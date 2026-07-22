@@ -53,9 +53,21 @@ export async function handleIncoming(
     .map((m) => ({ role: m.role, content: sanitize(m.content) }));
 
   // 1) Router: structural = direct DB answer (no LLM).
+  // Contextual follow-up: bare pronouns ("quem são eles?", "quais são?", "me diga os nomes")
+  // reuse the topic from the last assistant message.
+  const isBareFollowUp = /^(quem\s+s[aã]o(\s+eles|\s+elas)?|quais\s+s[aã]o(\s+eles|\s+elas)?|me\s+diga(\s+os)?(\s+nomes?)?|diga(\s+os)?(\s+nomes?)?|os?\s+nomes?|liste(\s+eles|\s+elas)?|todos|todas)\s*[?.!]*$/i.test(text.trim());
+  let routerInput = text;
+  if (isBareFollowUp) {
+    const lastAssistant = [...trimmedHistory].reverse().find((m) => m.role === "assistant");
+    const prev = lastAssistant?.content.toLowerCase() ?? "";
+    if (/vendedor|vendedores|representante/.test(prev)) routerInput = `liste todos os vendedores`;
+    else if (/categoria|categorias/.test(prev)) routerInput = `liste todas as categorias`;
+    else if (/produto|produtos|destaque/.test(prev)) routerInput = `liste os produtos`;
+  }
+
   let routed;
   try {
-    routed = await routeQuery(text);
+    routed = await routeQuery(routerInput);
   } catch (err) {
     console.error("[router] falhou:", err instanceof Error ? err.message : err);
     routed = { kind: "passthrough" as const };

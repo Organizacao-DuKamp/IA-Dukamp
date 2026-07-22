@@ -23,7 +23,7 @@ function detectSpecies(text: string): SpeciesKey | null {
 }
 
 const COUNT_RE = /\b(quantos|quantas|qual\s+o\s+numero|numero\s+de|quantidade\s+de|tem\s+quantos|tem\s+quantas|existem\s+quantos)\b/i;
-const LIST_RE = /\b(quais|liste|listar|mostre|todos\s+os?\s+produtos?|produtos?\s+(disponi|dispon))/i;
+const LIST_RE = /\b(quais|liste|listar|listagem|mostre|mostrar|me\s+diga|diga\s+os?|nomes?\s+d[oe]s?|quem\s+s[aã]o|todos\s+os?|todas\s+as?|produtos?\s+(disponi|dispon))/i;
 const FEATURED_RE = /\b(destaque|destaques|em\s+destaque|principais\s+produtos?|produtos?\s+principais|mais\s+vendidos?|top\s+produtos?)\b/i;
 const SELLER_WORD_RE = /\b(vendedor|vendedora|vendedores|representante|revenda|revendedor|distribuidor)\b/i;
 const CATEGORY_WORD_RE = /\b(categorias?|linhas?\s+de\s+produtos?|cat[aá]logos?)\b/i;
@@ -269,12 +269,19 @@ async function listCategoriesFull(): Promise<string[]> {
   return (data ?? []).map((r: any) => r.name as string);
 }
 
+const SITE_SEARCH_STOPWORDS = new Set([
+  "sim","nao","não","tem","the","quero","saber","nome","nomes","deles","dela","dele","delas","eles","elas","essa","esse","isso","aqui","ali","sobre","como","onde","quem","qual","quais","quando","porque","por","que","com","sem","para","pra","dos","das","dum","duma","seu","sua","seus","suas","tudo","todo","toda","todos","todas","muito","muita","mais","menos","meu","minha","voce","você","vocês","obrigado","obrigada","favor","ola","olá","oi","boa","bom","dia","tarde","noite","produto","produtos","vendedor","vendedores","categoria","categorias","cliente","clientes","dukamp","preço","preco","valor","fica","ficam","informa","informe","informação","informacao","informações"
+]);
+
 /** Try to find a product on the site DB by name substring (fallback when local `products` is empty). */
 async function findSiteProductByName(text: string): Promise<Array<{ name: string; price: number | null; code: string | null; description: string | null }>> {
   const c = await siteClient();
   if (!c) return [];
   const q = normalizeName(text).replace(/[^a-z0-9\s/]/g, " ").trim();
-  const tokens = q.split(/\s+/).filter((t) => t.length >= 3).slice(0, 5);
+  const tokens = q
+    .split(/\s+/)
+    .filter((t) => t.length >= 4 && !SITE_SEARCH_STOPWORDS.has(t) && !/^\d+$/.test(t))
+    .slice(0, 5);
   if (tokens.length === 0) return [];
   const orExpr = tokens.map((t) => `name.ilike.*${t}*`).join(",");
   const { data } = await c
@@ -341,8 +348,8 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
     };
   }
 
-  // Sellers — list
-  if (hasSellerWord && (hasList || /todos|equipe/i.test(userText))) {
+  // Sellers — list (broadened: "nomes", "quem são", "todos", "equipe", "liste")
+  if (hasSellerWord && (hasList || /\b(todos|todas|equipe|nomes?|quem\s+s[aã]o)\b/i.test(userText))) {
     const list = await listSellersFull();
     if (list.length === 0) return { kind: "structural", text: "Nenhum vendedor ativo encontrado." };
     const bullets = list.map((s) => {
@@ -352,7 +359,7 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
       const contact = s.whatsapp ? ` — WhatsApp: ${s.whatsapp}` : s.phone ? ` — Tel: ${s.phone}` : "";
       return `- ${parts.join(" — ")}${contact}`;
     }).join("\n");
-    return { kind: "structural", text: `Vendedores DuKamp:\n\n${bullets}` };
+    return { kind: "structural", text: `Vendedores DuKamp (${list.length}):\n\n${bullets}` };
   }
 
   // Sellers — by name
