@@ -339,8 +339,20 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
         text: "Ainda não localizei os endereços das unidades DuKamp na base. Recomendo consultar o site oficial da DuKamp ou falar com um vendedor.",
       };
     }
+    const unitCount = headquarters ? 1 : 0;
     const lines: string[] = [];
+    if (hasCount) {
+      const where = headquarters?.city && headquarters.state
+        ? ` — matriz em ${headquarters.city}/${headquarters.state}`
+        : "";
+      lines.push(
+        unitCount === 0
+          ? "Não localizei nenhuma unidade DuKamp cadastrada na base."
+          : `A DuKamp tem **${unitCount} unidade** cadastrada${where}.`,
+      );
+    }
     if (headquarters) {
+      if (lines.length > 0) lines.push("");
       lines.push(`**Matriz DuKamp**${headquarters.razaoSocial ? ` — ${headquarters.razaoSocial}` : ""}`);
       if (headquarters.address) lines.push(`- Endereço: ${headquarters.address}`);
       if (headquarters.cnpj) lines.push(`- CNPJ: ${headquarters.cnpj}`);
@@ -352,7 +364,7 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
       lines.push(`**Regiões atendidas pelos vendedores DuKamp** (${regions.length}):`);
       lines.push(regions.map((r) => `- ${r}`).join("\n"));
     }
-    if (!headquarters) {
+    if (!headquarters && regions.length > 0) {
       lines.unshift("Não encontrei o endereço da matriz cadastrado, mas a DuKamp atende comercialmente as seguintes regiões pela equipe de vendedores:");
     }
     return { kind: "structural", text: lines.join("\n") };

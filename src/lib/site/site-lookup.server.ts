@@ -156,9 +156,16 @@ function pickAfter(text: string, label: RegExp): string | undefined {
   const m = text.match(label);
   if (!m) return undefined;
   const rest = text.slice(m.index! + m[0].length);
-  const stop = rest.search(/(Nome fantasia|Raz[aã]o social|CNPJ|Endere[cç]o|E-?mail|Telefone|WhatsApp)\s*:/i);
+  // Stop at next known label OR the next numbered section heading like "2. Objeto".
+  const stopRe = /(Raz[aã]o social\s*:|Nome fantasia\s*:|CNPJ\s*:|Endere[cç]o\s*:|E-?mail[^:\n]{0,40}:|Telefone[^:\n]{0,40}:|WhatsApp[^:\n]{0,40}:|\s\d{1,2}\.\s+[A-ZÀ-Ú])/;
+  const stop = rest.search(stopRe);
   const val = (stop >= 0 ? rest.slice(0, stop) : rest).trim();
-  return val.replace(/^[:\-\s]+/, "").trim() || undefined;
+  // Strip a trailing dangling "Telefone ou" / "E-mail" fragment if present.
+  const cleaned = val
+    .replace(/^[:\-\s]+/, "")
+    .replace(/\s+(Telefone|E-?mail|WhatsApp|CNPJ|Endere[cç]o|Raz[aã]o social|Nome fantasia)(\s+(ou|de)\s+\w+)?\s*$/i, "")
+    .trim();
+  return cleaned || undefined;
 }
 
 /**
@@ -188,8 +195,8 @@ export async function getSiteUnits(): Promise<{ headquarters?: SiteUnit; regions
       razaoSocial: pickAfter(text, /Raz[aã]o social\s*:/i),
       cnpj: pickAfter(text, /CNPJ\s*:/i),
       address,
-      email: pickAfter(text, /E-?mail(?:\s+de\s+atendimento)?\s*:/i),
-      phone: pickAfter(text, /Telefone(?:\s+ou\s+WhatsApp)?\s*:/i),
+      email: (text.match(/E-?mail(?:\s+de\s+atendimento)?\s*:\s*([^\s<>()]+@[^\s<>()]+)/i)?.[1] ?? "").trim() || undefined,
+      phone: (text.match(/Telefone(?:\s+ou\s+WhatsApp)?\s*:\s*([()\d\s\-+.]{8,25})/i)?.[1] ?? "").trim() || undefined,
     };
     const cityMatch = address.match(/,\s*([^,/]+)\/([A-Z]{2})\b/);
     if (cityMatch) {
