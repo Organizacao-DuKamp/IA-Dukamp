@@ -192,20 +192,224 @@ async function listActive(species: SpeciesKey | null): Promise<string[]> {
   }
 }
 
+// ---- Site (Dukamp website) helpers ---------------------------------------
+
+async function siteClient() {
+  const { siteSupabase, isSiteConfigured } = await import("@/lib/site/site-client.server");
+  if (!isSiteConfigured()) return null;
+  return siteSupabase();
+}
+
+async function listFeaturedProducts(): Promise<Array<{ name: string; price: number | null }>> {
+  const c = await siteClient();
+  if (!c) return [];
+  const { data } = await c
+    .from("products")
+    .select("name,price,active,featured")
+    .eq("active", true)
+    .eq("featured", true)
+    .order("name", { ascending: true })
+    .limit(50);
+  return (data ?? []).map((p: any) => ({ name: p.name as string, price: (p.price as number | null) ?? null }));
+}
+
+async function countSellers(): Promise<number> {
+  const c = await siteClient();
+  if (!c) return 0;
+  const { count } = await c
+    .from("sellers")
+    .select("id", { count: "exact", head: true })
+    .eq("active", true);
+  return count ?? 0;
+}
+
+async function listSellersFull(): Promise<Array<{ name: string; role: string | null; region: string | null; phone: string | null; whatsapp: string | null }>> {
+  const c = await siteClient();
+  if (!c) return [];
+  const { data } = await c
+    .from("sellers")
+    .select("name,role,region,phone,whatsapp,active,display_order")
+    .eq("active", true)
+    .order("display_order", { ascending: true })
+    .limit(100);
+  return (data ?? []) as any[];
+}
+
+async function findSellerByName(text: string): Promise<Array<{ name: string; role: string | null; region: string | null; phone: string | null; whatsapp: string | null }>> {
+  const all = await listSellersFull();
+  const norm = normalizeName(text);
+  const hits = all.filter((s) => {
+    const key = normalizeName(s.name);
+    if (key.length < 3) return false;
+    // token overlap: first name or full name inside text
+    const firstName = key.split(/\s+/)[0];
+    return norm.includes(key) || norm.includes(firstName);
+  });
+  return hits;
+}
+
+async function countCategories(): Promise<number> {
+  const c = await siteClient();
+  if (!c) return 0;
+  const { count } = await c
+    .from("categories")
+    .select("id", { count: "exact", head: true })
+    .eq("active", true);
+  return count ?? 0;
+}
+
+async function listCategoriesFull(): Promise<string[]> {
+  const c = await siteClient();
+  if (!c) return [];
+  const { data } = await c
+    .from("categories")
+    .select("name,active,sort_order")
+    .eq("active", true)
+    .order("sort_order", { ascending: true });
+  return (data ?? []).map((r: any) => r.name as string);
+}
+
+/** Try to find a product on the site DB by name substring (fallback when local `products` is empty). */
+async function findSiteProductByName(text: string): Promise<Array<{ name: string; price: number | null; code: string | null; description: string | null }>> {
+  const c = await siteClient();
+  if (!c) return [];
+  const q = normalizeName(text).replace(/[^a-z0-9\s/]/g, " ").trim();
+  const tokens = q.split(/\s+/).filter((t) => t.length >= 3).slice(0, 5);
+  if (tokens.length === 0) return [];
+  const orExpr = tokens.map((t) => `name.ilike.*${t}*`).join(",");
+  const { data } = await c
+    .from("products")
+    .select("name,price,code,description,active")
+    .or(orExpr)
+    .eq("active", true)
+    .limit(20);
+  return (data ?? []) as any[];
+}
+
+function fmtBRL(n: number | null): string {
+  if (n == null) return "";
+  try {
+    return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  } catch {
+    return `R$ ${n.toFixed(2)}`;
+  }
+}
+
+function stripHtml(html: string | null): string {
+  if (!html) return "";
+  return html
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|div|tr|li|h[1-6])>/gi, "\n")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+// ---- Main router ---------------------------------------------------------
+
 export async function routeQuery(userText: string): Promise<RouterResult> {
   const species = detectSpecies(userText);
+  const hasCount = COUNT_RE.test(userText);
+  const hasList = LIST_RE.test(userText);
+  const hasFeatured = FEATURED_RE.test(userText);
+  const hasSellerWord = SELLER_WORD_RE.test(userText);
+  const hasCategoryWord = CATEGORY_WORD_RE.test(userText);
+  const hasUnitWord = UNIT_WORD_RE.test(userText);
+  const hasPriceWord = PRICE_WORD_RE.test(userText);
 
-  // Structural: count
-  if (COUNT_RE.test(userText)) {
+  // Units / filial / matriz — data not available yet.
+  if (hasUnitWord && !hasSellerWord) {
+    return {
+      kind: "structural",
+      text: "Ainda não tenho os endereços das unidades DuKamp (matriz/filiais) cadastrados aqui. Recomendo consultar o site oficial ou falar com um vendedor DuKamp.",
+    };
+  }
+
+  // Sellers — count
+  if (hasSellerWord && hasCount) {
+    const n = await countSellers();
+    return {
+      kind: "structural",
+      text: n === 0
+        ? "Não encontrei vendedores cadastrados no momento."
+        : `Atualmente a DuKamp tem **${n} vendedor(es) ativo(s)** cadastrado(s).`,
+    };
+  }
+
+  // Sellers — list
+  if (hasSellerWord && (hasList || /todos|equipe/i.test(userText))) {
+    const list = await listSellersFull();
+    if (list.length === 0) return { kind: "structural", text: "Nenhum vendedor ativo encontrado." };
+    const bullets = list.map((s) => {
+      const parts = [`**${s.name}**`];
+      if (s.role) parts.push(s.role);
+      if (s.region) parts.push(s.region);
+      const contact = s.whatsapp ? ` — WhatsApp: ${s.whatsapp}` : s.phone ? ` — Tel: ${s.phone}` : "";
+      return `- ${parts.join(" — ")}${contact}`;
+    }).join("\n");
+    return { kind: "structural", text: `Vendedores DuKamp:\n\n${bullets}` };
+  }
+
+  // Sellers — by name
+  if (hasSellerWord || /\b(quem\s+e|contato\s+d[aeo])\b/i.test(userText)) {
+    const hits = await findSellerByName(userText);
+    if (hits.length === 1) {
+      const s = hits[0];
+      const lines = [`**${s.name}**`];
+      if (s.role) lines.push(`- Cargo: ${s.role}`);
+      if (s.region) lines.push(`- Região: ${s.region}`);
+      if (s.whatsapp) lines.push(`- WhatsApp: ${s.whatsapp}`);
+      if (s.phone) lines.push(`- Telefone: ${s.phone}`);
+      return { kind: "structural", text: lines.join("\n") };
+    }
+    if (hits.length > 1) {
+      const opts = hits.map((s) => `- **${s.name}**${s.region ? ` (${s.region})` : ""}`).join("\n");
+      return { kind: "structural", text: `Encontrei mais de um vendedor. A qual você se refere?\n\n${opts}` };
+    }
+  }
+
+  // Categories
+  if (hasCategoryWord && hasCount) {
+    const n = await countCategories();
+    return {
+      kind: "structural",
+      text: n === 0
+        ? "Não encontrei categorias cadastradas."
+        : `A DuKamp tem **${n} categoria(s) ativa(s)** no catálogo.`,
+    };
+  }
+  if (hasCategoryWord && (hasList || /todas/i.test(userText))) {
+    const cats = await listCategoriesFull();
+    if (cats.length === 0) return { kind: "structural", text: "Nenhuma categoria ativa encontrada." };
+    return { kind: "structural", text: `Categorias ativas:\n\n${cats.map((c) => `- ${c}`).join("\n")}` };
+  }
+
+  // Featured products
+  if (hasFeatured) {
+    const feat = await listFeaturedProducts();
+    if (feat.length === 0) {
+      return {
+        kind: "structural",
+        text: "Não há produtos marcados como destaque no site DuKamp neste momento.",
+      };
+    }
+    const bullets = feat.map((p) => `- **${p.name}**${p.price != null ? ` — ${fmtBRL(p.price)}` : ""}`).join("\n");
+    return { kind: "structural", text: `Produtos em destaque no site DuKamp:\n\n${bullets}` };
+  }
+
+  // Products — count
+  if (hasCount && (!hasSellerWord && !hasCategoryWord)) {
     const { n, source } = await countActive(species);
     const label = species
       ? ` para ${species === "ovinos_caprinos" ? "ovinos e caprinos" : species}`
       : "";
     if (n === 0) {
-      return {
-        kind: "structural",
-        text: `Ainda não tenho produtos cadastrados${label} na base ativa.`,
-      };
+      return { kind: "structural", text: `Ainda não tenho produtos cadastrados${label} na base ativa.` };
     }
     const suffix = source === "site" ? " (catálogo do site oficial DuKamp)" : "";
     return {
@@ -214,13 +418,10 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
     };
   }
 
-  // Structural: list
-  if (LIST_RE.test(userText)) {
+  // Products — list
+  if (hasList && !hasSellerWord && !hasCategoryWord) {
     const items = await listActive(species);
-    if (items.length === 0) {
-      return { kind: "structural", text: "Nenhum produto ativo encontrado." };
-    }
-    // Cap displayed items to keep the reply readable.
+    if (items.length === 0) return { kind: "structural", text: "Nenhum produto ativo encontrado." };
     const shown = items.slice(0, 60);
     const bullets = shown.map((n) => `- ${n}`).join("\n");
     const more = items.length > shown.length ? `\n\n_(exibindo ${shown.length} de ${items.length})_` : "";
@@ -230,7 +431,7 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
     };
   }
 
-  // Name-based routing
+  // Name-based routing (local fichas técnicas)
   const { exact, ambiguous } = await findProductByName(userText);
   if (ambiguous) {
     const opts = ambiguous.candidates.map((c) => `- **${c.official_name}**`).join("\n");
@@ -240,6 +441,22 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
     };
   }
   if (exact) return { kind: "passthrough", productHint: exact };
+
+  // Site product name fallback (when local fichas are empty).
+  const siteHits = await findSiteProductByName(userText);
+  if (siteHits.length === 1) {
+    const p = siteHits[0];
+    const desc = stripHtml(p.description);
+    const lines = [`**${p.name}**`];
+    if (p.code) lines.push(`- Código: ${p.code}`);
+    if (p.price != null) lines.push(`- Preço${hasPriceWord ? "" : " (site)"}: ${fmtBRL(p.price)}`);
+    if (desc) lines.push(`\n${desc.slice(0, 1800)}`);
+    return { kind: "structural", text: lines.join("\n") };
+  }
+  if (siteHits.length > 1 && siteHits.length <= 8) {
+    const opts = siteHits.map((p) => `- **${p.name}**`).join("\n");
+    return { kind: "structural", text: `Encontrei mais de um produto no site que pode se encaixar. A qual você se refere?\n\n${opts}` };
+  }
 
   return { kind: "passthrough" };
 }
