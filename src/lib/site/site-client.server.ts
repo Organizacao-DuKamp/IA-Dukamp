@@ -3,9 +3,9 @@
 
 import { createClient } from "@supabase/supabase-js";
 
-let _client: ReturnType<typeof createClient> | undefined;
+let _client: any;
 
-function build() {
+function build(): any {
   const url = process.env.DUKAMP_SITE_SUPABASE_URL;
   const key = process.env.DUKAMP_SITE_SUPABASE_ANON_KEY;
   if (!url || !key) {
@@ -16,7 +16,7 @@ function build() {
   });
 }
 
-export function siteSupabase() {
+export function siteSupabase(): any {
   if (!_client) _client = build();
   return _client;
 }
