@@ -55,25 +55,29 @@ export const registerSeed = createServerFn({ method: "POST" })
     const { parseSourcePath } = await import("./rag/paths");
 
     const files = listSeedFiles();
-    let inserted = 0;
-    for (const f of files) {
+    const rows = files.map((f) => {
       const p = parseSourcePath(f.absPath);
-      const { error } = await supabaseAdmin.from("knowledge_documents").upsert(
-        {
-          title: p.title,
-          filename: p.filename,
-          source_path: p.sourcePath,
-          category: p.category,
-          subcategory: p.subcategory,
-          status: "aguardando",
-          chunk_count: 0,
-          error_message: null,
-        },
-        { onConflict: "source_path", ignoreDuplicates: false },
-      );
-      if (!error) inserted++;
+      return {
+        title: p.title,
+        filename: p.filename,
+        source_path: p.sourcePath,
+        category: p.category,
+        subcategory: p.subcategory,
+        status: "aguardando",
+        chunk_count: 0,
+        error_message: null,
+      };
+    });
+
+    const batchSize = 100;
+    for (let i = 0; i < rows.length; i += batchSize) {
+      const batch = rows.slice(i, i + batchSize);
+      const { error } = await supabaseAdmin
+        .from("knowledge_documents")
+        .upsert(batch, { onConflict: "source_path", ignoreDuplicates: false });
+      if (error) throw new Error(error.message);
     }
-    return { total: files.length, inserted };
+    return { total: files.length, inserted: rows.length };
   });
 
 export const processNextPending = createServerFn({ method: "POST" })
