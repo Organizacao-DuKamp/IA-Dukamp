@@ -3,7 +3,7 @@
 // Keeps history ONLY in memory of the current tab (no localStorage, no cookies).
 
 import { sendChatMessage } from "../chat.functions";
-import type { ChannelAdapter, ChatMessage, ChatSource, OutgoingMessage } from "./types";
+import type { ChannelAdapter, ChatMessage, OutgoingMessage } from "./types";
 
 export class WebChatAdapter implements ChannelAdapter {
   readonly name = "web";
@@ -23,17 +23,14 @@ export class WebChatAdapter implements ChannelAdapter {
     this.sessionId = generateSessionId();
   }
 
-  async ask(
-    text: string,
-    history: ChatMessage[],
-  ): Promise<{ reply: string; sources: ChatSource[] }> {
+  async ask(text: string, history: ChatMessage[]): Promise<{ reply: string }> {
     const result = (await sendChatMessage({
       data: { sessionId: this.sessionId, text, history },
-    })) as { reply?: string; sources?: ChatSource[]; error?: string; status?: number };
+    })) as { reply?: string; error?: string; status?: number };
     if (result.error) throw new Error(result.error);
     const reply = result.reply ?? "";
     this.send({ sessionId: this.sessionId, text: reply });
-    return { reply, sources: result.sources ?? [] };
+    return { reply };
   }
 
   send(message: OutgoingMessage) {
