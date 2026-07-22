@@ -195,8 +195,8 @@ export async function getSiteUnits(): Promise<{ headquarters?: SiteUnit; regions
       razaoSocial: pickAfter(text, /Raz[aã]o social\s*:/i),
       cnpj: pickAfter(text, /CNPJ\s*:/i),
       address,
-      email: pickAfter(text, /E-?mail(?:\s+de\s+atendimento)?\s*:/i),
-      phone: pickAfter(text, /Telefone(?:\s+ou\s+WhatsApp)?\s*:/i),
+      email: (text.match(/E-?mail(?:\s+de\s+atendimento)?\s*:\s*([^\s<>()]+@[^\s<>()]+)/i)?.[1] ?? "").trim() || undefined,
+      phone: (text.match(/Telefone(?:\s+ou\s+WhatsApp)?\s*:\s*([()\d\s\-+.]{8,25})/i)?.[1] ?? "").trim() || undefined,
     };
     const cityMatch = address.match(/,\s*([^,/]+)\/([A-Z]{2})\b/);
     if (cityMatch) {
