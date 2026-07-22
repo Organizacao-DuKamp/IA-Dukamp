@@ -178,18 +178,23 @@ async function countActive(species: SpeciesKey | null): Promise<{ n: number; sou
 
 
 async function listActive(species: SpeciesKey | null): Promise<string[]> {
-  let q = supabaseAdmin
-    .from("products")
-    .select("official_name")
-    .eq("active", true)
-    .eq("is_duplicate", false)
-    .eq("requires_review", false)
-    .order("official_name", { ascending: true })
-    .limit(200);
-  if (species) q = q.eq("species", species);
-  const { data } = await q;
-  const local = (data ?? []).map((p) => p.official_name);
-  if (local.length > 0) return local;
+  try {
+    let q = supabaseAdmin
+      .from("products")
+      .select("official_name")
+      .eq("active", true)
+      .eq("is_duplicate", false)
+      .eq("requires_review", false)
+      .order("official_name", { ascending: true })
+      .limit(200);
+    if (species) q = q.eq("species", species);
+    const { data } = await q;
+    const local = (data ?? []).map((p) => p.official_name);
+    if (local.length > 0) return local;
+  } catch (err) {
+    console.warn("[router] local list skipped:", err instanceof Error ? err.message : err);
+  }
+
 
   // Fallback to the Dukamp site DB.
   try {
