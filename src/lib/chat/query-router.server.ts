@@ -269,12 +269,19 @@ async function listCategoriesFull(): Promise<string[]> {
   return (data ?? []).map((r: any) => r.name as string);
 }
 
+const SITE_SEARCH_STOPWORDS = new Set([
+  "sim","nao","não","tem","the","quero","saber","nome","nomes","deles","dela","dele","delas","eles","elas","essa","esse","isso","aqui","ali","sobre","como","onde","quem","qual","quais","quando","porque","por","que","com","sem","para","pra","dos","das","dum","duma","seu","sua","seus","suas","tudo","todo","toda","todos","todas","muito","muita","mais","menos","meu","minha","voce","você","vocês","obrigado","obrigada","favor","ola","olá","oi","boa","bom","dia","tarde","noite","produto","produtos","vendedor","vendedores","categoria","categorias","cliente","clientes","dukamp","preço","preco","valor","fica","ficam","informa","informe","informação","informacao","informações"
+]);
+
 /** Try to find a product on the site DB by name substring (fallback when local `products` is empty). */
 async function findSiteProductByName(text: string): Promise<Array<{ name: string; price: number | null; code: string | null; description: string | null }>> {
   const c = await siteClient();
   if (!c) return [];
   const q = normalizeName(text).replace(/[^a-z0-9\s/]/g, " ").trim();
-  const tokens = q.split(/\s+/).filter((t) => t.length >= 3).slice(0, 5);
+  const tokens = q
+    .split(/\s+/)
+    .filter((t) => t.length >= 4 && !SITE_SEARCH_STOPWORDS.has(t) && !/^\d+$/.test(t))
+    .slice(0, 5);
   if (tokens.length === 0) return [];
   const orExpr = tokens.map((t) => `name.ilike.*${t}*`).join(",");
   const { data } = await c
