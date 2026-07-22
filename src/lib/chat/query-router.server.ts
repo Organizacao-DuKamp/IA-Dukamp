@@ -290,7 +290,9 @@ async function listCategoriesFull(): Promise<string[]> {
 }
 
 const SITE_SEARCH_STOPWORDS = new Set([
-  "sim","nao","não","tem","the","quero","saber","nome","nomes","deles","dela","dele","delas","eles","elas","essa","esse","isso","aqui","ali","sobre","como","onde","quem","qual","quais","quando","porque","por","que","com","sem","para","pra","dos","das","dum","duma","seu","sua","seus","suas","tudo","todo","toda","todos","todas","muito","muita","mais","menos","meu","minha","voce","você","vocês","obrigado","obrigada","favor","ola","olá","oi","boa","bom","dia","tarde","noite","produto","produtos","vendedor","vendedores","categoria","categorias","cliente","clientes","dukamp","preço","preco","valor","fica","ficam","informa","informe","informação","informacao","informações"
+  "sim","nao","não","tem","the","quero","saber","nome","nomes","deles","dela","dele","delas","eles","elas","essa","esse","isso","aqui","ali","sobre","como","onde","quem","qual","quais","quando","porque","por","que","com","sem","para","pra","dos","das","dum","duma","seu","sua","seus","suas","tudo","todo","toda","todos","todas","muito","muita","mais","menos","meu","minha","voce","você","vocês","obrigado","obrigada","favor","ola","olá","oi","boa","bom","dia","tarde","noite","produto","produtos","vendedor","vendedores","categoria","categorias","cliente","clientes","dukamp","preço","preco","valor","fica","ficam","informa","informe","informação","informacao","informações",
+  // verbos/expressões coloquiais comuns que geravam falsos positivos (ex: "toma" casando com "auTOMAtica")
+  "toma","tomar","jeito","jeitoo","ajeita","ajeitar","vamos","vai","vem","olha","olhe","entao","então","entendi","entende","entender","legal","bacana","show","massa","cara","gente","tipo","assim","serio","sério","calma","espera","esperar","deixa","deixar","fala","falar","faz","fazer","tudo","nada","algo","alguma","alguem","alguém","ninguém","ninguem","talvez","acho","achei","acha","achar","preciso","precisa","precisar","gostaria","gostei","gosta","gostar","aparece","apareceu","aparecer","funciona","funcionar","erro","erros","bug","teste","testar","ainda"
 ]);
 
 /** Try to find a product on the site DB by name substring (fallback when local `products` is empty). */
@@ -300,7 +302,7 @@ async function findSiteProductByName(text: string): Promise<Array<{ name: string
   const q = normalizeName(text).replace(/[^a-z0-9\s/]/g, " ").trim();
   const tokens = q
     .split(/\s+/)
-    .filter((t) => t.length >= 4 && !SITE_SEARCH_STOPWORDS.has(t) && !/^\d+$/.test(t))
+    .filter((t) => t.length >= 5 && !SITE_SEARCH_STOPWORDS.has(t) && !/^\d+$/.test(t))
     .slice(0, 5);
   if (tokens.length === 0) return [];
   const orExpr = tokens.map((t) => `name.ilike.*${t}*`).join(",");
@@ -309,9 +311,19 @@ async function findSiteProductByName(text: string): Promise<Array<{ name: string
     .select("name,price,code,description,active")
     .or(orExpr)
     .eq("active", true)
-    .limit(20);
-  return (data ?? []) as any[];
+    .limit(30);
+  // Post-filter: token deve casar como palavra inteira no nome (evita "toma" casar com "auTOMAtica"/"decTOMAx").
+  const rows = (data ?? []) as any[];
+  const filtered = rows.filter((p) => {
+    const norm = normalizeName(p.name as string);
+    return tokens.some((t) => {
+      const re = new RegExp(`(^|\\W)${t.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")}(\\W|$)`);
+      return re.test(norm);
+    });
+  });
+  return filtered.slice(0, 20);
 }
+
 
 function fmtBRL(n: number | null): string {
   if (n == null) return "";
