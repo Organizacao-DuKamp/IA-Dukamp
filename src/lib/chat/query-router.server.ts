@@ -341,8 +341,8 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
     };
   }
 
-  // Sellers — list
-  if (hasSellerWord && (hasList || /todos|equipe/i.test(userText))) {
+  // Sellers — list (broadened: "nomes", "quem são", "todos", "equipe", "liste")
+  if (hasSellerWord && (hasList || /\b(todos|todas|equipe|nomes?|quem\s+s[aã]o)\b/i.test(userText))) {
     const list = await listSellersFull();
     if (list.length === 0) return { kind: "structural", text: "Nenhum vendedor ativo encontrado." };
     const bullets = list.map((s) => {
@@ -352,7 +352,7 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
       const contact = s.whatsapp ? ` — WhatsApp: ${s.whatsapp}` : s.phone ? ` — Tel: ${s.phone}` : "";
       return `- ${parts.join(" — ")}${contact}`;
     }).join("\n");
-    return { kind: "structural", text: `Vendedores DuKamp:\n\n${bullets}` };
+    return { kind: "structural", text: `Vendedores DuKamp (${list.length}):\n\n${bullets}` };
   }
 
   // Sellers — by name
