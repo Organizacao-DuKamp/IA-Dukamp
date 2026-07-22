@@ -14,16 +14,150 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      knowledge_chunks: {
+        Row: {
+          category: string
+          chunk_index: number
+          content: string
+          created_at: string
+          document_id: string
+          embedding: string | null
+          filename: string
+          id: string
+          subcategory: string | null
+          title: string
+        }
+        Insert: {
+          category: string
+          chunk_index: number
+          content: string
+          created_at?: string
+          document_id: string
+          embedding?: string | null
+          filename: string
+          id?: string
+          subcategory?: string | null
+          title: string
+        }
+        Update: {
+          category?: string
+          chunk_index?: number
+          content?: string
+          created_at?: string
+          document_id?: string
+          embedding?: string | null
+          filename?: string
+          id?: string
+          subcategory?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_chunks_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_documents: {
+        Row: {
+          bytes: number | null
+          category: string
+          chunk_count: number
+          created_at: string
+          error_message: string | null
+          filename: string
+          id: string
+          source_path: string
+          status: string
+          storage_path: string | null
+          subcategory: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          bytes?: number | null
+          category: string
+          chunk_count?: number
+          created_at?: string
+          error_message?: string | null
+          filename: string
+          id?: string
+          source_path: string
+          status?: string
+          storage_path?: string | null
+          subcategory?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          bytes?: number | null
+          category?: string
+          chunk_count?: number
+          created_at?: string
+          error_message?: string | null
+          filename?: string
+          id?: string
+          source_path?: string
+          status?: string
+          storage_path?: string | null
+          subcategory?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      match_knowledge_chunks: {
+        Args: { match_count?: number; query_embedding: string }
+        Returns: {
+          category: string
+          content: string
+          document_id: string
+          filename: string
+          id: string
+          similarity: number
+          subcategory: string
+          title: string
+        }[]
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +284,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const
