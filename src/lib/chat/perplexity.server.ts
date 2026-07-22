@@ -18,15 +18,22 @@ export class PerplexityError extends Error {
   }
 }
 
-export async function askPerplexity(history: ChatMessage[]): Promise<string> {
+export async function askPerplexity(
+  history: ChatMessage[],
+  context?: string,
+): Promise<string> {
   const apiKey = process.env.PERPLEXITY_API_KEY;
   if (!apiKey) {
     // Do not include the variable name in the client-facing error.
     throw new PerplexityError("Serviço de IA indisponível no momento.", 500);
   }
 
+  const systemContent = context
+    ? `${TPEC_SYSTEM_PROMPT}\n\n===== BASE DE CONHECIMENTO INTERNA =====\nUse PRIORITARIAMENTE os trechos abaixo (extraídos de documentos técnicos da propriedade) para responder. Se a resposta estiver neles, cite entre parênteses a fonte no formato (Fonte: <título>). Se os trechos não contiverem a resposta, diga isso explicitamente e complemente com conhecimento geral, deixando claro que é conhecimento externo.\n\n${context}\n===== FIM DA BASE =====`
+    : TPEC_SYSTEM_PROMPT;
+
   const messages = [
-    { role: "system" as const, content: TPEC_SYSTEM_PROMPT },
+    { role: "system" as const, content: systemContent },
     ...history.map((m) => ({ role: m.role, content: m.content })),
   ];
 
