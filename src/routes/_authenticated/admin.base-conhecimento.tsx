@@ -194,13 +194,48 @@ function AdminKnowledgeBase() {
           </p>
         )}
 
+        <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+          <div>
+            <h2 className="text-sm font-semibold">Atualizar via ZIP</h2>
+            <p className="text-xs text-muted-foreground">
+              Envie o <code>base-conhecimento.zip</code> atualizado. O sistema descompacta,
+              preserva a estrutura de pastas como categoria/subcategoria e enfileira os
+              documentos para reprocessamento. Aceita arquivos <code>.txt</code> e <code>.md</code>.
+            </p>
+          </div>
+          <label className="flex items-center gap-2 text-xs">
+            <input
+              type="checkbox"
+              checked={replaceAll}
+              onChange={(e) => setReplaceAll(e.target.checked)}
+            />
+            Substituir toda a base (apaga documentos e trechos existentes)
+          </label>
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="file"
+              accept=".zip,application/zip,application/x-zip-compressed"
+              disabled={busy !== null || running}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) void handleUploadZip(f);
+                e.target.value = "";
+              }}
+              className="text-xs file:mr-2 file:rounded-md file:border file:border-border file:bg-background file:px-3 file:py-1.5 file:text-xs file:text-foreground hover:file:bg-secondary"
+            />
+            {busy === "upload" && (
+              <span className="text-xs text-muted-foreground">Enviando e descompactando…</span>
+            )}
+          </div>
+        </div>
+
         <div className="flex flex-wrap gap-2">
           <button
             onClick={handleRegister}
             disabled={busy !== null || running}
             className="rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground disabled:opacity-50"
           >
-            {busy === "register" ? "Registrando…" : "1. Registrar seed (134 arquivos)"}
+            {busy === "register" ? "Registrando…" : "1. Registrar seed embutido"}
           </button>
           <button
             onClick={processAll}
@@ -216,6 +251,7 @@ function AdminKnowledgeBase() {
             Atualizar
           </button>
         </div>
+
 
         {log.length > 0 && (
           <div className="max-h-40 overflow-y-auto rounded-md border border-border bg-card p-3 text-xs">
