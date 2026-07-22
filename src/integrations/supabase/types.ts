@@ -14,6 +14,68 @@ export type Database = {
   }
   public: {
     Tables: {
+      import_report_items: {
+        Row: {
+          created_at: string
+          details: Json
+          file_name: string | null
+          id: string
+          message: string | null
+          report_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json
+          file_name?: string | null
+          id?: string
+          message?: string | null
+          report_id: string
+          status: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json
+          file_name?: string | null
+          id?: string
+          message?: string | null
+          report_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_report_items_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "import_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      import_reports: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          summary: Json
+          triggered_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          summary?: Json
+          triggered_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          summary?: Json
+          triggered_by?: string | null
+        }
+        Relationships: []
+      }
       knowledge_chunks: {
         Row: {
           category: string
@@ -24,6 +86,8 @@ export type Database = {
           embedding: string | null
           filename: string
           id: string
+          metadata: Json
+          product_id: string | null
           subcategory: string | null
           title: string
         }
@@ -36,6 +100,8 @@ export type Database = {
           embedding?: string | null
           filename: string
           id?: string
+          metadata?: Json
+          product_id?: string | null
           subcategory?: string | null
           title: string
         }
@@ -48,6 +114,8 @@ export type Database = {
           embedding?: string | null
           filename?: string
           id?: string
+          metadata?: Json
+          product_id?: string | null
           subcategory?: string | null
           title?: string
         }
@@ -59,6 +127,13 @@ export type Database = {
             referencedRelation: "knowledge_documents"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "knowledge_chunks_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
         ]
       }
       knowledge_documents: {
@@ -67,50 +142,245 @@ export type Database = {
           category: string
           chunk_count: number
           content: string | null
+          content_hash: string | null
           created_at: string
           error_message: string | null
+          file_type: string | null
           filename: string
           id: string
+          internal_title: string | null
+          is_duplicate_of: string | null
+          original_file: string | null
+          requires_review: boolean
           source_path: string
           status: string
           storage_path: string | null
           subcategory: string | null
           title: string
           updated_at: string
+          version: number
         }
         Insert: {
           bytes?: number | null
           category: string
           chunk_count?: number
           content?: string | null
+          content_hash?: string | null
           created_at?: string
           error_message?: string | null
+          file_type?: string | null
           filename: string
           id?: string
+          internal_title?: string | null
+          is_duplicate_of?: string | null
+          original_file?: string | null
+          requires_review?: boolean
           source_path: string
           status?: string
           storage_path?: string | null
           subcategory?: string | null
           title: string
           updated_at?: string
+          version?: number
         }
         Update: {
           bytes?: number | null
           category?: string
           chunk_count?: number
           content?: string | null
+          content_hash?: string | null
           created_at?: string
           error_message?: string | null
+          file_type?: string | null
           filename?: string
           id?: string
+          internal_title?: string | null
+          is_duplicate_of?: string | null
+          original_file?: string | null
+          requires_review?: boolean
           source_path?: string
           status?: string
           storage_path?: string | null
           subcategory?: string | null
           title?: string
           updated_at?: string
+          version?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_documents_is_duplicate_of_fkey"
+            columns: ["is_duplicate_of"]
+            isOneToOne: false
+            referencedRelation: "knowledge_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_aliases: {
+        Row: {
+          alias: string
+          alias_normalized: string
+          created_at: string
+          id: string
+          origin: string
+          product_id: string
+        }
+        Insert: {
+          alias: string
+          alias_normalized: string
+          created_at?: string
+          id?: string
+          origin?: string
+          product_id: string
+        }
+        Update: {
+          alias?: string
+          alias_normalized?: string
+          created_at?: string
+          id?: string
+          origin?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_aliases_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_review_queue: {
+        Row: {
+          created_at: string
+          details: Json
+          id: string
+          product_id: string | null
+          reason: string
+          resolution_notes: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json
+          id?: string
+          product_id?: string | null
+          reason: string
+          resolution_notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json
+          id?: string
+          product_id?: string | null
+          reason?: string
+          resolution_notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_review_queue_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          active: boolean
+          animal_phase: string | null
+          category: string | null
+          composition: string | null
+          consumption: string | null
+          created_at: string
+          description: string | null
+          duplicate_of: string | null
+          extra: Json
+          guarantee_levels: string | null
+          id: string
+          indication: string | null
+          is_duplicate: boolean
+          official_name: string
+          package_weight: string | null
+          requires_review: boolean
+          slug: string
+          source_document: string | null
+          source_updated_at: string | null
+          species: string | null
+          updated_at: string
+          usage_instructions: string | null
+        }
+        Insert: {
+          active?: boolean
+          animal_phase?: string | null
+          category?: string | null
+          composition?: string | null
+          consumption?: string | null
+          created_at?: string
+          description?: string | null
+          duplicate_of?: string | null
+          extra?: Json
+          guarantee_levels?: string | null
+          id?: string
+          indication?: string | null
+          is_duplicate?: boolean
+          official_name: string
+          package_weight?: string | null
+          requires_review?: boolean
+          slug: string
+          source_document?: string | null
+          source_updated_at?: string | null
+          species?: string | null
+          updated_at?: string
+          usage_instructions?: string | null
+        }
+        Update: {
+          active?: boolean
+          animal_phase?: string | null
+          category?: string | null
+          composition?: string | null
+          consumption?: string | null
+          created_at?: string
+          description?: string | null
+          duplicate_of?: string | null
+          extra?: Json
+          guarantee_levels?: string | null
+          id?: string
+          indication?: string | null
+          is_duplicate?: boolean
+          official_name?: string
+          package_weight?: string | null
+          requires_review?: boolean
+          slug?: string
+          source_document?: string | null
+          source_updated_at?: string | null
+          species?: string | null
+          updated_at?: string
+          usage_instructions?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_duplicate_of_fkey"
+            columns: ["duplicate_of"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_source_document_fkey"
+            columns: ["source_document"]
+            isOneToOne: false
+            referencedRelation: "knowledge_documents"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
