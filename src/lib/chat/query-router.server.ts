@@ -132,7 +132,7 @@ async function findProductByName(text: string): Promise<
   };
 }
 
-async function countActive(species: SpeciesKey | null): Promise<number> {
+async function countActive(species: SpeciesKey | null): Promise<{ n: number; source: "local" | "site" }> {
   let q = supabaseAdmin
     .from("products")
     .select("id", { count: "exact", head: true })
@@ -141,7 +141,20 @@ async function countActive(species: SpeciesKey | null): Promise<number> {
     .eq("requires_review", false);
   if (species) q = q.eq("species", species);
   const { count } = await q;
-  return count ?? 0;
+  if ((count ?? 0) > 0) return { n: count ?? 0, source: "local" };
+
+  // Fallback to the Dukamp site DB (source of truth for the commercial catalog).
+  try {
+    const { siteSupabase, isSiteConfigured } = await import("@/lib/site/site-client.server");
+    if (!isSiteConfigured()) return { n: 0, source: "local" };
+    const { count: siteCount } = await siteSupabase()
+      .from("products")
+      .select("id", { count: "exact", head: true })
+      .eq("active", true);
+    return { n: siteCount ?? 0, source: "site" };
+  } catch {
+    return { n: 0, source: "local" };
+  }
 }
 
 async function listActive(species: SpeciesKey | null): Promise<string[]> {
@@ -155,7 +168,23 @@ async function listActive(species: SpeciesKey | null): Promise<string[]> {
     .limit(200);
   if (species) q = q.eq("species", species);
   const { data } = await q;
-  return (data ?? []).map((p) => p.official_name);
+  const local = (data ?? []).map((p) => p.official_name);
+  if (local.length > 0) return local;
+
+  // Fallback to the Dukamp site DB.
+  try {
+    const { siteSupabase, isSiteConfigured } = await import("@/lib/site/site-client.server");
+    if (!isSiteConfigured()) return [];
+    const { data: siteData } = await siteSupabase()
+      .from("products")
+      .select("name")
+      .eq("active", true)
+      .order("name", { ascending: true })
+      .limit(300);
+    return (siteData ?? []).map((p: any) => p.name as string);
+  } catch {
+    return [];
+  }
 }
 
 export async function routeQuery(userText: string): Promise<RouterResult> {
@@ -163,7 +192,7 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
 
   // Structural: count
   if (COUNT_RE.test(userText)) {
-    const n = await countActive(species);
+    const { n, source } = await countActive(species);
     const label = species
       ? ` para ${species === "ovinos_caprinos" ? "ovinos e caprinos" : species}`
       : "";
@@ -173,9 +202,10 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
         text: `Ainda não tenho produtos cadastrados${label} na base ativa.`,
       };
     }
+    const suffix = source === "site" ? " (catálogo do site oficial DuKamp)" : "";
     return {
       kind: "structural",
-      text: `Atualmente há **${n} produto(s) ativo(s)**${label} no catálogo DuKamp.`,
+      text: `Atualmente há **${n} produto(s) ativo(s)**${label} no catálogo DuKamp${suffix}.`,
     };
   }
 
@@ -185,10 +215,13 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
     if (items.length === 0) {
       return { kind: "structural", text: "Nenhum produto ativo encontrado." };
     }
-    const bullets = items.map((n) => `- ${n}`).join("\n");
+    // Cap displayed items to keep the reply readable.
+    const shown = items.slice(0, 60);
+    const bullets = shown.map((n) => `- ${n}`).join("\n");
+    const more = items.length > shown.length ? `\n\n_(exibindo ${shown.length} de ${items.length})_` : "";
     return {
       kind: "structural",
-      text: `Produtos ativos${species ? ` (${species === "ovinos_caprinos" ? "ovinos e caprinos" : species})` : ""}:\n\n${bullets}`,
+      text: `Produtos ativos${species ? ` (${species === "ovinos_caprinos" ? "ovinos e caprinos" : species})` : ""}:\n\n${bullets}${more}`,
     };
   }
 
