@@ -66,6 +66,7 @@ export type Database = {
           bytes: number | null
           category: string
           chunk_count: number
+          content: string | null
           created_at: string
           error_message: string | null
           filename: string
@@ -81,6 +82,7 @@ export type Database = {
           bytes?: number | null
           category: string
           chunk_count?: number
+          content?: string | null
           created_at?: string
           error_message?: string | null
           filename: string
@@ -96,6 +98,7 @@ export type Database = {
           bytes?: number | null
           category?: string
           chunk_count?: number
+          content?: string | null
           created_at?: string
           error_message?: string | null
           filename?: string
