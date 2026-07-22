@@ -136,3 +136,72 @@ export function siteBlock(look: SiteLookup): string {
   }
   return parts.join("\n\n");
 }
+
+export interface SiteUnit {
+  label: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  phone?: string;
+  email?: string;
+  cnpj?: string;
+  razaoSocial?: string;
+}
+
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function pickAfter(text: string, label: RegExp): string | undefined {
+  const m = text.match(label);
+  if (!m) return undefined;
+  const rest = text.slice(m.index! + m[0].length);
+  const stop = rest.search(/(Nome fantasia|Raz[aã]o social|CNPJ|Endere[cç]o|E-?mail|Telefone|WhatsApp)\s*:/i);
+  const val = (stop >= 0 ? rest.slice(0, stop) : rest).trim();
+  return val.replace(/^[:\-\s]+/, "").trim() || undefined;
+}
+
+/**
+ * Extract Dukamp company unit info from site_settings footer pages
+ * (that's where the legal address + contact live). Also returns distinct
+ * seller regions to indicate commercial coverage.
+ */
+export async function getSiteUnits(): Promise<{ headquarters?: SiteUnit; regions: string[] }> {
+  if (!isSiteConfigured()) return { regions: [] };
+  const [{ data: settings }, sellers] = await Promise.all([
+    siteSupabase()
+      .from("site_settings")
+      .select("key,value")
+      .in("key", ["footer_page:termos-e-condicoes", "footer_page:como-comprar", "footer_page:politica-de-entrega"]),
+    listSiteSellers(200),
+  ]);
+
+  let headquarters: SiteUnit | undefined;
+  for (const row of (settings ?? []) as Array<{ key: string; value: any }>) {
+    const html: string = row?.value?.html ?? "";
+    if (!html) continue;
+    const text = stripHtml(html);
+    const address = pickAfter(text, /Endere[cç]o\s*:/i);
+    if (!address) continue;
+    headquarters = {
+      label: "Matriz",
+      razaoSocial: pickAfter(text, /Raz[aã]o social\s*:/i),
+      cnpj: pickAfter(text, /CNPJ\s*:/i),
+      address,
+      email: pickAfter(text, /E-?mail(?:\s+de\s+atendimento)?\s*:/i),
+      phone: pickAfter(text, /Telefone(?:\s+ou\s+WhatsApp)?\s*:/i),
+    };
+    const cityMatch = address.match(/,\s*([^,/]+)\/([A-Z]{2})\b/);
+    if (cityMatch) {
+      headquarters.city = cityMatch[1].trim();
+      headquarters.state = cityMatch[2].trim();
+    }
+    break;
+  }
+
+  const regions = Array.from(
+    new Set(sellers.map((s) => (s.region ?? "").trim()).filter((r) => r.length > 0)),
+  ).sort();
+
+  return { headquarters, regions };
+}
