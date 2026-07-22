@@ -74,7 +74,7 @@ export const updateProduct = createServerFn({ method: "POST" })
     if (typeof patch.official_name === "string") {
       patch.slug = toSlug(patch.official_name);
     }
-    const { error } = await supabaseAdmin.from("products").update(patch).eq("id", data.id);
+    const { error } = await supabaseAdmin.from("products").update(patch as never).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
