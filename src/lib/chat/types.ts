@@ -33,5 +33,12 @@ export interface ChannelAdapter {
   send(message: OutgoingMessage): Promise<void> | void;
 }
 
+export interface ChatSource {
+  title: string;
+  category: string;
+  subcategory: string | null;
+  similarity: number;
+}
+
 export const MAX_MESSAGE_CHARS = 2000;
 export const MAX_HISTORY_TURNS = 20;

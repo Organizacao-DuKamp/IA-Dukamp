@@ -3,8 +3,7 @@
 // Keeps history ONLY in memory of the current tab (no localStorage, no cookies).
 
 import { sendChatMessage } from "../chat.functions";
-import type { ChannelAdapter, ChatMessage, OutgoingMessage } from "./types";
-import type { ChatSource } from "./core.server";
+import type { ChannelAdapter, ChatMessage, ChatSource, OutgoingMessage } from "./types";
 
 export class WebChatAdapter implements ChannelAdapter {
   readonly name = "web";

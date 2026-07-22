@@ -8,6 +8,7 @@ import {
   MAX_HISTORY_TURNS,
   MAX_MESSAGE_CHARS,
   type ChatMessage,
+  type ChatSource,
   type IncomingMessage,
 } from "./types";
 
@@ -26,13 +27,6 @@ export class ChatError extends Error {
   ) {
     super(message);
   }
-}
-
-export interface ChatSource {
-  title: string;
-  category: string;
-  subcategory: string | null;
-  similarity: number;
 }
 
 export async function handleIncoming(
