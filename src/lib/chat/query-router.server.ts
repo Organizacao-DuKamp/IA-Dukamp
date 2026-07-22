@@ -22,8 +22,13 @@ function detectSpecies(text: string): SpeciesKey | null {
   return null;
 }
 
-const COUNT_RE = /\b(quantos|quantas|qual\s+o\s+numero|numero\s+de|quantidade\s+de)\b/i;
-const LIST_RE = /\b(quais|liste|listar|liste\s+os?|mostre\s+os?|todos\s+os?\s+produtos?|produtos?\s+(disponi|dispon))/i;
+const COUNT_RE = /\b(quantos|quantas|qual\s+o\s+numero|numero\s+de|quantidade\s+de|tem\s+quantos|tem\s+quantas|existem\s+quantos)\b/i;
+const LIST_RE = /\b(quais|liste|listar|mostre|todos\s+os?\s+produtos?|produtos?\s+(disponi|dispon))/i;
+const FEATURED_RE = /\b(destaque|destaques|em\s+destaque|principais\s+produtos?|produtos?\s+principais|mais\s+vendidos?|top\s+produtos?)\b/i;
+const SELLER_WORD_RE = /\b(vendedor|vendedora|vendedores|representante|revenda|revendedor|distribuidor)\b/i;
+const CATEGORY_WORD_RE = /\b(categorias?|linhas?\s+de\s+produtos?|cat[aá]logos?)\b/i;
+const UNIT_WORD_RE = /\b(unidades?|filial|filiais|matriz|endere[cç]os?|localiza[cç][aã]o|onde\s+fica|onde\s+est[aá])\b/i;
+const PRICE_WORD_RE = /\b(pre[cç]o|valor|quanto\s+custa|custo|cotaç[aã]o)\b/i;
 
 export interface StructuralAnswer {
   kind: "structural";
