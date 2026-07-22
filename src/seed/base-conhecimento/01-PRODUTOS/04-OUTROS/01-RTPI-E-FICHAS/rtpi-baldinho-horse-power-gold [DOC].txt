@@ -1,0 +1,347 @@
+ARQUIVO DE ORIGEM: rtpi-baldinho-horse-power-gold.doc
+CAMINHO ORIGINAL: 04-OUTROS/01-RTPI-E-FICHAS/rtpi-baldinho-horse-power-gold.doc
+FORMATO ORIGINAL: .doc
+========================================================================
+
+HORSE POWER GOLD
+
+|LOG DE ATUALIZAÇÕES                                                      |
+|         |                                                               |
+|17/11/11 |Criação do documento                                           |
+|01/06/15 |Alterado para Núcleo e retirada vitamina B2 (desabastecimento  |
+|         |de mercado)                                                    |
+|08/10/201|Atualização documentos                                         |
+|8        |                                                               |
+|05/11/202|Troca do SIF                                                   |
+|0        |                                                               |
+
+                              RELATÓRIO TÉCNICO
+
+1)    NOME, ENDEREÇO E CNPJ DO ESTABELECIMENTO PROPRIETÁRIO DO PRODUTO:
+
+     Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+     Código SIF: SP-002190-3
+     Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+     CEP 15150-000, MONTE APRAZÍVEL, SP
+     CNPJ: 002.425.166/0001-85
+     INSCRIÇÃO ESTADUAL: 462.063.756.110
+     FONE/FAX: (17) 3275.3106
+
+2)    DESIGNAÇÃO DO PRODUTO POR NOME E MARCA COMERCIAL:
+
+              HORSE POWER GOLD
+
+3)    CLASSIFICAÇÃO DO PRODUTO:
+
+              NÚCLEO PARA EQUINOS
+
+4)    FORMA FÍSICA DE APRESENTAÇÃO:
+
+              Seco, em pó
+
+5)    CARACTERÍSTICA DA EMBALAGEM E FORMA DE ACONDICIONAMENTO:
+
+              Produto será acondicionado em:
+
+              - opção 1 -   sacaria do tipo ráfia (polipropileno),  nova  e
+                         de uso único
+              - opção 2 -   saco de plástico (polietileno)  como  embalagem
+                         primária e, como embalagem secundária serão usados
+                         balde de plástico ou caixas de papelão.
+
+6)    COMPOSIÇÃO QUALITATIVA:
+
+              ácido  aspártico,  ácido  fólico,  ácido  glutâmico,  aditivo
+      antioxidante,  alanina,  arginina,  biotina,  carbonato   de   cálcio,
+      cisteína, cloreto de colina, cloreto  de  potássio,  cromo  aminoácido
+      quelato,  DL-metionina,   enxofre   ventilado   (flor   de   enxofre),
+      fenilalanina, fosfato bicálcico, glicina, histidina, iodato de cálcio,
+      isoleucina,  leucina,  leveduras,  L-lisina,  milho  integral   moído,
+      niacina, óxido de magnésio, pantotenato de cálcio,  prolina,  selenito
+      de sódio, serina, sulfato de cálcio, sulfato de  cobalto,  sulfato  de
+      cobre,  sulfato  de  manganês,  sulfato  de  zinco,  sulfato  ferroso,
+      tirosina, treonina,  triptofano,  valina,  vitamina  A,  vitamina  B1,
+      vitamina B12, vitamina B6, vitamina C, vitamina D3, vitamina E.
+
+7)    ENRIQUECIMENTO: não há
+
+8)    EVENTUAIS SUBSTITUTIVOS:
+
+              não há.
+
+     9)     NÍVEIS DE GARANTIA:
+
+              |ITEM                        |ESPECIFICAÇÃO   |VALOR         |UNIDADE    |
+|CÁLCIO                      |(mín/máx)       |140 / 210     |g          |
+|FÓSFORO                     |(mín)           |96            |g          |
+|MAGNÉSIO                    |(mín)           |14            |g          |
+|POTÁSSIO                    |(mín)           |10            |g          |
+|ENXOFRE                     |(mín)           |12            |g          |
+|COBALTO                     |(mín)           |200           |mg         |
+|COBRE                       |(mín)           |1.800         |mg         |
+|IODO                        |(mín)           |36            |mg         |
+|FERRO                       |(mín)           |2.500         |mg         |
+|MANGANÊS                    |(mín)           |1.000         |mg         |
+|SELÊNIO                     |(mín)           |28            |mg         |
+|ZINCO                       |(mín)           |5.000         |mg         |
+|CROMO                       |(mín)           |39            |mg         |
+|FLÚOR                       |(máx)           |960           |mg         |
+|VITAMINA A                  |(mín)           |1.000.000     |U.I./kg    |
+|VITAMINA D3                 |(mín)           |110.000       |U.I./kg    |
+|VITAMINA E                  |(mín)           |2.500         |U.I./kg    |
+|VITAMINA B1                 |(mín)           |190           |mg         |
+|PANTOTENATO DE CÁLCIO       |(mín)           |600           |mg         |
+|VITAMINA B6                 |(mín)           |80            |mg         |
+|VITAMINA B12                |(mín)           |1.100         |mcg        |
+|VITAMINA C                  |(mín)           |174           |mg         |
+|BIOTINA                     |(mín)           |13            |mg         |
+|ÁCIDO FÓLICO                |(mín)           |74            |mg         |
+|NIACINA                     |(mín)           |600           |mg         |
+|COLINA                      |(mín)           |5.000         |mg         |
+|ETOXIQUIN                   |(mín)           |150           |mg         |
+|L-LISINA                    |(mín)           |30            |g          |
+|DL-METIONINA                |(mín)           |10            |g          |
+|ÁCIDO ASPÁRTICO             |(mín)           |5.340         |mg         |
+|ÁCIDO GLUTÂMICO             |(mín)           |6.600         |mg         |
+|ALANINA                     |(mín)           |3.470         |mg         |
+|ARGININA                    |(mín)           |1.990         |mg         |
+|CISTEÍNA                    |(mín)           |360           |mg         |
+|FENILALANINA                |(mín)           |1.960         |mg         |
+|GLICINA                     |(mín)           |2.330         |mg         |
+|HISTIDINA                   |(mín)           |990           |mg         |
+|ISOLEUCINA                  |(mín)           |2.430         |mg         |
+|LEUCINA                     |(mín)           |3.580         |mg         |
+|PROLINA                     |(mín)           |1.500         |mg         |
+|SERINA                      |(mín)           |2.715         |mg         |
+|TIROSINA                    |(mín)           |3.400         |mg         |
+|TREONINA                    |(mín)           |2.450         |mg         |
+|TRIPTOFANO                  |(mín)           |375           |mg         |
+|VALINA                      |(mín)           |3.000         |mg         |
+
+     10)    DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO E DO CONTROLE DA MATÉRIA-
+     PRIMA E DO PRODUTO ACABADO:
+
+[pic]
+
+DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO:
+              O presente produto será fabricado  no  setor  de  suplementos
+      minerais, cujo fluxograma é apresentado na figura acima.
+              Basicamente,  esse  setor  é  composto  por  uma  moega  para
+      recepção de ingredientes (legenda nº.5), misturador com  1.000  kg  de
+      capacidade  (legenda  nº.7),  silo  de  ensaque   (legenda   nº.9)   e
+      ensacadeira (legenda nº.10).
+              As etapas de produção serão:
+              1) reunião dos ingredientes em volta da moega (legenda nº.5),
+      já pesados em quantidades pré-definidas pelo Departamento Técnico;
+              1.1) no caso  de  ingredientes  considerados  microelementos,
+      eles serão previamente misturados  em  misturador  tipo  ‘Y’  (legenda
+      nº.1), após adicionados ao calcário calcítico em  uma  quantidade  que
+      totalize entre 20 e 30 kg, ao  final  do  qual  procura-se  obter  uma
+      mistura homogênea e em quantidade capaz de ser  bem  homogeneizado  no
+      misturador de 1.000 kg. Essa pré-mistura de ingredientes será  chamada
+      de “premix”
+              2) abastecimento da moega (legenda  nº.5)  com  1.000  kg  de
+      ingredientes (“premix” inclusive) que irão compor o  produto  acabado,
+      ingredientes  estes  qualificados  e  quantificados  em  planilha   de
+      produção
+              3) transferência dos 1.000 kg de ingredientes da moega até  o
+      misturador, através de rosca transportadora (legenda nº.6).
+              4) mistura dos ingredientes no misturador horizontal (legenda
+      nº.7);
+              5) transferência da mistura  do  misturador  até  o  silo  de
+      ensaque, através de rosca transportadora (legenda nº.8);
+              6) ensaque do produto acabado (legenda nº.10).
+
+CONTROLE DA MATÉRIA-PRIMA:
+              As matérias-primas obrigatoriamente deverão vir  acompanhadas
+      de  laudo  de   análise,   contendo   a(s)   concentração(ões)   do(s)
+      nutriente(s) de interesse. Os dados declarados pelo  fornecedor  serão
+      utilizados para abastecer a matriz do software de formulação.
+
+CONTROLE DO PRODUTO ACABADO:
+              Durante o processo  produtivo,  periodicamente,  sub-amostras
+      serão coletadas na bica de ensaque e  compostas  numa  única  amostra,
+      datada,  identificada  e  armazenada,  para   futura   análise,   caso
+      necessária.
+
+11)   INDICAÇÕES DE USO E ESPÉCIE ANIMAL A QUE SE DESTINA:
+
+INDICAÇÕES DE USO:
+
+              Indicado para fabricação de rações destinadas  à  alimentação
+      de equinos em crescimento e na fase adulta (manutenção,  gestação,  em
+      trabalho ou atletas).
+
+ESPÉCIE ANIMAL A QUE SE DESTINA: EQUINOS
+
+12)   MODO DE USAR:
+
+              Misturar o produto às rações durante sua confecção na dose de
+      2% na mistura (ou 20 kg do produto por tonelada de ração), assegurando
+      uma mistura homogênea.
+              Recomenda-se que cada animal tenha um consumo de Horse  Power
+      Gold conforme o quadro a seguir:
+
+              |- Equídeos        |Manutenção (40 g/dia);                                 |
+|adultos:          |                                                       |
+|                  |Treinamento ou trabalho leve (60 g/dia);               |
+|                  |Treinamento ou trabalho moderado (80 g/dia);           |
+|                  |Treinamento ou trabalho pesado (100 g/dia);            |
+|- Equídeos em crescimento: 60 g/dia                                      |
+|Fêmeas em gestação: 90 g/dia                                             |
+|Animais debilitados ou deficientes nutricionalmente: 100 g/dia           |
+
+              A dosagem, o período e a forma  de  administração  podem  ser
+      alterados conforme recomendações de profissional habilitado.
+              Em caso de dúvidas, consulte nosso departamento técnico ou um
+      profissional de sua confiança.
+              Produto destinado exclusivamente  para  equinos  adultos.  Em
+      hipótese alguma deverá ser ingerido por humanos
+
+13)   CONTEÚDO LÍQUIDO EXPRESSO NO SISTEMA DECIMAL:
+
+              500 g, 1 kg , 3 kg , 10 kg  , 20 kg , 25 kg , 30 kg , 40 kg
+
+14)   PRAZO DE VALIDADE:
+
+              2 anos após a data de fabricação
+
+     15) CONDIÇÕES DE CONSERVAÇÃO:
+
+              Conservar  este  produto  em  local  coberto,  fresco,  seco,
+      arejado, livre de insetos e  roedores,  sobre  estrados,  afastado  de
+      paredes e devidamente tampado em sua embalagem original. Não armazenar
+      junto a combustíveis, fertilizantes ou produtos tóxicos.
+
+16) RESTRIÇÕES E OUTRAS RECOMENDAÇÕES:
+
+              Produto destinado exclusivamente para  equídeos  adultos.  Em
+      hipótese alguma deverá ser ingerido por humanos.
+
+                                      Monte Aprazível, 08 de outubro de 2018
+
+             |Marco Antonio Sartori        |
+|Engenheiro Agronomo          |
+|Crea sp-5060907799/d         |
+|Responsável  Técnico         |
+|Dukamp Saúde Animal          |
+
+                                    ANEXO
+                            - CROQUI DO RÓTULO -
+
+                              HORSE POWER GOLD
+                             NÚCLEO PARA EQUINOS
+
+INDICAÇÃO DO PRODUTO:
+
+Indicado para fabricação de rações destinadas à alimentação de equinos em
+crescimento e na fase adulta (manutenção, gestação, em trabalho ou
+atletas).
+
+COMPOSIÇÃO BÁSICA DO PRODUTO:
+
+ácido aspártico, ácido fólico, ácido glutâmico, aditivo antioxidante,
+alanina, arginina, biotina, carbonato de cálcio, cisteína, cloreto de
+colina, cloreto de potássio, cromo aminoácido quelato, DL-metionina,
+enxofre ventilado (flor de enxofre), fenilalanina, fosfato bicálcico,
+glicina, histidina, iodato de cálcio, isoleucina, leucina, leveduras, L-
+lisina, milho integral moído, niacina, óxido de magnésio, pantotenato de
+cálcio, prolina, selenito de sódio, serina, sulfato de cálcio, sulfato de
+cobalto, sulfato de cobre, sulfato de manganês, sulfato de zinco, sulfato
+ferroso, tirosina, treonina, triptofano, valina, vitamina A, vitamina B1,
+vitamina B12, vitamina B6, vitamina C, vitamina D3, vitamina E.
+
+EVENTUAIS SUBSTITUTIVOS:
+
+não há
+
+NIVEIS DE GARANTIA DO PRODUTO:
+
+CÁLCIO      (mín/máx)  140 / 210  g
+FÓSFORO     (mín)      96   g
+MAGNÉSIO    (mín)      14   g
+POTÁSSIO    (mín)      10   g
+ENXOFRE     (mín)      12   g
+COBALTO     (mín)      200  mg
+COBRE (mín) 1.800      mg
+IODO  (mín) 36   mg
+FERRO (mín) 2.500      mg
+MANGANÊS    (mín)      1.000      mg
+SELÊNIO     (mín)      28   mg
+ZINCO (mín) 5.000      mg
+CROMO (mín) 39   mg
+FLÚOR (máx) 960  mg
+VITAMINA A  (mín)      1.000.000  U.I./kg
+VITAMINA D3 (mín)      110.000    U.I./kg
+VITAMINA E  (mín)      2.500      U.I./kg
+VITAMINA B1 (mín)      190  mg
+PANTOTENATO DE CÁLCIO  (mín)      600  mg
+VITAMINA B6 (mín)      80   mg
+VITAMINA B12     (mín) 1.100      mcg
+VITAMINA C  (mín)      174  mg
+BIOTINA     (mín)      13   mg
+ÁCIDO FÓLICO     (mín) 74   mg
+NIACINA     (mín)      600  mg
+COLINA      (mín)      5.000      mg
+ETOXIQUIN   (mín)      150  mg
+L-LISINA    (mín)      30   g
+DL-METIONINA     (mín) 10   g
+ÁCIDO ASPÁRTICO  (mín) 5.340      mg
+ÁCIDO GLUTÂMICO  (mín) 6.600      mg
+ALANINA     (mín)      3.470      mg
+ARGININA    (mín)      1.990      mg
+CISTEÍNA    (mín)      360  mg
+FENILALANINA     (mín) 1.960      mg
+GLICINA     (mín)      2.330      mg
+HISTIDINA   (mín)      990  mg
+ISOLEUCINA  (mín)      2.430      mg
+LEUCINA     (mín)      3.580      mg
+PROLINA     (mín)      1.500      mg
+SERINA      (mín)      2.715      mg
+TIROSINA    (mín)      3.400      mg
+TREONINA    (mín)      2.450      mg
+TRIPTOFANO  (mín)      375  mg
+VALINA      (mín)      3.000      mg
+
+MODO DE USAR:
+
+Misturar o produto às rações durante sua confecção na dose de 2% na mistura
+(ou 20 kg do produto por tonelada de ração), assegurando uma mistura
+homogênea.
+Recomenda-se que cada animal tenha um consumo de Horse Power Gold conforme
+o quadro a seguir:
+
+              |- Equídeos     |Manutenção (40 g/dia);                                    |
+|adultos:       |                                                          |
+|               |Treinamento ou trabalho leve (60 g/dia);                  |
+|               |Treinamento ou trabalho moderado (80 g/dia);              |
+|               |Treinamento ou trabalho pesado (100 g/dia);               |
+|- Equídeos em crescimento: 60 g/dia                                      |
+|Fêmeas em gestação: 90 g/dia                                             |
+|Animais debilitados ou deficientes nutricionalmente: 100 g/dia           |
+
+A dosagem, o período e a forma de administração podem ser alterados
+conforme recomendações de profissional habilitado.
+Em caso de dúvidas, consulte nosso departamento técnico ou um profissional
+de sua confiança.
+Produto destinado exclusivamente para equinos adultos. Em hipótese alguma
+deverá ser ingerido por humanos.
+
+PRAZO DE VALIDADE:  2 anos após a data de fabricação
+
+MODO DE CONSERVAÇÃO:
+
+Conservar este produto em local coberto, fresco, seco, arejado, livre de
+insetos e roedores, sobre estrados, afastado de paredes e devidamente
+tampado em sua embalagem original. Não armazenar junto a combustíveis,
+fertilizantes ou produtos tóxicos.
+
+DADOS DA EMPRESA:
+
+Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+Código SIF: SP-002190-3
+Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+CEP 15150-000, MONTE APRAZÍVEL, SP
+CNPJ: 002.425.166/0001-85
+INSCRIÇÃO ESTADUAL: 462.063.756.110
+FONE/FAX: (17) 3275.3106

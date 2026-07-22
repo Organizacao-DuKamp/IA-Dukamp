@@ -1,0 +1,289 @@
+ARQUIVO DE ORIGEM: rtpi-concentrado-dk-conc-lactacao.doc
+CAMINHO ORIGINAL: 01-BOVINOS/01-RTPI-E-FICHAS/05-CONCENTRADOS/rtpi-concentrado-dk-conc-lactacao.doc
+FORMATO ORIGINAL: .doc
+========================================================================
+
+DUKAMP CONCENTRADO LACTAÇÃO
+
+|LOG DE ATUALIZAÇÕES                                                      |
+|         |                                                               |
+|14/05/12 |Criação do documento                                           |
+|29/06/15 |Ajustes nos dizeres do novo rótulo, para caber em etiqueta     |
+|         |auto-colante 100x260                                           |
+|09/10/201|Atualização documentos                                         |
+|8        |                                                               |
+|13/11/202|Troca do SIF                                                   |
+|0        |                                                               |
+
+                              RELATÓRIO TÉCNICO
+
+1)    NOME, ENDEREÇO E CNPJ DO ESTABELECIMENTO PROPRIETÁRIO DO PRODUTO:
+
+     Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+     Código SIF: SP-002190-3
+     Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+     CEP 15150-000, MONTE APRAZÍVEL, SP
+     CNPJ: 002.425.166/0001-85
+
+2)    DESIGNAÇÃO DO PRODUTO POR NOME E MARCA COMERCIAL:
+
+              DUKAMP CONCENTRADO LACTAÇÃO
+
+3)    CLASSIFICAÇÃO DO PRODUTO:
+
+              CONCENTRADO
+
+4)    FORMA FÍSICA DE APRESENTAÇÃO:
+
+              Farelada ou peletizada
+
+5)    CARACTERÍSTICA DA EMBALAGEM E FORMA DE ACONDICIONAMENTO:
+
+              Produto  será  acondicionado  em  sacaria   do   tipo   ráfia
+      (polipropileno), nova e de uso único.
+
+6)    COMPOSIÇÃO QUALITATIVA:
+
+               Farelo de soja, farelo de algodão, farelo de polpa  cítrica,
+      farelo  de  trigo,  fosfato  bicálcico,  carbonato  de  cálcio,  milho
+      integral moído, uréia pecuária,  premix  mineral  vitamínico.  Produto
+      poderá conter milho (1,2,4,5), soja (1,2,3,4) ou  algodão  (1,2,4,5,6)
+      transgênicos.  Espécie  doadora  de  genes  (em  caso  de  ingrediente
+      transgênico): 1- Agrobacterium tumefaciens; 2- Bacillus thuringiensis;
+      3- Arabidopsis thaliana; 4-  Streptomyces  viridochromogenes;  5-  Zea
+      mays; 6- Streptomyces hygroscopicus.
+
+7)    ENRIQUECIMENTO: não há
+
+8)    EVENTUAIS SUBSTITUTIVOS: Casca de soja moída, farelo de amendoim,
+    sorgo integral moído, milheto, farelo de girassol, gérmen de milho,
+    farelo de glúten de milho.
+
+    9)      NÍVEIS DE GARANTIA POR KG DO PRODUTO:
+
+              |ITEM                   |ESPECIFICAÇÃO      |VALOR          |UNIDADE      |
+|Cálcio                 |mín/máx            |23 / 60        |g            |
+|Fósforo                |mín                |10             |g            |
+|Proteína bruta         |mín                |400            |g            |
+|N.N.P. equiv. em       |máx                |210            |g            |
+|proteína               |                   |               |             |
+|Extrato etéreo         |mín/máx            |8.000 / 23.000 |mg           |
+|Matéria fibrosa        |mín/máx            |40 / 120       |g            |
+|Fibra em detergente    |mín/máx            |35 / 125       |g            |
+|ácido                  |                   |               |             |
+|Matéria mineral        |mín/máx            |80 / 160       |g            |
+|Umidade                |máx                |130            |g            |
+
+10 )  ENRIQUECIDO POR KILO DE PRODUTO COM;
+
+|Magnésio               |mín                |1,35           |g/kg         |
+|Enxofre                |mín                | 0,874         |   g/kg      |
+|Potássio               |mín                | 1,08          |g/kg         |
+|Zinco                  |mín                |270            |mg/kg        |
+|Cobre                  |mín                |90             |mg/kg        |
+|Manganês               |mín                | 180           |mg/kg        |
+|Iodo                   |mín                |4,05           |mg/kg        |
+|Cobalto                |mín                |  2,70         |mg./kg       |
+|Selênio                |mín                | 2,41          |mg./kg       |
+|Ferro                  |mín                | 100           |mg./kg       |
+|Vitamina A             |mín                | 16200         |ui/kg        |
+|Vitamina D3            |mín                | 4500          |ui/kg        |
+|Vitamina E             |mín                | 108           |ui/kg        |
+
+    11)     DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO E DO CONTROLE DA MATÉRIA-
+    PRIMA E DO PRODUTO ACABADO:
+
+[pic]
+
+DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO:
+              O presente produto será fabricado  no  setor  de  suplementos
+      minerais, cujo fluxograma é apresentado na figura acima.
+              Basicamente,  esse  setor  é  composto  por  uma  moega  para
+      recepção de ingredientes (legenda nº.5), misturador com  1.000  kg  de
+      capacidade  (legenda  nº.7),  silo  de  ensaque   (legenda   nº.9)   e
+      ensacadeira (legenda nº.10).
+              As etapas de produção serão:
+              1) reunião dos ingredientes em volta da moega (legenda nº.5),
+      já pesados em quantidades pré-definidas pelo Departamento Técnico;
+              1.1) no caso  de  ingredientes  considerados  microelementos,
+      eles serão previamente misturados  em  misturador  tipo  ‘Y’  (legenda
+      nº.1), após adicionados ao calcário calcítico em  uma  quantidade  que
+      totalize entre 20 e 30 kg, ao  final  do  qual  procura-se  obter  uma
+      mistura homogênea e em quantidade capaz de ser  bem  homogeneizado  no
+      misturador de 1.000 kg. Essa pré-mistura de ingredientes será  chamada
+      de “premix”
+              2) abastecimento da moega (legenda  nº.5)  com  1.000  kg  de
+      ingredientes (“premix” inclusive) que irão compor o  produto  acabado,
+      ingredientes  estes  qualificados  e  quantificados  em  planilha   de
+      produção
+              3) transferência dos 1.000 kg de ingredientes da moega até  o
+      misturador, através de rosca transportadora (legenda nº.6).
+              4) mistura dos ingredientes no misturador horizontal (legenda
+      nº.7);
+              5) transferência da mistura  do  misturador  até  o  silo  de
+      ensaque, através de rosca transportadora (legenda nº.8);
+              6) ensaque do produto acabado (legenda nº.10).
+
+CONTROLE DA MATÉRIA-PRIMA:
+              As matérias-primas obrigatoriamente deverão vir  acompanhadas
+      de  laudo  de   análise,   contendo   a(s)   concentração(ões)   do(s)
+      nutriente(s) de interesse. Os dados declarados pelo  fornecedor  serão
+      utilizados para abastecer a matriz do software de formulação.
+
+CONTROLE DO PRODUTO ACABADO:
+              Durante o processo  produtivo,  periodicamente,  sub-amostras
+      serão coletadas na bica de ensaque e  compostas  numa  única  amostra,
+      datada,  identificada  e  armazenada,  para   futura   análise,   caso
+      necessária.
+
+12)   INDICAÇÕES DE USO E ESPÉCIE ANIMAL A QUE SE DESTINA:
+
+INDICAÇÕES DE USO:
+
+              Concentrado para manufatura de rações destinadas a  vacas  em
+      lactação com produções entre 7 e 15 litros de leite por dia.
+
+ESPÉCIE ANIMAL A QUE SE DESTINA: BOVINOS
+
+13)   MODO DE USAR:
+
+              Misturar 40 kg de Dukamp Concentrado Lactação com  60  kg  de
+      milho ou sorgo moídos. Da mistura  elaborada,  fornecer  às  vacas  em
+      lactação na proporção de 1 kg de ração para cada 2,5  a  3  litros  de
+      leite produzidos, de acordo com o estágio da  lactação,  qualidade  do
+      volumoso e estado corporal dos animais. A introdução da ração na dieta
+      deverá ser gradual, substituindo parte da ração atualmente em uso pela
+      mistura confeccionada com esse produto, até  a  substituição  completa
+      dentro de 14 dias. Este produto contém uréia, sendo contra-indicado  o
+      uso de uréia adicional. Fornecer o produto em cochos cobertos e/ou que
+      evitem acúmulo de água. Não fornecer o produto para animais  lactentes
+      e/ou para  animais  em  jejum,  famintos  e  debilitados.  Porventura,
+      padrões diferentes de odor, aparência e textura  poderão  ser  notados
+      entre lotes  conforme  a  disponibilidade  de  componentes  básicos  e
+      eventuais substitutivos  sem,  no  entanto,  comprometer  a  qualidade
+      nutricional ou os níveis de garantia.
+
+14)   CONTEÚDO LÍQUIDO EXPRESSO NO SISTEMA DECIMAL:
+
+              30 kg OU 40 kg
+
+15)   PRAZO DE VALIDADE:
+
+       6 meses após a data de fabricação
+
+    16) CONDIÇÕES DE CONSERVAÇÃO:
+
+              Conservar  este  produto  em  local  coberto,  fresco,  seco,
+      arejado, livre de insetos e  roedores,  sobre  estrados,  afastado  de
+      paredes e devidamente embalado. Não armazenar  junto  a  combustíveis,
+      fertilizantes ou produtos tóxicos.
+
+17) RESTRIÇÕES E OUTRAS RECOMENDAÇÕES:
+
+              A  introdução  da  ração  na  dieta   deverá   ser   gradual,
+      substituindo  parte  da  ração  atualmente   em   uso   pela   mistura
+      confeccionada com esse produto, até a substituição completa dentro  de
+      14 dias.
+              Este produto contém uréia, sendo  contra-indicado  o  uso  de
+      uréia adicional.
+              Fornecer o produto em cochos cobertos e/ou que evitem acúmulo
+      de água.
+              Não fornecer o  produto  para  animais  lactentes  e/ou  para
+      animais em jejum, famintos e debilitados.
+
+                                       Monte Aprazível, 09 de outubro de2018
+
+|          Marco Antonio      |
+|Sartori                      |
+|Engenheiro Agronomo          |
+|crea-sp – 5060907799/d       |
+|Responsável Técnico          |
+|Dukamp Saúde Animal          |
+
+                                    ANEXO
+                            - CROQUI DO RÓTULO -
+
+                         DUKAMP CONCENTRADO LACTAÇÃO
+                    CONCENTRADO PARA BOVINOS EM LACTAÇÃO
+
+INDICAÇÃO DO PRODUTO
+Concentrado para manufatura de rações destinadas a vacas em lactação com
+produções entre 7 e 15 litros de leite por dia.
+
+COMPOSIÇÃO BÁSICA DO PRODUTO
+
+Farelo de soja, farelo de algodão, farelo de polpa cítrica, farelo de
+trigo, fosfato bicálcico, carbonato de cálcio, milho integral moído, uréia
+pecuária,  premix mineral vitamínico. Produto poderá conter milho
+(1,2,4,5), soja (1,2,3,4) ou algodão (1,2,4,5,6) transgênicos. Espécie
+doadora de genes (em caso de ingrediente transgênico): 1- Agrobacterium
+tumefaciens; 2- Bacillus thuringiensis; 3- Arabidopsis thaliana; 4-
+Streptomyces viridochromogenes; 5- Zea mays; 6- Streptomyces hygroscopicus.
+
+EVENTUAIS SUBSTITUTIVOS
+Casca de soja moída, farelo de amendoim, sorgo integral moído, milheto,
+farelo de girassol, gérmen de milho, farelo de glúten de milho.
+
+NIVEIS DE GARANTIA POR KG DO PRODUTO
+Cálcio      mín/máx    23 / 60    g
+Fósforo     mín  10    g
+Proteína bruta   mín   400  g
+N.N.P. equiv. em proteína   máx   210  g
+Extrato etéreo   mín/máx    8.000 / 23.000   mg
+Matéria fibrosa  mín/máx    40 / 120   g
+Fibra em detergente ácido   mín/máx    35 / 125   g
+Matéria mineral  mín/máx    80 / 160   g
+Umidade     máx  130   g
+
+ENRIQUECIDO POR KILO DE PRODUTO COM;
+
+Magnésio    mín  1,35  g/kg
+Enxofre     mín  .......................0,874 g/kg
+Potássio    mín  1,08  g/kg
+Zinco mín   270  mg/kg
+Cobre mín   90   mg/kg
+Manganês    mín  180   mg/kg
+Iodo  mín   ........................4,05 mg/kg
+Cobalto     mín  2,7   mg//kg
+Selenio     mín  2,41  mg/kg
+Ferro mín   100  mg/kg
+Vitamina A.................................mín........................16200
+ui/kg
+Vitamina D3 mín  ..........................45000 ui/kg
+Vitamina E  mín  108   ui/kg
+MODO DE USAR
+
+Misturar 40 kg de Dukamp Concentrado Lactação com 60 kg de milho ou sorgo
+moídos. Da mistura elaborada, fornecer às vacas em lactação na proporção de
+1 kg de ração para cada 2,5 a 3 litros de leite produzidos, de acordo com o
+estágio da lactação, qualidade do volumoso e estado corporal dos animais. A
+introdução da ração na dieta deverá ser gradual, substituindo parte da
+ração atualmente em uso pela mistura confeccionada com esse produto, até a
+substituição completa dentro de 14 dias. Este produto contém uréia, sendo
+contra-indicado o uso de uréia adicional. Fornecer o produto em cochos
+cobertos e/ou que evitem acúmulo de água. Não fornecer o produto para
+animais lactentes e/ou para animais em jejum, famintos e debilitados.
+Porventura, padrões diferentes de odor, aparência e textura poderão ser
+notados entre lotes conforme a disponibilidade de componentes básicos e
+eventuais substitutivos sem, no entanto, comprometer a qualidade
+nutricional ou os níveis de garantia.
+
+PRAZO DE VALIDADE:
+ 6 meses após a data de fabricação
+
+MODO DE CONSERVAÇÃO
+
+Conservar este produto em local coberto, fresco, seco, arejado, livre de
+insetos e roedores, sobre estrados, afastado de paredes e devidamente
+embalado. Não armazenar junto a combustíveis, fertilizantes ou produtos
+tóxicos.
+
+DADOS DA EMPRESA:
+
+Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+Código SIF: SP-002190-3
+Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+CEP 15150-000, MONTE APRAZÍVEL, SP
+CNPJ: 002.425.166/0001-85
+INSCRIÇÃO ESTADUAL: 462.063.756.110
+FONE/FAX: (17) 3275.3106

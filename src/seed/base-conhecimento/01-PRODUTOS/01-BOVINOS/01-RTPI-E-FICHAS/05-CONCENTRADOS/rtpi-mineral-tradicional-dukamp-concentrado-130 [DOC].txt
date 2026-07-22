@@ -1,0 +1,375 @@
+ARQUIVO DE ORIGEM: rtpi-mineral-tradicional-dukamp-concentrado-130.doc
+CAMINHO ORIGINAL: 01-BOVINOS/01-RTPI-E-FICHAS/05-CONCENTRADOS/rtpi-mineral-tradicional-dukamp-concentrado-130.doc
+FORMATO ORIGINAL: .doc
+========================================================================
+
+DUKAMP CONCENTRADO 130
+
+|LOG DE ATUALIZAÇÕES                                                      |
+|         |                                                               |
+|17/09/12 |Criação do documento                                           |
+|05/10/201|Atualização do docuemnto                                       |
+|8        |                                                               |
+|04/11/202|Troca do SIF                                                   |
+|0        |                                                               |
+
+                              RELATÓRIO TÉCNICO
+
+1)    NOME, ENDEREÇO E CNPJ DO ESTABELECIMENTO PROPRIETÁRIO DO PRODUTO:
+
+     Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+     Código SIF: SP-002190-3
+     Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+     CEP 15150-000, MONTE APRAZÍVEL, SP
+     CNPJ: 002.425.166/0001-85
+
+2)    DESIGNAÇÃO DO PRODUTO POR NOME E MARCA COMERCIAL:
+
+              DUKAMP CONCENTRADO 130
+
+3)    CLASSIFICAÇÃO DO PRODUTO:
+
+              SUPLEMENTO MINERAL PARA MISTURA
+
+4)    FORMA FÍSICA DE APRESENTAÇÃO:
+
+              Seco, em pó
+
+5)    CARACTERÍSTICA DA EMBALAGEM E FORMA DE ACONDICIONAMENTO:
+
+              Produto  será  acondicionado  em  sacaria   do   tipo   ráfia
+      (polipropileno), nova e de uso único.
+
+6)    COMPOSIÇÃO QUALITATIVA:
+
+              enxofre  ventilado  (flor-de-enxofre),  óxido  de   magnésio,
+      monóxido de manganês, óxido de zinco, sulfato  de  ferro,  sulfato  de
+      cobre, sulfato de  cobalto,  iodato  de  cálcio,  selenito  de  sódio,
+      fosfato bicálcico (68,4211%), calcário calcítico.
+
+7)    ENRIQUECIMENTO: não há
+
+8)    EVENTUAIS SUBSTITUTIVOS:
+
+              fosfato monoamônio, iodato de potássio, sulfato de manganês.
+
+     9)     NÍVEIS DE GARANTIA:
+
+NOVA EMBALAGEM
+
+              |ITEM                   |ESPECIFICAÇÃO      |VALOR          |UNIDADE      |
+|CÁLCIO                 |(mín/máx)          |156/780        |g            |
+|FÓSFORO                |(mín)              |130            |g            |
+|MAGNÉSIO               |(mín)              |5              |g            |
+|ENXOFRE                |(mín)              |12             |g            |
+|COBALTO                |(mín)              |100            |mg           |
+|COBRE                  |(mín)              |1.300          |mg           |
+|IODO                   |(mín)              |120            |mg           |
+|FERRO                  |(mín)              |2.650          |mg           |
+|MANGANÊS               |(mín)              |2.000          |mg           |
+|SELÊNIO                |(mín)              |30             |mg           |
+|ZINCO                  |(mín)              |5.300          |mg           |
+|FLÚOR                  |(máx)              |1.300          |mg           |
+|SOLUBILIDADE DO ACIDO  |                   |90             |%            |
+|CITRICO A 2 %          |                   |               |             |
+
+NOVA EMBALAGEM
+
+|VALOR DE REFERÊNCIA                                                       |
+|DILUIÇÃO: 25 KG DE DUKAMP CONCENTRADO 130 + 25 KG DE SAL COMUM            |
+|GARANTIA                    |Valor de |Quantidade       |Quantidade em %  |
+|                            |referênci|fornecida por    |do VR fornecido  |
+|                            |a (VR*)  |100g de          |por 100g de      |
+|                            |         |suplemento       |suplemento       |
+|CONSUMO DE                  |g/dia    |g/dia            |%                |
+|Proteína Bruta              |550      |-                |-                |
+|Nutrientes Digestíveis      |4.000    |-                |-                |
+|Totais (NDT)                |         |                 |                 |
+|MACRONUTRIENTES             |g/dia    |g/dia            |%                |
+|Cálcio (mín./máx.)          |14       |7,8 / 39         |55 / 278         |
+|Fósforo                     |11       |6,5              |59               |
+|Magnésio                    |9        |0,2              |2                |
+|Sódio                       |7        |18,5             |264              |
+|Enxofre                     |1        |0,6              |4                |
+|Potássio                    |54       |-                |-                |
+|MICRONUTRIENTES             |mg/dia   |mg/dia           |%                |
+|Cobalto                     |0,9      |5                |555              |
+|Cobre                       |90       |65               |72               |
+|Iodo                        |4,5      |6                |133              |
+|Ferro                       |450      |133              |29               |
+|Manganês                    |180      |100              |55               |
+|Selênio                     |0,9      |1,5              |166              |
+|Zinco                       |270      |265              |98               |
+|VITAMINAS                   |U.I./dia |U.I./dia         |%                |
+|Vitamina A                  |20.000   |-                |-                |
+|Vitamina D                  |2.500    |-                |-                |
+|Vitamina E                  |350      |-                |-                |
+|* Valor diário de referência para mantença de um animal de 450 kg de peso |
+|corporal                                                                  |
+
+|VALOR DE REFERÊNCIA                                                       |
+|DILUIÇÃO: 50 KG DE DUKAMP CONCENTRADO 130 + 25 KG DE SAL COMUM            |
+|GARANTIA                    |Valor de |Quantidade       |Quantidade em %  |
+|                            |referênci|fornecida por    |do VR fornecido  |
+|                            |a (VR*)  |100g de          |por 100g de      |
+|                            |         |suplemento       |suplemento       |
+|CONSUMO DE                  |g/dia    |g/dia            |%                |
+|Proteína Bruta              |550      |-                |-                |
+|Nutrientes Digestíveis      |4.000    |-                |-                |
+|Totais (NDT)                |         |                 |                 |
+|MACRONUTRIENTES             |g/dia    |g/dia            |%                |
+|Cálcio (mín./máx.)          |14       |10,4 / 52        |74 / 371         |
+|Fósforo                     |11       |8,6              |78               |
+|Magnésio                    |9        |0,3              |3                |
+|Sódio                       |7        |12,3             |175              |
+|Enxofre                     |13,5     |0,8              |5                |
+|Potássio                    |54       |-                |-                |
+|MICRONUTRIENTES             |mg/dia   |mg/dia           |%                |
+|Cobalto                     |0,9      |6,6              |733              |
+|Cobre                       |90       |86,6             |96               |
+|Iodo                        |4,5      |8                |177              |
+|Ferro                       |450      |177              |39               |
+|Manganês                    |180      |133,3            |74               |
+|Selênio                     |0,9      |2                |222              |
+|Zinco                       |270      |353,3            |130              |
+|VITAMINAS                   |U.I./dia |U.I./dia         |%                |
+|Vitamina A                  |20.000   |-                |-                |
+|Vitamina D                  |2.500    |-                |-                |
+|Vitamina E                  |350      |-                |-                |
+|* Valor diário de referência para mantença de um animal de 450 kg de peso |
+|corporal                                                                  |
+
+10)   DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO E DO CONTROLE DA MATÉRIA-PRIMA E
+     DO PRODUTO ACABADO:
+
+[pic]
+
+DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO:
+              O presente produto será fabricado  no  setor  de  suplementos
+      minerais, cujo fluxograma é apresentado na figura acima.
+              Basicamente,  esse  setor  é  composto  por  uma  moega  para
+      recepção de ingredientes (legenda nº.5), misturador com  1.000  kg  de
+      capacidade  (legenda  nº.7),  silo  de  ensaque   (legenda   nº.9)   e
+      ensacadeira (legenda nº.10).
+              As etapas de produção serão:
+              1) reunião dos ingredientes em volta da moega (legenda nº.5),
+      já pesados em quantidades pré-definidas pelo Departamento Técnico;
+              1.1) no caso  de  ingredientes  considerados  microelementos,
+      eles serão previamente misturados  em  misturador  tipo  ‘Y’  (legenda
+      nº.1), após adicionados ao calcário calcítico em  uma  quantidade  que
+      totalize entre 20 e 30 kg, ao  final  do  qual  procura-se  obter  uma
+      mistura homogênea e em quantidade capaz de ser  bem  homogeneizado  no
+      misturador de 1.000 kg. Essa pré-mistura de ingredientes será  chamada
+      de “premix”
+              2) abastecimento da moega (legenda  nº.5)  com  1.000  kg  de
+      ingredientes (“premix” inclusive) que irão compor o  produto  acabado,
+      ingredientes  estes  qualificados  e  quantificados  em  planilha   de
+      produção
+              3) transferência dos 1.000 kg de ingredientes da moega até  o
+      misturador, através de rosca transportadora (legenda nº.6).
+              4) mistura dos ingredientes no misturador horizontal (legenda
+      nº.7);
+              5) transferência da mistura  do  misturador  até  o  silo  de
+      ensaque, através de rosca transportadora (legenda nº.8);
+              6) ensaque do produto acabado (legenda nº.10).
+
+CONTROLE DA MATÉRIA-PRIMA:
+              As matérias-primas obrigatoriamente deverão vir  acompanhadas
+      de  laudo  de   análise,   contendo   a(s)   concentração(ões)   do(s)
+      nutriente(s) de interesse. Os dados declarados pelo  fornecedor  serão
+      utilizados para abastecer a matriz do software de formulação.
+
+CONTROLE DO PRODUTO ACABADO:
+              Durante o processo  produtivo,  periodicamente,  sub-amostras
+      serão coletadas na bica de ensaque e  compostas  numa  única  amostra,
+      datada,  identificada  e  armazenada,  para   futura   análise,   caso
+      necessária.
+
+11)   INDICAÇÕES DE USO E ESPÉCIE ANIMAL A QUE SE DESTINA:
+
+INDICAÇÕES DE USO:
+
+              Suplemento mineral para ser misturado ao  sal  comum  (NaCl),
+      indicado para bovinos.
+
+ESPÉCIE ANIMAL A QUE SE DESTINA: BOVINOS
+
+12)   MODO DE USAR:
+
+              Este produto deve ser  diluído  com  cloreto  de  sódio  (sal
+      comum) na proporção de 2:3 para  bovinos  em  fase  de  acabamento  ou
+      terminação. Para animais em gestação e lactação, misturar 2  sacos  de
+      Dukamp Concentrado 130 com 1 saco de sal comum.  Já  para  animais  em
+      crescimento,  misturar  com  sal  comum  na  proporção  de  1:1.  Após
+      misturar, distribuir  em  cochos,  permitindo  acesso  permanente  dos
+      animais. Recomenda-se o uso de cochos cobertos e com espaço mínimo  de
+      3 a 5 cm por cabeça suplementada. Não fornecer o produto para  ovinos.
+      Em  caso  de  dúvidas,  consulte  nosso  departamento  técnico  ou  um
+      profissional de sua confiança.
+
+13)   CONTEÚDO LÍQUIDO EXPRESSO NO SISTEMA DECIMAL: 25 kg
+
+14)   PRAZO DE VALIDADE: 2 anos após a data de fabricação
+
+15) CONDIÇÕES DE CONSERVAÇÃO:
+
+               Conservar este produto  em  local  coberto,  seco,  arejado,
+      livre de insetos e roedores, sobre estrados,  afastado  de  paredes  e
+      devidamente   embalado.   Não   armazenar   junto   a    combustíveis,
+      fertilizantes ou produtos tóxicos.
+
+16) RESTRIÇÕES E OUTRAS RECOMENDAÇÕES:
+
+              Não fornecer o produto para ovinos.
+
+                                      Monte Aprazível, 05 de outubro de 2018
+
+         |Marco Antonio Sartori        |
+|Engenheiro Agrônomo          |
+|Crea-sp – 5060907799/d       |
+|Responsável  Técnico         |
+|Dukamp Saúde Animal          |
+
+            ANEXO
+                            - CROQUI DO RÓTULO -
+
+                           DUKAMP CONCENTRADO 130
+                       SUPLEMENTO MINERAL PARA MISTURA
+
+INDICAÇÃO DO PRODUTO
+
+: Suplemento mineral para ser misturado ao sal comum (NaCl), indicado para
+bovinos.
+
+COMPOSIÇÃO BÁSICA DO PRODUTO
+
+enxofre ventilado (flor-de-enxofre), óxido de magnésio, monóxido de
+manganês, óxido de zinco, sulfato de ferro, sulfato de cobre, sulfato de
+cobalto, iodato de cálcio, selenito de sódio, fosfato bicálcico (68,4211%),
+calcário calcítico
+
+EVENTUAIS SUBSTITUTIVOS
+
+fosfato monoamônio, iodato de potássio, sulfato de manganês
+
+NIVEIS DE GARANTIA DO PRODUTO
+
+CÁLCIO      (mín/máx)  156/780    g
+FÓSFORO     (mín)      130  g
+MAGNÉSIO    (mín)      5    g
+ENXOFRE     (mín)      12   g
+COBALTO     (mín)      100  mg
+COBRE (mín) 1.300      mg
+IODO  (mín) 120  mg
+FERRO (mín) 2.650      mg
+MANGANÊS    (mín)      2.000      mg
+SELÊNIO     (mín)      30   mg
+ZINCO (mín) 5.300      mg
+FLÚOR (máx) 1.300      mg
+SOLUBILIDADE EM ÁCIDO CRITRICO A 2 5 (MÍN.) -  2 %
+
+|VALOR DE REFERÊNCIA                                                       |
+|DILUIÇÃO: 25 KG DE DUKAMP CONCENTRADO 130 + 25 KG DE SAL COMUM            |
+|GARANTIA                    |Valor de |Quantidade       |Quantidade em %  |
+|                            |referênci|fornecida por    |do VR fornecido  |
+|                            |a (VR*)  |100g de          |por 100g de      |
+|                            |         |suplemento       |suplemento       |
+|CONSUMO DE                  |g/dia    |g/dia            |%                |
+|Proteína Bruta              |550      |-                |-                |
+|Nutrientes Digestíveis      |4.000    |-                |-                |
+|Totais (NDT)                |         |                 |                 |
+|MACRONUTRIENTES             |g/dia    |g/dia            |%                |
+|Cálcio (mín./máx.)          |14       |7,8 / 39         |55 / 278         |
+|Fósforo                     |11       |6,5              |59               |
+|Magnésio                    |9        |0,2              |2                |
+|Sódio                       |7        |18,5             |264              |
+|Enxofre                     |1        |0,6              |4                |
+|Potássio                    |54       |-                |-                |
+|MICRONUTRIENTES             |mg/dia   |mg/dia           |%                |
+|Cobalto                     |0,9      |5                |555              |
+|Cobre                       |90       |65               |72               |
+|Iodo                        |4,5      |6                |133              |
+|Ferro                       |450      |133              |29               |
+|Manganês                    |180      |100              |55               |
+|Selênio                     |0,9      |1,5              |166              |
+|Zinco                       |270      |265              |98               |
+|VITAMINAS                   |U.I./dia |U.I./dia         |%                |
+|Vitamina A                  |20.000   |-                |-                |
+|Vitamina D                  |2.500    |-                |-                |
+|Vitamina E                  |350      |-                |-                |
+|* Valor diário de referência para mantença de um animal de 450 kg de peso |
+|corporal                                                                  |
+|                                                                          |
+|                                                                          |
+|                                                                          |
+|                                                                          |
+|                                                                          |
+|                                                                          |
+|                                                                          |
+|                                                                          |
+|                                                                          |
+|                                                                          |
+|                                                                          |
+|                                                                          |
+|                                                                          |
+|VALOR DE REFERÊNCIA                                                       |
+|DILUIÇÃO: 50 KG DE DUKAMP CONCENTRADO 130 + 25 KG DE SAL COMUM            |
+|GARANTIA                    |Valor de |Quantidade       |Quantidade em %  |
+|                            |referênci|fornecida por    |do VR fornecido  |
+|                            |a (VR*)  |100g de          |por 100g de      |
+|                            |         |suplemento       |suplemento       |
+|CONSUMO DE                  |g/dia    |g/dia            |%                |
+|Proteína Bruta              |550      |-                |-                |
+|Nutrientes Digestíveis      |4.000    |-                |-                |
+|Totais (NDT)                |         |                 |                 |
+|MACRONUTRIENTES             |g/dia    |g/dia            |%                |
+|Cálcio (mín./máx.)          |14       |10,4 / 52        |74 / 371         |
+|Fósforo                     |11       |8,6              |78               |
+|Magnésio                    |9        |0,3              |3                |
+|Sódio                       |7        |12,3             |175              |
+|Enxofre                     |13,5     |0,8              |5                |
+|Potássio                    |54       |-                |-                |
+|MICRONUTRIENTES             |mg/dia   |mg/dia           |%                |
+|Cobalto                     |0,9      |6,6              |733              |
+|Cobre                       |90       |86,6             |96               |
+|Iodo                        |4,5      |8                |177              |
+|Ferro                       |450      |177              |39               |
+|Manganês                    |180      |133,3            |74               |
+|Selênio                     |0,9      |2                |222              |
+|Zinco                       |270      |353,3            |130              |
+|VITAMINAS                   |U.I./dia |U.I./dia         |%                |
+|Vitamina A                  |20.000   |-                |-                |
+|Vitamina D                  |2.500    |-                |-                |
+|Vitamina E                  |350      |-                |-                |
+|* Valor diário de referência para mantença de um animal de 450 kg de peso |
+|corporal                                                                  |
+
+MODO DE USAR
+
+Este produto deve ser diluído com cloreto de sódio (sal comum) na proporção
+de 2:3 para bovinos em fase de acabamento ou terminação. Para animais em
+gestação e lactação, misturar 2 sacos de Dukamp Concentrado 130 com 1 saco
+de sal comum. Já para animais em crescimento, misturar com sal comum na
+proporção de 1:1. Após misturar, distribuir em cochos, permitindo acesso
+permanente dos animais. Recomenda-se o uso de cochos cobertos e com espaço
+mínimo de 3 a 5 cm por cabeça suplementada. Não fornecer o produto para
+ovinos. Em caso de dúvidas, consulte nosso departamento técnico ou um
+profissional de sua confiança.
+
+PRAZO DE VALIDADE: 2 anos após a data de fabricação
+
+MODO DE CONSERVAÇÃO
+
+ Conservar este produto em local coberto, seco, arejado, livre de insetos e
+roedores, sobre estrados, afastado de paredes e devidamente embalado. Não
+armazenar junto a combustíveis, fertilizantes ou produtos tóxicos
+
+DADOS DA EMPRESA:
+
+Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+Código SIF: SP-002190-3
+Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+CEP 15150-000, MONTE APRAZÍVEL, SP
+CNPJ: 002.425.166/0001-85
+INSCRIÇÃO ESTADUAL: 462.063.756.110
+FONE/FAX: (17) 3275.3106

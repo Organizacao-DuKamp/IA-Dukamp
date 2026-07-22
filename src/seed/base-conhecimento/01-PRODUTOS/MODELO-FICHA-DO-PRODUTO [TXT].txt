@@ -1,0 +1,37 @@
+ARQUIVO DE ORIGEM: MODELO-FICHA-DO-PRODUTO.txt
+CAMINHO ORIGINAL: MODELO-FICHA-DO-PRODUTO.txt
+FORMATO ORIGINAL: .txt
+========================================================================
+
+FICHA DO PRODUTO DUKAMP
+
+Nome do produto:
+Categoria:
+Espécie indicada:
+Fase do animal:
+Objetivo do produto:
+Forma física:
+Peso da embalagem:
+
+Indicação:
+
+Composição:
+
+Níveis de garantia:
+
+Modo de uso:
+
+Consumo recomendado:
+
+Restrições e advertências:
+
+Diferenças para outros produtos:
+
+Perguntas frequentes:
+1.
+2.
+3.
+
+Fontes usadas para preencher esta ficha:
+
+Data da última atualização:

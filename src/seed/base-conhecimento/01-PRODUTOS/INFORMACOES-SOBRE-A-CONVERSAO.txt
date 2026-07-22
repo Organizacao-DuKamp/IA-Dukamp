@@ -1,0 +1,9 @@
+VERSÃO LEVE PARA A IA
+
+Os documentos de produtos foram convertidos para TXT para reduzir muito o tamanho e facilitar o envio à base de conhecimento. A formatação visual dos documentos antigos não foi preservada, mas o texto foi mantido sempre que era extraível.
+
+Documentos convertidos: 127
+Imagens/rótulos visuais não incluídos: 36
+Arquivos sem texto ou não convertidos: 0
+
+Você pode começar usando esta versão. Guarde os arquivos originais separadamente apenas para consulta visual quando necessário.

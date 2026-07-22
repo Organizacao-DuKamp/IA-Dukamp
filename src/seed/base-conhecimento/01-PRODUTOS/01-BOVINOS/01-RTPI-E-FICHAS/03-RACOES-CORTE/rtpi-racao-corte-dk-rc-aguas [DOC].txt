@@ -1,0 +1,281 @@
+ARQUIVO DE ORIGEM: rtpi-racao-corte-dk-rc-aguas.doc
+CAMINHO ORIGINAL: 01-BOVINOS/01-RTPI-E-FICHAS/03-RACOES-CORTE/rtpi-racao-corte-dk-rc-aguas.doc
+FORMATO ORIGINAL: .doc
+========================================================================
+
+DUKAMP RAÇÃO ÁGUAS
+
+|LOG DE ATUALIZAÇÕES                                                      |
+|         |                                                               |
+|31/10/12 |Criação do documento                                           |
+|04/07/14 |Melhora na descrição dos possíveis ingredientes trangênicos    |
+|         |presentes no produto                                           |
+|08/10/201|Atualização documentos                                         |
+|8        |                                                               |
+|10/01/202|Inserção dos niveis de enriquecimento                          |
+|0        |                                                               |
+|04/11/202|Troca do SIF                                                   |
+|0        |                                                               |
+
+                              RELATÓRIO TÉCNICO
+
+1)    NOME, ENDEREÇO E CNPJ DO ESTABELECIMENTO PROPRIETÁRIO DO PRODUTO:
+
+     Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+     Código SIF: SP-002190-3
+     Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+     CEP 15150-000, MONTE APRAZÍVEL, SP
+     CNPJ: 002.425.166/0001-85
+
+2)    DESIGNAÇÃO DO PRODUTO POR NOME E MARCA COMERCIAL:
+
+              DUKAMP RAÇÃO ÁGUAS
+
+3)    CLASSIFICAÇÃO DO PRODUTO:
+
+              RAÇÃO PARA BOVINOS DE CORTE
+
+4)    FORMA FÍSICA DE APRESENTAÇÃO:
+
+              Farelada
+
+5)    CARACTERÍSTICA DA EMBALAGEM E FORMA DE ACONDICIONAMENTO:
+
+              Produto  será  acondicionado  em  sacaria   do   tipo   ráfia
+      (polipropileno), nova e de uso único.
+
+6)    COMPOSIÇÃO QUALITATIVA:
+
+              farelo de soja, farelo de algodão, polpa cítrica,  farelo  de
+      trigo, fosfato bicálcico, carbonato de cálcio, cloreto de  sódio  (sal
+      comum),   milho    integral    moído,    premix    mineral    calcareo
+      calcitico.Produto   poderá   conter   milho1,2,4,5,   soja1,2,3,4   ou
+      algodão1,2,4,5,6 transgênicos.
+              Espécie  doadora   de   genes   (em   caso   de   ingrediente
+      transgênico): 1- Agrobacterium tumefaciens; 2- Bacillus thuringiensis;
+      3- Arabidopsis thaliana; 4- Streptomyces  viridochromogenes;   5-  Zea
+      mays; 6- Streptomyces hygroscopicus.
+
+7)    ENRIQUECIMENTO: não há
+
+8)    EVENTUAIS SUBSTITUTIVOS:
+
+              Casca de soja moída, farelo de amendoim, sorgo integral
+      moído, milheto, farelo de girassol, farelo de glúten de milho.
+
+    9)      NÍVEIS DE GARANTIA:
+
+              |ITEM                   |ESPECIFICAÇÃO      |VALOR          |UNIDADE      |
+|Cálcio                 |mín/máx            |10 / 30        |g/kg         |
+|Fósforo                |mín                |5.000          |mg/kg        |
+|Proteína bruta         |mín                |120            |g/kg         |
+|Extrato etéreo         |mín/máx            |8.000 / 25.000 |mg/kg        |
+|Matéria fibrosa        |mín/máx            |50 / 140       |g/kg         |
+|Fibra em detergente    |mín/máx            |45 / 150       |g/kg         |
+|ácido                  |                   |               |             |
+|Matéria mineral        |mín/máx            |80 / 300       |g/kg         |
+|Umidade                |máx                |130            |g/kg         |
+
+10)  ENRIQUECIDO POR KILO DE PRODUTO COM;
+
+|Magnésio               |mín                |1,6            |g/kg         |
+|Enxofre                |mín                |4              |   g/kg      |
+|Potássio               |mín                |2,4            |g/kg         |
+|Zinco                  |mín                |240            |mg/kg        |
+|Cobre                  |mín                |80             |mg/kg        |
+|Manganês               |mín                |160            |mg/kg        |
+|Iodo                   |mín                |6              |mg/kg        |
+|Cobalto                |mín                |   4,85        |mg./kg       |
+|Selênio                |mín                |2,4            |mg./kg       |
+|Ferro                  |mín                |117            |mg./kg       |
+
+    11)     DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO E DO CONTROLE DA MATÉRIA-
+    PRIMA E DO PRODUTO ACABADO:
+
+[pic]
+
+DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO:
+              O presente produto será fabricado  no  setor  de  suplementos
+      minerais, cujo fluxograma é apresentado na figura acima.
+              Basicamente,  esse  setor  é  composto  por  uma  moega  para
+      recepção de ingredientes (legenda nº.5), misturador com  1.000  kg  de
+      capacidade  (legenda  nº.7),  silo  de  ensaque   (legenda   nº.9)   e
+      ensacadeira (legenda nº.10).
+              As etapas de produção serão:
+              1) reunião dos ingredientes em volta da moega (legenda nº.5),
+      já pesados em quantidades pré-definidas pelo Departamento Técnico;
+              1.1) no caso  de  ingredientes  considerados  microelementos,
+      eles serão previamente misturados  em  misturador  tipo  ‘Y’  (legenda
+      nº.1), após adicionados ao calcário calcítico em  uma  quantidade  que
+      totalize entre 20 e 30 kg, ao  final  do  qual  procura-se  obter  uma
+      mistura homogênea e em quantidade capaz de ser  bem  homogeneizado  no
+      misturador de 1.000 kg. Essa pré-mistura de ingredientes será  chamada
+      de “premix”
+              2) abastecimento da moega (legenda  nº.5)  com  1.000  kg  de
+      ingredientes (“premix” inclusive) que irão compor o  produto  acabado,
+      ingredientes  estes  qualificados  e  quantificados  em  planilha   de
+      produção
+              3) transferência dos 1.000 kg de ingredientes da moega até  o
+      misturador, através de rosca transportadora (legenda nº.6).
+              4) mistura dos ingredientes no misturador horizontal (legenda
+      nº.7);
+              5) transferência da mistura  do  misturador  até  o  silo  de
+      ensaque, através de rosca transportadora (legenda nº.8);
+              6) ensaque do produto acabado (legenda nº.10).
+
+CONTROLE DA MATÉRIA-PRIMA:
+              As matérias-primas obrigatoriamente deverão vir  acompanhadas
+      de  laudo  de   análise,   contendo   a(s)   concentração(ões)   do(s)
+      nutriente(s) de interesse. Os dados declarados pelo  fornecedor  serão
+      utilizados para abastecer a matriz do software de formulação.
+
+CONTROLE DO PRODUTO ACABADO:
+              Durante o processo  produtivo,  periodicamente,  sub-amostras
+      serão coletadas na bica de ensaque e  compostas  numa  única  amostra,
+      datada,  identificada  e  armazenada,  para   futura   análise,   caso
+      necessária.
+
+12)   INDICAÇÕES DE USO E ESPÉCIE ANIMAL A QUE SE DESTINA:
+
+INDICAÇÕES DE USO:
+
+              Ração de baixo consumo para engorda de bovinos de corte  semi
+      confinados ou  suplementados  a  campo,  no  período  das  águas  e/ou
+      primavera.
+
+ESPÉCIE ANIMAL A QUE SE DESTINA: BOVINOS
+
+13)   MODO DE USAR:
+
+              Fornecer entre 0,3 a 0,5% do peso vivo em ração  diariamente,
+      em doses de 1 a 1,5 kg por cabeça por dia, dependendo da qualidade  do
+      volumoso, estado corporal dos animais, estágio de desenvolvimento e do
+      desempenho esperado. Como o produto contém sal comum em  sua  fórmula,
+      espera-se que a ingestão fique distribuída durante o  dia,  não  sendo
+      necessário fracionar o fornecimento dessa ração em mais  de  um  trato
+      diário. Para  adaptar os animais ao uso do produto, iniciar fornecendo
+      quantidades crescentes até atingir a quantia recomendada dentro de  10
+      dias,  substituindo  completamente  o  suplemento  mineral  ou  o  sal
+      proteinado convencional. Espaçamento de cocho necessário: entre  15  e
+      30 cm por cabeça suplementada. Não fornecer o produto para machos  que
+      se pretende utilizar  como  reprodutores,  pois  estes  não  devem  se
+      alimentar de farelo  de  algodão,  presente  na  fórmula.  Porventura,
+      padrões diferentes de odor, aparência e textura  poderão  ser  notados
+      entre lotes  conforme  a  disponibilidade  de  componentes  básicos  e
+      eventuais substitutivos  sem,  no  entanto,  comprometer  a  qualidade
+      nutricional ou os níveis de garantia.
+
+14)   CONTEÚDO LÍQUIDO EXPRESSO NO SISTEMA DECIMAL:
+
+              30 kg OU 40 kg
+
+15)   PRAZO DE VALIDADE:
+
+              180 dias após a data de fabricação
+
+    16) CONDIÇÕES DE CONSERVAÇÃO:
+
+              Conservar  este  produto  em  local  coberto,  fresco,  seco,
+      arejado, livre de insetos e  roedores,  sobre  estrados,  afastado  de
+      paredes e devidamente embalado. Não armazenar  junto  a  combustíveis,
+      fertilizantes ou produtos tóxicos.
+
+17) RESTRIÇÕES E OUTRAS RECOMENDAÇÕES:
+
+              Não fornecer o produto para machos que se  pretende  utilizar
+         como reprodutores, pois estes não devem se alimentar de farelo  de
+         algodão, presente na fórmula.
+
+                                      Monte Aprazível, 08 de outubro de 2018
+
+             |Marco Antonio Sartori        |
+|ZEngenheiro Agronomo         |
+|Crea – sp – 5060907799/d     |
+|Responsável  Técnico         |
+|Dukamp Saúde Animal          |
+
+                                    ANEXO
+                            - CROQUI DO RÓTULO -
+
+                             DUKAMP RAÇÃO ÁGUAS
+                         RAÇÃO PARA BOVINOS DE CORTE
+
+INDICAÇÃO DO PRODUTO
+Ração de baixo consumo para engorda de bovinos de corte semi confinados ou
+suplementados a campo, no período das águas e/ou primavera.
+
+COMPOSIÇÃO BÁSICA DO PRODUTO
+farelo de soja, farelo de algodão, polpa cítrica, farelo de trigo, fosfato
+bicálcico, carbonato de cálcio, cloreto de sódio (sal comum), milho
+integral moído, premix mineral, calcareo calcitico.
+Produto poderá conter milho1,2,4,5, soja1,2,3,4 ou algodão1,2,4,5,6
+transgênicos.
+Espécie doadora de genes (em caso de ingrediente transgênico): 1-
+Agrobacterium tumefaciens; 2- Bacillus thuringiensis; 3- Arabidopsis
+thaliana; 4- Streptomyces viridochromogenes;  5- Zea mays; 6- Streptomyces
+hygroscopicus.
+
+EVENTUAIS SUBSTITUTIVOS
+Casca de soja moída, farelo de amendoim, sorgo integral moído, milheto,
+farelo de girassol, farelo de glúten de milho
+
+NIVEIS DE GARANTIA DO PRODUTO
+Cálcio      mín/máx    10 / 30    g/kg
+Fósforo     mín  5.000 mg/kg
+Proteína bruta   mín   120  g/kg
+Extrato etéreo   mín/máx    8.000 / 25.000   mg/kg
+Matéria fibrosa  mín/máx    50 / 140   g/kg
+Fibra em detergente ácido   mín/máx    45 / 150   g/kg
+Matéria mineral  mín/máx    80 / 300   g/kg
+Umidade     máx  130   g/kg
+
+ENRIQUECIDO POR KILO DE PRODUTO COM;
+
+Magnésio    mín  1,6   g/kg
+Enxofre     mín  4     g/kg
+Potássio    mín  2,4   g/kg
+Zinco mín   240  mg/kg
+Cobre mín   80   mg/kg
+Manganês    mín  160   mg/kg
+Iodo  mín   6    mg/kg
+Cobalto     mín  4,85  mg//kg
+Selenio     mín  2,4   mg/kg
+Ferro mín   117  mg/kg
+
+MODO DE USAR
+
+Fornecer entre 0,3 a 0,5% do peso vivo em ração diariamente, em doses de 1
+a 1,5 kg por cabeça por dia, dependendo da qualidade do volumoso, estado
+corporal dos animais, estágio de desenvolvimento e do desempenho esperado.
+Como o produto contém sal comum em sua fórmula, espera-se que a ingestão
+fique distribuída durante o dia, não sendo necessário fracionar o
+fornecimento dessa ração em mais de um trato diário. Para  adaptar os
+animais ao uso do produto, iniciar fornecendo quantidades crescentes até
+atingir a quantia recomendada dentro de 10 dias, substituindo completamente
+o suplemento mineral ou o sal proteinado convencional. Espaçamento de cocho
+necessário: entre 15 e 30 cm por cabeça suplementada. Não fornecer o
+produto para machos que se pretende utilizar como reprodutores, pois estes
+não devem se alimentar de farelo de algodão, presente na fórmula.
+Porventura, padrões diferentes de odor, aparência e textura poderão ser
+notados entre lotes conforme a disponibilidade de componentes básicos e
+eventuais substitutivos sem, no entanto, comprometer a qualidade
+nutricional ou os níveis de garantia.
+
+PRAZO DE VALIDADE: 180 dias após a data de fabricação
+
+MODO DE CONSERVAÇÃO
+
+Conservar este produto em local coberto, fresco, seco, arejado, livre de
+insetos e roedores, sobre estrados, afastado de paredes e devidamente
+embalado. Não armazenar junto a combustíveis, fertilizantes ou produtos
+tóxicos.
+
+DADOS DA EMPRESA:
+
+Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+Código SIF: SP-002190-3
+Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+CEP 15150-000, MONTE APRAZÍVEL, SP
+CNPJ: 002.425.166/0001-85
+INSCRIÇÃO ESTADUAL: 462.063.756.110
+FONE/FAX: (17) 3275.3106

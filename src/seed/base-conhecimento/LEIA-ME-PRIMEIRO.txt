@@ -1,0 +1,27 @@
+BASE DE CONHECIMENTO SIMPLIFICADA - IA DUKAMP
+
+Você só precisa usar 3 pastas:
+
+1) 01-PRODUTOS
+   Aqui já estão os RTPI, fichas técnicas, rótulos e descrições dos produtos.
+   Para cadastrar um produto novo, coloque os arquivos na espécie correta e preencha
+   uma cópia do arquivo MODELO-FICHA-DO-PRODUTO.txt.
+
+2) 02-CONHECIMENTO-GERAL
+   Use para conteúdos que servem para vários produtos, como nutrição, manejo,
+   informações da DuKamp, perguntas frequentes e atendimento.
+
+3) 03-REGRAS-DA-IA
+   Contém as regras de comportamento e o prompt-base da IA.
+
+PARA COMEÇAR AGORA:
+- Entre em 01-PRODUTOS.
+- Escolha os 10 produtos mais importantes.
+- Localize os arquivos de cada produto.
+- Preencha uma ficha simples para cada um usando o modelo.
+- Quando a IA for configurada, envie os arquivos das três pastas. Não é necessário
+  criar cópias em outras pastas nem fazer auditoria formal.
+
+IMPORTANTE:
+- Imagens e logos pesados não foram incluídos para manter o download pequeno.
+- Arquivos obsoletos, dados pessoais de vendedores e formulações restritas foram excluídos.

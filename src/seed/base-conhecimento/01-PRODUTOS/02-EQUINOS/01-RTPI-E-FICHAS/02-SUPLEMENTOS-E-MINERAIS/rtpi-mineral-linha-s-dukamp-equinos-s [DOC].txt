@@ -1,0 +1,230 @@
+ARQUIVO DE ORIGEM: rtpi-mineral-linha-s-dukamp-equinos-s.doc
+CAMINHO ORIGINAL: 02-EQUINOS/01-RTPI-E-FICHAS/02-SUPLEMENTOS-E-MINERAIS/rtpi-mineral-linha-s-dukamp-equinos-s.doc
+FORMATO ORIGINAL: .doc
+========================================================================
+
+DUKAMP EQUINOS/S
+
+|LOG DE ATUALIZAÇÕES                                                      |
+|08/01/202|                                                               |
+|0        |                                                               |
+|         |                                                               |
+
+                              RELATÓRIO TÉCNICO
+
+1)    NOME, ENDEREÇO E CNPJ DO ESTABELECIMENTO PROPRIETÁRIO DO PRODUTO:
+
+     Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+     Código SIF: SP-002190-3
+     Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+     CEP 15150-000, MONTE APRAZÍVEL, SP
+     CNPJ: 002.425.166/0001-85
+
+2)    DESIGNAÇÃO DO PRODUTO POR NOME E MARCA COMERCIAL:
+
+              DUKAMP EQUINOS/S
+
+3)    CLASSIFICAÇÃO DO PRODUTO:
+
+              SUPLEMENTO MINERAL DE PRONTO USO PARA EQUINOS
+
+4)    FORMA FÍSICA DE APRESENTAÇÃO:
+
+              Seco, em pó
+
+5)    CARACTERÍSTICA DA EMBALAGEM E FORMA DE ACONDICIONAMENTO:
+
+              Produto  será  acondicionado  em  sacaria   do   tipo   ráfia
+      (polipropileno), nova e de uso único.
+
+6)    COMPOSIÇÃO QUALITATIVA:
+
+              fosfato bicálcico, carbonato de cálcio,  óxido  de  magnésio,
+      cloreto de sódio (sal comum) - 25%,  sulfato  de  cálcio,  sulfato  de
+      cobalto, sulfato de cobre, iodato de cálcio, sulfato de ferro, sulfato
+      de manganês, selenito de sódio, sulfato de zinco, caulim - 2%,calcareo
+      calcitico
+
+7)    ENRIQUECIMENTO: não há
+
+8)    EVENTUAIS SUBSTITUTIVOS:
+
+              sulfato de magnésio, enxofre  ventilado  (flor  de  enxofre),
+      monóxido de manganês, iodato de potássio, fosfato monoamônico,   óxido
+      de zinco.
+
+     9)     NÍVEIS DE GARANTIA:
+
+              |ITEM                   |ESPECIFICAÇÃO      |VALOR          |UNIDADE      |
+|CÁLCIO                 |mín/máx            |120 / 480      |g            |
+|FÓSFORO                |mín                |80             |g            |
+|MAGNÉSIO               |mín                |14             |g            |
+|SÓDIO                  |mín                |93             |g            |
+|ENXOFRE                |mín                |15             |g            |
+|COBALTO                |mín                |26             |mg           |
+|COBRE                  |mín                |795            |mg           |
+|IODO                   |mín                |49             |mg           |
+|FERRO                  |mín                |2.500          |mg           |
+|MANGANÊS               |mín                |885            |mg           |
+|SELÊNIO                |mín                |13             |mg           |
+|ZINCO                  |mín                |3.300          |mg           |
+|FLÚOR                  |máx                |800            |mg           |
+
+10)   DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO E DO CONTROLE DA MATÉRIA-PRIMA E
+     DO PRODUTO ACABADO:
+
+[pic]
+
+DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO:
+              O presente produto será fabricado  no  setor  de  suplementos
+      minerais, cujo fluxograma é apresentado na figura acima.
+              Basicamente,  esse  setor  é  composto  por  uma  moega  para
+      recepção de ingredientes (legenda nº.5), misturador com  1.000  kg  de
+      capacidade  (legenda  nº.7),  silo  de  ensaque   (legenda   nº.9)   e
+      ensacadeira (legenda nº.10).
+              As etapas de produção serão:
+              1) reunião dos ingredientes em volta da moega (legenda nº.5),
+      já pesados em quantidades pré-definidas pelo Departamento Técnico;
+              1.1) no caso  de  ingredientes  considerados  microelementos,
+      eles serão previamente misturados  em  misturador  tipo  ‘Y’  (legenda
+      nº.1), após adicionados ao calcário calcítico em  uma  quantidade  que
+      totalize entre 20 e 30 kg, ao  final  do  qual  procura-se  obter  uma
+      mistura homogênea e em quantidade capaz de ser  bem  homogeneizado  no
+      misturador de 1.000 kg. Essa pré-mistura de ingredientes será  chamada
+      de “premix”
+              2) abastecimento da moega (legenda  nº.5)  com  1.000  kg  de
+      ingredientes (“premix” inclusive) que irão compor o  produto  acabado,
+      ingredientes  estes  qualificados  e  quantificados  em  planilha   de
+      produção
+              3) transferência dos 1.000 kg de ingredientes da moega até  o
+      misturador, através de rosca transportadora (legenda nº.6).
+              4) mistura dos ingredientes no misturador horizontal (legenda
+      nº.7);
+              5) transferência da mistura  do  misturador  até  o  silo  de
+      ensaque, através de rosca transportadora (legenda nº.8);
+              6) ensaque do produto acabado (legenda nº.10).
+
+CONTROLE DA MATÉRIA-PRIMA:
+              As matérias-primas obrigatoriamente deverão vir  acompanhadas
+      de  laudo  de   análise,   contendo   a(s)   concentração(ões)   do(s)
+      nutriente(s) de interesse. Os dados declarados pelo  fornecedor  serão
+      utilizados para abastecer a matriz do software de formulação.
+
+CONTROLE DO PRODUTO ACABADO:
+              Durante o processo  produtivo,  periodicamente,  sub-amostras
+      serão coletadas na bica de ensaque e  compostas  numa  única  amostra,
+      datada,  identificada  e  armazenada,  para   futura   análise,   caso
+      necessária.
+
+11)   INDICAÇÕES DE USO E ESPÉCIE ANIMAL A QUE SE DESTINA:
+
+INDICAÇÕES DE USO:
+
+              Suplemento mineral de pronto uso, indicado  para  equinos  em
+      suas várias fases de desenvolvimento, submetidos ou não  a  atividades
+      físicas.
+
+ESPÉCIE ANIMAL A QUE SE DESTINA: EQUINOS
+
+12)   MODO DE USAR:
+
+              DUKAMP EQUINOS/S já é pronto para uso,  bastando  despejar  o
+      produto em cochos  e  deixar  à  disposição  permanente  dos  animais.
+      Preferencialmente, recomenda-se o uso de cochos cobertos e com  espaço
+      mínimo de 3 a 5 cm por cabeça suplementada.  Não  fornecer  o  produto
+      para ovinos. Em caso de dúvidas, consulte nosso  departamento  técnico
+      ou um profissional de sua confiança.
+
+13)   CONTEÚDO LÍQUIDO EXPRESSO NO SISTEMA DECIMAL:
+
+               30 kg
+
+14)   PRAZO DE VALIDADE:
+
+              2 anos após a data de fabricação
+
+15) CONDIÇÕES DE CONSERVAÇÃO:
+
+              Conservar este produto em local coberto, seco, arejado, livre
+      de  insetos  e  roedores,  sobre  estrados,  afastado  de  paredes   e
+      devidamente   embalado.   Não   armazenar   junto   a    combustíveis,
+      fertilizantes ou produtos tóxicos.
+
+16) RESTRIÇÕES E OUTRAS RECOMENDAÇÕES:
+
+              Não fornecer o produto para ovinos.
+
+                                      Monte Aprazível, 08 de Janeiro de 2020
+
+             |         Marco Antonio       |
+|Sartori                      |
+|Eng. Agronomo.               |
+|CREA _SP – 506090779/d       |
+|Responsável  Técnico         |
+|Dukamp Saúde Animal          |
+                                    ANEXO
+                            - CROQUI DO RÓTULO -
+
+                             DUKAMP EQUINOS / S
+                SUPLEMENTO MINERAL DE PRONTO USO PARA EQUINOS
+
+INDICAÇÃO DO PRODUTO
+
+Suplemento mineral de pronto uso, indicado para equinos em suas várias
+fases de desenvolvimento, submetidos ou não a atividades físicas.
+
+COMPOSIÇÃO BÁSICA DO PRODUTO
+
+fosfato bicálcico, carbonato de cálcio, óxido de magnésio, cloreto de sódio
+(sal comum) - 25%, sulfato de cálcio, sulfato de cobalto, sulfato de cobre,
+iodato de cálcio, sulfato de ferro, sulfato de manganês, selenito de sódio,
+sulfato de zinco, caulim - 2%, calcareo calcitico
+
+EVENTUAIS SUBSTITUTIVOS
+
+sulfato de magnésio, enxofre ventilado (flor de enxofre), monóxido de
+manganês, iodato de potássio, fosfato monoamônico, óxido de zinco
+
+NIVEIS DE GARANTIA DO PRODUTO
+
+CÁLCIO      mín/máx    120 / 480  g
+FÓSFORO     mín  80    g
+MAGNÉSIO    mín  14    g
+SÓDIO mín   93   g
+ENXOFRE     mín  15    g
+COBALTO     mín  26    mg
+COBRE mín   795  mg
+IODO  mín   49   mg
+FERRO mín   2.500      mg
+MANGANÊS    mín  885   mg
+SELÊNIO     mín  13    mg
+ZINCO mín   3.300      mg
+FLÚOR máx   800  mg
+
+MODO DE USAR
+
+DUKAMP EQUINOS/S já é pronto para uso, bastando despejar o produto em
+cochos e deixar à disposição permanente dos animais. Preferencialmente,
+recomenda-se o uso de cochos cobertos e com espaço mínimo de 3 a 5 cm por
+cabeça suplementada. Não fornecer o produto para ovinos. Em caso de
+dúvidas, consulte nosso departamento técnico ou um profissional de sua
+confiança.
+
+PRAZO DE VALIDADE: 2 anos após a data de fabricação
+
+MODO DE CONSERVAÇÃO
+
+Conservar este produto em local coberto, fresco, seco, arejado, livre de
+insetos e roedores, sobre estrados, afastado de paredes e devidamente
+embalado. Não armazenar junto a combustíveis, fertilizantes ou produtos
+tóxicos.
+
+DADOS DA EMPRESA:
+
+Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+Código SIF: SP-08243
+Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+CEP 15150-000, MONTE APRAZÍVEL, SP
+CNPJ: 002.425.166/0001-85
+INSCRIÇÃO ESTADUAL: 462.063.756.110
+FONE/FAX: (17) 3275.3106

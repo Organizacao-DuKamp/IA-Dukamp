@@ -1,0 +1,238 @@
+ARQUIVO DE ORIGEM: rtpi-racao-outras-dk-rc-proteinada-dukavallus.doc
+CAMINHO ORIGINAL: 01-BOVINOS/01-RTPI-E-FICHAS/02-PROTEINADOS/rtpi-racao-outras-dk-rc-proteinada-dukavallus.doc
+FORMATO ORIGINAL: .doc
+========================================================================
+
+DUKAMP RAÇÃO PROTEINADA DUKAVALLUS
+
+|LOG DE ATUALIZAÇÕES                                                      |
+|         |                                                               |
+|04/05/202|Criação do documento                                           |
+|0        |                                                               |
+|05/11/202|Troca do SIF                                                   |
+|0        |                                                               |
+
+                              RELATÓRIO TÉCNICO
+
+1)    NOME, ENDEREÇO E CNPJ DO ESTABELECIMENTO PROPRIETÁRIO DO PRODUTO:
+
+     Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+     Código SIF: SP-002190-3
+     Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+     CEP 15150-000, MONTE APRAZÍVEL, SP
+     CNPJ: 002.425.166/0001-85
+
+2)    DESIGNAÇÃO DO PRODUTO POR NOME E MARCA COMERCIAL:
+
+              DUKAMP RAÇÃO PROTEINADA DUKAVALLUS
+
+3)    CLASSIFICAÇÃO DO PRODUTO:
+
+              RAÇÃO
+
+4)    FORMA FÍSICA DE APRESENTAÇÃO:
+
+              Farelada
+
+5)    CARACTERÍSTICA DA EMBALAGEM E FORMA DE ACONDICIONAMENTO:
+
+              Produto  será  acondicionado  em  sacaria   do   tipo   ráfia
+      (polipropileno), nova e de uso único.
+
+6)    COMPOSIÇÃO QUALITATIVA:
+
+              Farelo de soja*, carbonato de cálcio, milho integral moído**,
+      melaço de cana em pó,  fosfato  bicálcico,  aveia  branca,  farelo  de
+      trigo, premix mineral vitamínico. Espécie doadora de genes (em caso de
+      ingredientes trangênicos):   *Agrobacterium  tumefaciens;   **Bacillus
+      thuringiensis.
+
+7)    ENRIQUECIMENTO:  há
+
+8)    EVENTUAIS SUBSTITUTIVOS:
+
+              feno de gramíneas, feno de alfafa, farelo de arroz,  levedura
+      seca de cana-de-açúcar, refinazil, sorgo  integral  moído,  gérmen  de
+      milho.
+
+    9)      NÍVEIS DE GARANTIA:
+
+              |ITEM                   |ESPECIFICAÇÃO      |VALOR          |UNIDADE      |
+|Cálcio                 |mín/máx            |20 / 35        |g/kg         |
+|Fósforo                |mín                |10.000         |mg/kg        |
+|Proteína bruta         |mín                |200            |g/kg         |
+|Extrato etéreo         |mín/máx            |15 / 35        |g/kg         |
+|Matéria fibrosa        |mín/máx            |20 / 110       |g/kg         |
+|Fibra em detergente    |mín/máx            |50 / 200       |g/kg         |
+|ácido                  |                   |               |             |
+|Matéria mineral        |mín/máx            |100 / 400      |g/kg         |
+|Umidade                |máx                |130            |g/kg         |
+
+10)  ENRIQUECIDO POR KILO DE PRODUTO COM;
+
+|Cobalto                |mín                |5              |mg/kg        |
+|Cobre                  |mín                |150            |mg/kg        |
+|Iodo                   |mín                |9              |mg/kg        |
+|Ferro                  |mín                |500            |mg/kg        |
+|Manganês               |mín                |400            |mg/kg        |
+|Selênio                |mín                |4              |mg/kg        |
+|Zinco                  |mín                |500            |mg/kg        |
+
+11)   DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO E DO CONTROLE DA MATÉRIA-PRIMA E
+    DO PRODUTO ACABADO:
+
+[pic]
+
+DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO:
+              O presente produto será fabricado  no  setor  de  suplementos
+      minerais, cujo fluxograma é apresentado na figura acima.
+              Basicamente,  esse  setor  é  composto  por  uma  moega  para
+      recepção de ingredientes (legenda nº.5), misturador com  1.000  kg  de
+      capacidade  (legenda  nº.7),  silo  de  ensaque   (legenda   nº.9)   e
+      ensacadeira (legenda nº.10).
+              As etapas de produção serão:
+              1) reunião dos ingredientes em volta da moega (legenda nº.5),
+      já pesados em quantidades pré-definidas pelo Departamento Técnico;
+              1.1) no caso  de  ingredientes  considerados  microelementos,
+      eles serão previamente misturados  em  misturador  tipo  ‘Y’  (legenda
+      nº.1), após adicionados ao calcário calcítico em  uma  quantidade  que
+      totalize entre 20 e 30 kg, ao  final  do  qual  procura-se  obter  uma
+      mistura homogênea e em quantidade capaz de ser  bem  homogeneizado  no
+      misturador de 1.000 kg. Essa pré-mistura de ingredientes será  chamada
+      de “premix”
+              2) abastecimento da moega (legenda  nº.5)  com  1.000  kg  de
+      ingredientes (“premix” inclusive) que irão compor o  produto  acabado,
+      ingredientes  estes  qualificados  e  quantificados  em  planilha   de
+      produção
+              3) transferência dos 1.000 kg de ingredientes da moega até  o
+      misturador, através de rosca transportadora (legenda nº.6).
+              4) mistura dos ingredientes no misturador horizontal (legenda
+      nº.7);
+              5) transferência da mistura  do  misturador  até  o  silo  de
+      ensaque, através de rosca transportadora (legenda nº.8);
+              6) ensaque do produto acabado (legenda nº.10).
+
+CONTROLE DA MATÉRIA-PRIMA:
+              As matérias-primas obrigatoriamente deverão vir  acompanhadas
+      de  laudo  de   análise,   contendo   a(s)   concentração(ões)   do(s)
+      nutriente(s) de interesse. Os dados declarados pelo  fornecedor  serão
+      utilizados para abastecer a matriz do software de formulação.
+
+CONTROLE DO PRODUTO ACABADO:
+              Durante o processo  produtivo,  periodicamente,  sub-amostras
+      serão coletadas na bica de ensaque e  compostas  numa  única  amostra,
+      datada,  identificada  e  armazenada,  para   futura   análise,   caso
+      necessária.
+
+12)   INDICAÇÕES DE USO E ESPÉCIE ANIMAL A QUE SE DESTINA:
+
+INDICAÇÕES DE USO:
+
+              Produto indicado para alimentação de equinos em manutenção.
+
+ESPÉCIE ANIMAL A QUE SE DESTINA: EQUINOS
+
+13)   MODO DE USAR:
+
+               Fornecer o produto Dukamp Ração Proteinada  Dukavallus  para
+      equinos acima de 1 ano de idade, em repouso, de 100 g  de  ração  para
+      cada 100 kg de peso vivo, dependendo da qualidade  do  volumoso  e  do
+      escore de condição corporal do animal. Em caso  de  dúvidas,  consulte
+      nosso departamento  técnico  ou  um  profissional  habilitado  de  sua
+      confiança.
+
+14)   CONTEÚDO LÍQUIDO EXPRESSO NO SISTEMA DECIMAL:
+
+              30 kg
+
+15)   PRAZO DE VALIDADE:
+
+              180 dias após a data de fabricação
+
+16) CONDIÇÕES DE CONSERVAÇÃO:
+
+              Conservar  este  produto  em  local  coberto,  fresco,  seco,
+      arejado, livre de insetos e  roedores,  sobre  estrados,  afastado  de
+      paredes e devidamente embalado. Não armazenar  junto  a  combustíveis,
+      fertilizantes ou produtos tóxicos.
+
+17) RESTRIÇÕES E OUTRAS RECOMENDAÇÕES:
+
+              (nenhuma)
+
+                                         Monte Aprazível, 05 de maio de 2020
+
+             |MARCO A. SARTORI             |
+|Eng. Agronomo – crea –sp –   |
+|5060907799/d                 |
+|Responsável  Técnico         |
+|Dukamp Saúde Animal          |
+
+                                    ANEXO
+                            - CROQUI DO RÓTULO -
+
+                     DUKAMP RAÇÃO  PROTEINADA DUKAVALLUS
+                             RAÇÃO PARA EQUINOS
+
+INDICAÇÃO DO PRODUTO
+
+Produto indicado para alimentação de equinos em manutenção
+
+COMPOSIÇÃO BÁSICA DO PRODUTO
+
+Farelo de soja*, carbonato de cálcio, milho integral moído**, melaço de
+cana em pó, fosfato bicálcico, aveia branca, farelo de trigo, premix
+mineral vitamínico. Espécie doadora de genes (em caso de ingredientes
+trangênicos):  *Agrobacterium tumefaciens;  **Bacillus thuringiensis
+
+EVENTUAIS SUBSTITUTIVOS
+
+Feno de gramíneas, feno de alfafa, farelo de arroz, levedura seca de cana-
+de-açúcar, refinazil, sorgo integral moído, gérmen de milho.
+
+NIVEIS DE GARANTIA DO PRODUTO
+
+Cálcio      mín/máx    20 / 35    g/kg
+Fósforo     mín  10.000     mg/kg
+Proteína bruta   mín   200  g/kg
+Extrato etéreo   mín/máx    15 / 35    g/kg
+Matéria fibrosa  mín/máx    20 / 110   g/kg
+Fibra em detergente ácido   mín/máx    50 / 200   g/kg
+Matéria mineral  mín/máx    100 / 400  g/kg
+Umidade     máx  130   g/kg
+
+ENRIQUECIDO POR KILO DE PRODUTO COM;
+
+Cobalto     mín  5     mg/kg
+Cobre mín   150  mg/kg
+Iodo  mín   9    mg/kg
+Ferro mín   500  mg/kg
+Manganês    mín  400   mg/kg
+Selênio     mín  4     mg/kg
+Zinco mín   500  mg/kg
+MODO DE USAR
+
+Fornecer o produto Dukamp Ração Proteinada Dukavallus para equinos acima de
+1 ano de idade, em repouso, de 100 g de ração para cada 100 kg de peso
+vivo, dependendo da qualidade do volumoso e do escore de condição corporal
+do animal. Em caso de dúvidas, consulte nosso departamento técnico ou um
+profissional habilitado de sua confiança.
+
+PRAZO DE VALIDADE: 180 dias após a data de fabricação
+
+MODO DE CONSERVAÇÃO
+
+Conservar este produto em local coberto, fresco, seco, arejado, livre de
+insetos e roedores, sobre estrados, afastado de paredes e devidamente
+embalado. Não armazenar junto a combustíveis, fertilizantes ou produtos
+tóxicos.
+
+DADOS DA EMPRESA:
+
+Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+Código SIF: SP-002190-3
+Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+CEP 15150-000, MONTE APRAZÍVEL, SP
+CNPJ: 002.425.166/0001-85
+INSCRIÇÃO ESTADUAL: 462.063.756.110
+FONE/FAX: (17) 3275.3106

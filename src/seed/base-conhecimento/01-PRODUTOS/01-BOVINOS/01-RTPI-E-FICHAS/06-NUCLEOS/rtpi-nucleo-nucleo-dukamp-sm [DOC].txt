@@ -1,0 +1,217 @@
+ARQUIVO DE ORIGEM: rtpi-nucleo-nucleo-dukamp-sm.doc
+CAMINHO ORIGINAL: 01-BOVINOS/01-RTPI-E-FICHAS/06-NUCLEOS/rtpi-nucleo-nucleo-dukamp-sm.doc
+FORMATO ORIGINAL: .doc
+========================================================================
+
+NÚCLEO DUKAMP SM
+
+|LOG DE ATUALIZAÇÕES                                                      |
+|         |                                                               |
+|11/07/12 |Criação do documento                                           |
+|05/10/201|Atualização documentos                                         |
+|8        |                                                               |
+|13/11/202|Troca do SIF                                                   |
+|0        |                                                               |
+
+                              RELATÓRIO TÉCNICO
+
+1)    NOME, ENDEREÇO E CNPJ DO ESTABELECIMENTO PROPRIETÁRIO DO PRODUTO:
+
+     Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+     Código SIF: SP-002190-3
+     Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+     CEP 15150-000, MONTE APRAZÍVEL, SP
+     CNPJ: 002.425.166/0001-85
+
+2)    DESIGNAÇÃO DO PRODUTO POR NOME E MARCA COMERCIAL:
+
+              NÚCLEO DUKAMP SM
+
+3)    CLASSIFICAÇÃO DO PRODUTO:
+
+               NÚCLEO PARA BOVINOS
+
+4)    FORMA FÍSICA DE APRESENTAÇÃO:
+
+              Seco, em pó
+
+5)    CARACTERÍSTICA DA EMBALAGEM E FORMA DE ACONDICIONAMENTO:
+
+              Produto será acondicionado em sacos plásticos  (polietileno),
+      novos e de uso único.
+
+6)    COMPOSIÇÃO QUALITATIVA:
+
+              Carbonato de cálcio, iodato de  cálcio,  óxido  de  magnésio,
+      óxido de zinco, selenito de sódio,  sulfato  de  cobalto,  sulfato  de
+      cobre, sulfato de ferro, enxofre ventilado (flor de enxofre), monóxido
+      de manganês.
+
+7)    ENRIQUECIMENTO: não há
+
+8)    EVENTUAIS SUBSTITUTIVOS:
+
+               iodato de potássio, sulfato de magnésio, sulfato  de  zinco,
+      sulfato de manganês.
+
+     9)     NÍVEIS DE GARANTIA:
+
+|ITEM                   |ESPECIFICAÇÃO      |VALOR          |UNIDADE      |
+|CÁLCIO                 |mín / máx          |20 / 130       |g            |
+|MAGNÉSIO               |mín                |200            |g            |
+|ENXOFRE                |mín                |250            |g            |
+|COBALTO                |mín                |900            |mg           |
+|COBRE                  |mín                |15.000         |mg           |
+|IODO                   |mín                |900            |mg           |
+|FERRO                  |mín                | 17500         |mg           |
+|MANGANÊS               |mín                | 30.000        |mg           |
+|SELÊNIO                |mín                | 25000         |mg           |
+|ZINCO                  |mín                |50.000         |mg           |
+|FLÚOR                  |máx                |10000          |mg           |
+
+     10)    DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO E DO CONTROLE DA MATÉRIA-
+     PRIMA E DO PRODUTO ACABADO:
+
+[pic]
+
+DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO:
+              O presente produto será  fabricado  no  setor  de  NÚCLEOS  E
+      PREMIXES, cujo fluxograma é apresentado na figura acima.
+              Basicamente, esse setor é composto por um misturador tipo "Y"
+      (legenda nº 1), misturador de 500 kg de  capacidade  (legenda  nº  2),
+      ensacadeira (legenda nº 3), balança digital (legenda nº 4)  e  máquina
+      de costura (legenda nº 5).
+              As etapas de produção serão:
+              1)  pesagem  dos  ingredientes  que  comporão  o  produto  em
+      fabricação, de acordo com  a  fórmula  determinada  pelo  Departamento
+      Técnico;
+              1.1) ingredientes cuja quantidade represente menos que 3%  do
+      total serão previamente misturados em misturador tipo ‘Y’ (legenda  nº
+      1), ao final do qual procura-se  obter  uma  mistura  homogênea  e  em
+      quantidade capaz de ser bem homogeneizado no misturador de 500 kg
+              2) abastecimento do misturador horizontal de  500kg  (legenda
+      nº 2) com os ingredientes já pesados previamente;
+              3) mistura dos ingredientes no misturador horizontal (legenda
+      nº 2);
+              4) ensaque do produto  acabado  (legenda  nº  3),  ajuste  da
+      quantidade (peso líquido) de cada embalagem  com  auxílio  de  balança
+      digital (legenda nº 4) e costura da sacaria (legenda nº 5).
+
+CONTROLE DA MATÉRIA-PRIMA:
+              As matérias-primas obrigatoriamente deverão vir  acompanhadas
+      de  laudo  de   análise,   contendo   a(s)   concentração(ões)   do(s)
+      nutriente(s) de interesse. Os dados declarados pelo  fornecedor  serão
+      utilizados para abastecer a matriz do software de formulação.
+
+CONTROLE DO PRODUTO ACABADO:
+              Durante o processo  produtivo,  periodicamente,  sub-amostras
+      serão coletadas na bica de ensaque e  compostas  numa  única  amostra,
+      datada,  identificada  e  armazenada,  para   futura   análise,   caso
+      necessária.
+
+11)   INDICAÇÕES DE USO E ESPÉCIE ANIMAL A QUE SE DESTINA:
+
+INDICAÇÕES DE USO:
+              : PRODUTO INDICADO PARA SER USADO COMO SUPLEMENTO MINERAL  NA
+      ELABORAÇÃO DE SAL MINERALIZADO DESTINADO A ALIMENTAÇÃO DE  BOVINOS  DE
+      ACORDO COM A RECOMENDAÇÃO TÉCNICAS.
+
+ESPÉCIE ANIMAL A QUE SE DESTINA: BOVINOS
+
+12)   MODO DE USAR:
+
+Adicionar 60 a 100 kgs do produto  por  tonelada  nas  formulações  de  sais
+mineralizados destinados á alimentação de bovinos de lete ou de corte.  Este
+produto deve ser complementado  com  fontes  de  cálcio,  fósforo,  sódio  e
+outros macrolelementos necéssarios, para formulações específicas ou em  saco
+de dívidas, consulte nosso departamento técnico ou um  profissional  de  sua
+confiança.
+
+13)   CONTEÚDO LÍQUIDO EXPRESSO NO SISTEMA DECIMAL:
+
+              20 kg
+
+14)   PRAZO DE VALIDADE:
+
+               24 meses após a data de fabricação
+
+15) CONDIÇÕES DE CONSERVAÇÃO:
+
+              Conservar  este  produto  em  local  coberto,  fresco,  seco,
+      arejado, livre de insetos e  roedores,  sobre  estrados,  afastado  de
+      paredes e devidamente embalado. Não armazenar  junto  a  combustíveis,
+      fertilizantes  ou  produtos  tóxicos.
+
+16) RESTRIÇÕES E OUTRAS RECOMENDAÇÕES:
+
+              Não fornecer o produto para ovinos ou equídeos.
+
+                                     Monte Aprazível, 05 de outubro  de 2018
+
+             |Marco Antonio Sartori        |
+|ZEngenheiro Agronômo Crea –  |
+|sp – 50609077/d              |
+|Responsável  Técnico         |
+|Dukamp Saúde Animal          |
+                                    ANEXO
+                            - CROQUI DO RÓTULO -
+
+                              NÚCLEO DUKAMP SM
+                         NÚCLEO PARA BOVINOS DE CORTE
+
+INDICAÇÃO DO PRODUTO
+              produto indicado para ser usado como  suplemento  mineral  na
+      elaboração de sal mineralizado destinado a alimentação de  bovinos  de
+      acordo com a recomendação técnicas.
+
+COMPOSIÇÃO BÁSICA DO PRODUTO
+
+              Carbonato de cálcio, iodato de  cálcio,  óxido  de  magnésio,
+      óxido de zinco, selenito de sódio,  sulfato  de  cobalto,  sulfato  de
+      cobre, sulfato de ferro, enxofre ventilado (flor de enxofre), monóxido
+      de manganês.
+
+EVENTUAIS SUBSTITUTIVOS
+ iodato de potássio, sulfato de magnésio, sulfato de zinco, sulfato de
+manganês.
+
+NIVEIS DE GARANTIA DO PRODUTO
+
+CÁLCIO      mín / máx  20/ 130    g
+MAGNÉSIO    mín  200   g
+ENXOFRE     mín  250   g
+COBALTO     mín  900   mg
+COBRE mín   15000      mg
+IODO  mín   900  mg
+FERRO mín   17500      mg
+MANGANÊS    mín  30.000     mg
+SELÊNIO     mín  25000 mg
+ZINCO mín   50.000     mg
+FLÚOR máx   10000      mg
+
+MODO DE USAR
+Adicionar 60 a 100 kgs do produto  por  tonelada  nas  formulações  de  sais
+mineralizados destinados á alimentação de bovinos de lete ou de corte.  Este
+produto deve ser complementado  com  fontes  de  cálcio,  fósforo,  sódio  e
+outros macrolelementos necéssarios, para formulações específicas ou em  saco
+de dívidas, consulte nosso departamento técnico ou um  profissional  de  sua
+confiança.
+
+PRAZO DE VALIDADE:
+ 24 meses após a data de fabricação
+
+MODO DE CONSERVAÇÃO
+ Conservar este produto em local coberto, fresco, seco, arejado, livre de
+insetos e roedores, sobre estrados, afastado de paredes e devidamente
+embalado. Não armazenar junto a combustíveis,  fertilizantes  ou  produtos
+tóxicos.
+
+DADOS DA EMPRESA:
+
+Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+Código SIF: SP-002190-3
+Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+CEP 15150-000, MONTE APRAZÍVEL, SP
+CNPJ: 002.425.166/0001-85
+INSCRIÇÃO ESTADUAL: 462.063.756.110
+FONE/FAX: (17) 3275.3106

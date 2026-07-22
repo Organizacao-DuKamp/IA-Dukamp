@@ -1,0 +1,339 @@
+ARQUIVO DE ORIGEM: rtpi-baldinho-rodeo-bulls-turbo.doc
+CAMINHO ORIGINAL: 04-OUTROS/01-RTPI-E-FICHAS/rtpi-baldinho-rodeo-bulls-turbo.doc
+FORMATO ORIGINAL: .doc
+========================================================================
+
+RODEO BULLS TURBO
+
+|LOG DE ATUALIZAÇÕES                                                      |
+|         |                                                               |
+|06/07/12 |Criação do documento                                           |
+|08/10/201| Atualização documentos                                        |
+|8        |                                                               |
+|05/11/202|Troca do SIF                                                   |
+|0        |                                                               |
+
+                              RELATÓRIO TÉCNICO
+
+1)    NOME, ENDEREÇO E CNPJ DO ESTABELECIMENTO PROPRIETÁRIO DO PRODUTO:
+
+     Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+     Código SIF: SP-002190-3
+     Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+     CEP 15150-000, MONTE APRAZÍVEL, SP
+     CNPJ: 002.425.166/0001-85
+     INSCRIÇÃO ESTADUAL: 462.063.756.110
+     FONE/FAX: (17) 3275.3106
+
+2)    DESIGNAÇÃO DO PRODUTO POR NOME E MARCA COMERCIAL:
+
+              RODEO BULLS TURBO
+
+3)    CLASSIFICAÇÃO DO PRODUTO:
+
+              SUPLEMENTO MINERAL/VITAMÍNICO COM AMINOÁCIDOS  PARA MISTURA
+
+4)    FORMA FÍSICA DE APRESENTAÇÃO:
+
+              Seco, em pó
+
+5)    CARACTERÍSTICA DA EMBALAGEM E FORMA DE ACONDICIONAMENTO:
+
+              Produto será acondicionado em:
+
+              - opção 1 -   sacaria do tipo ráfia (polipropileno),  nova  e
+                         de uso único
+              - opção 2 -   saco de plástico (polietileno)  como  embalagem
+                         primária e, como embalagem secundária serão usados
+                         balde de plástico ou caixas de papelão.
+
+6)    COMPOSIÇÃO QUALITATIVA:
+
+              creatina, sal cálcico de ácido graxo,  carbonato  de  cálcio,
+      caulim, cloreto de potássio, cloreto de sódio (sal comum), sulfato  de
+      cobalto, sulfato de cobre, iodato  de  cálcio,  sulfato  de  manganês,
+      transquelato de selênio, selenito de sódio, sulfato de ferro,  sulfato
+      de zinco, óxido  de  zinco,  cromo  aminoácido  quelato,  vitamina  A,
+      vitamina D3, vitamina E, vitamina B1, pantotenato de cálcio,  vitamina
+      B12, vitamina B2,  piridoxina,  ácido  fólico,  vitamina  C,  biotina,
+      cloreto de colina, niacina, L-lisina, DL-metionina,  ácido  aspártico,
+      ácido glutâmico, alanina, arginina, cisteína,  fenilalanina,  glicina,
+      histidina, isoleucina, leucina, prolina, serina,  tirosina,  treonina,
+      triptofano, valina, veículo q.s.p.
+
+7)    ENRIQUECIMENTO: não há
+
+8)    EVENTUAIS SUBSTITUTIVOS:
+
+              não há.
+
+     9)     NÍVEIS DE GARANTIA:
+
+              |ITEM                        |ESPECIFICAÇÃO   |VALOR         |UNIDADE    |
+|POTÁSSIO                    |(mín)           |20            |g          |
+|SÓDIO                       |(mín)           |7.000         |mg         |
+|COBALTO                     |(mín)           |50            |mg         |
+|COBRE                       |(mín)           |620           |mg         |
+|IODO                        |(mín)           |40            |mg         |
+|FERRO                       |(mín)           |50            |mg         |
+|MANGANÊS                    |(mín)           |600           |mg         |
+|SELÊNIO                     |(mín)           |20            |mg         |
+|ZINCO                       |(mín)           |3.000         |mg         |
+|CROMO                       |(mín)           |20            |mg         |
+|VITAMINA A                  |(mín)           |200.000       |U.I./kg    |
+|VITAMINA D3                 |(mín)           |20.000        |U.I./kg    |
+|VITAMINA E                  |(mín)           |3.500         |U.I./kg    |
+|VITAMINA B1                 |(mín)           |190           |mg         |
+|PANTOTENATO DE CÁLCIO       |(mín)           |600           |mg         |
+|VITAMINA B12                |(mín)           |1.100         |mcg        |
+|VITAMINA B2                 |(mín)           |550           |mg         |
+|PIRIDOXINA                  |(mín)           |89            |mg         |
+|ÁCIDO FÓLICO                |(mín)           |77            |mg         |
+|VITAMINA C                  |(mín)           |175           |mg         |
+|BIOTINA                     |(mín)           |13            |mg         |
+|COLINA                      |(mín)           |5.010         |mg         |
+|NIACINA                     |(mín)           |602           |mg         |
+|LISINA                      |(mín)           |33            |g          |
+|METIONINA                   |(mín)           |12            |g          |
+|ÁCIDO ASPÁRTICO             |(mín)           |11,1000       |g          |
+|ÁCIDO GLUTÂMICO             |(mín)           |13,7500       |g          |
+|ALANINA                     |(mín)           |7.220         |mg         |
+|ARGININA                    |(mín)           |4.150         |mg         |
+|CISTEÍNA                    |(mín)           |750           |mg         |
+|FENILALANINA                |(mín)           |4.050         |mg         |
+|GLICINA                     |(mín)           |4.850         |mg         |
+|HISTIDINA                   |(mín)           |2.050         |mg         |
+|ISOLEUCINA                  |(mín)           |5.050         |mg         |
+|LEUCINA                     |(mín)           |7.450         |mg         |
+|PROLINA                     |(mín)           |3.125         |mg         |
+|SERINA                      |(mín)           |5.650         |mg         |
+|TIROSINA                    |(mín)           |7.075         |mg         |
+|TREONINA                    |(mín)           |5.100         |mg         |
+|TRIPTOFANO                  |(mín)           |775           |mg         |
+|VALINA                      |(mín)           |6.250         |mg         |
+|ÁCIDO OLÉICO                |(mín)           |6.250         |mg         |
+|ÁCIDO LINOLÉICO             |(mín)           |79,2000       |g          |
+|ÁCIDO LINOLÊNICO            |(mín)           |102,5000      |g          |
+|CREATINA                    |(mín)           |320           |g          |
+|VEÍCULO Q.S.P.              |                |1.000         |g          |
+
+     10)    DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO E DO CONTROLE DA MATÉRIA-
+     PRIMA E DO PRODUTO ACABADO:
+
+[pic]
+
+DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO:
+              O presente produto será fabricado  no  setor  de  suplementos
+      minerais, cujo fluxograma é apresentado na figura acima.
+              Basicamente,  esse  setor  é  composto  por  uma  moega  para
+      recepção de ingredientes (legenda nº.5), misturador com  1.000  kg  de
+      capacidade  (legenda  nº.7),  silo  de  ensaque   (legenda   nº.9)   e
+      ensacadeira (legenda nº.10).
+              As etapas de produção serão:
+              1) reunião dos ingredientes em volta da moega (legenda nº.5),
+      já pesados em quantidades pré-definidas pelo Departamento Técnico;
+              1.1) no caso  de  ingredientes  considerados  microelementos,
+      eles serão previamente misturados  em  misturador  tipo  ‘Y’  (legenda
+      nº.1), após adicionados ao calcário calcítico em  uma  quantidade  que
+      totalize entre 20 e 30 kg, ao  final  do  qual  procura-se  obter  uma
+      mistura homogênea e em quantidade capaz de ser  bem  homogeneizado  no
+      misturador de 1.000 kg. Essa pré-mistura de ingredientes será  chamada
+      de “premix”
+              2) abastecimento da moega (legenda  nº.5)  com  1.000  kg  de
+      ingredientes (“premix” inclusive) que irão compor o  produto  acabado,
+      ingredientes  estes  qualificados  e  quantificados  em  planilha   de
+      produção
+              3) transferência dos 1.000 kg de ingredientes da moega até  o
+      misturador, através de rosca transportadora (legenda nº.6).
+              4) mistura dos ingredientes no misturador horizontal (legenda
+      nº.7);
+              5) transferência da mistura  do  misturador  até  o  silo  de
+      ensaque, através de rosca transportadora (legenda nº.8);
+              6) ensaque do produto acabado (legenda nº.10).
+
+CONTROLE DA MATÉRIA-PRIMA:
+              As matérias-primas obrigatoriamente deverão vir  acompanhadas
+      de  laudo  de   análise,   contendo   a(s)   concentração(ões)   do(s)
+      nutriente(s) de interesse. Os dados declarados pelo  fornecedor  serão
+      utilizados para abastecer a matriz do software de formulação.
+
+CONTROLE DO PRODUTO ACABADO:
+              Durante o processo  produtivo,  periodicamente,  sub-amostras
+      serão coletadas na bica de ensaque e  compostas  numa  única  amostra,
+      datada,  identificada  e  armazenada,  para   futura   análise,   caso
+      necessária.
+
+11)   INDICAÇÕES DE USO E ESPÉCIE ANIMAL A QUE SE DESTINA:
+
+INDICAÇÕES DE USO:
+
+              Indicado para bovinos atletas ou submetidos a  atividades  de
+      alta intensidade, melhorando a resitência física  e  os  atributos  da
+      musculatura esquelética, como força e explosão.  Proporciona  aumentos
+      da performance atlética por promover ganho de massa muscular e melhora
+      da relação corporal entre massa magra e gordura.
+
+ESPÉCIE ANIMAL A QUE SE DESTINA: BOVINOS
+
+12)   MODO DE USAR:
+
+              Fornecer  somente  para  bovinos,  seguindo  as   orientações
+      abaixo:
+
+|CATEGORIA ANIMAL      |QUANTIDADE                                    |
+|Adultos acima de 500  |100 g/dia, durante os 7 dias que antecedem    |
+|kg                    |algum evento esportivo                        |
+|Manutenção e animais  |50 g/dia                                      |
+|jovens                |                                              |
+
+              Recomenda-se fornecer DUKAMP RODEO BULLS  TURBO  misturado  à
+      ração.
+
+              Este suplemento não substitui o  suplemento  mineal,  devendo
+      este continuar a ser fornecido aos animais.
+
+13)   CONTEÚDO LÍQUIDO EXPRESSO NO SISTEMA DECIMAL:
+
+              500 g, 1 kg , 3 kg , 10 kg  , 20 kg , 25 kg , 30 kg , 40 kg
+
+14)   PRAZO DE VALIDADE:
+
+              2 anos após a data de fabricação
+
+     15) CONDIÇÕES DE CONSERVAÇÃO:
+
+              Conservar  este  produto  em  local  coberto,  fresco,  seco,
+      arejado, livre de insetos e  roedores,  sobre  estrados,  afastado  de
+      paredes e devidamente tampado em sua embalagem original. Não armazenar
+      junto a combustíveis, fertilizantes ou produtos tóxicos.
+
+16) RESTRIÇÕES E OUTRAS RECOMENDAÇÕES:
+
+              Recomenda-se fornecer DUKAMP RODEO BULLS  TURBO  misturado  à
+      ração.
+
+              Este suplemento não substitui o  suplemento  mineal,  devendo
+      este continuar a ser fornecido aos animais.
+
+                                      Monte Aprazível, 08 de outubro de 2018
+
+             |Marco Antonio Sartori        |
+|Engenheiro Agronomo          |
+|Crea-sp-5060907799/d         |
+|Responsável  Técnico         |
+|Dukamp Saúde Animal          |
+
+                                    ANEXO
+                            - CROQUI DO RÓTULO -
+
+                              RODEO BULLS TURBO
+         SUPLEMENTO MINERAL/VITAMÍNICO COM AMINOÁCIDOS  PARA MISTURA
+
+INDICAÇÃO DO PRODUTO:
+
+              Indicado para bovinos atletas ou submetidos a  atividades  de
+      alta intensidade, melhorando a resitência física  e  os  atributos  da
+      musculatura esquelética, como força e explosão.  Proporciona  aumentos
+      da performance atlética por promover ganho de massa muscular e melhora
+      da relação corporal entre massa magra e gordura.
+
+COMPOSIÇÃO BÁSICA DO PRODUTO:
+
+              creatina, sal cálcico de ácido graxo,  carbonato  de  cálcio,
+      caulim, cloreto de potássio, cloreto de sódio (sal comum), sulfato  de
+      cobalto, sulfato de cobre, iodato  de  cálcio,  sulfato  de  manganês,
+      transquelato de selênio, selenito de sódio, sulfato de ferro,  sulfato
+      de zinco, óxido  de  zinco,  cromo  aminoácido  quelato,  vitamina  A,
+      vitamina D3, vitamina E, vitamina B1, pantotenato de cálcio,  vitamina
+      B12, vitamina B2,  piridoxina,  ácido  fólico,  vitamina  C,  biotina,
+      cloreto de colina, niacina, L-lisina, DL-metionina,  ácido  aspártico,
+      ácido glutâmico, alanina, arginina, cisteína,  fenilalanina,  glicina,
+      histidina, isoleucina, leucina, prolina, serina,  tirosina,  treonina,
+      triptofano, valina, veículo q.s.p.
+
+EVENTUAIS SUBSTITUTIVOS: não há
+
+NIVEIS DE GARANTIA DO PRODUTO:
+
+POTÁSSIO    (mín)      20   g
+SÓDIO (mín) 7.000      mg
+COBALTO     (mín)      50   mg
+COBRE (mín) 620  mg
+IODO  (mín) 40   mg
+FERRO (mín) 50   mg
+MANGANÊS    (mín)      600  mg
+SELÊNIO     (mín)      20   mg
+ZINCO (mín) 3.000      mg
+CROMO (mín) 20   mg
+VITAMINA A  (mín)      200.000    U.I./kg
+VITAMINA D3 (mín)      20.000     U.I./kg
+VITAMINA E  (mín)      3.500      U.I./kg
+VITAMINA B1 (mín)      190  mg
+PANTOTENATO DE CÁLCIO  (mín)      600  mg
+VITAMINA B12     (mín) 1.100      mcg
+VITAMINA B2 (mín)      550  mg
+PIRIDOXINA  (mín)      89   mg
+ÁCIDO FÓLICO     (mín) 77   mg
+VITAMINA C  (mín)      175  mg
+BIOTINA     (mín)      13   mg
+COLINA      (mín)      5.010      mg
+NIACINA     (mín)      602  mg
+LISINA      (mín)      33   g
+METIONINA   (mín)      12   g
+ÁCIDO ASPÁRTICO  (mín) 11,1000    g
+ÁCIDO GLUTÂMICO  (mín) 13,7500    g
+ALANINA     (mín)      7.220      mg
+ARGININA    (mín)      4.150      mg
+CISTEÍNA    (mín)      750  mg
+FENILALANINA     (mín) 4.050      mg
+GLICINA     (mín)      4.850      mg
+HISTIDINA   (mín)      2.050      mg
+ISOLEUCINA  (mín)      5.050      mg
+LEUCINA     (mín)      7.450      mg
+PROLINA     (mín)      3.125      mg
+SERINA      (mín)      5.650      mg
+TIROSINA    (mín)      7.075      mg
+TREONINA    (mín)      5.100      mg
+TRIPTOFANO  (mín)      775  mg
+VALINA      (mín)      6.250      mg
+ÁCIDO OLÉICO     (mín) 6.250      mg
+ÁCIDO LINOLÉICO  (mín) 79,2000    g
+ÁCIDO LINOLÊNICO (mín) 102,5000   g
+CREATINA    (mín)      320  g
+VEÍCULO Q.S.P.         1.000      g
+
+MODO DE USAR:
+
+              Fornecer  somente  para  bovinos,  seguindo  as   orientações
+      abaixo:
+
+|CATEGORIA ANIMAL      |QUANTIDADE                                    |
+|Adultos acima de 500  |100 g/dia, durante os 7 dias que antecedem    |
+|kg                    |algum evento esportivo                        |
+|Manutenção e animais  |50 g/dia                                      |
+|jovens                |                                              |
+
+              Recomenda-se fornecer DUKAMP RODEO BULLS  TURBO  misturado  à
+      ração.
+
+              Este suplemento não substitui o  suplemento  mineal,  devendo
+      este continuar a ser fornecido aos animais.
+
+PRAZO DE VALIDADE:  2 anos após a data de fabricação
+
+MODO DE CONSERVAÇÃO:
+
+Conservar este produto em local coberto, fresco, seco, arejado, livre de
+insetos e roedores, sobre estrados, afastado de paredes e devidamente
+tampado em sua embalagem original. Não armazenar junto a combustíveis,
+fertilizantes ou produtos tóxicos.
+
+DADOS DA EMPRESA:
+
+Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+Código SIF: SP-002190-3
+Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+CEP 15150-000, MONTE APRAZÍVEL, SP
+CNPJ: 002.425.166/0001-85
+INSCRIÇÃO ESTADUAL: 462.063.756.110
+FONE/FAX: (17) 3275.3106

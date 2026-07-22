@@ -1,0 +1,290 @@
+ARQUIVO DE ORIGEM: rtpi-baldinho-creatina-turbo.doc
+CAMINHO ORIGINAL: 04-OUTROS/01-RTPI-E-FICHAS/rtpi-baldinho-creatina-turbo.doc
+FORMATO ORIGINAL: .doc
+========================================================================
+
+CREATINA TURBO
+
+|LOG DE ATUALIZAÇÕES                                                      |
+|         |                                                               |
+|01/02/11 |Criação do documento                                           |
+|07/11/11 |Alteração na unidade de medida da creatina, lisina e metionina,|
+|         |de forma a estar expresso em gramas, ao invés de mg            |
+|06/07/12 |Resequenciamento dos tópicos obrigatórios e inclusão do ANEXO  |
+|01/06/15 |Alterado para Núcleo                                           |
+|08/10/201|Atualização documentos                                         |
+|8        |                                                               |
+|05/11/202|Troca do SIF                                                   |
+|0        |                                                               |
+
+                              RELATÓRIO TÉCNICO
+
+1)    NOME, ENDEREÇO E CNPJ DO ESTABELECIMENTO PROPRIETÁRIO DO PRODUTO:
+
+     Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+     Código SIF: SP-002190-3
+     Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+     CEP 15150-000, MONTE APRAZÍVEL, SP
+     CNPJ: 002.425.166/0001-85
+     INSCRIÇÃO ESTADUAL: 462.063.756.110
+     FONE/FAX: (17) 3275.3106
+
+2)    DESIGNAÇÃO DO PRODUTO POR NOME E MARCA COMERCIAL:
+
+              CREATINA TURBO
+
+3)    CLASSIFICAÇÃO DO PRODUTO:
+
+              NÚCLEO PARA EQUINOS
+
+4)    FORMA FÍSICA DE APRESENTAÇÃO:
+
+              Seco, em pó
+
+5)    CARACTERÍSTICA DA EMBALAGEM E FORMA DE ACONDICIONAMENTO:
+
+              Produto será acondicionado em:
+
+              - opção 1 -   sacaria do tipo ráfia (polipropileno),  nova  e
+                         de uso único
+              - opção 2 -   saco de plástico (polietileno)  como  embalagem
+                         primária e, como embalagem secundária serão usados
+                         balde de plástico ou caixas de papelão.
+
+6)    COMPOSIÇÃO QUALITATIVA:
+
+              creatina (80%), cloreto de potássio, cloreto  de  sódio  (sal
+      comum), transquelato de selênio, selenito de sódio,  cromo  aminoácido
+      quelato, L-lisina, DL-metionina,  ácido  aspártico,  ácido  glutâmico,
+      alanina,  arginina,  cisteína,   fenilalanina,   glicina,   histidina,
+      isoleucina, leucina, prolina, serina, tirosina, treonina,  triptofano,
+      valina, veículo q.s.p.
+
+7)    ENRIQUECIMENTO: não há
+
+8)    EVENTUAIS SUBSTITUTIVOS:
+
+              não há.
+
+    9)      NÍVEIS DE GARANTIA:
+
+              |ITEM                   |ESPECIFICAÇÃO      |VALOR          |UNIDADE      |
+|CREATINA               |(mín)              |800            |g            |
+|POTÁSSIO               |(mín)              |5.000          |mg           |
+|SÓDIO                  |(mín)              |2.000          |mg           |
+|SELÊNIO                |(mín)              |10             |mg           |
+|CROMO                  |(mín)              |12             |mg           |
+|LISINA                 |(mín)              |70,4           |g            |
+|METIONINA              |(mín)              |25             |g            |
+|ÁCIDO ASPÁRTICO        |(mín)              |2.400          |mg           |
+|ÁCIDO GLUTÂMICO        |(mín)              |2.970          |mg           |
+|ALANINA                |(mín)              |1.560          |mg           |
+|ARGININA               |(mín)              |896            |mg           |
+|CISTEÍNA               |(mín)              |162            |mg           |
+|FENILALANINA           |(mín)              |880            |mg           |
+|GLICINA                |(mín)              |1.040          |mg           |
+|HISTIDINA              |(mín)              |442            |mg           |
+|ISOLEUCINA             |(mín)              |1.090          |mg           |
+|LEUCINA                |(mín)              |1.600          |mg           |
+|PROLINA                |(mín)              |675            |mg           |
+|SERINA                 |(mín)              |1.220          |mg           |
+|TIROSINA               |(mín)              |1.500          |mg           |
+|TREONINA               |(mín)              |1.100          |mg           |
+|TRIPTOFANO             |(mín)              |167            |mg           |
+|VALINA                 |(mín)              |1.350          |mg           |
+|VEÍCULO Q.S.P.         |                   |1.000          |g            |
+
+    10)     DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO E DO CONTROLE DA MATÉRIA-
+    PRIMA E DO PRODUTO ACABADO:
+
+[pic]
+
+DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO:
+              O presente produto será fabricado  no  setor  de  suplementos
+      minerais, cujo fluxograma é apresentado na figura acima.
+              Basicamente,  esse  setor  é  composto  por  uma  moega  para
+      recepção de ingredientes (legenda nº.5), misturador com  1.000  kg  de
+      capacidade  (legenda  nº.7),  silo  de  ensaque   (legenda   nº.9)   e
+      ensacadeira (legenda nº.10).
+              As etapas de produção serão:
+              1) reunião dos ingredientes em volta da moega (legenda nº.5),
+      já pesados em quantidades pré-definidas pelo Departamento Técnico;
+              1.1) no caso  de  ingredientes  considerados  microelementos,
+      eles serão previamente misturados  em  misturador  tipo  ‘Y’  (legenda
+      nº.1), após adicionados ao calcário calcítico em  uma  quantidade  que
+      totalize entre 20 e 30 kg, ao  final  do  qual  procura-se  obter  uma
+      mistura homogênea e em quantidade capaz de ser  bem  homogeneizado  no
+      misturador de 1.000 kg. Essa pré-mistura de ingredientes será  chamada
+      de “premix”
+              2) abastecimento da moega (legenda  nº.5)  com  1.000  kg  de
+      ingredientes (“premix” inclusive) que irão compor o  produto  acabado,
+      ingredientes  estes  qualificados  e  quantificados  em  planilha   de
+      produção
+              3) transferência dos 1.000 kg de ingredientes da moega até  o
+      misturador, através de rosca transportadora (legenda nº.6).
+              4) mistura dos ingredientes no misturador horizontal (legenda
+      nº.7);
+              5) transferência da mistura  do  misturador  até  o  silo  de
+      ensaque, através de rosca transportadora (legenda nº.8);
+              6) ensaque do produto acabado (legenda nº.10).
+
+CONTROLE DA MATÉRIA-PRIMA:
+              As matérias-primas obrigatoriamente deverão vir  acompanhadas
+      de  laudo  de   análise,   contendo   a(s)   concentração(ões)   do(s)
+      nutriente(s) de interesse. Os dados declarados pelo  fornecedor  serão
+      utilizados para abastecer a matriz do software de formulação.
+
+CONTROLE DO PRODUTO ACABADO:
+              Durante o processo  produtivo,  periodicamente,  sub-amostras
+      serão coletadas na bica de ensaque e  compostas  numa  única  amostra,
+      datada,  identificada  e  armazenada,  para   futura   análise,   caso
+      necessária.
+
+11)   INDICAÇÕES DE USO E ESPÉCIE ANIMAL A QUE SE DESTINA:
+
+INDICAÇÕES DE USO:
+
+              Indicado para fabricação de rações destinadas  à  alimentação
+      de equinos adultos (em trabalho ou atletas).
+
+ESPÉCIE ANIMAL A QUE SE DESTINA: EQUINOS
+
+12)   MODO DE USAR:
+
+              Misturar o produto às rações durante sua confecção, de  forma
+      que cada animal tenha um consumo de CREATINA TURBO conforme o quadro a
+      seguir:
+
+|ATIVIDADE        |QUANTIDADE DE CREATINA TURBO                     |
+|Moderada         |40 g/dia, quando submetidos a treinamentos de    |
+|                 |explosão                                         |
+|Intensa ou Muito |120 g/dia por 14 dias, e depois 40 g/dia, quando |
+|Intensa          |submetidos a treinamentos de explosão            |
+|                 |40 g/dia quando treinados para resistência       |
+
+              Este produto não substitui o suplemento mineral, devendo este
+      continuar a ser fornecido aos animais.
+              A dosagem, o período e a forma  de  administração  podem  ser
+      alterados conforme recomendações de profissional habilitado.
+              Em caso de dúvidas, consulte nosso departamento técnico ou um
+      profissional habilitado de sua confiança.
+              Produto destinado exclusivamente  para  equinos  adultos.  Em
+      hipótese alguma deverá ser ingerido por humanos.
+
+13)   CONTEÚDO LÍQUIDO EXPRESSO NO SISTEMA DECIMAL:
+
+              500 g / 1 kg / 2 kg / 3 kg / 5 kg / 10 kg / 20 kg / 25  kg  /
+      30 kg / 40 kg
+
+14)   PRAZO DE VALIDADE:
+
+              2 anos após a data de fabricação
+
+15) CONDIÇÕES DE CONSERVAÇÃO:
+
+              Conservar  este  produto  em  local  coberto,  fresco,  seco,
+      arejado, livre de insetos e  roedores,  sobre  estrados,  afastado  de
+      paredes e devidamente tampado em sua embalagem original. Não armazenar
+      junto a combustíveis, fertilizantes ou produtos tóxicos.
+
+16) RESTRIÇÕES E OUTRAS RECOMENDAÇÕES:
+
+              Este suplemento não substitui o suplemento  mineral,  devendo
+      este continuar a ser fornecido aos animais.
+              Produto destinado exclusivamente  para  equinos  adultos.  Em
+      hipótese alguma deverá ser ingerido por humanos.
+
+                                      Monte Aprazível, 08 de outubro de 2018
+
+             |Marco Antonio Sartori        |
+|Engenheiro Agronomo          |
+|Crea-sp- 5060907799/d        |
+|Responsável  Técnico         |
+|Dukamp Saúde Animal          |
+
+                                    ANEXO
+                            - CROQUI DO RÓTULO -
+
+                               CREATINA TURBO
+                             NÚCLEO PARA EQUINOS
+
+INDICAÇÃO DO PRODUTO:
+
+Indicado para fabricação de rações destinadas à alimentação de equinos
+adultos (em trabalho ou atletas).
+
+COMPOSIÇÃO BÁSICA DO PRODUTO:
+
+creatina (80%), cloreto de potássio, cloreto de sódio (sal comum),
+transquelato de selênio, selenito de sódio, cromo aminoácido quelato, L-
+lisina, DL-metionina, ácido aspártico, ácido glutâmico, alanina, arginina,
+cisteína, fenilalanina, glicina, histidina, isoleucina, leucina, prolina,
+serina, tirosina, treonina, triptofano, valina, veículo q.s.p.
+
+EVENTUAIS SUBSTITUTIVOS:  não há
+
+NIVEIS DE GARANTIA DO PRODUTO:
+
+CREATINA    (mín)      800  g
+POTÁSSIO    (mín)      5.000      mg
+SÓDIO (mín) 2.000      mg
+SELÊNIO     (mín)      10   mg
+CROMO (mín) 12   mg
+LISINA      (mín)      70,4 g
+METIONINA   (mín)      25   g
+ÁCIDO ASPÁRTICO  (mín) 2.400      mg
+ÁCIDO GLUTÂMICO  (mín) 2.970      mg
+ALANINA     (mín)      1.560      mg
+ARGININA    (mín)      896  mg
+CISTEÍNA    (mín)      162  mg
+FENILALANINA     (mín) 880  mg
+GLICINA     (mín)      1.040      mg
+HISTIDINA   (mín)      442  mg
+ISOLEUCINA  (mín)      1.090      mg
+LEUCINA     (mín)      1.600      mg
+PROLINA     (mín)      675  mg
+SERINA      (mín)      1.220      mg
+TIROSINA    (mín)      1.500      mg
+TREONINA    (mín)      1.100      mg
+TRIPTOFANO  (mín)      167  mg
+VALINA      (mín)      1.350      mg
+VEÍCULO Q.S.P.         1.000      g
+
+MODO DE USAR:
+
+Misturar o produto às rações durante sua confecção, de forma que cada
+animal tenha um consumo de CREATINA TURBO conforme o quadro a seguir:
+
+|ATIVIDADE        |QUANTIDADE DE CREATINA TURBO                           |
+|Moderada         |40 g/dia, quando submetidos a treinamentos de explosão |
+|Intensa ou Muito |120 g/dia por 14 dias, e depois 40 g/dia, quando       |
+|Intensa          |submetidos a treinamentos de explosão                  |
+|                 |40 g/dia quando treinados para resistência             |
+
+Este produto não substitui o suplemento mineral, devendo este continuar a
+ser fornecido aos animais.
+A dosagem, o período e a forma de administração podem ser alterados
+conforme recomendações de profissional habilitado.
+Em caso de dúvidas, consulte nosso departamento técnico ou um profissional
+habilitado de sua confiança.
+Produto destinado exclusivamente para equinos adultos. Em hipótese alguma
+deverá ser ingerido por humanos.
+
+PRAZO DE VALIDADE:  2 anos após a data de fabricação
+
+MODO DE CONSERVAÇÃO:
+
+Conservar este produto em local coberto, fresco, seco, arejado, livre de
+insetos e roedores, sobre estrados, afastado de paredes e devidamente
+tampado em sua embalagem original. Não armazenar junto a combustíveis,
+fertilizantes ou produtos tóxicos.
+
+DADOS DA EMPRESA:
+
+Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+Código SIF: SP-002190-3
+Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+CEP 15150-000, MONTE APRAZÍVEL, SP
+CNPJ: 002.425.166/0001-85
+INSCRIÇÃO ESTADUAL: 462.063.756.110
+FONE/FAX: (17) 3275.3106

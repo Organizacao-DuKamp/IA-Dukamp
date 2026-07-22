@@ -1,0 +1,301 @@
+ARQUIVO DE ORIGEM: rtpi-mineral-linha-s-dukamp-reproducao-s.doc
+CAMINHO ORIGINAL: 01-BOVINOS/01-RTPI-E-FICHAS/01-MINERAIS/01-LINHA-S/rtpi-mineral-linha-s-dukamp-reproducao-s.doc
+FORMATO ORIGINAL: .doc
+========================================================================
+
+DUKAMP REPRODUÇÃO/S
+
+|LOG DE ATUALIZAÇÕES                                                      |
+|         |                                                               |
+|20/09/11 |Criação do documento                                           |
+|17/02/12 |Resequenciamento dos tópicos obrigatórios e inclusão do ANEXO  |
+|05/102018|Atualização do documento                                       |
+|04/11/202|Troca do SIF                                                   |
+|0        |                                                               |
+
+                              RELATÓRIO TÉCNICO
+
+1)    NOME, ENDEREÇO E CNPJ DO ESTABELECIMENTO PROPRIETÁRIO DO PRODUTO:
+
+     Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+     Código SIF: SP-002190-3
+     Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+     CEP 15150-000, MONTE APRAZÍVEL, SP
+     CNPJ: 002.425.166/0001-85
+
+2)    DESIGNAÇÃO DO PRODUTO POR NOME E MARCA COMERCIAL:
+
+              DUKAMP REPRODUÇÃO/S
+
+3)    CLASSIFICAÇÃO DO PRODUTO:
+
+              SUPLEMENTO MINERAL DE PRONTO USO PARA BOVINOS
+
+4)    FORMA FÍSICA DE APRESENTAÇÃO:
+
+              Seco, em pó
+
+5)    CARACTERÍSTICA DA EMBALAGEM E FORMA DE ACONDICIONAMENTO:
+
+              Produto  será  acondicionado  em  sacaria   do   tipo   ráfia
+      (polipropileno), nova e de uso único.
+
+6)    COMPOSIÇÃO QUALITATIVA:
+
+              fosfato bicálcico, carbonato de cálcio,  óxido  de  magnésio,
+      cloreto de sódio (sal  comum)  25%,  sulfato  de  cálcio,  sulfato  de
+      cobalto, sulfato de cobre, iodato de cálcio, sulfato de ferro, sulfato
+      de manganês, selenito de sódio, sulfato de zinco, calcareo calcitico
+
+7)    ENRIQUECIMENTO: não há
+
+8)    EVENTUAIS SUBSTITUTIVOS:
+
+              sulfato de  magnésio,  enxofre  ventilado  (flor-de-enxofre),
+      monóxido de manganês, iodato de potássio, fosfato  monoamõnico,  óxido
+      de zinco.
+
+    9)      NÍVEIS DE GARANTIA:
+
+              |ITEM                   |ESPECIFICAÇÃO      |VALOR          |UNIDADE      |
+|CÁLCIO                 |mín/máx            |125 /550       |g            |
+|FÓSFORO                |mín                |85             |g            |
+|MAGNÉSIO               |mín                |15             |g            |
+|SÓDIO                  |mín                |93             |g            |
+|ENXOFRE                |mín                |13             |g            |
+|COBALTO                |mín                |30             |mg           |
+|COBRE                  |mín                |930            |mg           |
+|IODO                   |mín                |61             |mg           |
+|FERRO                  |mín                |3.000          |mg           |
+|MANGANÊS               |mín                |1.050          |mg           |
+|SELÊNIO                |mín                |17             |mg           |
+|ZINCO                  |mín                |4.120          |mg           |
+|FLÚOR                  |máx                |850            |mg           |
+
+              |VALOR DE REFERÊNCIA                                                       |
+|GARANTIA                    |Valor de |Quantidade       |Quantidade em %  |
+|                            |referênci|fornecida por    |do VR fornecido  |
+|                            |a (VR*)  |100g de          |por 100g de      |
+|                            |         |suplemento       |suplemento       |
+|CONSUMO DE                  |g/dia    |g/dia            |%                |
+|Proteína Bruta              |550      |-                |-                |
+|Nutrientes Digestíveis      |4.000    |-                |-                |
+|Totais (NDT)                |         |                 |                 |
+|                            |         |                 |                 |
+|MACRONUTRIENTES             |g/dia    |g/dia            |%                |
+|Cálcio                      |14       |12,5 / 55        |89 / 221         |
+|Fósforo                     |11       |8,5              |77               |
+|Magnésio                    |9        |1,5              |16               |
+|Sódio                       |7        |9,3              |132              |
+|Enxofre                     |13,5     |1,3              |9                |
+|Potássio                    |54       |-                |-                |
+|                            |         |                 |                 |
+|MICRONUTRIENTES             |mg/dia   |mg/dia           |%                |
+|Cobalto                     |0,9      |3                |333              |
+|Cobre                       |90       |93               |103              |
+|Iodo                        |4,5      |6,1              |135              |
+|Ferro                       |450      |300              |66               |
+|Manganês                    |180      |105              |58               |
+|Selênio                     |0,9      |1,7              |144              |
+|Zinco                       |270      |412              |152              |
+|                            |         |                 |                 |
+|VITAMINAS                   |U.I./dia |U.I./dia         |%                |
+|Vitamina A                  |20.000   |-                |-                |
+|Vitamina D                  |2.500    |-                |-                |
+|Vitamina E                  |350      |-                |-                |
+|* Valor diário de referência para mantença de um animal de 450 kg de peso |
+|corporal                                                                  |
+
+    10)     DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO E DO CONTROLE DA MATÉRIA-
+    PRIMA E DO PRODUTO ACABADO:
+
+[pic]
+
+DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO:
+              O presente produto será fabricado  no  setor  de  suplementos
+      minerais, cujo fluxograma é apresentado na figura acima.
+              Basicamente,  esse  setor  é  composto  por  uma  moega  para
+      recepção de ingredientes (legenda nº.5), misturador com  1.000  kg  de
+      capacidade  (legenda  nº.7),  silo  de  ensaque   (legenda   nº.9)   e
+      ensacadeira (legenda nº.10).
+              As etapas de produção serão:
+              1) reunião dos ingredientes em volta da moega (legenda nº.5),
+      já pesados em quantidades pré-definidas pelo Departamento Técnico;
+              1.1) no caso  de  ingredientes  considerados  microelementos,
+      eles serão previamente misturados  em  misturador  tipo  ‘Y’  (legenda
+      nº.1), após adicionados ao calcário calcítico em  uma  quantidade  que
+      totalize entre 20 e 30 kg, ao  final  do  qual  procura-se  obter  uma
+      mistura homogênea e em quantidade capaz de ser  bem  homogeneizado  no
+      misturador de 1.000 kg. Essa pré-mistura de ingredientes será  chamada
+      de “premix”
+              2) abastecimento da moega (legenda  nº.5)  com  1.000  kg  de
+      ingredientes (“premix” inclusive) que irão compor o  produto  acabado,
+      ingredientes  estes  qualificados  e  quantificados  em  planilha   de
+      produção
+              3) transferência dos 1.000 kg de ingredientes da moega até  o
+      misturador, através de rosca transportadora (legenda nº.6).
+              4) mistura dos ingredientes no misturador horizontal (legenda
+      nº.7);
+              5) transferência da mistura  do  misturador  até  o  silo  de
+      ensaque, através de rosca transportadora (legenda nº.8);
+              6) ensaque do produto acabado (legenda nº.10).
+
+CONTROLE DA MATÉRIA-PRIMA:
+              As matérias-primas obrigatoriamente deverão vir  acompanhadas
+      de  laudo  de   análise,   contendo   a(s)   concentração(ões)   do(s)
+      nutriente(s) de interesse. Os dados declarados pelo  fornecedor  serão
+      utilizados para abastecer a matriz do software de formulação.
+
+CONTROLE DO PRODUTO ACABADO:
+              Durante o processo  produtivo,  periodicamente,  sub-amostras
+      serão coletadas na bica de ensaque e  compostas  numa  única  amostra,
+      datada,  identificada  e  armazenada,  para   futura   análise,   caso
+      necessária.
+
+11)   INDICAÇÕES DE USO E ESPÉCIE ANIMAL A QUE SE DESTINA:
+
+INDICAÇÕES DE USO:
+
+              Suplemento mineral de pronto uso  indicado  para  bovinos  de
+      corte nas fases de reprodução, gestação, cria e/ou recria em áreas  de
+      média fertilidade, em pastagens de média qualidade nutricional.
+
+ESPÉCIE ANIMAL A QUE SE DESTINA: BOVINOS
+
+12)   MODO DE USAR:
+
+              Dukamp Reprodução/S já é pronto para uso, bastando despejar o
+      produto em cochos  e  deixar  à  disposição  permanente  dos  animais.
+      preferencialmente, recomenda-se o uso de cochos cobertos e com  espaço
+      mínimo de 3 a 5 cm por cabeça suplementada.  não  fornecer  o  produto
+      para ovinos. em caso de dúvidas, consulte nosso  departamento  técnico
+      ou um profissional de sua confiança.
+
+13)   CONTEÚDO LÍQUIDO EXPRESSO NO SISTEMA DECIMAL:
+
+               30 kg
+
+14)   PRAZO DE VALIDADE:
+
+              2 anos após a data de fabricação
+
+15) CONDIÇÕES DE CONSERVAÇÃO:
+
+              Conservar  este  produto  em  local  coberto,  fresco,  seco,
+      arejado, livre de insetos e  roedores,  sobre  estrados,  afastado  de
+      paredes e devidamente embalado. Não armazenar  junto  a  combustíveis,
+      fertilizantes ou produtos tóxicos.
+
+16) RESTRIÇÕES E OUTRAS RECOMENDAÇÕES:
+
+              Não fornecer o produto para ovinos.
+
+                                      Monte Aprazível, 05 de outubro de 2018
+
+             |Marco Antonio Sartori        |
+|Engenheiro Agronômo          |
+|Crea – sp – 5060907799/d     |
+|Responsável  Técnico         |
+|Dukamp Saúde Animal          |
+
+                                    ANEXO
+                            - CROQUI DO RÓTULO -
+
+                            DUKAMP REPRODUÇÃO / S
+                SUPLEMENTO MINERAL DE PRONTO USO PARA BOVINOS
+
+INDICAÇÃO DO PRODUTO
+
+Suplemento mineral de pronto uso indicado para bovinos de corte nas fases
+de reprodução, gestação, cria e/ou recria em áreas de média fertilidade, em
+pastagens de média qualidade nutricional
+
+COMPOSIÇÃO BÁSICA DO PRODUTO
+
+fosfato bicálcico, carbonato de cálcio, óxido de magnésio, cloreto de sódio
+(sal comum) 25%, sulfato de cálcio, sulfato de cobalto, sulfato de cobre,
+iodato de cálcio, sulfato de ferro, sulfato de manganês, selenito de sódio,
+sulfato de zinco, calcareo calcitico
+
+EVENTUAIS SUBSTITUTIVOS
+
+sulfato de magnésio, enxofre ventilado (flor-de-enxofre), monóxido de
+manganês, iodato de potássio, fosfato monoamõnico, óxido de zinco
+
+NIVEIS DE GARANTIA DO PRODUTO
+
+CÁLCIO      mín/máx    125 / 550  g
+FÓSFORO     mín  85    g
+MAGNÉSIO    mín  15    g
+SÓDIO mín   93   g
+ENXOFRE     mín  13    g
+COBALTO     mín  30    mg
+COBRE mín   930  mg
+IODO  mín   61   mg
+FERRO mín   3.000      mg
+MANGANÊS    mín  1.050 mg
+SELÊNIO     mín  17    mg
+ZINCO mín   4.120      mg
+FLÚOR máx   850  mg
+
+      |VALOR DE REFERÊNCIA                                                       |
+|GARANTIA                    |Valor de |Quantidade       |Quantidade em %  |
+|                            |referênci|fornecida por    |do VR fornecido  |
+|                            |a (VR*)  |100g de          |por 100g de      |
+|                            |         |suplemento       |suplemento       |
+|CONSUMO DE                  |g/dia    |g/dia            |%                |
+|Proteína Bruta              |550      |-                |-                |
+|Nutrientes Digestíveis      |4.000    |-                |-                |
+|Totais (NDT)                |         |                 |                 |
+|                            |         |                 |                 |
+|MACRONUTRIENTES             |g/dia    |g/dia            |%                |
+|Cálcio                      |14       |12,5 / 31        |89 / 221         |
+|Fósforo                     |11       |8,5              |77               |
+|Magnésio                    |9        |1,5              |16               |
+|Sódio                       |7        |9,3              |132              |
+|Enxofre                     |13,5     |1,3              |9                |
+|Potássio                    |54       |-                |-                |
+|                            |         |                 |                 |
+|MICRONUTRIENTES             |mg/dia   |mg/dia           |%                |
+|Cobalto                     |0,9      |3                |333              |
+|Cobre                       |90       |93               |103              |
+|Iodo                        |4,5      |6,1              |135              |
+|Ferro                       |450      |300              |66               |
+|Manganês                    |180      |105              |58               |
+|Selênio                     |0,9      |1,7              |144              |
+|Zinco                       |270      |412              |152              |
+|                            |         |                 |                 |
+|VITAMINAS                   |U.I./dia |U.I./dia         |%                |
+|Vitamina A                  |20.000   |-                |-                |
+|Vitamina D                  |2.500    |-                |-                |
+|Vitamina E                  |350      |-                |-                |
+|* Valor diário de referência para mantença de um animal de 450 kg de peso |
+|corporal                                                                  |
+
+MODO DE USAR
+
+Dukamp Reprodução/S já é pronto para uso, bastando despejar o produto em
+cochos e deixar à disposição permanente dos animais. preferencialmente,
+recomenda-se o uso de cochos cobertos e com espaço mínimo de 3 a 5 cm por
+cabeça suplementada. não fornecer o produto para ovinos. em caso de
+dúvidas, consulte nosso departamento técnico ou um profissional de sua
+confiança
+
+PRAZO DE VALIDADE: 2 anos após a data de fabricação
+
+MODO DE CONSERVAÇÃO
+
+Conservar este produto em local coberto, fresco, seco, arejado, livre de
+insetos e roedores, sobre estrados, afastado de paredes e devidamente
+embalado. Não armazenar junto a combustíveis, fertilizantes ou produtos
+tóxicos.
+
+DADOS DA EMPRESA:
+
+Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+Código SIF: SP-002109-3
+Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+CEP 15150-000, MONTE APRAZÍVEL, SP
+CNPJ: 002.425.166/0001-85
+INSCRIÇÃO ESTADUAL: 462.063.756.110
+FONE/FAX: (17) 3275.3106
