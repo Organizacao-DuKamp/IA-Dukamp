@@ -8,6 +8,7 @@ import {
   processNextPending,
   registerSeed,
   reprocessDocument,
+  uploadKnowledgeZip,
 } from "@/lib/knowledge.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/base-conhecimento")({
