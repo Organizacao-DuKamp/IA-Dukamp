@@ -329,12 +329,33 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
   const hasUnitWord = UNIT_WORD_RE.test(userText);
   const hasPriceWord = PRICE_WORD_RE.test(userText);
 
-  // Units / filial / matriz — data not available yet.
+  // Units / filial / matriz — pull address & regions from the site DB.
   if (hasUnitWord && !hasSellerWord) {
-    return {
-      kind: "structural",
-      text: "Ainda não tenho os endereços das unidades DuKamp (matriz/filiais) cadastrados aqui. Recomendo consultar o site oficial ou falar com um vendedor DuKamp.",
-    };
+    const { getSiteUnits } = await import("@/lib/site/site-lookup.server");
+    const { headquarters, regions } = await getSiteUnits();
+    if (!headquarters && regions.length === 0) {
+      return {
+        kind: "structural",
+        text: "Ainda não localizei os endereços das unidades DuKamp na base. Recomendo consultar o site oficial da DuKamp ou falar com um vendedor.",
+      };
+    }
+    const lines: string[] = [];
+    if (headquarters) {
+      lines.push(`**Matriz DuKamp**${headquarters.razaoSocial ? ` — ${headquarters.razaoSocial}` : ""}`);
+      if (headquarters.address) lines.push(`- Endereço: ${headquarters.address}`);
+      if (headquarters.cnpj) lines.push(`- CNPJ: ${headquarters.cnpj}`);
+      if (headquarters.phone) lines.push(`- Telefone/WhatsApp: ${headquarters.phone}`);
+      if (headquarters.email) lines.push(`- E-mail: ${headquarters.email}`);
+    }
+    if (regions.length > 0) {
+      lines.push("");
+      lines.push(`**Regiões atendidas pelos vendedores DuKamp** (${regions.length}):`);
+      lines.push(regions.map((r) => `- ${r}`).join("\n"));
+    }
+    if (!headquarters) {
+      lines.unshift("Não encontrei o endereço da matriz cadastrado, mas a DuKamp atende comercialmente as seguintes regiões pela equipe de vendedores:");
+    }
+    return { kind: "structural", text: lines.join("\n") };
   }
 
   // Sellers — count
