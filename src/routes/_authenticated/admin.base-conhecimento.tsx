@@ -45,6 +45,7 @@ function AdminKnowledgeBase() {
   const register = useServerFn(registerSeed);
   const processOne = useServerFn(processNextPending);
   const reprocess = useServerFn(reprocessDocument);
+  const uploadZip = useServerFn(uploadKnowledgeZip);
 
   const [docs, setDocs] = useState<Doc[]>([]);
   const [statData, setStatData] = useState<Stats | null>(null);
@@ -52,6 +53,7 @@ function AdminKnowledgeBase() {
   const [log, setLog] = useState<string[]>([]);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [replaceAll, setReplaceAll] = useState(false);
 
   async function refresh() {
     try {
