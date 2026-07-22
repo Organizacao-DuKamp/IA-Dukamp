@@ -52,6 +52,11 @@ export async function handleIncoming(
     .slice(-MAX_HISTORY_TURNS)
     .map((m) => ({ role: m.role, content: sanitize(m.content) }));
 
+  // 0) Small-talk / reactions short-circuit — never send these to Perplexity
+  // (its search model turns "ah que legal" into a dictionary definition with citations).
+  const smallTalk = detectSmallTalk(text);
+  if (smallTalk) return { reply: smallTalk };
+
   // 1) Router: structural = direct DB answer (no LLM).
   // Contextual follow-up: bare pronouns ("quem são eles?", "quais são?", "me diga os nomes")
   // reuse the topic from the last assistant message.
