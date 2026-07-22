@@ -15,9 +15,10 @@ export interface Match {
 export async function searchKnowledge(query: string, matchCount = 6): Promise<Match[]> {
   const vec = await embedQuery(query);
   const { data, error } = await supabaseAdmin.rpc("match_knowledge_chunks", {
-    query_embedding: toPgVector(vec) as unknown as number[],
+    // pgvector accepts a bracketed string; supabase-js types expect string here.
+    query_embedding: toPgVector(vec),
     match_count: matchCount,
-  });
+  } as never);
   if (error) throw new Error(error.message);
   return (data ?? []) as Match[];
 }
