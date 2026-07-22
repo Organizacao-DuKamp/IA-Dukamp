@@ -121,6 +121,36 @@ function AdminKnowledgeBase() {
     await refresh();
   }
 
+  async function handleUploadZip(file: File) {
+    setBusy("upload");
+    setError(null);
+    try {
+      const buf = await file.arrayBuffer();
+      // Convert ArrayBuffer -> base64 in chunks to avoid stack overflow.
+      const bytes = new Uint8Array(buf);
+      let binary = "";
+      const CHUNK = 0x8000;
+      for (let i = 0; i < bytes.length; i += CHUNK) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+      }
+      const zipBase64 = btoa(binary);
+      const r = (await uploadZip({ data: { zipBase64, replaceAll } })) as {
+        total: number;
+        inserted: number;
+      };
+      setLog((l) => [
+        `📦 ZIP recebido: ${r.inserted}/${r.total} documentos ${replaceAll ? "(base substituída)" : "(mesclados)"}. Clique em "Processar pendentes" para gerar os embeddings.`,
+        ...l,
+      ]);
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha ao enviar ZIP.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+
   const s = statData?.docs;
 
   return (
