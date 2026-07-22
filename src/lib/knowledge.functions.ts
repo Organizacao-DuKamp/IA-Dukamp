@@ -150,3 +150,83 @@ export const reprocessDocument = createServerFn({ method: "POST" })
       .eq("id", data.id);
     return { ok: true };
   });
+
+const UploadInput = z.object({
+  zipBase64: z.string().min(1),
+  replaceAll: z.boolean().optional().default(false),
+});
+
+export const uploadKnowledgeZip = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => UploadInput.parse(d))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { parseSourcePath } = await import("./rag/paths");
+    const JSZip = (await import("jszip")).default;
+
+    // Decode base64 -> Uint8Array
+    const binary = atob(data.zipBase64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+
+    const zip = await JSZip.loadAsync(bytes);
+    const entries = Object.values(zip.files).filter(
+      (f) => !f.dir && /\.(txt|md)$/i.test(f.name),
+    );
+    if (entries.length === 0) {
+      throw new Error("Nenhum arquivo .txt ou .md encontrado no ZIP.");
+    }
+
+    // Normalize path: ensure it contains the "/base-conhecimento/" marker so parseSourcePath works.
+    // Also strip any leading top-level folder from the zip (e.g., "base-conhecimento/..." or "my-export/...").
+    const rows: Array<Record<string, unknown>> = [];
+    for (const entry of entries) {
+      const raw = entry.name.replace(/^\/+/, "");
+      // Try to find "base-conhecimento" segment; if absent, treat the first segment as it.
+      let rel = raw;
+      const marker = "base-conhecimento/";
+      const mIdx = raw.indexOf(marker);
+      if (mIdx >= 0) {
+        rel = raw.slice(mIdx + marker.length);
+      } else {
+        // strip leading top-level folder if there is one
+        const parts = raw.split("/");
+        if (parts.length > 1) rel = parts.slice(1).join("/");
+      }
+      const fakeAbs = `/src/seed/base-conhecimento/${rel}`;
+      const p = parseSourcePath(fakeAbs);
+      const text = await entry.async("string");
+      rows.push({
+        title: p.title,
+        filename: p.filename,
+        source_path: p.sourcePath,
+        category: p.category,
+        subcategory: p.subcategory,
+        status: "aguardando",
+        chunk_count: 0,
+        error_message: null,
+        content: text,
+      });
+    }
+
+    if (data.replaceAll) {
+      // Wipe chunks first (FK-safe), then docs.
+      await supabaseAdmin.from("knowledge_chunks").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+      await supabaseAdmin.from("knowledge_documents").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    }
+
+    const batchSize = 50;
+    for (let i = 0; i < rows.length; i += batchSize) {
+      const batch = rows.slice(i, i + batchSize);
+      const { error } = await supabaseAdmin
+        .from("knowledge_documents")
+        .upsert(batch, { onConflict: "source_path", ignoreDuplicates: false });
+      if (error) throw new Error(error.message);
+    }
+
+    // For upserts of existing docs, reset chunks so reprocessing re-embeds fresh content.
+    // (New docs already have chunk_count=0 and no chunks.)
+    return { total: entries.length, inserted: rows.length };
+  });
+
