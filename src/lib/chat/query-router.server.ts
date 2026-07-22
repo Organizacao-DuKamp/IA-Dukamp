@@ -329,44 +329,29 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
   const hasUnitWord = UNIT_WORD_RE.test(userText);
   const hasPriceWord = PRICE_WORD_RE.test(userText);
 
-  // Units / filial / matriz — pull address & regions from the site DB.
+  // Units / filial / matriz — DuKamp tem 2 unidades: matriz (Monte Aprazível/SP) e filial (São José do Rio Preto/SP).
   if (hasUnitWord && !hasSellerWord) {
     const { getSiteUnits } = await import("@/lib/site/site-lookup.server");
-    const { headquarters, regions } = await getSiteUnits();
-    if (!headquarters && regions.length === 0) {
-      return {
-        kind: "structural",
-        text: "Ainda não localizei os endereços das unidades DuKamp na base. Recomendo consultar o site oficial da DuKamp ou falar com um vendedor.",
-      };
-    }
-    const unitCount = headquarters ? 1 : 0;
+    const { headquarters } = await getSiteUnits().catch(() => ({ headquarters: null as any }));
+
     const lines: string[] = [];
     if (hasCount) {
-      const where = headquarters?.city && headquarters.state
-        ? ` — matriz em ${headquarters.city}/${headquarters.state}`
-        : "";
-      lines.push(
-        unitCount === 0
-          ? "Não localizei nenhuma unidade DuKamp cadastrada na base."
-          : `A DuKamp tem **${unitCount} unidade** cadastrada${where}.`,
-      );
-    }
-    if (headquarters) {
-      if (lines.length > 0) lines.push("");
-      lines.push(`**Matriz DuKamp**${headquarters.razaoSocial ? ` — ${headquarters.razaoSocial}` : ""}`);
-      if (headquarters.address) lines.push(`- Endereço: ${headquarters.address}`);
-      if (headquarters.cnpj) lines.push(`- CNPJ: ${headquarters.cnpj}`);
-      if (headquarters.phone) lines.push(`- Telefone/WhatsApp: ${headquarters.phone}`);
-      if (headquarters.email) lines.push(`- E-mail: ${headquarters.email}`);
-    }
-    if (regions.length > 0) {
+      lines.push("A DuKamp tem **2 unidades**: **matriz em Monte Aprazível/SP** e **filial em São José do Rio Preto/SP**.");
       lines.push("");
-      lines.push(`**Regiões atendidas pelos vendedores DuKamp** (${regions.length}):`);
-      lines.push(regions.map((r) => `- ${r}`).join("\n"));
     }
-    if (!headquarters && regions.length > 0) {
-      lines.unshift("Não encontrei o endereço da matriz cadastrado, mas a DuKamp atende comercialmente as seguintes regiões pela equipe de vendedores:");
-    }
+
+    lines.push(`**Matriz DuKamp**${headquarters?.razaoSocial ? ` — ${headquarters.razaoSocial}` : " — DUKAMP SAÚDE ANIMAL LTDA"}`);
+    lines.push(`- Endereço: ${headquarters?.address || "Avenida Santos Dumont, 403 - Jardim Bom Jesus, Monte Aprazível/SP"}`);
+    if (headquarters?.cnpj) lines.push(`- CNPJ: ${headquarters.cnpj}`);
+    if (headquarters?.phone) lines.push(`- Telefone/WhatsApp: ${headquarters.phone}`);
+    if (headquarters?.email) lines.push(`- E-mail: ${headquarters.email}`);
+
+    lines.push("");
+    lines.push("**Filial DuKamp** — São José do Rio Preto/SP");
+
+    lines.push("");
+    lines.push("**Área de atendimento:** a DuKamp atende clientes em **todo o Brasil** através da equipe comercial e da logística própria.");
+
     return { kind: "structural", text: lines.join("\n") };
   }
 
