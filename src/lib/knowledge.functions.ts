@@ -91,7 +91,7 @@ export const processNextPending = createServerFn({ method: "POST" })
 
     const { data: doc, error } = await supabaseAdmin
       .from("knowledge_documents")
-      .select("id, title, filename, category, subcategory, source_path")
+      .select("id, title, filename, category, subcategory, source_path, content")
       .eq("status", "aguardando")
       .order("category", { ascending: true })
       .limit(1)
@@ -105,9 +105,12 @@ export const processNextPending = createServerFn({ method: "POST" })
       .eq("id", doc.id);
 
     try {
-      const seed = listSeedFiles().find((f) => parseSourcePath(f.absPath).sourcePath === doc.source_path);
-      if (!seed) throw new Error("Arquivo do seed não encontrado.");
-      const text = await seed.load();
+      let text: string | null = doc.content ?? null;
+      if (!text) {
+        const seed = listSeedFiles().find((f) => parseSourcePath(f.absPath).sourcePath === doc.source_path);
+        if (!seed) throw new Error("Conteúdo do documento não encontrado (nem no upload nem no seed).");
+        text = await seed.load();
+      }
       const count = await ingestDocument(
         {
           id: doc.id,
@@ -132,6 +135,7 @@ export const processNextPending = createServerFn({ method: "POST" })
       return { done: false as const, id: doc.id, title: doc.title, error: msg };
     }
   });
+
 
 const ReprocessInput = z.object({ id: z.string().uuid() });
 export const reprocessDocument = createServerFn({ method: "POST" })
