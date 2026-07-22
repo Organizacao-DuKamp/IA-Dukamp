@@ -21,6 +21,38 @@ function sanitize(text: string): string {
     .trim();
 }
 
+// Detects casual reactions/acknowledgments/greetings that should NOT be sent
+// to Perplexity's grounded search model (which would turn "ah que legal" into
+// a dictionary entry with citations). Returns a natural human reply, or null.
+function detectSmallTalk(raw: string): string | null {
+  const t = raw.trim().toLowerCase().replace(/[!.?…]+$/g, "").replace(/\s+/g, " ");
+  if (!t || t.length > 60) return null;
+
+  // Greetings
+  if (/^(oi|ol[aá]|e\s?a[ií]|opa|bom\s+dia|boa\s+tarde|boa\s+noite|hey|hi|hello)$/i.test(t)) {
+    return "Oi! Sou a TPEC-IA, assistente da DuKamp. Como posso te ajudar hoje — dúvidas sobre produtos, manejo, vendedores ou preços?";
+  }
+  // Thanks
+  if (/^(obrigad[ao]|valeu|vlw|thanks|obg|grat[oa])$/i.test(t)) {
+    return "Por nada! Se precisar de mais alguma coisa, é só chamar.";
+  }
+  // Positive reactions
+  if (/^(ah\s+)?(que\s+)?(legal|bacana|[óo]timo|show|massa|top|bom|dahora|maneiro|interessante|bem\s+legal|muito\s+bom)$/i.test(t) ||
+      /^(nossa|uau|wow|caramba|s[eé]rio|puxa)$/i.test(t) ||
+      /^ah\s+(sim|ok|entendi|legal|bacana)$/i.test(t)) {
+    return "Que bom! 😊 Precisa de mais alguma coisa sobre os produtos DuKamp, manejo ou algum vendedor?";
+  }
+  // Acknowledgements
+  if (/^(ok|okay|beleza|blz|certo|entendi|ciente|t[áa]\s+bom|t[áa]|sim|isso|perfeito)$/i.test(t)) {
+    return "Combinado! Estou aqui se precisar de mais algo.";
+  }
+  // Farewells
+  if (/^(tchau|at[eé]\s+mais|falou|flw|adeus|bye)$/i.test(t)) {
+    return "Até mais! Qualquer dúvida sobre DuKamp, é só voltar. 👋";
+  }
+  return null;
+}
+
 export class ChatError extends Error {
   constructor(
     message: string,
