@@ -180,7 +180,17 @@ export const uploadKnowledgeZip = createServerFn({ method: "POST" })
 
     // Normalize path: ensure it contains the "/base-conhecimento/" marker so parseSourcePath works.
     // Also strip any leading top-level folder from the zip (e.g., "base-conhecimento/..." or "my-export/...").
-    const rows: Array<Record<string, unknown>> = [];
+    const rows: Array<{
+      title: string;
+      filename: string;
+      source_path: string;
+      category: string;
+      subcategory: string | null;
+      status: string;
+      chunk_count: number;
+      error_message: string | null;
+      content: string;
+    }> = [];
     for (const entry of entries) {
       const raw = entry.name.replace(/^\/+/, "");
       // Try to find "base-conhecimento" segment; if absent, treat the first segment as it.
