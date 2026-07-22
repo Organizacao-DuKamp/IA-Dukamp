@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedAdminProdutosRouteImport } from './routes/_authenticated/admin.produtos'
 import { Route as AuthenticatedAdminBaseConhecimentoRouteImport } from './routes/_authenticated/admin.base-conhecimento'
 
 const AuthRoute = AuthRouteImport.update({
@@ -28,6 +29,12 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminProdutosRoute =
+  AuthenticatedAdminProdutosRouteImport.update({
+    id: '/admin/produtos',
+    path: '/admin/produtos',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminBaseConhecimentoRoute =
   AuthenticatedAdminBaseConhecimentoRouteImport.update({
     id: '/admin/base-conhecimento',
@@ -39,11 +46,13 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin/base-conhecimento': typeof AuthenticatedAdminBaseConhecimentoRoute
+  '/admin/produtos': typeof AuthenticatedAdminProdutosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin/base-conhecimento': typeof AuthenticatedAdminBaseConhecimentoRoute
+  '/admin/produtos': typeof AuthenticatedAdminProdutosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -51,18 +60,20 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/admin/base-conhecimento': typeof AuthenticatedAdminBaseConhecimentoRoute
+  '/_authenticated/admin/produtos': typeof AuthenticatedAdminProdutosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/admin/base-conhecimento'
+  fullPaths: '/' | '/auth' | '/admin/base-conhecimento' | '/admin/produtos'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/admin/base-conhecimento'
+  to: '/' | '/auth' | '/admin/base-conhecimento' | '/admin/produtos'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/admin/base-conhecimento'
+    | '/_authenticated/admin/produtos'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -94,6 +105,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin/produtos': {
+      id: '/_authenticated/admin/produtos'
+      path: '/admin/produtos'
+      fullPath: '/admin/produtos'
+      preLoaderRoute: typeof AuthenticatedAdminProdutosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/base-conhecimento': {
       id: '/_authenticated/admin/base-conhecimento'
       path: '/admin/base-conhecimento'
@@ -106,11 +124,13 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminBaseConhecimentoRoute: typeof AuthenticatedAdminBaseConhecimentoRoute
+  AuthenticatedAdminProdutosRoute: typeof AuthenticatedAdminProdutosRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminBaseConhecimentoRoute:
     AuthenticatedAdminBaseConhecimentoRoute,
+  AuthenticatedAdminProdutosRoute: AuthenticatedAdminProdutosRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
