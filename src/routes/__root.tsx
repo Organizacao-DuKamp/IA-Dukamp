@@ -77,6 +77,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { title: "TPEC-IA · Assistente especialista em pecuária" },
+      { property: "og:title", content: "TPEC-IA · Assistente especialista em pecuária" },
+      { name: "twitter:title", content: "TPEC-IA · Assistente especialista em pecuária" },
+      { name: "description", content: "TPEC-IA é uma assistente de IA em português voltada à pecuária brasileira: manejo, nutrição, pastagens, reprodução, sanidade e gestão da propriedade." },
+      { property: "og:description", content: "TPEC-IA é uma assistente de IA em português voltada à pecuária brasileira: manejo, nutrição, pastagens, reprodução, sanidade e gestão da propriedade." },
+      { name: "twitter:description", content: "TPEC-IA é uma assistente de IA em português voltada à pecuária brasileira: manejo, nutrição, pastagens, reprodução, sanidade e gestão da propriedade." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8dc8f346-430e-4805-8b8c-c297b5951271/id-preview-105dd62f--321088cb-b0f3-4b23-a899-1c2fdfd07617.lovable.app-1784730300208.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8dc8f346-430e-4805-8b8c-c297b5951271/id-preview-105dd62f--321088cb-b0f3-4b23-a899-1c2fdfd07617.lovable.app-1784730300208.png" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:type", content: "website" },
     ],
     links: [
       {

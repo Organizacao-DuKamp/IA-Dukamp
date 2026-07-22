@@ -17,7 +17,7 @@ export const Route = createFileRoute("/")({
       {
         property: "og:description",
         content:
-          "Tire dúvidas sobre bovinocultura de corte e leite com uma IA especializada. Sem cadastro, sem histórico salvo.",
+          "TPEC-IA é uma assistente de IA em português voltada à pecuária brasileira: manejo, nutrição, pastagens, reprodução, sanidade e gestão da propriedade.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
