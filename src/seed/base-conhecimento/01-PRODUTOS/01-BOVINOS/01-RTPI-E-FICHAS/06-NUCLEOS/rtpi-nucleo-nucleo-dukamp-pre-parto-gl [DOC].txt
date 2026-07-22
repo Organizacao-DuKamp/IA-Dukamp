@@ -1,0 +1,242 @@
+ARQUIVO DE ORIGEM: rtpi-nucleo-nucleo-dukamp-pre-parto-gl.doc
+CAMINHO ORIGINAL: 01-BOVINOS/01-RTPI-E-FICHAS/06-NUCLEOS/rtpi-nucleo-nucleo-dukamp-pre-parto-gl.doc
+FORMATO ORIGINAL: .doc
+========================================================================
+
+NÚCLEO DUKAMP PRÉ PARTO GL
+
+|LOG DE ATUALIZAÇÕES                                                      |
+|         |                                                               |
+|11/07/12 |Criação do documento                                           |
+|05/10/201|Atualização documentos                                         |
+|8        |                                                               |
+|13/11/202|Troca do SIF                                                   |
+|0        |                                                               |
+
+                              RELATÓRIO TÉCNICO
+
+1)    NOME, ENDEREÇO E CNPJ DO ESTABELECIMENTO PROPRIETÁRIO DO PRODUTO:
+
+     Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+     Código SIF: SP-002190-3
+     Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+     CEP 15150-000, MONTE APRAZÍVEL, SP
+     CNPJ: 002.425.166/0001-85
+
+2)    DESIGNAÇÃO DO PRODUTO POR NOME E MARCA COMERCIAL:
+
+              NÚCLEO DUKAMP PRÉ PARTO GL
+
+3)    CLASSIFICAÇÃO DO PRODUTO:
+
+               NÚCLEO PARA BOVINOS
+
+4)    FORMA FÍSICA DE APRESENTAÇÃO:
+
+              Seco, em pó
+
+5)    CARACTERÍSTICA DA EMBALAGEM E FORMA DE ACONDICIONAMENTO:
+
+              Produto será acondicionado em sacos plásticos  (polietileno),
+      novos e de uso único.
+
+6)    COMPOSIÇÃO QUALITATIVA:
+
+              Cacareo calcitico, farelo de soja, fosfato bicalcico,  iodato
+      de cálcio óxido de  magnésio,  oxido  de  zinco,  selenito  de  sódio,
+      sulfato de cobalto, sulfato de cobre, sulfato de  ferro,  vitamina  a,
+      vitamina d3, vitamina e, niacina monesina sódica,  cloreto  de  sódio,
+      enxofre ventilado, monoxido de manganes, metionato de cromo,  complexo
+      zinco  aminoacido,   complexo   cobre   aminoácido,   complexo   cobre
+      aminoacido.
+
+7)    ENRIQUECIMENTO: não há
+
+8)    EVENTUAIS SUBSTITUTIVOS:
+
+               iodato de potássio, sulfato de magnésio, sulfato  de  zinco,
+      sulfato de manganês.
+
+     9)     NÍVEIS DE GARANTIA:
+
+|ITEM                   |ESPECIFICAÇÃO      |VALOR          |UNIDADE      |
+|CÁLCIO                 |mín / máx          |95 / 290       |g            |
+|MAGNÉSIO               |mín                |20             |g            |
+|FOSFORO                |nìm                |10             |G            |
+|NIACINA                |mín                | 15000         |mg           |
+|SÓDIO                  |mín                |10             |g            |
+|ENXOFRE                |mín                | 10            |g            |
+|COBALTO                |mín                |40             |mg           |
+|COBRE                  |mín                |700            |mg           |
+|IODO                   |mín                |20             |mg           |
+|FERRO                  |mín                |780            |mg           |
+|MANGANÊS               |mín                |1650           |mg           |
+|SELÊNIO                |mín                |10             |mg           |
+|ZINCO                  |mín                |2400           |mg           |
+|FLÚOR                  |máx                | 800           |mg           |
+|VITAMINA A             |mín                |265.000        |UI/kg        |
+|VITAMINA D3            |mín                |75.000         |UI/kg        |
+|VITAMINA E             |mín                |250000         |UI/kg        |
+|MONENSINA SÓDICA       |mín                |650            |mg           |
+|CROMO                  |nim                |20             |MGR          |
+|PROTEINA BRUTA         |Nìm.               |230            |g            |
+
+     10)    DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO E DO CONTROLE DA MATÉRIA-
+     PRIMA E DO PRODUTO ACABADO:
+
+[pic]
+
+DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO:
+              O presente produto será  fabricado  no  setor  de  NÚCLEOS  E
+      PREMIXES, cujo fluxograma é apresentado na figura acima.
+              Basicamente, esse setor é composto por um misturador tipo "Y"
+      (legenda nº 1), misturador de 500 kg de  capacidade  (legenda  nº  2),
+      ensacadeira (legenda nº 3), balança digital (legenda nº 4)  e  máquina
+      de costura (legenda nº 5).
+              As etapas de produção serão:
+              1)  pesagem  dos  ingredientes  que  comporão  o  produto  em
+      fabricação, de acordo com  a  fórmula  determinada  pelo  Departamento
+      Técnico;
+              1.1) ingredientes cuja quantidade represente menos que 3%  do
+      total serão previamente misturados em misturador tipo ‘Y’ (legenda  nº
+      1), ao final do qual procura-se  obter  uma  mistura  homogênea  e  em
+      quantidade capaz de ser bem homogeneizado no misturador de 500 kg
+              2) abastecimento do misturador horizontal de  500kg  (legenda
+      nº 2) com os ingredientes já pesados previamente;
+              3) mistura dos ingredientes no misturador horizontal (legenda
+      nº 2);
+              4) ensaque do produto  acabado  (legenda  nº  3),  ajuste  da
+      quantidade (peso líquido) de cada embalagem  com  auxílio  de  balança
+      digital (legenda nº 4) e costura da sacaria (legenda nº 5).
+
+CONTROLE DA MATÉRIA-PRIMA:
+              As matérias-primas obrigatoriamente deverão vir  acompanhadas
+      de  laudo  de   análise,   contendo   a(s)   concentração(ões)   do(s)
+      nutriente(s) de interesse. Os dados declarados pelo  fornecedor  serão
+      utilizados para abastecer a matriz do software de formulação.
+
+CONTROLE DO PRODUTO ACABADO:
+              Durante o processo  produtivo,  periodicamente,  sub-amostras
+      serão coletadas na bica de ensaque e  compostas  numa  única  amostra,
+      datada,  identificada  e  armazenada,  para   futura   análise,   caso
+      necessária.
+
+11)   INDICAÇÕES DE USO E ESPÉCIE ANIMAL A QUE SE DESTINA:
+
+INDICAÇÕES DE USO:
+              :Produto indicado para proteico  ser  usado  como  nucleo,  e
+      vitaminico destinado ao  preparo  de  rações  para  vacas  e  novilhas
+      leiteiras, no periodo de 21 dias que antecede o parto.
+
+ESPÉCIE ANIMAL A QUE SE DESTINA: BOVINOS
+
+12)   MODO DE USAR:
+
+               Adicionar 100 kg do produto por tonelada de ração e fornecer
+      o produto elaborado sempre junto com volumoso calculado na porporção d
+      3 a 4 kilos por cabeça dia, dependendo  da  qualidade  do  volumoso  e
+      ecore corporal dos animais. È recomendado fazer adapatação  do  animal
+      ao produto fornecendo quantidades crescentes até atingir a  quantidade
+      recomendada.
+
+13)   CONTEÚDO LÍQUIDO EXPRESSO NO SISTEMA DECIMAL:
+
+              20 kg
+
+14)   PRAZO DE VALIDADE:
+
+               24 meses após a data de fabricação
+
+15) CONDIÇÕES DE CONSERVAÇÃO:
+
+              Conservar  este  produto  em  local  coberto,  fresco,  seco,
+      arejado, livre de insetos e  roedores,  sobre  estrados,  afastado  de
+      paredes e devidamente embalado. Não armazenar  junto  a  combustíveis,
+      fertilizantes  ou  produtos  tóxicos.
+
+16) RESTRIÇÕES E OUTRAS RECOMENDAÇÕES:
+
+              Não fornecer o produto para ovinos ou equídeos.
+
+                                     Monte Aprazível, 05 de outubro  de 2018
+
+             |Marco Antonio Sartori        |
+|ZEngenheiro Agronômo Crea –  |
+|sp – 50609077/d              |
+|Responsável  Técnico         |
+|Dukamp Saúde Animal          |
+                                    ANEXO
+                            - CROQUI DO RÓTULO -
+
+                         NÚCLEO DUKAMP PRÉ PARTO GL
+                             NÚCLEO PARA BOVINOS
+
+INDICAÇÃO DO PRODUTO
+
+:Produto indicado para proteico ser usado como nucleo, e vitaminico
+destinado ao preparo de rações para vacas e novilhas leiteiras, no periodo
+de 21 dias que antecede o parto
+
+COMPOSIÇÃO BÁSICA DO PRODUTO
+
+              Adicionar 100 kg do produto por tonelada de ração e  fornecer
+      o produto elaborado sempre junto com volumoso calculado na porporção d
+      3 a 4 kilos por cabeça dia, dependendo  da  qualidade  do  volumoso  e
+      ecore corporal dos animais. È recomendado fazer adapatação  do  animal
+      ao produto fornecendo quantidades crescentes até atingir a  quantidade
+      recomendada.
+
+EVENTUAIS SUBSTITUTIVOS
+ iodato de potássio, sulfato de magnésio, sulfato de zinco, sulfato de
+manganês.
+
+NIVEIS DE GARANTIA DO PRODUTO
+
+|ITEM                   |ESPECIFICAÇÃO      |VALOR          |UNIDADE      |
+|CÁLCIO                 |mín / máx          |95 / 290       |g            |
+|MAGNÉSIO               |mín                |20             |g            |
+|FOSFORO                |nìm                |10             |G            |
+|NIACINA                |mín                | 15000         |mg           |
+|SÓDIO                  |mín                |10             |g            |
+|ENXOFRE                |mín                | 10            |g            |
+|COBALTO                |mín                |40             |mg           |
+|COBRE                  |mín                |700            |mg           |
+|IODO                   |mín                |20             |mg           |
+|FERRO                  |mín                |780            |mg           |
+|MANGANÊS               |mín                |1650           |mg           |
+|SELÊNIO                |mín                |10             |mg           |
+|ZINCO                  |mín                |2400           |mg           |
+|FLÚOR                  |máx                | 800           |mg           |
+|VITAMINA A             |mín                |265.000        |UI/kg        |
+|VITAMINA D3            |mín                |75.000         |UI/kg        |
+|VITAMINA E             |mín                |250000         |UI/kg        |
+|MONENSINA SÓDICA       |mín                |650            |mg           |
+|CROMO                  |nim                |20             |MGR          |
+|PROTEINA BRUTA         |Nìm.               |230            |g            |
+
+MODO DE USAR
+              Adicionar 100 kg do produto por tonelada de ração e  fornecer
+      o produto elaborado sempre junto com volumoso calculado na porporção d
+      3 a 4 kilos por cabeça dia, dependendo  da  qualidade  do  volumoso  e
+      ecore corporal dos animais. È recomendado fazer adapatação  do  animal
+      ao produto fornecendo quantidades crescentes até atingir a  quantidade
+      recomendada.
+
+PRAZO DE VALIDADE:
+ 24 meses após a data de fabricação
+
+MODO DE CONSERVAÇÃO
+ Conservar este produto em local coberto, fresco, seco, arejado, livre de
+insetos e roedores, sobre estrados, afastado de paredes e devidamente
+embalado. Não armazenar junto a combustíveis,  fertilizantes  ou  produtos
+tóxicos.
+
+DADOS DA EMPRESA:
+
+Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+Código SIF: SP-002190-3
+Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+CEP 15150-000, MONTE APRAZÍVEL, SP
+CNPJ: 002.425.166/0001-85
+INSCRIÇÃO ESTADUAL: 462.063.756.110
+FONE/FAX: (17) 3275.3106

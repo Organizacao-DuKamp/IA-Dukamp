@@ -1,0 +1,229 @@
+ARQUIVO DE ORIGEM: rtpi-mineral-tradicional-dukamp-ovinos.doc
+CAMINHO ORIGINAL: 03-OVINOS-E-CAPRINOS/01-RTPI-E-FICHAS/02-SUPLEMENTOS-E-MINERAIS/rtpi-mineral-tradicional-dukamp-ovinos.doc
+FORMATO ORIGINAL: .doc
+========================================================================
+
+DUKAMP OVINOS
+
+|LOG DE ATUALIZAÇÕES                                                      |
+|         |                                                               |
+|27/08/12 |Criação do documento                                           |
+|05/10/201|Atualização documento                                          |
+|8        |                                                               |
+|04/11/202|Troca do SIF                                                   |
+|0        |                                                               |
+
+                              RELATÓRIO TÉCNICO
+
+1)    NOME, ENDEREÇO E CNPJ DO ESTABELECIMENTO PROPRIETÁRIO DO PRODUTO:
+
+     Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+     Código SIF: SP-002190-3
+     Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+     CEP 15150-000, MONTE APRAZÍVEL, SP
+     CNPJ: 002.425.166/0001-85
+
+2)    DESIGNAÇÃO DO PRODUTO POR NOME E MARCA COMERCIAL:
+
+              DUKAMP OVINOS
+
+3)    CLASSIFICAÇÃO DO PRODUTO:
+
+              SUPLEMENTO MINERAL DE PRONTO USO PARA OVINOS
+
+4)    FORMA FÍSICA DE APRESENTAÇÃO:
+
+              Seco, em pó
+
+5)    CARACTERÍSTICA DA EMBALAGEM E FORMA DE ACONDICIONAMENTO:
+
+              Produto  será  acondicionado  em  sacaria   do   tipo   ráfia
+      (polipropileno), nova e de uso único.
+
+6)    COMPOSIÇÃO QUALITATIVA:
+
+               calcário calcítico, fosfato  bicálcico,  iodato  de  cálcio,
+      óxido de magnésio, sulfato de zinco, selenito  de  sódio,  sulfato  de
+      cobalto, sulfato de ferro, cloreto de sódio (sal comum) - 31%, enxofre
+      ventilado  (flor  de  enxofre),sulfato  de  calcio,   palatabilizante,
+      sulfato de manganês.
+
+7)    ENRIQUECIMENTO: não há
+
+8)    EVENTUAIS SUBSTITUTIVOS:
+
+               óxido de zinco, levedura seca de  cana  de  açúcar,  melaço,
+      monóxido de manganês, iodato de potássio
+
+     9)     NÍVEIS DE GARANTIA:
+
+              |ITEM                   |ESPECIFICAÇÃO      |VALOR          |UNIDADE      |
+|CÁLCIO                 |(mín/máx)          |90 / 360       |g            |
+|FÓSFORO                |(mín)              |60             |g            |
+|MAGNÉSIO               |(mín)              |10             |g            |
+|SÓDIO                  |(mín)              |110            |g            |
+|ENXOFRE                |(mín)              |12             |g            |
+|COBALTO                |(mín)              |150            |mg           |
+|IODO                   |(mín)              |60             |mg           |
+|FERRO                  |(mín)              |2.500          |mg           |
+|MANGANÊS               |(mín)              |4.500          |mg           |
+|SELÊNIO                |(mín)              |30             |mg           |
+|ZINCO                  |(mín)              |6.000          |mg           |
+|FLÚOR                  |(máx)              |600            |mg           |
+|PALATABILIZANTE        |(mín)              |180            |g            |
+
+     10)    DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO E DO CONTROLE DA MATÉRIA-
+     PRIMA E DO PRODUTO ACABADO:
+
+[pic]
+
+DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO:
+              O presente produto será fabricado  no  setor  de  suplementos
+      minerais, cujo fluxograma é apresentado na figura acima.
+              Basicamente,  esse  setor  é  composto  por  uma  moega  para
+      recepção de ingredientes (legenda nº.5), misturador com  1.000  kg  de
+      capacidade  (legenda  nº.7),  silo  de  ensaque   (legenda   nº.9)   e
+      ensacadeira (legenda nº.10).
+              As etapas de produção serão:
+              1) reunião dos ingredientes em volta da moega (legenda nº.5),
+      já pesados em quantidades pré-definidas pelo Departamento Técnico;
+              1.1) no caso  de  ingredientes  considerados  microelementos,
+      eles serão previamente misturados  em  misturador  tipo  ‘Y’  (legenda
+      nº.1), após adicionados ao calcário calcítico em  uma  quantidade  que
+      totalize entre 20 e 30 kg, ao  final  do  qual  procura-se  obter  uma
+      mistura homogênea e em quantidade capaz de ser  bem  homogeneizado  no
+      misturador de 1.000 kg. Essa pré-mistura de ingredientes será  chamada
+      de “premix”
+              2) abastecimento da moega (legenda  nº.5)  com  1.000  kg  de
+      ingredientes (“premix” inclusive) que irão compor o  produto  acabado,
+      ingredientes  estes  qualificados  e  quantificados  em  planilha   de
+      produção
+              3) transferência dos 1.000 kg de ingredientes da moega até  o
+      misturador, através de rosca transportadora (legenda nº.6).
+              4) mistura dos ingredientes no misturador horizontal (legenda
+      nº.7);
+              5) transferência da mistura  do  misturador  até  o  silo  de
+      ensaque, através de rosca transportadora (legenda nº.8);
+              6) ensaque do produto acabado (legenda nº.10).
+
+CONTROLE DA MATÉRIA-PRIMA:
+              As matérias-primas obrigatoriamente deverão vir  acompanhadas
+      de  laudo  de   análise,   contendo   a(s)   concentração(ões)   do(s)
+      nutriente(s) de interesse. Os dados declarados pelo  fornecedor  serão
+      utilizados para abastecer a matriz do software de formulação.
+
+CONTROLE DO PRODUTO ACABADO:
+              Durante o processo  produtivo,  periodicamente,  sub-amostras
+      serão coletadas na bica de ensaque e  compostas  numa  única  amostra,
+      datada,  identificada  e  armazenada,  para   futura   análise,   caso
+      necessária.
+
+11)   INDICAÇÕES DE USO E ESPÉCIE ANIMAL A QUE SE DESTINA:
+
+INDICAÇÕES DE USO:
+
+               Suplemento mineral de pronto  uso  indicado  para  todas  as
+      categorias  de  ovinos,  em  suas  várias   fases   de   atividade   e
+      desenvolvimento.
+
+ESPÉCIE ANIMAL A QUE SE DESTINA: OVINOS
+
+12)   MODO DE USAR:
+
+               DUKAMP OVINOS já é pronto  para  uso,  bastando  despejar  o
+      produto em cochos  e  deixar  à  disposição  permanente  dos  animais.
+      Preferencialmente, recomenda-se o uso de cochos cobertos e com  espaço
+      mínimo de 3 a 5 cm  por  cabeça  suplementada.  Em  caso  de  dúvidas,
+      consulte  nosso  departamento  técnico  ou  um  profissional  de   sua
+      confiança.
+
+13)   CONTEÚDO LÍQUIDO EXPRESSO NO SISTEMA DECIMAL:
+
+              25 kg
+
+14)   PRAZO DE VALIDADE: 2 anos após a data de fabricação
+
+15) CONDIÇÕES DE CONSERVAÇÃO:
+
+              .
+               Conservar este produto  em  local  coberto,  seco,  arejado,
+      livre de insetos e roedores, sobre estrados,  afastado  de  paredes  e
+      devidamente   embalado.   Não   armazenar   junto   a    combustíveis,
+      fertilizantes ou produtos tóxicos.
+
+16) RESTRIÇÕES E OUTRAS RECOMENDAÇÕES:
+
+              (nenhuma)
+
+                                      Monte Aprazível, 05 de outubro de 2018
+
+             |Marco Antonio Sartoir        |
+|Engenheiro agrõnomo          |
+|Crea – sp – 5060907799/d     |
+|Responsável  Técnico         |
+|Dukamp Saúde Animal          |
+
+            ANEXO
+                            - CROQUI DO RÓTULO -
+
+                                DUKAMP OVINOS
+                SUPLEMENTO MINERAL DE PRONTO USO PARA OVINOS
+
+INDICAÇÃO DO PRODUTO
+
+ Suplemento mineral de pronto uso indicado para todas as categorias de
+ovinos, em suas várias fases de atividade e desenvolvimento.
+
+COMPOSIÇÃO BÁSICA DO PRODUTO
+
+ calcário calcítico, fosfato bicálcico, iodato de cálcio, óxido de
+magnésio, sulfato de zinco, selenito de sódio, sulfato de cobalto, sulfato
+de ferro, cloreto de sódio (sal comum) - 31%, enxofre ventilado (flor de
+enxofre), palatabilizante, sulfato de manganês.
+
+EVENTUAIS SUBSTITUTIVOS
+
+ óxido de zinco, levedura seca de cana de açúcar, melaço, monóxido de
+manganês, iodato de potássio.
+
+NIVEIS DE GARANTIA DO PRODUTO
+
+CÁLCIO      (mín/máx)  90 / 360   g
+FÓSFORO     (mín)      60   g
+MAGNÉSIO    (mín)      10   g
+SÓDIO (mín) 110  g
+ENXOFRE     (mín)      12   g
+COBALTO     (mín)      150  mg
+IODO  (mín) 60   mg
+FERRO (mín) 2.500      mg
+MANGANÊS    (mín)      4.500      mg
+SELÊNIO     (mín)      30   mg
+ZINCO (mín) 6.000      mg
+FLÚOR (máx) 600  mg
+PALATABILIZANTE  (mín) 180  g
+
+MODO DE USAR
+
+ DUKAMP OVINOS já é pronto para uso, bastando despejar o produto em cochos
+e deixar à disposição permanente dos animais. Preferencialmente, recomenda-
+se o uso de cochos cobertos e com espaço mínimo de 3 a 5 cm por cabeça
+suplementada. Em caso de dúvidas, consulte nosso departamento técnico ou um
+profissional de sua confiança.
+
+PRAZO DE VALIDADE: 2 anos após a data de fabricação
+
+MODO DE CONSERVAÇÃO
+
+ Conservar este produto em local coberto, seco, arejado, livre de insetos e
+roedores, sobre estrados, afastado de paredes e devidamente embalado. Não
+armazenar junto a combustíveis, fertilizantes ou produtos tóxicos.
+
+DADOS DA EMPRESA:
+
+Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+Código SIF: SP-002190-3
+Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+CEP 15150-000, MONTE APRAZÍVEL, SP
+CNPJ: 002.425.166/0001-85
+INSCRIÇÃO ESTADUAL: 462.063.756.110
+FONE/FAX: (17) 3275.3106

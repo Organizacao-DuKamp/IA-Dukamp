@@ -1,0 +1,346 @@
+ARQUIVO DE ORIGEM: rtpi-baldinho-fertikamp-gold.doc
+CAMINHO ORIGINAL: 04-OUTROS/01-RTPI-E-FICHAS/rtpi-baldinho-fertikamp-gold.doc
+FORMATO ORIGINAL: .doc
+========================================================================
+
+FERTIKAMP GOLD
+
+|LOG DE ATUALIZAÇÕES                                                      |
+|         |                                                               |
+|11/07/12 |Criação do documento                                           |
+
+              adequar níveis de garantia ao novo padrão do MAPA
+                               (mín/máx; mg/g)
+                              RELATÓRIO TÉCNICO
+
+1)    NOME, ENDEREÇO E CNPJ DO ESTABELECIMENTO PROPRIETÁRIO DO PRODUTO:
+
+     Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+     Código SIF: SP-08243
+     Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+     CEP 15150-000, MONTE APRAZÍVEL, SP
+     CNPJ: 002.425.166/0001-85
+     INSCRIÇÃO ESTADUAL: 462.063.756.110
+     FONE/FAX: (17) 3275.3106
+
+2)    DESIGNAÇÃO DO PRODUTO POR NOME E MARCA COMERCIAL:
+
+              FERTIKAMP GOLD
+
+3)    CLASSIFICAÇÃO DO PRODUTO:
+
+              SUPLEMENTO MINERAL VITAMÍNICO PARA MISTURA PARA OVINOS
+
+4)    FORMA FÍSICA DE APRESENTAÇÃO:
+
+              Seco, em pó
+
+5)    CARACTERÍSTICA DA EMBALAGEM E FORMA DE ACONDICIONAMENTO:
+
+              Produto será acondicionado em:
+
+              - opção 1 -   sacaria do tipo ráfia (polipropileno),  nova  e
+                         de uso único
+              - opção 2 -   saco de plástico (polietileno)  como  embalagem
+                         primária e, como embalagem secundária serão usados
+                         balde de plástico ou caixas de papelão.
+
+6)    COMPOSIÇÃO QUALITATIVA:
+
+              ácido  fólico,  ácido  pantotênico,   aditivo   antioxidante,
+      aditivo promotor de  crescimento  e  eficiência  alimentar,  aroma  de
+      baunilha, carbonato de cálcio, cloreto de potássio, cloreto  de  sódio
+      (sal comum), cromo aminoácido quelato, DL-metionina, enxofre ventilado
+      (flor de enxofre), fosfato  bicálcico  -  61,54%,  iodato  de  cálcio,
+      levedura seca de cana-de-açúcar, L-lisina, melaço, niacina,  óxido  de
+      magnésio, selenito de sódio, sulfato de cálcio, sulfato  de  colbalto,
+      sulfato de ferro, sulfato de manganês, sulfato de zinco,  vitamina  A,
+      vitamina B1, vitamina B12,  vitamina  B2,  vitamina  B6,  vitamina  C,
+      vitamina D3, vitamina E, vitamina H.
+
+7)    ENRIQUECIMENTO: não há
+
+8)    EVENTUAIS SUBSTITUTIVOS:
+
+              iodato de potássio, lasalocida de sódio, sulfato de magnésio.
+
+     9)     NÍVEIS DE GARANTIA:
+
+              |ITEM                        |ESPECIFICAÇÃO   |VALOR         |UNIDADE    |
+|CÁLCIO                      |                |150           |g          |
+|FÓSFORO                     |                |120           |g          |
+|MAGNÉSIO                    |                |14            |g          |
+|POTÁSSIO                    |                |1             |g          |
+|SÓDIO                       |                |17            |g          |
+|ENXOFRE                     |                |25            |g          |
+|COBALTO                     |                |60            |mg         |
+|IODO                        |                |80            |mg         |
+|FERRO                       |                |3.500         |mg         |
+|MANGANÊS                    |                |2.500         |mg         |
+|SELÊNIO                     |                |20            |mg         |
+|ZINCO                       |                |5.600         |mg         |
+|CROMO                       |                |5             |mg         |
+|FLÚOR                       |(máx)           |2.000         |mg         |
+|VITAMINA A                  |                |280.000       |U.I./kg    |
+|VITAMINA D3                 |                |28.000        |U.I./kg    |
+|VITAMINA E                  |                |4.500         |U.I./kg    |
+|VITAMINA B1                 |                |1.000         |mg         |
+|VITAMINA B2                 |                |1.500         |mg         |
+|ÁCIDO PANTOTÊNICO           |                |1.300         |mg         |
+|VITAMINA B6                 |                |500           |mg         |
+|VITAMINA B12                |                |2.500         |mcg        |
+|VITAMINA C                  |                |5.000         |mg         |
+|BIOTINA                     |                |120           |mg         |
+|ÁCIDO FÓLICO                |                |1.000         |mg         |
+|NIACINA                     |                |10.000        |mg         |
+|DL-METIONINA                |                |900           |mg         |
+|L-LISINA                    |                |2.600         |mg         |
+|ETOXIQUIN                   |                |150           |mg         |
+|MONENSINA SÓDICA            |                |900           |mg         |
+
+10)   DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO E DO CONTROLE DA MATÉRIA-PRIMA E
+     DO PRODUTO ACABADO:
+
+[pic]
+
+DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO:
+              O presente produto será fabricado  no  setor  de  suplementos
+      minerais, cujo fluxograma é apresentado na figura acima.
+              Basicamente,  esse  setor  é  composto  por  uma  moega  para
+      recepção de ingredientes (legenda nº.5), misturador com  1.000  kg  de
+      capacidade  (legenda  nº.7),  silo  de  ensaque   (legenda   nº.9)   e
+      ensacadeira (legenda nº.10).
+              As etapas de produção serão:
+              1) reunião dos ingredientes em volta da moega (legenda nº.5),
+      já pesados em quantidades pré-definidas pelo Departamento Técnico;
+              1.1) no caso  de  ingredientes  considerados  microelementos,
+      eles serão previamente misturados  em  misturador  tipo  ‘Y’  (legenda
+      nº.1), após adicionados ao calcário calcítico em  uma  quantidade  que
+      totalize entre 20 e 30 kg, ao  final  do  qual  procura-se  obter  uma
+      mistura homogênea e em quantidade capaz de ser  bem  homogeneizado  no
+      misturador de 1.000 kg. Essa pré-mistura de ingredientes será  chamada
+      de “premix”
+              2) abastecimento da moega (legenda  nº.5)  com  1.000  kg  de
+      ingredientes (“premix” inclusive) que irão compor o  produto  acabado,
+      ingredientes  estes  qualificados  e  quantificados  em  planilha   de
+      produção
+              3) transferência dos 1.000 kg de ingredientes da moega até  o
+      misturador, através de rosca transportadora (legenda nº.6).
+              4) mistura dos ingredientes no misturador horizontal (legenda
+      nº.7);
+              5) transferência da mistura  do  misturador  até  o  silo  de
+      ensaque, através de rosca transportadora (legenda nº.8);
+              6) ensaque do produto acabado (legenda nº.10).
+
+CONTROLE DA MATÉRIA-PRIMA:
+              As matérias-primas obrigatoriamente deverão vir  acompanhadas
+      de  laudo  de   análise,   contendo   a(s)   concentração(ões)   do(s)
+      nutriente(s) de interesse. Os dados declarados pelo  fornecedor  serão
+      utilizados para abastecer a matriz do software de formulação.
+
+CONTROLE DO PRODUTO ACABADO:
+              Durante o processo  produtivo,  periodicamente,  sub-amostras
+      serão coletadas na bica de ensaque e  compostas  numa  única  amostra,
+      datada,  identificada  e  armazenada,  para   futura   análise,   caso
+      necessária.
+
+11)   INDICAÇÕES DE USO E ESPÉCIE ANIMAL A QUE SE DESTINA:
+
+INDICAÇÕES DE USO:
+
+              Suplemento  mineral   vitamínico   para   mistura,   contendo
+      vitaminas,   macro   e    microelementos    minerais,    ionóforo    e
+      palatabilizante, indicado para  suplementação  de  ovinos  e  caprinos
+      adultos (reprodutores e/ou matrizes). Também é indicado para o preparo
+      de animais de elite para exposições.
+
+ESPÉCIE ANIMAL A QUE SE DESTINA: OVINOS
+
+12)   MODO DE USAR:
+
+              O  suplemento  FERTIKAMP  GOLD  é  para  uso   exclusivo   na
+      formulação de rações.
+              Recomenda-se adição de 30 a  40  kg  de  FERTIKAMP  GOLD  por
+      tonelada de ração (isto é, entre 3  e  4%  de  inclusão).  Fornecer  o
+      produto elaborado calculado na proporção de 250 a 500 gramas de  ração
+      para cada 10 kg de peso corporal. É desejável que o consumo diário  de
+      FERTIKAMP GOLD esteja em torno de 750 a 2.000 miligramas para cada  kg
+      de peso corporal.
+              FERTIKAMP GOLD pode ser administrado aos animais misturado as
+      rações durante sua confecção ou através do método “top dress”, isto é,
+      polvilhando o produto sobre o alimento no cocho.
+              Caso a opção seja pelo polvilhamento sobre a ração, as  doses
+      diárias por cabeça recomendadas são descritas no quadro a seguir:
+
+              |PESO DO ANIMAL  |QUANTIDADE DE FERTIKAMP GOLD |
+|30 kg           |22,5 a 60 g/animal/dia       |
+|40 kg           |30 a 80 g/animal/dia         |
+|50 kg           |37,5 a 100 g/animal/dia      |
+|60 kg           |45 a 120 g/animal/dia        |
+|70 kg           |52,5 a 140 g/animal/dia      |
+|80 kg           |60 a 160 g/animal/dia        |
+|90 kg           | 67,5 a 180g/animal/dia      |
+|100 kg          |75 a 200 g/animal/dia        |
+|110 kg          |82,5 a 220 g/animal/dia      |
+|120 kg          |90 a 240 g/animal/dia        |
+
+              As recomendações aqui descritas de inclusão de FERTIKAMP GOLD
+      na ração, bem como as de quantidades a serem fornecidas da ração podem
+      ser  alteradas  conforme  o  escore   corporal   do   animal,   status
+      nutricional, ganho de peso desejado e/ou qualidade do  volumoso.  Para
+      isso, consulte um profissional habilitado.
+              Porventura, padrões diferentes de odor, aparência  e  textura
+      poderão  ser  notados  entre  lotes  conforme  a  disponibilidade   de
+      componentes  básicos  e  eventuais  substitutivos  sem,  no   entanto,
+      comprometer a qualidade nutricional ou os níveis de garantia.
+              Em caso de dúvidas ou para formulações específicas,  consulte
+      nosso departamento técnico ou um profissional de sua confiança.
+              Não fornecer o produto para equídeos.
+
+13)   CONTEÚDO LÍQUIDO EXPRESSO NO SISTEMA DECIMAL:
+
+              500 g, 1 kg , 3 kg , 10 kg  , 20 kg , 25 kg , 30 kg , 40 kg
+
+14)   PRAZO DE VALIDADE:
+
+              2 anos após a data de fabricação
+
+15) CONDIÇÕES DE CONSERVAÇÃO:
+
+              Conservar em local coberto, fresco, arejado, livre de insetos
+      e roedores e devidamente embalado. Impedir que entre  em  contato  com
+      luz solar direta  e  umidade.  Não  armazenar  junto  a  combustíveis,
+      fertilizantes, produtos tóxicos e/ou em contato direto com  o  solo  e
+      paredes.
+
+16) RESTRIÇÕES E OUTRAS RECOMENDAÇÕES:
+
+              Não fornecer o produto para equídeos.
+
+                                        Monte Aprazível, 11 de Julho de 2012
+
+         |Hugo Imaizumi                |
+|Zootecnista, D.Sc. - CRMV-SP |
+|1623/Z                       |
+|Responsável  Técnico         |
+|Dukamp Saúde Animal          |
+
+                                    ANEXO
+                            - CROQUI DO RÓTULO -
+
+                               FERTIKAMP GOLD
+           SUPLEMENTO MINERAL VITAMÍNICO PARA MISTURA PARA OVINOS
+
+INDICAÇÃO DO PRODUTO:
+
+Suplemento mineral vitamínico para mistura, contendo vitaminas, macro e
+microelementos minerais, ionóforo e palatabilizante, indicado para
+suplementação de ovinos e caprinos adultos (reprodutores e/ou matrizes).
+Também é indicado para o preparo de animais de elite para exposições.
+
+COMPOSIÇÃO BÁSICA DO PRODUTO:
+
+ácido fólico, ácido pantotênico, aditivo antioxidante, aditivo promotor de
+crescimento e eficiência alimentar, aroma de baunilha, carbonato de cálcio,
+cloreto de potássio, cloreto de sódio (sal comum), cromo aminoácido
+quelato, DL-metionina, enxofre ventilado (flor de enxofre), fosfato
+bicálcico - 61,54%, iodato de cálcio, levedura seca de cana-de-açúcar, L-
+lisina, melaço, niacina, óxido de magnésio, selenito de sódio, sulfato de
+cálcio, sulfato de colbalto, sulfato de ferro, sulfato de manganês, sulfato
+de zinco, vitamina A, vitamina B1, vitamina B12, vitamina B2, vitamina B6,
+vitamina C, vitamina D3, vitamina E, vitamina H.
+
+EVENTUAIS SUBSTITUTIVOS:
+
+iodato de potássio, lasalocida de sódio, sulfato de magnésio
+
+NIVEIS DE GARANTIA DO PRODUTO:
+
+CÁLCIO           150   g
+FÓSFORO          120   g
+MAGNÉSIO         14    g
+POTÁSSIO         1     g
+SÓDIO       17   g
+ENXOFRE          25    g
+COBALTO          60    mg
+IODO        80   mg
+FERRO       3.500      mg
+MANGANÊS         2.500 mg
+SELÊNIO          20    mg
+ZINCO       5.600      mg
+CROMO       5    mg
+FLÚOR (máx) 2.000      mg
+VITAMINA A       280.000    U.I./kg
+VITAMINA D3      28.000     U.I./kg
+VITAMINA E       4.500 U.I./kg
+VITAMINA B1      1.000 mg
+VITAMINA B2      1.500 mg
+ÁCIDO PANTOTÊNICO           1.300 mg
+VITAMINA B6      500   mg
+VITAMINA B12           2.500      mcg
+VITAMINA C       5.000 mg
+BIOTINA          120   mg
+ÁCIDO FÓLICO           1.000      mg
+NIACINA          10.000     mg
+DL-METIONINA           900  mg
+L-LISINA         2.600 mg
+ETOXIQUIN        150   mg
+MONENSINA SÓDICA       900  mg
+
+MODO DE USAR:
+
+O suplemento FERTIKAMP GOLD é para uso exclusivo na formulação de rações.
+Recomenda-se adição de 30 a 40 kg de FERTIKAMP GOLD por  tonelada  de  ração
+(isto é, entre 3 e 4% de inclusão). Fornecer o produto  elaborado  calculado
+na proporção de 250 a 500 gramas de ração para cada 10 kg de peso  corporal.
+É desejável que o consumo diário de FERTIKAMP GOLD esteja em torno de 750  a
+2.000 miligramas para cada kg de peso corporal.
+FERTIKAMP GOLD  pode  ser  administrado  aos  animais  misturado  as  rações
+durante sua confecção ou através do método “top dress”, isto é,  polvilhando
+o produto sobre o alimento no cocho.
+Caso a opção seja pelo polvilhamento sobre a ração,  as  doses  diárias  por
+cabeça recomendadas são descritas no quadro a seguir:
+
+|PESO DO ANIMAL  |QUANTIDADE DE FERTIKAMP GOLD |
+|30 kg           |22,5 a 60 g/animal/dia       |
+|40 kg           |30 a 80 g/animal/dia         |
+|50 kg           |37,5 a 100 g/animal/dia      |
+|60 kg           |45 a 120 g/animal/dia        |
+|70 kg           |52,5 a 140 g/animal/dia      |
+|80 kg           |60 a 160 g/animal/dia        |
+|90 kg           | 67,5 a 180g/animal/dia      |
+|100 kg          |75 a 200 g/animal/dia        |
+|110 kg          |82,5 a 220 g/animal/dia      |
+|120 kg          |90 a 240 g/animal/dia        |
+
+As recomendações aqui descritas de inclusão de FERTIKAMP GOLD na ração,  bem
+como as de quantidades a serem  fornecidas  da  ração  podem  ser  alteradas
+conforme o escore corporal do animal,  status  nutricional,  ganho  de  peso
+desejado e/ou qualidade do volumoso. Para  isso,  consulte  um  profissional
+habilitado.
+Porventura, padrões diferentes de odor,  aparência  e  textura  poderão  ser
+notados entre lotes conforme a  disponibilidade  de  componentes  básicos  e
+eventuais  substitutivos  sem,   no   entanto,   comprometer   a   qualidade
+nutricional ou os níveis de garantia.
+Em  caso  de  dúvidas  ou  para  formulações  específicas,  consulte   nosso
+departamento técnico ou um profissional de sua confiança.
+Não fornecer o produto para equídeos.
+
+PRAZO DE VALIDADE:  2 anos após a data de fabricação
+
+MODO DE CONSERVAÇÃO:
+
+Conservar em local coberto, fresco, arejado, livre de insetos e roedores e
+devidamente embalado. Impedir que entre em contato com luz solar direta e
+umidade. Não armazenar junto a combustíveis, fertilizantes, produtos
+tóxicos e/ou em contato direto com o solo e paredes.
+
+DADOS DA EMPRESA:
+
+Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+Código SIF: SP-08243
+Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+CEP 15150-000, MONTE APRAZÍVEL, SP
+CNPJ: 002.425.166/0001-85
+INSCRIÇÃO ESTADUAL: 462.063.756.110
+FONE/FAX: (17) 3275.3106

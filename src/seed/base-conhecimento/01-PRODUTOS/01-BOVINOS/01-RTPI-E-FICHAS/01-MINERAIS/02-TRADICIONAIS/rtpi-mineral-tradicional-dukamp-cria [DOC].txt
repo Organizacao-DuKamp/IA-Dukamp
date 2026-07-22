@@ -1,0 +1,372 @@
+ARQUIVO DE ORIGEM: rtpi-mineral-tradicional-dukamp-cria.doc
+CAMINHO ORIGINAL: 01-BOVINOS/01-RTPI-E-FICHAS/01-MINERAIS/02-TRADICIONAIS/rtpi-mineral-tradicional-dukamp-cria.doc
+FORMATO ORIGINAL: .doc
+========================================================================
+
+DUKAMP CRIA
+
+|LOG DE ATUALIZAÇÕES                                                      |
+|         |                                                               |
+|23/07/12 |Criação do documento                                           |
+
+NESSE RTPI, consta os dizeres da embalagem atual, bem como o plano para
+constar na futura embalagem a ser confeccionada quando o estoque atual
+esgotar.
+                              RELATÓRIO TÉCNICO
+
+1)    NOME, ENDEREÇO E CNPJ DO ESTABELECIMENTO PROPRIETÁRIO DO PRODUTO:
+
+     Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+     Código SIF: SP-08243
+     Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+     CEP 15150-000, MONTE APRAZÍVEL, SP
+     CNPJ: 002.425.166/0001-85
+
+2)    DESIGNAÇÃO DO PRODUTO POR NOME E MARCA COMERCIAL:
+
+              DUKAMP CRIA
+
+3)    CLASSIFICAÇÃO DO PRODUTO:
+
+              SUPLEMENTO MINERAL DE PRONTO USO PARA BOVINOS
+
+4)    FORMA FÍSICA DE APRESENTAÇÃO:
+
+              Seco, em pó
+
+5)    CARACTERÍSTICA DA EMBALAGEM E FORMA DE ACONDICIONAMENTO:
+
+              Produto  será  acondicionado  em  sacaria   do   tipo   ráfia
+      (polipropileno), nova e de uso único.
+
+6)    COMPOSIÇÃO QUALITATIVA:
+
+              EMBALAGEM ATUAL: enxofre ventilado (flor de  enxofre),  óxido
+      de magnésio, monóxido de manganês, óxido de zinco, sulfato  de  ferro,
+      cloreto de sódio (sal comum), fosfato bicálcico,  selenito  de  sódio,
+      sulfato de cobre, sulfato  de  cobalto,  iodato  de  cálcio,  calcário
+      calcítico.
+              NOVA EMBALAGEM: calcário calcítico, fosfato bicálcico, iodato
+      de cálcio, óxido de magnésio, sulfato de  zinco,  selenito  de  sódio,
+      sulfato de cobalto, sulfato de cobre, sulfato  de  ferro,  cloreto  de
+      sódio (sal comum), enxofre ventilado (flor  de  enxofre),  sulfato  de
+      manganês.
+
+7)    ENRIQUECIMENTO: não há
+
+8)    EVENTUAIS SUBSTITUTIVOS:
+
+              EMBALAGEM ATUAL:  fosfato  monoamônio,  iodato  de  potássio,
+      sulfato de manganês.
+              NOVA EMBALAGEM: óxido de zinco, monóxido de manganês,  iodato
+      de potássio
+
+     9)     NÍVEIS DE GARANTIA:
+
+EMBALAGEM ATUAL
+
+              |ITEM                   |ESPECIFICAÇÃO      |VALOR          |UNIDADE      |
+|CÁLCIO                 |(mín)              |172            |g            |
+|FÓSFORO                |(mín)              |73             |g            |
+|MAGNÉSIO               |                   |15             |g            |
+|SÓDIO                  |                   |130            |g            |
+|ENXOFRE                |                   |12             |g            |
+|COBALTO                |                   |50             |mg           |
+|COBRE                  |                   |1.000          |mg           |
+|IODO                   |                   |65             |mg           |
+|FERRO                  |                   |1.400          |mg           |
+|MANGANÊS               |                   |1.000          |mg           |
+|SELÊNIO                |                   |25             |mg           |
+|ZINCO                  |                   |3.500          |mg           |
+|FLÚOR                  |(máx)              |750            |mg           |
+|SOLUBULIDADE DO FÓSFORO|(mín)              |90             |%            |
+|EM ÁC. CÍTRICO A 2%    |                   |               |             |
+
+NOVA EMBALAGEM
+
+              |ITEM                   |ESPECIFICAÇÃO      |VALOR          |UNIDADE      |
+|CÁLCIO                 |(mín/máx)          |88 / 475       |g            |
+|FÓSFORO                |(mín)              |73             |g            |
+|MAGNÉSIO               |(mín)              |15             |g            |
+|SÓDIO                  |(mín)              |130            |g            |
+|ENXOFRE                |(mín)              |12             |g            |
+|COBALTO                |(mín)              |50             |mg           |
+|COBRE                  |(mín)              |1.000          |mg           |
+|IODO                   |(mín)              |65             |mg           |
+|FERRO                  |(mín)              |1.400          |mg           |
+|MANGANÊS               |(mín)              |1.000          |mg           |
+|SELÊNIO                |(mín)              |25             |mg           |
+|ZINCO                  |(mín)              |3.500          |mg           |
+|FLÚOR                  |(máx)              |730            |mg           |
+
+EMBALAGEM ATUAL: não há valor de referência
+
+NOVA EMBALAGEM
+
+|VALOR DE REFERÊNCIA                                                       |
+|GARANTIA                    |Valor de |Quantidade       |Quantidade em %  |
+|                            |referênci|fornecida por    |do VR fornecido  |
+|                            |a (VR*)  |100g de          |por 100g de      |
+|                            |         |suplemento       |suplemento       |
+|CONSUMO DE                  |g/dia    |g/dia            |%                |
+|Proteína Bruta              |550      |-                |-                |
+|Nutrientes Digestíveis      |4.000    |-                |-                |
+|Totais (NDT)                |         |                 |                 |
+|MACRONUTRIENTES             |g/dia    |g/dia            |%                |
+|Cálcio (mín./máx.)          |14       |8,8 / 47,5       |62 / 339         |
+|Fósforo                     |11       |7,3              |66               |
+|Magnésio                    |9        |1,5              |16               |
+|Sódio                       |7        |13               |185              |
+|Enxofre                     |1        |1,2              |8                |
+|Potássio                    |54       |-                |-                |
+|MICRONUTRIENTES             |mg/dia   |mg/dia           |%                |
+|Cobalto                     |0,9      |5                |555              |
+|Cobre                       |90       |100              |111              |
+|Iodo                        |4,5      |6,5              |144              |
+|Ferro                       |450      |140              |31               |
+|Manganês                    |180      |100              |55               |
+|Selênio                     |0,9      |2,5              |277              |
+|Zinco                       |270      |350              |129              |
+|VITAMINAS                   |U.I./dia |U.I./dia         |%                |
+|Vitamina A                  |20.000   |-                |-                |
+|Vitamina D                  |2.500    |-                |-                |
+|Vitamina E                  |350      |-                |-                |
+|* Valor diário de referência para mantença de um animal de 450 kg de peso |
+|corporal                                                                  |
+
+10)   DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO E DO CONTROLE DA MATÉRIA-PRIMA E
+     DO PRODUTO ACABADO:
+
+[pic]
+
+DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO:
+              O presente produto será fabricado  no  setor  de  suplementos
+      minerais, cujo fluxograma é apresentado na figura acima.
+              Basicamente,  esse  setor  é  composto  por  uma  moega  para
+      recepção de ingredientes (legenda nº.5), misturador com  1.000  kg  de
+      capacidade  (legenda  nº.7),  silo  de  ensaque   (legenda   nº.9)   e
+      ensacadeira (legenda nº.10).
+              As etapas de produção serão:
+              1) reunião dos ingredientes em volta da moega (legenda nº.5),
+      já pesados em quantidades pré-definidas pelo Departamento Técnico;
+              1.1) no caso  de  ingredientes  considerados  microelementos,
+      eles serão previamente misturados  em  misturador  tipo  ‘Y’  (legenda
+      nº.1), após adicionados ao calcário calcítico em  uma  quantidade  que
+      totalize entre 20 e 30 kg, ao  final  do  qual  procura-se  obter  uma
+      mistura homogênea e em quantidade capaz de ser  bem  homogeneizado  no
+      misturador de 1.000 kg. Essa pré-mistura de ingredientes será  chamada
+      de “premix”
+              2) abastecimento da moega (legenda  nº.5)  com  1.000  kg  de
+      ingredientes (“premix” inclusive) que irão compor o  produto  acabado,
+      ingredientes  estes  qualificados  e  quantificados  em  planilha   de
+      produção
+              3) transferência dos 1.000 kg de ingredientes da moega até  o
+      misturador, através de rosca transportadora (legenda nº.6).
+              4) mistura dos ingredientes no misturador horizontal (legenda
+      nº.7);
+              5) transferência da mistura  do  misturador  até  o  silo  de
+      ensaque, através de rosca transportadora (legenda nº.8);
+              6) ensaque do produto acabado (legenda nº.10).
+
+CONTROLE DA MATÉRIA-PRIMA:
+              As matérias-primas obrigatoriamente deverão vir  acompanhadas
+      de  laudo  de   análise,   contendo   a(s)   concentração(ões)   do(s)
+      nutriente(s) de interesse. Os dados declarados pelo  fornecedor  serão
+      utilizados para abastecer a matriz do software de formulação.
+
+CONTROLE DO PRODUTO ACABADO:
+              Durante o processo  produtivo,  periodicamente,  sub-amostras
+      serão coletadas na bica de ensaque e  compostas  numa  única  amostra,
+      datada,  identificada  e  armazenada,  para   futura   análise,   caso
+      necessária.
+
+11)   INDICAÇÕES DE USO E ESPÉCIE ANIMAL A QUE SE DESTINA:
+
+INDICAÇÕES DE USO:
+
+              EMBALAGEM ATUAL: Produto indicado  para  evitar  ou  corrigir
+      carências e deficiências minerais em  bovinos  nas  fases  de  cria  e
+      recria mantidos em áreas de média fertilidade com pastagens  de  média
+      qualidade nutricional.
+              NOVA EMBALAGEM: Suplemento mineral  de  pronto  uso  indicado
+      para bovinos de corte na fase de cria e recria em pastagens  de  média
+      qualidade nutricional.
+
+ESPÉCIE ANIMAL A QUE SE DESTINA: BOVINOS
+
+12)   MODO DE USAR:
+
+              EMBALAGEM ATUAL: O Dukamp  Cria  já  está  pronto  para  uso,
+      bastando despejar o produto em cochos e deixar a disposição permanente
+      dos animais. Em caso de dúvidas, consulte nosso  departamento  técnico
+      ou um profissional de sua confiança.
+              NOVA EMBALAGEM: DUKAMP CRIA já é pronto  para  uso,  bastando
+      despejar o produto em cochos e  deixar  à  disposição  permanente  dos
+      animais. Preferencialmente, recomenda-se o uso de  cochos  cobertos  e
+      com espaço mínimo de 3 a 5 cm por cabeça suplementada. Não fornecer  o
+      produto para ovinos. Em caso de dúvidas, consulte  nosso  departamento
+      técnico ou um profissional de sua confiança.
+
+13)   CONTEÚDO LÍQUIDO EXPRESSO NO SISTEMA DECIMAL:
+
+              25 kg
+
+14)   PRAZO DE VALIDADE: 2 anos após a data de fabricação
+
+15) CONDIÇÕES DE CONSERVAÇÃO:
+
+              EMBALAGEM ATUAL: Conservar este  produto  em  local  coberto,
+      seco, arejado, sobre  estrados,  afastado  de  paredes  e  devidamente
+      embalado. Não armazenar junto a produtos tóxicos.
+              NOVA EMBALAGEM: Conservar  este  produto  em  local  coberto,
+      seco, arejado, livre de insetos e roedores, sobre  estrados,  afastado
+      de paredes e devidamente embalado. Não armazenar junto a combustíveis,
+      fertilizantes ou produtos tóxicos.
+
+16) RESTRIÇÕES E OUTRAS RECOMENDAÇÕES:
+
+              Não fornecer o produto para ovinos.
+
+                                        Monte Aprazível, 23 de Julho de 2012
+
+             |Hugo Imaizumi                |
+|Zootecnista, D.Sc. - CRMV-SP |
+|1623/Z                       |
+|Responsável  Técnico         |
+|Dukamp Saúde Animal          |
+
+            ANEXO
+                            - CROQUI DO RÓTULO -
+
+                                 DUKAMP CRIA
+         SUPLEMENTO MINERAL PARA BOVINOS DE CORTE (EMBALAGEM ATUAL)
+   SUPLEMENTO MINERAL DE PRONTO USO PARA BOVINOS DE CORTE (NOVA EMBALAGEM)
+
+INDICAÇÃO DO PRODUTO
+
+EMBALAGEM ATUAL: Produto indicado para evitar ou corrigir carências e
+deficiências minerais em bovinos nas fases de cria e recria mantidos em
+áreas de média fertilidade com pastagens de média qualidade nutricional.
+NOVA EMBALAGEM: Suplemento mineral de pronto uso indicado para bovinos de
+corte na fase de cria e recria em pastagens de média qualidade nutricional.
+
+COMPOSIÇÃO BÁSICA DO PRODUTO
+
+EMBALAGEM ATUAL: enxofre ventilado (flor de enxofre), óxido de magnésio,
+monóxido de manganês, óxido de zinco, sulfato de ferro, cloreto de sódio
+(sal comum), fosfato bicálcico, selenito de sódio, sulfato de cobre,
+sulfato de cobalto, iodato de cálcio, calcário calcítico.
+NOVA EMBALAGEM: calcário calcítico, fosfato bicálcico, iodato de cálcio,
+óxido de magnésio, sulfato de zinco, selenito de sódio, sulfato de cobalto,
+sulfato de cobre, sulfato de ferro, cloreto de sódio (sal comum), enxofre
+ventilado (flor de enxofre), sulfato de manganês.
+
+EVENTUAIS SUBSTITUTIVOS
+
+EMBALAGEM ATUAL: fosfato monoamônio, iodato de potássio, sulfato de
+manganês.
+NOVA EMBALAGEM: óxido de zinco, monóxido de manganês, iodato de potássio
+
+NIVEIS DE GARANTIA DO PRODUTO
+
+EMBALAGEM ATUAL:
+CÁLCIO      (mín)      172  g
+FÓSFORO     (mín)      73   g
+MAGNÉSIO         15    g
+SÓDIO       130  g
+ENXOFRE          12    g
+COBALTO          50    mg
+COBRE       1.000      mg
+IODO        65   mg
+FERRO       1.400      mg
+MANGANÊS         1.000 mg
+SELÊNIO          25    mg
+ZINCO       3.500      mg
+FLÚOR (máx) 750  mg
+SOLUBULIDADE DO FÓSFORO
+EM ÁC. CÍTRICO A 2%    (mín)      90   %
+
+NOVA EMBALAGEM:
+CÁLCIO      (mín/máx)  88 / 475   g
+FÓSFORO     (mín)      73   g
+MAGNÉSIO    (mín)      15   g
+SÓDIO (mín) 130  g
+ENXOFRE     (mín)      12   g
+COBALTO     (mín)      50   mg
+COBRE (mín) 1.000      mg
+IODO  (mín) 65   mg
+FERRO (mín) 1.400      mg
+MANGANÊS    (mín)      1.000      mg
+SELÊNIO     (mín)      25   mg
+ZINCO (mín) 3.500      mg
+FLÚOR (máx) 730  mg
+
+EMBALAGEM ATUAL: não há valor de referência
+
+NOVA EMBALAGEM:
+
+|VALOR DE REFERÊNCIA                                                       |
+|GARANTIA                    |Valor de |Quantidade       |Quantidade em %  |
+|                            |referênci|fornecida por    |do VR fornecido  |
+|                            |a (VR*)  |100g de          |por 100g de      |
+|                            |         |suplemento       |suplemento       |
+|CONSUMO DE                  |g/dia    |g/dia            |%                |
+|Proteína Bruta              |550      |-                |-                |
+|Nutrientes Digestíveis      |4.000    |-                |-                |
+|Totais (NDT)                |         |                 |                 |
+|MACRONUTRIENTES             |g/dia    |g/dia            |%                |
+|Cálcio (mín./máx.)          |14       |8,8 / 47,5       |62 / 339         |
+|Fósforo                     |11       |7,3              |66               |
+|Magnésio                    |9        |1,5              |16               |
+|Sódio                       |7        |13               |185              |
+|Enxofre                     |1        |1,2              |8                |
+|Potássio                    |54       |-                |-                |
+|MICRONUTRIENTES             |mg/dia   |mg/dia           |%                |
+|Cobalto                     |0,9      |5                |555              |
+|Cobre                       |90       |100              |111              |
+|Iodo                        |4,5      |6,5              |144              |
+|Ferro                       |450      |140              |31               |
+|Manganês                    |180      |100              |55               |
+|Selênio                     |0,9      |2,5              |277              |
+|Zinco                       |270      |350              |129              |
+|VITAMINAS                   |U.I./dia |U.I./dia         |%                |
+|Vitamina A                  |20.000   |-                |-                |
+|Vitamina D                  |2.500    |-                |-                |
+|Vitamina E                  |350      |-                |-                |
+|* Valor diário de referência para mantença de um animal de 450 kg de peso |
+|corporal                                                                  |
+
+MODO DE USAR
+
+EMBALAGEM ATUAL: O Dukamp Cria já está pronto para uso, bastando despejar o
+produto em cochos e deixar a disposição permanente dos animais. Em caso de
+dúvidas, consulte nosso departamento técnico ou um profissional de sua
+confiança.
+NOVA EMBALAGEM: DUKAMP CRIA já é pronto para uso, bastando despejar o
+produto em cochos e deixar à disposição permanente dos animais.
+Preferencialmente, recomenda-se o uso de cochos cobertos e com espaço
+mínimo de 3 a 5 cm por cabeça suplementada. Não fornecer o produto para
+ovinos. Em caso de dúvidas, consulte nosso departamento técnico ou um
+profissional de sua confiança.
+
+PRAZO DE VALIDADE: 2 anos após a data de fabricação
+
+MODO DE CONSERVAÇÃO
+
+EMBALAGEM ATUAL: Conservar este produto em local coberto, seco, arejado,
+sobre estrados, afastado de paredes e devidamente embalado. Não armazenar
+junto a produtos tóxicos.
+NOVA EMBALAGEM: Conservar este produto em local coberto, seco, arejado,
+livre de insetos e roedores, sobre estrados, afastado de paredes e
+devidamente embalado. Não armazenar junto a combustíveis, fertilizantes ou
+produtos tóxicos.
+
+DADOS DA EMPRESA:
+
+Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+Código SIF: SP-08243
+Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+CEP 15150-000, MONTE APRAZÍVEL, SP
+CNPJ: 002.425.166/0001-85
+INSCRIÇÃO ESTADUAL: 462.063.756.110
+FONE/FAX: (17) 3275.3106

@@ -1,0 +1,85 @@
+ARQUIVO DE ORIGEM: relacao-de-produtos-dukamp-2012-02.pdf
+CAMINHO ORIGINAL: 04-OUTROS/01-RTPI-E-FICHAS/relacao-de-produtos-dukamp-2012-02.pdf
+FORMATO ORIGINAL: .pdf
+========================================================================
+
+RELAÇÃO DE PRODUTOS FABRICADOS PELA DUKAMP SAÚDE ANIMAL LTDA
+                                         SIF: SP-08243
+                               Resp. Técnico: Hugo Imaizumi (CRMV-SP 01623/Z)
+                               ATUALIZAÇÃO: 13/02/2012                        página 1 / 2
+
+Seq. Marca                                   Classificação                       Espécie
+   1 ADEKamp Gold                            Suplemento mineral para mistura     Bovinos
+   2 BABYKAMP Gold                           Suplemento mineral para mistura     Bovinos
+   3 BABYKAMP OVINOS Gold                    Suplemento mineral para mistura     Ovinos
+   4 BEEFKAMP Gold                           Suplemento mineral para mistura     Bovinos
+   5 CREATINA Turbo                          Suplemento mineral para mistura     Equinos
+   6 Dukamp 130                              Suplemento mineral para mistura     Bovinos
+   7 Dukamp 175                              Suplemento mineral para mistura     Bovinos
+   8 Dukamp 40/S                             Suplemento mineral de pronto uso    Bovinos
+   9 Dukamp 60                               Suplemento mineral de pronto uso    Bovinos
+  10 Dukamp 60/S                             Suplemento mineral de pronto uso    Bovinos
+  11 Dukamp 65                               Suplemento mineral de pronto uso    Bovinos
+  12 Dukamp 65/S                             Suplemento mineral de pronto uso    Bovinos
+  13 Dukamp 80                               Suplemento mineral de pronto uso    Bovinos
+  14 Dukamp 80/S                             Suplemento mineral de pronto uso    Bovinos
+  15 Dukamp 87/S                             Suplemento mineral de pronto uso    Bovinos
+  16 Dukamp Concentrado 130                  Suplemento mineral para mistura     Bovinos
+  17 Dukamp Concentrado Confinamento 40      Concentrado                         Bovinos
+  18 Dukamp Concentrado Confinamento 60      Concentrado                         Bovinos
+  19 Dukamp Concentrado Lactação             Concentrado                         Bovinos
+  20 Dukamp Creep Feeding                    Suplemento mineral protéico         Bovinos
+  21 Dukamp Cria                             Suplemento mineral de pronto uso    Bovinos
+  22 Dukamp Cria/S                           Suplemento mineral de pronto uso    Bovinos
+  23 Dukamp Eqüinos/S                        Suplemento mineral de pronto uso    Equinos
+  24 Dukamp Leite Premium                    Suplemento mineral de pronto uso    Bovinos
+  25 Dukamp Leite/S                          Suplemento mineral de pronto uso    Bovinos
+  26 Dukamp Ovinos                           Suplemento mineral de pronto uso    Ovinos
+  27 Dukamp Protéico                         Suplemento mineral protéico         Bovinos
+  28 Dukamp Protéico 50                      Suplemento mineral protéico         Bovinos
+  29 Dukamp Protéico 60                      Suplemento mineral protéico         Bovinos
+  30 Dukamp Protéico Águas                   Suplemento mineral protéico         Bovinos
+  31 Dukamp Protéico Premium                 Suplemento mineral protéico         Bovinos
+  32 Dukamp Protéico Seca                    Suplemento mineral protéico         Bovinos
+  33 Dukamp Protéico Seca 24 AC              Suplemento mineral protéico         Bovinos
+  34 Dukamp Protéico Transição 30            Suplemento mineral protéico         Bovinos
+  35 Dukamp Ração Águas                      Ração                               Bovinos
+  36 Dukamp Ração Baby                       Ração                               Bovinos
+  37 Dukamp Ração Baby Elite                 Ração                               Bovinos
+  38 Dukamp Ração Confinamento               Ração                               Bovinos
+  39 Dukamp Ração Confinamento Ovinos        Ração                               Ovinos
+  40 Dukamp Ração Confinamento SR            Ração                               Bovinos
+  41 Dukamp Ração Lactação 22                Ração                               Bovinos
+  42 Dukamp Ração Lactação 22 TIROLEZ        Ração                               Bovinos
+  43 Dukamp Ração Lactação 24                Ração                               Bovinos
+  44 Dukamp Ração Lactação 24 AE             Ração                               Bovinos
+  45 Dukamp Ração Lactação 24 TIROLEZ        Ração                               Bovinos
+  46 Dukamp Ração Lactação ST                Ração                               Bovinos
+  47 Dukamp Ração Lactação Triunfo           Ração                               Bovinos
+  48 Dukamp Ração Reprodutor                 Ração                               Bovinos
+  49 Dukamp Ração Semi Confinamento          Ração                               Bovinos
+  50 Dukamp Ração Semi Confinamento SR       Ração                               Bovinos
+  51 Dukamp Reprodução/S                     Suplemento mineral de pronto uso    Bovinos
+  52 Dukamp Transição 35                     Suplemento mineral protéico         Bovinos
+  53 Dukamp Uréia                            Suplemento mineral com uréia        Bovinos
+  54 FERTIKAMP Gold                          Suplemento mineral para mistura     Ovinos
+
+    RELAÇÃO DE PRODUTOS FABRICADOS PELA DUKAMP SAÚDE ANIMAL LTDA
+                                         SIF: SP-08243
+                               Resp. Técnico: Hugo Imaizumi (CRMV-SP 01623/Z)
+                               ATUALIZAÇÃO: 13/02/2012                        página 2 / 2
+
+Seq. Marca                                   Classificação                       Espécie
+  55 HORSEPOWER Gold                         Suplemento mineral para mistura     Equinos
+  56 HORSEPOWER Gold Turbo                   Suplemento mineral para mistura     Equinos
+  57 Núcleo Dukamp Bezerro GL                Núcleo                              Bovinos
+  58 Núcleo Dukamp Confinamento              Núcleo                              Bovinos
+  59 Núcleo Dukamp Confinamento Premium      Núcleo                              Bovinos
+  60 Núcleo Dukamp Crescimento               Núcleo                              Bovinos
+  61 Núcleo Dukamp Lactação                  Núcleo                              Bovinos
+  62 Núcleo Dukamp Lactação GL               Núcleo                              Bovinos
+  63 Núcleo Dukamp Pré-parto GL              Núcleo                              Bovinos
+  64 Núcleo Dukamp Protéico Seca             Núcleo                              Bovinos
+  65 Núcleo Dukamp SM                        Núcleo                              Bovinos
+  66 Ração Dukavallus                        Ração                               Equinos
+  67 RODEO BULLS Turbo                       Suplemento mineral para mistura     Bovinos

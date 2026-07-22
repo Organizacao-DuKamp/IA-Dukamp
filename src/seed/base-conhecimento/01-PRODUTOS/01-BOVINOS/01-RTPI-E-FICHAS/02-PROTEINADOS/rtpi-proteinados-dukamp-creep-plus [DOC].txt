@@ -1,0 +1,345 @@
+ARQUIVO DE ORIGEM: rtpi-proteinados-dukamp-creep-plus.doc
+CAMINHO ORIGINAL: 01-BOVINOS/01-RTPI-E-FICHAS/02-PROTEINADOS/rtpi-proteinados-dukamp-creep-plus.doc
+FORMATO ORIGINAL: .doc
+========================================================================
+
+DUKAMP CREEP PLUS
+
+|LOG DE ATUALIZAÇÕES                                                      |
+|         |                                                               |
+|20/01/21 |Criação do documento                                           |
+
+                              RELATÓRIO TÉCNICO
+
+1)    NOME, ENDEREÇO E CNPJ DO ESTABELECIMENTO PROPRIETÁRIO DO PRODUTO:
+
+     Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+     Código SIF: SP-002190-3
+     Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+     CEP 15150-000, MONTE APRAZÍVEL, SP
+     CNPJ: 002.425.166/0001-85
+
+2)    DESIGNAÇÃO DO PRODUTO POR NOME E MARCA COMERCIAL:
+
+              DUKAMP CREEP PLUS
+
+3)    CLASSIFICAÇÃO DO PRODUTO:
+
+              SUPLEMENTO MINERAL PROTÉICO DE PRONTO USO  PARA   BOVINOS  DE
+      CORTE
+
+4)    FORMA FÍSICA DE APRESENTAÇÃO:
+
+              Farelada
+
+5)    CARACTERÍSTICA DA EMBALAGEM E FORMA DE ACONDICIONAMENTO:
+
+              Produto  será  acondicionado  em  sacaria   do   tipo   ráfia
+      (polipropileno), nova e de uso único.
+
+6)    COMPOSIÇÃO QUALITATIVA:
+
+               farelo de  soja,  farelo  de  trigo,  carbonato  de  cálcio,
+      fosfato bicálcico, milho integral moído,  monensina sodica, cloreto de
+      sódio (sal comum), melaço em pó, premix  mineral  vitamínico.  Produto
+      poderá conter milho (1,2,4,5), soja (1,2,3,4) ou  algodão  (1,2,4,5,6)
+      transgênicos.  Espécie  doadora  de  genes  (em  caso  de  ingrediente
+      transgênico): 1- Agrobacterium tumefaciens; 2- Bacillus thuringiensis;
+      3- Arabidopsis thaliana; 4-  Streptomyces  viridochromogenes;  5-  Zea
+      mays; 6- Streptomyces hygroscopicus.
+
+7)    ENRIQUECIMENTO: não há
+
+8)    EVENTUAIS SUBSTITUTIVOS:
+
+              Farelo de algodão, sorgo integral moído, milheto,  farelo  de
+      trigo, farelo de polpa cítrica, gérmen de milho, farelo  de  amendoim,
+      glúten de milho, leveduras.
+
+    9)      NÍVEIS DE GARANTIA:
+
+|ITEM                   |ESPECIFICAÇÃO      |VALOR          |UNIDADE      |
+|CÁLCIO                 |mín/máx            |30 / 75        |g            |
+|FÓSFORO                |mín                |28             |g            |
+|MAGNÉSIO               |mín                |8.000          |mg           |
+|SÓDIO                  |mín                |19             |g            |
+|ENXOFRE                |mín                |14             |g            |
+|COBALTO                |mín                |6              |mg           |
+|COBRE                  |mín                |250            |mg           |
+|IODO                   |mín                |12             |mg           |
+|FERRO                  |mín                |1700           |mg           |
+|MANGANÊS               |mín                |530            |mg           |
+|SELÊNIO                |mín                |4              |mg           |
+|ZINCO                  |mín                |            900|mg           |
+|FLÚOR                  |máx                |               |mg           |
+|                       |                   |300            |             |
+|MONENSINA SÓDICA       |mín                |230            |mg           |
+|PROTEÍNA BRUTA         |mín                |170            |g            |
+
+              |VALOR DE REFERÊNCIA                                                       |
+|GARANTIA                    |Valor de |Quantidade       |Quantidade em %  |
+|                            |referênci|fornecida por    |do VR fornecido  |
+|                            |a (VR*)  |100g de          |por 100g de      |
+|                            |         |suplemento       |suplemento       |
+|CONSUMO DE                  |g/dia    |g/dia            |%                |
+|Proteína Bruta              |550      |17               |3                |
+|Nutrientes Digestíveis      |4.000    |-                |-                |
+|Totais (NDT)                |         |                 |                 |
+|                            |         |                 |                 |
+|MACRONUTRIENTES             |g/dia    |g/dia            |%                |
+|Cálcio (mín./máx.)          |14       |3 / 7,5          |21 / 53          |
+|Fósforo                     |11       |2,8              |25               |
+|Magnésio                    |9        |0,8              |8                |
+|Sódio                       |7        |1,9              |27               |
+|Enxofre                     |13,5     |1,4              |11               |
+|Potássio                    |54       |-                |-                |
+|                            |         |                 |                 |
+|MICRONUTRIENTES             |mg/dia   |mg/dia           |%                |
+|Cobalto                     |0,9      |0,6              |66               |
+|Cobre                       |90       |25               |27               |
+|Iodo                        |4,5      |1,2              |33               |
+|Ferro                       |450      |170              |37               |
+|Manganês                    |180      |53               |29               |
+|Selênio                     |0,9      |0,4              |44               |
+|Zinco                       |270      |90               |33               |
+|                            |         |                 |                 |
+|VITAMINAS                   |U.I./dia |U.I./dia         |%                |
+|Vitamina A                  |20.000   |                 |                 |
+|Vitamina D                  |2.500    |                 |                 |
+|Vitamina E                  |350      |                 |                 |
+|* Valor diário de referência para mantença de um animal de 450 kg de peso |
+|corporal                                                                  |
+
+    10)     DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO E DO CONTROLE DA MATÉRIA-
+    PRIMA E DO PRODUTO ACABADO:
+
+[pic]
+
+DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO:
+              O presente produto será fabricado  no  setor  de  suplementos
+      minerais, cujo fluxograma é apresentado na figura acima.
+              Basicamente,  esse  setor  é  composto  por  uma  moega  para
+      recepção de ingredientes (legenda nº.5), misturador com  1.000  kg  de
+      capacidade  (legenda  nº.7),  silo  de  ensaque   (legenda   nº.9)   e
+      ensacadeira (legenda nº.10).
+              As etapas de produção serão:
+              1) reunião dos ingredientes em volta da moega (legenda nº.5),
+      já pesados em quantidades pré-definidas pelo Departamento Técnico;
+              1.1) no caso  de  ingredientes  considerados  microelementos,
+      eles serão previamente misturados  em  misturador  tipo  ‘Y’  (legenda
+      nº.1), após adicionados ao calcário calcítico em  uma  quantidade  que
+      totalize entre 20 e 30 kg, ao  final  do  qual  procura-se  obter  uma
+      mistura homogênea e em quantidade capaz de ser  bem  homogeneizado  no
+      misturador de 1.000 kg. Essa pré-mistura de ingredientes será  chamada
+      de “premix”
+              2) abastecimento da moega (legenda  nº.5)  com  1.000  kg  de
+      ingredientes (“premix” inclusive) que irão compor o  produto  acabado,
+      ingredientes  estes  qualificados  e  quantificados  em  planilha   de
+      produção
+              3) transferência dos 1.000 kg de ingredientes da moega até  o
+      misturador, através de rosca transportadora (legenda nº.6).
+              4) mistura dos ingredientes no misturador horizontal (legenda
+      nº.7);
+              5) transferência da mistura  do  misturador  até  o  silo  de
+      ensaque, através de rosca transportadora (legenda nº.8);
+              6) ensaque do produto acabado (legenda nº.10).
+
+CONTROLE DA MATÉRIA-PRIMA:
+              As matérias-primas obrigatoriamente deverão vir  acompanhadas
+      de  laudo  de   análise,   contendo   a(s)   concentração(ões)   do(s)
+      nutriente(s) de interesse. Os dados declarados pelo  fornecedor  serão
+      utilizados para abastecer a matriz do software de formulação.
+
+CONTROLE DO PRODUTO ACABADO:
+              Durante o processo  produtivo,  periodicamente,  sub-amostras
+      serão coletadas na bica de ensaque e  compostas  numa  única  amostra,
+      datada,  identificada  e  armazenada,  para   futura   análise,   caso
+      necessária.
+
+11)   INDICAÇÕES DE USO E ESPÉCIE ANIMAL A QUE SE DESTINA:
+
+INDICAÇÕES DE USO:
+
+              Produto indicado para a  suplementação  mineral,  protéica  e
+      vitamínica de bezerros em toda fase de aleitamento até 2 meses após  a
+      desmama.
+
+ESPÉCIE ANIMAL A QUE SE DESTINA: BOVINOS DE CORTE
+
+12)   MODO DE USAR:
+
+              O produto Dukamp Creep Plus já vem pronto para uso,  bastando
+      despejar em cochos protegidos e deixar  à  disposição  permanente  dos
+      animais. Consumo esperado de 200 g do produto para cada 100 kg de peso
+      vivo dos animais. Recomenda-se espaçamento mínimo de 10 a  15  cm  por
+      cabeça suplementada e manter boa disponibilidade de pasto,  mesmo  que
+      de baixa qualidade. Não fornecer o produto  para  eqüídeos  e  ovinos.
+      Porventura, padrões diferentes de odor, aparência  e  textura  poderão
+      ser notados entre lotes  conforme  a  disponibilidade  de  componentes
+      básicos e eventuais  substitutivos  sem,  no  entanto,  comprometer  a
+      qualidade nutricional ou os níveis de garantia. Em caso de dúvidas  ou
+      intoxicações, consulte nosso departamento técnico ou  um  profissional
+      de sua confiança.
+              ATENÇÃO: NÃO FORNECER A OUTRAS ESPÉCIES  ANIMAIS QUE  NÃO  ÀS
+      DESCRITAS NA INDICAÇÃO DO PRODUTO.  NÃO  ADMINISTRAR  JUNTO  A  OUTROS
+      PRODUTOS QUE CONTENHAM IONÓFOROS. NÃO PERMITIR ACESSO  DE  EQUINOS  AO
+      PRODUTO, POIS  A  INGESTÃO  PODERÁ  SER  FATAL.  ESTE  PRODUTO  CONTÉM
+      IONÓFORO E O USO SIMULTÂNEO COM CERTAS SUBSTÂNCIAS MEDICAMENTOSAS PODE
+      SER CONTRA-INDICADA.  A  MONENSINA,  SALINOMICINA  E  A  NARASINA  SÃO
+      INCOMPATÍVEIS COM A TIAMULINA.
+
+13)   CONTEÚDO LÍQUIDO EXPRESSO NO SISTEMA DECIMAL:
+
+              25 kg
+
+14)   PRAZO DE VALIDADE:
+
+               1 ano após a data de fabricação
+
+15) CONDIÇÕES DE CONSERVAÇÃO:
+
+              Conservar  este  produto  em  local  coberto,  fresco,  seco,
+      arejado, livre de insetos e  roedores,  sobre  estrados,  afastado  de
+      paredes e devidamente embalado. Não armazenar  junto  a  combustíveis,
+      fertilizantes ou produtos tóxicos.
+
+16) RESTRIÇÕES E OUTRAS RECOMENDAÇÕES:
+
+              Não fornecer o produto para eqüídeos e ovinos.
+              Não fornecer a outras espécies  animais que não às  descritas
+      na indicação do produto.
+              Não  administrar  junto  a  outros  produtos  que   contenham
+      ionóforos.
+              Não permitir acesso de equinos ao produto,  pois  a  ingestão
+      poderá ser fatal.
+              Este produto contém ionóforo e o uso  simultâneo  com  certas
+      substâncias medicamentosas pode ser contra-indicada.
+              A monensina, salinomicina e a narasina são incompatíveis  com
+      a tiamulina.
+
+                                      Monte Aprazível, 20 de janeiro de 2021
+
+             |Marco Antonio Sartori        |
+|Engenheiro Agronômo Crea –sp |
+|– 5060907799/d               |
+|Responsável  Técnico         |
+|Dukamp Saúde Animal          |
+
+                                    ANEXO
+                            - CROQUI DO RÓTULO -
+
+                              DUKAMP CREEP PLUS
+      SUPLEMENTO MINERAL PROTÉICO DE PRONTO USO PARA  BOVINOS DE CORTE
+
+INDICAÇÃO DO PRODUTO
+
+Produto indicado para a suplementação mineral, protéica e vitamínica de
+bezerros em toda fase de aleitamento até 2 meses após a desmama.
+
+COMPOSIÇÃO BÁSICA DO PRODUTO
+
+farelo de soja, farelo de trigo, carbonato de cálcio, fosfato bicálcico,
+milho integral moído,  monensina sódica, cloreto de sódio (sal comum),
+melaço em pó, premix mineral vitamínico. Produto poderá conter milho
+(1,2,4,5), soja (1,2,3,4) ou algodão (1,2,4,5,6) transgênicos. Espécie
+doadora de genes (em caso de ingrediente transgênico): 1- Agrobacterium
+tumefaciens; 2- Bacillus thuringiensis; 3- Arabidopsis thaliana; 4-
+Streptomyces viridochromogenes; 5- Zea mays; 6- Streptomyces hygroscopicus.
+
+EVENTUAIS SUBSTITUTIVOS
+
+Farelo de algodão, sorgo integral moído, milheto, farelo de trigo, farelo
+de polpa cítrica, gérmen de milho, farelo de amendoim, glúten de milho,
+leveduras
+
+NIVEIS DE GARANTIA DO PRODUTO
+
+CÁLCIO      mín/máx    30 / 75    g
+FÓSFORO     mín  28    g
+MAGNÉSIO    mín  8.000 mg
+SÓDIO mín   19   g
+ENXOFRE     mín  14    g
+COBALTO     mín  6     mg
+COBRE mín   250  mg
+IODO  mín   12   mg
+FERRO mín   1700 mg
+MANGANÊS    mín  530   mg
+SELÊNIO     mín  4     mg
+ZINCO mín   900  mg
+FLÚOR máx   300  mg
+MONENSINA SÓDICA mín   230  mg
+PROTEÍNA BRUTA   mín   170  g
+
+              |VALOR DE REFERÊNCIA                                                       |
+|GARANTIA                    |Valor de |Quantidade       |Quantidade em %  |
+|                            |referênci|fornecida por    |do VR fornecido  |
+|                            |a (VR*)  |100g de          |por 100g de      |
+|                            |         |suplemento       |suplemento       |
+|CONSUMO DE                  |g/dia    |g/dia            |%                |
+|Proteína Bruta              |550      |25               |4                |
+|Nutrientes Digestíveis      |4.000    |-                |-                |
+|Totais (NDT)                |         |                 |                 |
+|                            |         |                 |                 |
+|MACRONUTRIENTES             |g/dia    |g/dia            |%                |
+|Cálcio (mín./máx.)          |14       |3 / 7,5          |21 / 53          |
+|Fósforo                     |11       |28               |25               |
+|Magnésio                    |9        |0,8              |8                |
+|Sódio                       |7        |1,9              |27               |
+|Enxofre                     |13,5     |1,4              |11               |
+|Potássio                    |54       |-                |-                |
+|                            |         |                 |                 |
+|MICRONUTRIENTES             |mg/dia   |mg/dia           |%                |
+|Cobalto                     |0,9      |0,6              |66               |
+|Cobre                       |90       |25               |27               |
+|Iodo                        |4,5      |1,2              |33               |
+|Ferro                       |450      |170              |37               |
+|Manganês                    |180      |53               |29               |
+|Selênio                     |0,9      |0,4              |44               |
+|Zinco                       |270      |90               |33               |
+|                            |         |                 |                 |
+|VITAMINAS                   |U.I./dia |U.I./dia         |%                |
+|Vitamina A                  |20.000   |                 |                 |
+|Vitamina D                  |2.500    |                 |                 |
+|Vitamina E                  |350      |                 |                 |
+|* Valor diário de referência para mantença de um animal de 450 kg de peso |
+|corporal                                                                  |
+
+MODO DE USAR
+
+O produto Dukamp Creep Plus já vem pronto para uso, bastando despejar em
+cochos protegidos e deixar à disposição permanente dos animais. Consumo
+esperado de 200 g do produto para cada 100 kg de peso vivo dos animais.
+Recomenda-se espaçamento mínimo de 10 a 15 cm por cabeça suplementada e
+manter boa disponibilidade de pasto, mesmo que de baixa qualidade. Não
+fornecer o produto para eqüídeos e ovinos. Porventura, padrões diferentes
+de odor, aparência e textura poderão ser notados entre lotes conforme a
+disponibilidade de componentes básicos e eventuais substitutivos sem, no
+entanto, comprometer a qualidade nutricional ou os níveis de garantia. Em
+caso de dúvidas ou intoxicações, consulte nosso departamento técnico ou um
+profissional de sua confiança.
+ATENÇÃO: NÃO FORNECER A OUTRAS ESPÉCIES  ANIMAIS QUE NÃO ÀS DESCRITAS NA
+INDICAÇÃO DO PRODUTO. NÃO ADMINISTRAR JUNTO A OUTROS PRODUTOS QUE CONTENHAM
+IONÓFOROS. NÃO PERMITIR ACESSO DE EQUINOS AO PRODUTO, POIS A INGESTÃO
+PODERÁ SER FATAL. ESTE PRODUTO CONTÉM IONÓFORO E O USO SIMULTÂNEO COM
+CERTAS SUBSTÂNCIAS MEDICAMENTOSAS PODE SER CONTRA-INDICADA. A MONENSINA,
+SALINOMICINA E A NARASINA SÃO INCOMPATÍVEIS COM A TIAMULINA.
+
+PRAZO DE VALIDADE:
+ 1 ano após a data de fabricação
+
+MODO DE CONSERVAÇÃO
+
+Conservar este produto em local coberto, fresco, seco, arejado, livre de
+insetos e roedores, sobre estrados, afastado de paredes e devidamente
+embalado. Não armazenar junto a combustíveis, fertilizantes ou produtos
+tóxicos.
+
+DADOS DA EMPRESA:
+
+Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+Código SIF: SP-002190-3
+Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+CEP 15150-000, MONTE APRAZÍVEL, SP
+CNPJ: 002.425.166/0001-85
+INSCRIÇÃO ESTADUAL: 462.063.756.110
+FONE/FAX: (17) 3275.3106

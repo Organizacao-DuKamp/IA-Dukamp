@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import ReactMarkdown from "react-markdown";
 import { WebChatAdapter } from "@/lib/chat/web-adapter";
-import { MAX_MESSAGE_CHARS, type ChatMessage } from "@/lib/chat/types";
+import { MAX_MESSAGE_CHARS, type ChatMessage, type ChatSource } from "@/lib/chat/types";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/")({
   component: ChatPage,
 });
 
-type UIMessage = ChatMessage & { id: string };
+type UIMessage = ChatMessage & { id: string; sources?: ChatSource[] };
 
 function ChatPage() {
   const [messages, setMessages] = useState<UIMessage[]>([]);
@@ -55,10 +55,10 @@ function ChatPage() {
     setInput("");
     setLoading(true);
     try {
-      const reply = await adapter.ask(text, history);
+      const { reply, sources } = await adapter.ask(text, history);
       setMessages((prev) => [
         ...prev,
-        { id: crypto.randomUUID(), role: "assistant", content: reply },
+        { id: crypto.randomUUID(), role: "assistant", content: reply, sources },
       ]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao consultar a IA.");
@@ -177,9 +177,30 @@ function MessageBubble({ message }: { message: UIMessage }) {
         {isUser ? (
           <p className="whitespace-pre-wrap">{message.content}</p>
         ) : (
-          <div className="prose prose-sm max-w-none prose-headings:mt-3 prose-headings:mb-2 prose-p:my-2 prose-ul:my-2 prose-li:my-0.5 prose-strong:text-foreground">
-            <ReactMarkdown>{message.content}</ReactMarkdown>
-          </div>
+          <>
+            <div className="prose prose-sm max-w-none prose-headings:mt-3 prose-headings:mb-2 prose-p:my-2 prose-ul:my-2 prose-li:my-0.5 prose-strong:text-foreground">
+              <ReactMarkdown>{message.content}</ReactMarkdown>
+            </div>
+            {message.sources && message.sources.length > 0 && (
+              <div className="mt-3 rounded-lg border border-border bg-card/50 p-2.5">
+                <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Fontes consultadas na base
+                </p>
+                <ul className="space-y-1">
+                  {message.sources.map((s, i) => (
+                    <li key={i} className="text-xs text-foreground">
+                      <span className="font-medium">{s.title}</span>{" "}
+                      <span className="text-muted-foreground">
+                        · {s.category}
+                        {s.subcategory ? ` / ${s.subcategory}` : ""} ·{" "}
+                        {(s.similarity * 100).toFixed(0)}% relevância
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

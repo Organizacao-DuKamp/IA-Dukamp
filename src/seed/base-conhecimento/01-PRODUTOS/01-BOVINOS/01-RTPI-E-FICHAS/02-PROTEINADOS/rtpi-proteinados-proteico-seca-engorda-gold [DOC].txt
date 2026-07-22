@@ -1,0 +1,378 @@
+ARQUIVO DE ORIGEM: rtpi-proteinados-proteico-seca-engorda-gold.doc
+CAMINHO ORIGINAL: 01-BOVINOS/01-RTPI-E-FICHAS/02-PROTEINADOS/rtpi-proteinados-proteico-seca-engorda-gold.doc
+FORMATO ORIGINAL: .doc
+========================================================================
+
+DUKAMP PROTÉICO SECA ENGORDA GOLD
+
+|LOG DE ATUALIZAÇÕES                                                      |
+|         |                                                               |
+|30/05/22 |Criação do documento                                           |
+
+               NESSE RTPI, consta os dizeres do rótulo atual.
+
+                              RELATÓRIO TÉCNICO
+
+1)    NOME, ENDEREÇO E CNPJ DO ESTABELECIMENTO PROPRIETÁRIO DO PRODUTO:
+
+     Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+     Código SIF: SP-002190-3
+     Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+     CEP 15150-000, MONTE APRAZÍVEL, SP
+     CNPJ: 002.425.166/0001-85
+
+2)    DESIGNAÇÃO DO PRODUTO POR NOME E MARCA COMERCIAL:
+
+              DUKAMP PROTÉICO SECA ENGORDA GOLD
+
+3)    CLASSIFICAÇÃO DO PRODUTO:
+
+              SUPLEMENTO MINERAL  PROTÉICO DE PRONTO USO PARA   BOVINOS  DE
+      CORTE
+
+4)    FORMA FÍSICA DE APRESENTAÇÃO:
+
+              Seco, em pó
+
+5)    CARACTERÍSTICA DA EMBALAGEM E FORMA DE ACONDICIONAMENTO:
+
+              Produto  será  acondicionado  em  sacaria   do   tipo   ráfia
+      (polipropileno), nova e de uso único.
+
+6)    COMPOSIÇÃO QUALITATIVA:
+
+               RÓTULO: milho integral moído, farelo  de  algodão,  calcareo
+      calcitico, carbonato de cálcio, cloreto de sódio (sal comum) - 17,9 %,
+      fosfato bicálcico, uréia  pecuária,  premix  mineral.  Produto  poderá
+      conter  milho  (1,2,4,5),  soja  (1,2,3,4)  ou   algodão   (1,2,4,5,6)
+      transgênicos.  Espécie  doadora  de  genes  (em  caso  de  ingrediente
+      transgênico): 1- Agrobacterium tumefaciens; 2- Bacillus thuringiensis;
+      3- Arabidopsis thaliana; 4-  Streptomyces  viridochromogenes;  5-  Zea
+      mays; 6- Streptomyces hygroscopicus.
+
+7)    ENRIQUECIMENTO: não há
+
+8)    EVENTUAIS SUBSTITUTIVOS:
+
+              amiréia 150, casca de soja moída,  casca  de  algodão  moída,
+      farelo de amendoim, polpa cítrica, farelo de trigo, farelo  de  arroz,
+      farelo de soja, gérmen de milho, glúten de milho, leveduras,  milheto,
+      sorgo integral moído, fosfato monoamônio.
+
+    9)      NÍVEIS DE GARANTIA:
+
+|ITEM                   |ESPECIFICAÇÃO      |VALOR          |UNIDADE      |
+|CÁLCIO                 |mín/máx            |20 / 75        |g            |
+|FÓSFORO                |mín                |10             |g            |
+|MAGNÉSIO               |mín                |2.000          |mg           |
+|SÓDIO                  |mín                | 45            |g            |
+|ENXOFRE                |mín                |18             |g            |
+|COBALTO                |mín                |5              |mg           |
+|COBRE                  |mín                |160            |mg           |
+|IODO                   |mín                |8              |mg           |
+|FERRO                  |mín                |350            |mg           |
+|MANGANÊS               |mín                |350            |mg           |
+|SELÊNIO                |mín                |4              |mg           |
+|ZINCO                  |mín                |450            |mg           |
+|FLÚOR                  |máx                |1.400          |mg           |
+|N.N.P. EQUIV. EM       |máx                |313            |g            |
+|PROTEÍNA               |                   |               |             |
+|PROTEÍNA BRUTA         |mín                |250            |g            |
+
+              |VALOR DE REFERÊNCIA                                                       |
+|GARANTIA                    |Valor de |Quantidade       |Quantidade em %  |
+|                            |referênci|fornecida por    |do VR fornecido  |
+|                            |a (VR*)  |100g de          |por 100g de      |
+|                            |         |suplemento       |suplemento       |
+|CONSUMO DE                  |g/dia    |g/dia            |%                |
+|Proteína Bruta              |550      |25               |4,45             |
+|Nutrientes Digestíveis      |4.000    |-                |-                |
+|Totais (NDT)                |         |                 |                 |
+|                            |         |                 |                 |
+|MACRONUTRIENTES             |g/dia    |g/dia            |%                |
+|Cálcio (mín./máx.)          |14       |2,0 / 7,5        |14 / 53          |
+|Fósforo                     |11       |1                |10               |
+|Magnésio                    |9        |0,2              |2                |
+|Sódio                       |7        |7                |100              |
+|Enxofre                     |13,5     |1,8              |13               |
+|Potássio                    |54       |-                |-                |
+|                            |         |                 |                 |
+|MICRONUTRIENTES             |mg/dia   |mg/dia           |%                |
+|Cobalto                     |0,9      |0,5              |55               |
+|Cobre                       |90       |16               |17               |
+|Iodo                        |4,5      |0,8              |17               |
+|Ferro                       |450      |35               |7                |
+|Manganês                    |180      |35               |19               |
+|Selênio                     |0,9      |0,4              |44               |
+|Zinco                       |270      |45               |16               |
+|                            |         |                 |                 |
+|VITAMINAS                   |U.I./dia |U.I./dia         |%                |
+|Vitamina A                  |20.000   |-                |-                |
+|Vitamina D                  |2.500    |-                |-                |
+|Vitamina E                  |350      |-                |-                |
+|* Valor diário de referência para mantença de um animal de 450 kg de peso |
+|corporal                                                                  |
+
+    10)     DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO E DO CONTROLE DA MATÉRIA-
+    PRIMA E DO PRODUTO ACABADO:
+
+[pic]
+
+DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO:
+              O presente produto será fabricado  no  setor  de  suplementos
+      minerais, cujo fluxograma é apresentado na figura acima.
+              Basicamente,  esse  setor  é  composto  por  uma  moega  para
+      recepção de ingredientes (legenda nº.5), misturador com  1.000  kg  de
+      capacidade  (legenda  nº.7),  silo  de  ensaque   (legenda   nº.9)   e
+      ensacadeira (legenda nº.10).
+              As etapas de produção serão:
+              1) reunião dos ingredientes em volta da moega (legenda nº.5),
+      já pesados em quantidades pré-definidas pelo Departamento Técnico;
+              1.1) no caso  de  ingredientes  considerados  microelementos,
+      eles serão previamente misturados  em  misturador  tipo  ‘Y’  (legenda
+      nº.1), após adicionados ao calcário calcítico em  uma  quantidade  que
+      totalize entre 20 e 30 kg, ao  final  do  qual  procura-se  obter  uma
+      mistura homogênea e em quantidade capaz de ser  bem  homogeneizado  no
+      misturador de 1.000 kg. Essa pré-mistura de ingredientes será  chamada
+      de “premix”
+              2) abastecimento da moega (legenda  nº.5)  com  1.000  kg  de
+      ingredientes (“premix” inclusive) que irão compor o  produto  acabado,
+      ingredientes  estes  qualificados  e  quantificados  em  planilha   de
+      produção
+              3) transferência dos 1.000 kg de ingredientes da moega até  o
+      misturador, através de rosca transportadora (legenda nº.6).
+              4) mistura dos ingredientes no misturador horizontal (legenda
+      nº.7);
+              5) transferência da mistura  do  misturador  até  o  silo  de
+      ensaque, através de rosca transportadora (legenda nº.8);
+              6) ensaque do produto acabado (legenda nº.10).
+
+CONTROLE DA MATÉRIA-PRIMA:
+              As matérias-primas obrigatoriamente deverão vir  acompanhadas
+      de  laudo  de   análise,   contendo   a(s)   concentração(ões)   do(s)
+      nutriente(s) de interesse. Os dados declarados pelo  fornecedor  serão
+      utilizados para abastecer a matriz do software de formulação.
+
+CONTROLE DO PRODUTO ACABADO:
+              Durante o processo  produtivo,  periodicamente,  sub-amostras
+      serão coletadas na bica de ensaque e  compostas  numa  única  amostra,
+      datada,  identificada  e  armazenada,  para   futura   análise,   caso
+      necessária.
+
+11)   INDICAÇÕES DE USO E ESPÉCIE ANIMAL A QUE SE DESTINA:
+
+INDICAÇÕES DE USO:
+
+              Produto pronto para uso, indicado para suplementação  mineral
+      protéica de bovinos de corte acima de 4 meses de idade, nas  fases  de
+      cria, recria e engorda, sob pastagens, na estação seca do ano.
+
+ESPÉCIE ANIMAL A QUE SE DESTINA: BOVINOS DE CORTE
+
+12)   MODO DE USAR:
+
+              Dukamp Protéico Seca Engorda Gold  já  vem  pronto  para  uso
+      bastando despejar o produto em cochos e deixar à disposição permanente
+      dos animais.
+              Este produto  contém  uréia  e,  portanto,  deve  ser  sempre
+      fornecido em cochos cobertos e/ou que evitem acúmulo de água. O uso de
+      uréia  adicional  é  contra-indicado,  salvo  quando   prescrito   por
+      profissional habilitado. Não fornecer este suplemento para animais com
+      menos de 4 meses de  idade  e/ou  para  animais  em  jejum,  famintos,
+      subnutridos ou debilitados. Recomenda-se espaçamento mínimo de 10 a 15
+      cm por cabeça suplementada e  manter  boa  disponibilidade  de  pasto,
+      mesmo que seco e de baixa  qualidade.  Não  fornecer  o  produto  para
+      machos reprodutores, pois estes não devem se alimentar  de  farelo  de
+      algodão, presente nesta formulação. Também não fornecer o produto para
+      eqüídeos, ovinos ou vacas leiteiras.
+              Para adaptação dos animais ao início do  uso  de  suplementos
+      contendo uréia, é recomendado misturar o produto com sal branco ou  um
+      suplemento mineral qualquer na proporção de 1:2  na  primeira  semana,
+      misturar na proporção de 2:1 na segunda semana e usar o produto dukamp
+      protéico seca puro a partir da terceira semana.
+              Consumo esperado de 50 a 150 gramas do produto para cada  100
+      kg de peso corporal (média de 100 gramas para  cada  100  kg  de  peso
+      corporal),  desde  que   atendidas   as   especificações   de   manejo
+      recomendadas.
+              Porventura, padrões diferentes de odor, aparência  e  textura
+      poderão  ser  notados  entre  lotes  conforme  a  disponibilidade   de
+      componentes  básicos  e  eventuais  substitutivos  sem,  no   entanto,
+      comprometer a qualidade nutricional ou os níveis de garantia.
+              Em  caso  de  dúvidas   ou   intoxicações,   consulte   nosso
+      departamento técnico ou um profissional de sua confiança.
+
+13)   CONTEÚDO LÍQUIDO EXPRESSO NO SISTEMA DECIMAL:
+
+               30 kg
+
+14)   PRAZO DE VALIDADE:
+
+              1 ano após a data de fabricação
+
+15) CONDIÇÕES DE CONSERVAÇÃO:
+
+              Conservar  este  produto  em  local  coberto,  fresco,  seco,
+      arejado, livre de insetos e  roedores,  sobre  estrados,  afastado  de
+      paredes e devidamente embalado. não armazenar  junto  a  combustíveis,
+      fertilizantes ou produtos tóxicos.
+
+16) RESTRIÇÕES E OUTRAS RECOMENDAÇÕES:
+
+              Este produto  contém  uréia  e,  portanto,  deve  ser  sempre
+      fornecido em cochos cobertos e/ou que evitem acúmulo de água.
+              O uso de uréia  adicional  é  contra-indicado,  salvo  quando
+      prescrito por profissional habilitado.
+              Não fornecer este suplemento para  animais  com  menos  de  4
+      meses de idade e/ou para animais em jejum,  famintos,  subnutridos  ou
+      debilitados.
+              Recomenda-se espaçamento mínimo de 10  a  15  cm  por  cabeça
+      suplementada e manter boa disponibilidade de pasto, mesmo que  seco  e
+      de baixa qualidade.
+              Não fornecer o produto para machos reprodutores,  pois  estes
+      não  devem  se  alimentar  de  farelo  de  algodão,   presente   nesta
+      formulação.
+              Também não fornecer o produto para eqüídeos, ovinos ou  vacas
+      leiteiras.
+
+                                         Monte Aprazível, 30 de maio de 2022
+
+             |Marco Antonio Sartori        |
+|Engenheiro Agrônomo          |
+|- CREA - SP                  |
+|5060907799/D                 |
+|Responsável  Técnico         |
+|Dukamp Saúde Animal          |
+
+                                    ANEXO
+                            - CROQUI DO RÓTULO -
+
+                      DUKAMP PROTÉICO SECA ENGORDA GOLD
+      SUPLEMENTO MINERAL  PROTÉICO DE PRONTO USO PARA  BOVINOS DE CORTE
+
+INDICAÇÃO DO PRODUTO
+
+Produto pronto para uso, indicado para suplementação mineral protéica de
+bovinos de corte acima de 4 meses de idade, nas fases de cria, recria e
+engorda, sob pastagens, na estação seca do ano.
+
+COMPOSIÇÃO BÁSICA DO PRODUTO
+
+ RÓTULO: milho integral moído, farelo de algodão, carbonato de
+cálcio,calcareo calcitico,  cloreto de sódio (sal comum) - 17,9 %, fosfato
+bicálcico, uréia pecuária, premix mineral. Produto poderá conter milho
+(1,2,4,5), soja (1,2,3,4) ou algodão (1,2,4,5,6) transgênicos. Espécie
+doadora de genes (em caso de ingrediente transgênico): 1- Agrobacterium
+tumefaciens; 2- Bacillus thuringiensis; 3- Arabidopsis thaliana; 4-
+Streptomyces viridochromogenes; 5- Zea mays; 6- Streptomyces hygroscopicus.
+
+EVENTUAIS SUBSTITUTIVOS
+
+amiréia 150, casca de soja moída, casca de algodão moída, farelo de
+amendoim, polpa cítrica, farelo de trigo, farelo de arroz, farelo de soja,
+gérmen de milho, glúten de milho, leveduras, milheto, sorgo integral moído,
+fosfato monoamônio
+
+NIVEIS DE GARANTIA DO PRODUTO
+
+CÁLCIO      mín/máx    20 / 75    g
+FÓSFORO     mín  10    g
+MAGNÉSIO    mín  2.000 mg
+SÓDIO mín   45   g
+ENXOFRE     mín  18    g
+COBALTO     mín  5     mg
+COBRE mín   160  mg
+IODO  mín   8    mg
+FERRO mín   350  mg
+MANGANÊS    mín  350   mg
+SELÊNIO     mín  4     mg
+ZINCO mín   450  mg
+FLÚOR máx   1.400      mg
+N.N.P. EQUIV. EM PROTEÍNA   máx   313  g
+PROTEÍNA BRUTA   mín   250  g
+
+              |VALOR DE REFERÊNCIA                                                       |
+|GARANTIA                    |Valor de |Quantidade       |Quantidade em %  |
+|                            |referênci|fornecida por    |do VR fornecido  |
+|                            |a (VR*)  |100g de          |por 100g de      |
+|                            |         |suplemento       |suplemento       |
+|CONSUMO DE                  |g/dia    |g/dia            |%                |
+|Proteína Bruta              |550      |25               |4,45             |
+|Nutrientes Digestíveis      |4.000    |-                |-                |
+|Totais (NDT)                |         |                 |                 |
+|                            |         |                 |                 |
+|MACRONUTRIENTES             |g/dia    |g/dia            |%                |
+|Cálcio (mín./máx.)          |14       |2,0 / 7,5        |14 / 53          |
+|Fósforo                     |11       |1                |10               |
+|Magnésio                    |9        |0,2              |2                |
+|Sódio                       |7        |7                |100              |
+|Enxofre                     |13,5     |1,8              |13               |
+|Potássio                    |54       |-                |-                |
+|                            |         |                 |                 |
+|MICRONUTRIENTES             |mg/dia   |mg/dia           |%                |
+|Cobalto                     |0,9      |0,5              |55               |
+|Cobre                       |90       |16               |17               |
+|Iodo                        |4,5      |0,8              |17               |
+|Ferro                       |450      |35               |7                |
+|Manganês                    |180      |35               |19               |
+|Selênio                     |0,9      |0,4              |44               |
+|Zinco                       |270      |45               |16               |
+|                            |         |                 |                 |
+|VITAMINAS                   |U.I./dia |U.I./dia         |%                |
+|Vitamina A                  |20.000   |-                |-                |
+|Vitamina D                  |2.500    |-                |-                |
+|Vitamina E                  |350      |-                |-                |
+|* Valor diário de referência para mantença de um animal de 450 kg de peso |
+|corporal                                                                  |
+
+MODO DE USAR
+
+Dukamp Protéico Seca Engorda Gold já vem pronto para uso bastando despejar
+o produto em cochos e deixar à disposição permanente dos animais.
+
+Este produto contém uréia e, portanto, deve ser sempre fornecido em cochos
+cobertos e/ou que evitem acúmulo de água. O uso de uréia adicional é contra-
+indicado, salvo quando prescrito por profissional habilitado. Não fornecer
+este suplemento para animais com menos de 4 meses de idade e/ou para
+animais em jejum, famintos, subnutridos ou debilitados. Recomenda-se
+espaçamento mínimo de 10 a 15 cm por cabeça suplementada e manter boa
+disponibilidade de pasto, mesmo que seco e de baixa qualidade. Não fornecer
+o produto para machos reprodutores, pois estes não devem se alimentar de
+farelo de algodão, presente nesta formulação. Também não fornecer o produto
+para eqüídeos, ovinos ou vacas leiteiras.
+
+Para adaptação dos animais ao início do uso de suplementos contendo uréia,
+é recomendado misturar o produto com sal branco ou um suplemento mineral
+qualquer na proporção de 1:2 na primeira semana, misturar na proporção de
+2:1 na segunda semana e usar o produto dukamp protéico seca puro a partir
+da terceira semana.
+
+Consumo esperado de 50 a 150 gramas do produto para cada 100 kg de peso
+corporal (média de 100 gramas para cada 100 kg de peso corporal), desde que
+atendidas as especificações de manejo recomendadas.
+
+Porventura, padrões diferentes de odor, aparência e textura poderão ser
+notados entre lotes conforme a disponibilidade de componentes básicos e
+eventuais substitutivos sem, no entanto, comprometer a qualidade
+nutricional ou os níveis de garantia.
+
+Em caso de dúvidas ou intoxicações, consulte nosso departamento técnico ou
+um profissional de sua confiança.
+
+PRAZO DE VALIDADE: 1 ano após a data de fabricação
+
+MODO DE CONSERVAÇÃO
+
+Conservar este produto em local coberto, fresco, seco, arejado, livre de
+insetos e roedores, sobre estrados, afastado de paredes e devidamente
+embalado. Não armazenar junto a combustíveis, fertilizantes ou produtos
+tóxicos.
+
+DADOS DA EMPRESA:
+
+Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+Código SIF: SP-002190-3
+Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+CEP 15150-000, MONTE APRAZÍVEL, SP
+CNPJ: 002.425.166/0001-85
+INSCRIÇÃO ESTADUAL: 462.063.756.110
+FONE/FAX: (17) 3275.3106

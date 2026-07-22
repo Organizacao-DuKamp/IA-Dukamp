@@ -1,0 +1,311 @@
+ARQUIVO DE ORIGEM: rtpi-baldinho-babykamp-gold.doc
+CAMINHO ORIGINAL: 04-OUTROS/01-RTPI-E-FICHAS/rtpi-baldinho-babykamp-gold.doc
+FORMATO ORIGINAL: .doc
+========================================================================
+
+BABYKAMP GOLD
+
+|LOG DE ATUALIZAÇÕES                                                      |
+|         |                                                               |
+|11/07/12 |Criação do documento                                           |
+|08/10/201|Atualização documentos                                         |
+|8        |                                                               |
+|13/11/202|Troca do SIF                                                   |
+|0        |                                                               |
+
+                              RELATÓRIO TÉCNICO
+
+1)    NOME, ENDEREÇO E CNPJ DO ESTABELECIMENTO PROPRIETÁRIO DO PRODUTO:
+
+     Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+     Código SIF: SP-002190-3
+     Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+     CEP 15150-000, MONTE APRAZÍVEL, SP
+     CNPJ: 002.425.166/0001-85
+     INSCRIÇÃO ESTADUAL: 462.063.756.110
+     FONE/FAX: (17) 3275.3106
+
+2)    DESIGNAÇÃO DO PRODUTO POR NOME E MARCA COMERCIAL:
+
+              BABYKAMP GOLD
+
+3)    CLASSIFICAÇÃO DO PRODUTO:
+
+              SUPLEMENTO MINERAL PARA MISTURA PARA BOVINOS
+
+4)    FORMA FÍSICA DE APRESENTAÇÃO:
+
+              Seco, em pó
+
+5)    CARACTERÍSTICA DA EMBALAGEM E FORMA DE ACONDICIONAMENTO:
+
+              Produto será acondicionado em:
+
+              - opção 1 -   sacaria do tipo ráfia (polipropileno),  nova  e
+                         de uso único
+              - opção 2 -   saco de plástico (polietileno)  como  embalagem
+                         primária e, como embalagem secundária serão usados
+                         balde de plástico ou caixas de papelão.
+
+6)    COMPOSIÇÃO QUALITATIVA:
+
+              aditivo antioxidante,monensina sodica, carbonato  de  cálcio,
+      cloreto de potássio, cloreto de sódio  (sal  comum),  cromo  orgânico,
+      enxofre  ventilado  (flor  de  enxofre),  farelo  de   soja,   fosfato
+      bicálcico, iodato de cálcio, leveduras,  melaço,  óxido  de  magnésio,
+      selenito de sódio, sulfato de cálcio, sulfato de colbalto, sulfato  de
+      cobre,  sulfato  de  manganês,  sulfato  de  zinco,  sulfato  ferroso,
+      vitamina A, vitamina D3, vitamina E, vitamina K.
+
+7)    ENRIQUECIMENTO: não há
+
+8)    EVENTUAIS SUBSTITUTIVOS:
+
+              iodato de potássio, lasalocida de sódio, sulfato de magnésio.
+
+     9)     NÍVEIS DE GARANTIA:
+
+              |ITEM                        |ESPECIFICAÇÃO   |VALOR         |UNIDADE    |
+|CÁLCIO                      |(mín/máx)       |160 / 240     |g          |
+|FÓSFORO                     |(mín)           |115           |g          |
+|MAGNÉSIO                    |(mín)           |14            |g          |
+|POTÁSSIO                    |(mín)           |1.000         |mg         |
+|SÓDIO                       |(mín)           |7.500         |mg         |
+|ENXOFRE                     |(mín)           |22            |g          |
+|COBALTO                     |(mín)           |42            |mg         |
+|COBRE                       |(mín)           |1.100         |mg         |
+|IODO                        |(mín)           |85            |mg         |
+|FERRO                       |(mín)           |3.000         |mg         |
+|MANGANÊS                    |(mín)           |1.400         |mg         |
+|SELÊNIO                     |(mín)           |18            |mg         |
+|ZINCO                       |(mín)           |5.600         |mg         |
+|CROMO                       |(mín)           |4             |mg         |
+|FLÚOR                       |(máx)           |1.150         |mg         |
+|VITAMINA A                  |(mín)           |280.000       |U.I./kg    |
+|VITAMINA D3                 |(mín)           |30.000        |U.I./kg    |
+|VITAMINA E                  |(mín)           |2.800         |U.I./kg    |
+|ETOXIQUIN                   |(mín)           |150           |mg         |
+|MONENSINA SÓDICA            |(mín)           |900           |mg         |
+
+10)   DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO E DO CONTROLE DA MATÉRIA-PRIMA E
+     DO PRODUTO ACABADO:
+
+[pic]
+
+DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO:
+              O presente produto será fabricado  no  setor  de  suplementos
+      minerais, cujo fluxograma é apresentado na figura acima.
+              Basicamente,  esse  setor  é  composto  por  uma  moega  para
+      recepção de ingredientes (legenda nº.5), misturador com  1.000  kg  de
+      capacidade  (legenda  nº.7),  silo  de  ensaque   (legenda   nº.9)   e
+      ensacadeira (legenda nº.10).
+              As etapas de produção serão:
+              1) reunião dos ingredientes em volta da moega (legenda nº.5),
+      já pesados em quantidades pré-definidas pelo Departamento Técnico;
+              1.1) no caso  de  ingredientes  considerados  microelementos,
+      eles serão previamente misturados  em  misturador  tipo  ‘Y’  (legenda
+      nº.1), após adicionados ao calcário calcítico em  uma  quantidade  que
+      totalize entre 20 e 30 kg, ao  final  do  qual  procura-se  obter  uma
+      mistura homogênea e em quantidade capaz de ser  bem  homogeneizado  no
+      misturador de 1.000 kg. Essa pré-mistura de ingredientes será  chamada
+      de “premix”
+              2) abastecimento da moega (legenda  nº.5)  com  1.000  kg  de
+      ingredientes (“premix” inclusive) que irão compor o  produto  acabado,
+      ingredientes  estes  qualificados  e  quantificados  em  planilha   de
+      produção
+              3) transferência dos 1.000 kg de ingredientes da moega até  o
+      misturador, através de rosca transportadora (legenda nº.6).
+              4) mistura dos ingredientes no misturador horizontal (legenda
+      nº.7);
+              5) transferência da mistura  do  misturador  até  o  silo  de
+      ensaque, através de rosca transportadora (legenda nº.8);
+              6) ensaque do produto acabado (legenda nº.10).
+
+CONTROLE DA MATÉRIA-PRIMA:
+              As matérias-primas obrigatoriamente deverão vir  acompanhadas
+      de  laudo  de   análise,   contendo   a(s)   concentração(ões)   do(s)
+      nutriente(s) de interesse. Os dados declarados pelo  fornecedor  serão
+      utilizados para abastecer a matriz do software de formulação.
+
+CONTROLE DO PRODUTO ACABADO:
+              Durante o processo  produtivo,  periodicamente,  sub-amostras
+      serão coletadas na bica de ensaque e  compostas  numa  única  amostra,
+      datada,  identificada  e  armazenada,  para   futura   análise,   caso
+      necessária.
+
+11)   INDICAÇÕES DE USO E ESPÉCIE ANIMAL A QUE SE DESTINA:
+
+INDICAÇÕES DE USO:
+
+              Suplemento  mineral  para  mistura,  para  uso  exclusivo  na
+      formulação de rações. Contém vitaminas e ionóforo e  é  indicado  para
+      potencializar a  expressão  genética  de  bezerros  em  fase  inicial,
+      visando otimizar o ganho de peso  e  eficiência  alimentar.  Também  é
+      indicado para o preparo de animais de elite para exposições.
+
+ESPÉCIE ANIMAL A QUE SE DESTINA: BOVINOS
+
+12)   MODO DE USAR:
+
+              O suplemento BABYKAMP GOLD é para uso exclusivo na formulação
+      de rações. Recomenda-se a adição de 30 a 40 kg de  BABYKAMP  GOLD  por
+      tonelada de ração (isto é, entre 2  e  4%  de  inclusão).  Fornecer  o
+      produto elaborado calculado na proporção de 1 a 1,5 kg de  ração  para
+      cada 100 kg de peso corporal. É desejável  que  o  consumo  diário  de
+      BABYKAMP GOLD esteja ao redor de 30 a 60 gramas por cabeça.
+
+              DOSAGEM RECOMENDADA:
+
+              - Bezerros(as) de corte ou leiteiros (comerciais):
+                 - saudáveis e em baias individuais: 30 g/dia
+                 - saudáveis e em baias coletivas: 45 g/dia
+                 - saudáveis e mantidos a pasto: 50 g/dia
+                 - debilitados: 60 g/dia
+
+              - Bezerros(as) de elevado potencial genético (elite e/ou para
+      exposição):
+                 - saudáveis: 45 g/dia
+                 - debilitados: 60 g/dia
+
+              As recomendações aqui descritas de inclusão de BABYKAMP  GOLD
+      na ração, bem como as de quantidades a serem fornecidas da ração podem
+      ser  alteradas  conforme  o  escore   corporal   do   animal,   status
+      nutricional, ganho  de  peso  desejado  e/ou  qualidade  do  volumoso.
+      Consulte um profissional habilitado.
+              Porventura, padrões diferentes de odor, aparência  e  textura
+      poderão  ser  notados  entre  lotes  conforme  a  disponibilidade   de
+      componentes  básicos  e  eventuais  substitutivos  sem,  no   entanto,
+      comprometer a qualidade nutricional ou os níveis de garantia.
+              Em caso de dúvidas, consulte nosso departamento técnico ou um
+      profissional de sua confiança.
+              Não fornecer o produto para equídeos ou ovinos.
+
+13)   CONTEÚDO LÍQUIDO EXPRESSO NO SISTEMA DECIMAL:
+
+              500 g, 1 kg , 3 kg , 10 kg  , 20 kg , 25 kg , 30 kg , 40 kg
+
+14)   PRAZO DE VALIDADE:
+
+              2 anos após a data de fabricação
+
+15) CONDIÇÕES DE CONSERVAÇÃO:
+
+              Conservar em local coberto, fresco, arejado, livre de insetos
+      e roedores e devidamente embalado. Impedir que entre  em  contato  com
+      luz solar direta  e  umidade.  Não  armazenar  junto  a  combustíveis,
+      fertilizantes, produtos tóxicos e/ou em contato direto com  o  solo  e
+      paredes.
+
+16) RESTRIÇÕES E OUTRAS RECOMENDAÇÕES:
+
+              Não fornecer o produto para equídeos ou ovinos.
+
+                                      Monte Aprazível, 08 de outubro de 2018
+
+         |Marco Antonio Sartori        |
+|oEngenheiro Agronomo         |
+|Crea –sp-5060907799/d        |
+|Responsável  Técnico         |
+|Dukamp Saúde Animal          |
+
+                                    ANEXO
+                            - CROQUI DO RÓTULO -
+
+                                BABYKAMP GOLD
+                SUPLEMENTO MINERAL PARA MISTURA PARA BOVINOS
+
+INDICAÇÃO DO PRODUTO:
+
+Suplemento mineral para mistura, para uso exclusivo na formulação de
+rações. Contém vitaminas e ionóforo e é indicado para potencializar a
+expressão genética de bezerros em fase inicial, visando otimizar o ganho de
+peso e eficiência alimentar. Também é indicado para o preparo de animais de
+elite para exposições.
+
+COMPOSIÇÃO BÁSICA DO PRODUTO:
+
+aditivo antioxidante,monensina sodiica , carbonato de cálcio, cloreto de
+potássio, cloreto de sódio (sal comum), cromo orgânico, enxofre ventilado
+(flor de enxofre), farelo de soja, fosfato bicálcico, iodato de cálcio,
+leveduras, melaço, óxido de magnésio, selenito de sódio, sulfato de cálcio,
+sulfato de colbalto, sulfato de cobre, sulfato de manganês, sulfato de
+zinco, sulfato ferroso, vitamina A, vitamina D3, vitamina E, vitamina.
+
+EVENTUAIS SUBSTITUTIVOS:
+
+iodato de potássio, lasalocida de sódio, sulfato de magnésio
+
+NIVEIS DE GARANTIA DO PRODUTO:
+
+CÁLCIO      (mín/máx)  160 / 240  g
+FÓSFORO     (mín)      115  g
+MAGNÉSIO    (mín)      14   g
+POTÁSSIO    (mín)      1.000      mg
+SÓDIO (mín) 7.500      mg
+ENXOFRE     (mín)      22   g
+COBALTO     (mín)      42   mg
+COBRE (mín) 1.100      mg
+IODO  (mín) 85   mg
+FERRO (mín) 3.000      mg
+MANGANÊS    (mín)      1.400      mg
+SELÊNIO     (mín)      18   mg
+ZINCO (mín) 5.600      mg
+CROMO (mín) 4    mg
+FLÚOR (máx) 1.150      mg
+VITAMINA A  (mín)      280.000    U.I./kg
+VITAMINA D3 (mín)      30.000     U.I./kg
+VITAMINA E  (mín)      2.800      U.I./kg
+ETOXIQUIN   (mín)      150  mg
+MONENSINA SÓDICA (mín) 900  mg
+
+MODO DE USAR:
+
+O suplemento BABYKAMP GOLD é para uso exclusivo  na  formulação  de  rações.
+Recomenda-se a adição de 30 a 40 kg de BABYKAMP GOLD por tonelada  de  ração
+(isto é, entre 2 e 4% de inclusão). Fornecer o produto  elaborado  calculado
+na proporção de 1 a 1,5 kg de ração para cada 100 kg  de  peso  corporal.  É
+desejável que o consumo diário de BABYKAMP GOLD esteja ao redor de 30  a  60
+gramas por cabeça.
+
+DOSAGEM RECOMENDADA:
+
+- Bezerros(as) de corte ou leiteiros (comerciais):
+      - saudáveis e em baias individuais: 30 g/dia
+      - saudáveis e em baias coletivas: 45 g/dia
+      - saudáveis e mantidos a pasto: 50 g/dia
+      - debilitados: 60 g/dia
+
+- Bezerros(as) de elevado potencial genético (elite e/ou para exposição):
+      - saudáveis: 45 g/dia
+      - debilitados: 60 g/dia
+
+As recomendações aqui descritas de inclusão de BABYKAMP GOLD na  ração,  bem
+como as de quantidades a serem  fornecidas  da  ração  podem  ser  alteradas
+conforme o escore corporal do animal,  status  nutricional,  ganho  de  peso
+desejado e/ou qualidade do volumoso. Consulte um profissional habilitado.
+Porventura, padrões diferentes de odor,  aparência  e  textura  poderão  ser
+notados entre lotes conforme a  disponibilidade  de  componentes  básicos  e
+eventuais  substitutivos  sem,   no   entanto,   comprometer   a   qualidade
+nutricional ou os níveis de garantia.
+Em caso de dúvidas, consulte nosso departamento técnico ou  um  profissional
+de sua confiança.
+Não fornecer o produto para equídeos ou ovinos.
+
+PRAZO DE VALIDADE:  2 anos após a data de fabricação
+
+MODO DE CONSERVAÇÃO:
+
+Conservar em local coberto, fresco, arejado, livre de insetos e roedores e
+devidamente embalado. Impedir que entre em contato com luz solar direta e
+umidade. Não armazenar junto a combustíveis, fertilizantes, produtos
+tóxicos e/ou em contato direto com o solo e paredes.
+
+DADOS DA EMPRESA:
+
+Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+Código SIF: SP-002190-3
+Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+CEP 15150-000, MONTE APRAZÍVEL, SP
+CNPJ: 002.425.166/0001-85
+INSCRIÇÃO ESTADUAL: 462.063.756.110
+FONE/FAX: (17) 3275.3106

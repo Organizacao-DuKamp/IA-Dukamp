@@ -1,0 +1,333 @@
+ARQUIVO DE ORIGEM: rtpi-racao-corte-dk-rc-confinamento-grao-inteiro.doc
+CAMINHO ORIGINAL: 01-BOVINOS/01-RTPI-E-FICHAS/03-RACOES-CORTE/rtpi-racao-corte-dk-rc-confinamento-grao-inteiro.doc
+FORMATO ORIGINAL: .doc
+========================================================================
+
+DUKAMP RAÇÃO CONFINAMENTO GRÃO INTEIRO
+
+|LOG DE ATUALIZAÇÕES                                                      |
+|         |                                                               |
+|21/03/12 |Criação do documento                                           |
+|08/10/201|Atualização documentos                                         |
+|8        |                                                               |
+|05/11/202|Troca do SIF                                                   |
+|0        |                                                               |
+
+                              RELATÓRIO TÉCNICO
+
+1)    NOME, ENDEREÇO E CNPJ DO ESTABELECIMENTO PROPRIETÁRIO DO PRODUTO:
+
+     Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+     Código SIF: SP-002190-3
+     Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+     CEP 15150-000, MONTE APRAZÍVEL, SP
+     CNPJ: 002.425.166/0001-85
+
+2)    DESIGNAÇÃO DO PRODUTO POR NOME E MARCA COMERCIAL:
+
+              DUKAMP RAÇÃO CONFINAMENTO GRÃO INTEIRO
+
+3)    CLASSIFICAÇÃO DO PRODUTO:
+
+              RAÇÃO PARA ENGORDA DE BOVINOS DE CORTE
+
+4)    FORMA FÍSICA DE APRESENTAÇÃO:
+
+              Pellets e grãos de milho
+
+5)    CARACTERÍSTICA DA EMBALAGEM E FORMA DE ACONDICIONAMENTO:
+
+              Produto  será  acondicionado  em  sacaria   do   tipo   ráfia
+      (polipropileno), nova e de uso único.
+
+6)    COMPOSIÇÃO QUALITATIVA:
+
+              Farelo de soja*, milho integral  moído**,  grão  de  milho**,
+      fosfato bicálcico, carbonato  de  cálcio,  uréia  pecuária,  monensina
+      sódica, bicarbonato  de  sódio,  premix  mineral  vitamínico.  Espécie
+      doadora de genes (em caso de ingrediente transgênico):  *Agrobacterium
+      tumefaciens;  **Bacillus thuringiensis.
+
+7)    ENRIQUECIMENTO: não há
+
+8)    EVENTUAIS SUBSTITUTIVOS: não há
+
+    9)      NÍVEIS DE GARANTIA:
+
+              |ITEM                   |ESPECIFICAÇÃO      |VALOR          |UNIDADE      |
+|Cálcio                 |mín/máx            |5.000 / 21.000 |mg/kg        |
+|Fósforo                |mín                |3.500          |mg/kg        |
+|Proteína bruta         |mín                |125            |g/kg         |
+|N.N.P. equiv. em       |máx                |4.250          |mg/kg        |
+|proteína               |                   |               |             |
+|Extrato etéreo         |mín/máx            |10 / 50        |g/kg         |
+|Matéria fibrosa        |mín/máx            |10 / 110       |g/kg         |
+|Fibra em detergente    |mín/máx            |10 / 120       |g/kg         |
+|ácido                  |                   |               |             |
+|Matéria mineral        |mín/máx            |20 / 150       |g/kg         |
+|Umidade                |máx                |130            |g/kg         |
+
+      10)  ENRIQUECIDO POR KILO DE PRODUTO COM;
+
+|Magnésio               |mín                |1,9            |g/kg         |
+|Enxofre                |mín                |1,55           |   g/kg      |
+|Potássio               |mín                |4,8            |g/kg         |
+|Sodio                  |mín                |1,4            |g/kg         |
+|Zinco                  |mín                |82             |mg/kg        |
+|Cobre                  |mín                |25             |mg/kg        |
+|Manganês               |mín                |70             |mg/kg        |
+|Iodo                   |mín                | 0,9           |mg/kg        |
+|Cobalto                |mín                |   1           |mg./kg       |
+|Selênio                |mín                |0,35           |mg./kg       |
+|Ferro                  |mín                |150            |mg./kg       |
+|Cromo                  |mín                |           0,21|mg/kg        |
+|Molibdenio             |mím                |           0,11|mg/kg        |
+|Níquel                 |min                |           0,06|mg/kg        |
+|Fluor (máx.)           |                   |35             |mg/kg        |
+|                       |Máx.               |               |             |
+|Vitamina A             |mín                | 4300          |ui/kg        |
+|Vitamina D3            |mín                |1125           |ui/kg        |
+|Vitamina E             |mín                |26,8           |ui/kg        |
+|Monensina sódica       |mín                |   22,5        |mg/kg        |
+|Tamponante             |min                |               |mg/kg        |
+|                       |                   |3000           |             |
+
+    11)     DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO E DO CONTROLE DA MATÉRIA-
+    PRIMA E DO PRODUTO ACABADO:
+
+[pic]
+
+DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO:
+              O presente produto será fabricado  no  setor  de  suplementos
+      minerais, cujo fluxograma é apresentado na figura acima.
+              Basicamente,  esse  setor  é  composto  por  uma  moega  para
+      recepção de ingredientes (legenda nº.5), misturador com  1.000  kg  de
+      capacidade  (legenda  nº.7),  silo  de  ensaque   (legenda   nº.9)   e
+      ensacadeira (legenda nº.10).
+              As etapas de produção serão:
+              1) reunião dos ingredientes em volta da moega (legenda nº.5),
+      já pesados em quantidades pré-definidas pelo Departamento Técnico;
+              1.1) no caso  de  ingredientes  considerados  microelementos,
+      eles serão previamente misturados  em  misturador  tipo  ‘Y’  (legenda
+      nº.1), após adicionados ao calcário calcítico em  uma  quantidade  que
+      totalize entre 20 e 30 kg, ao  final  do  qual  procura-se  obter  uma
+      mistura homogênea e em quantidade capaz de ser  bem  homogeneizado  no
+      misturador de 1.000 kg. Essa pré-mistura de ingredientes será  chamada
+      de “premix”
+              2) abastecimento da moega (legenda  nº.5)  com  1.000  kg  de
+      ingredientes (“premix” inclusive) que irão compor o  produto  acabado,
+      ingredientes  estes  qualificados  e  quantificados  em  planilha   de
+      produção
+              3) transferência dos 1.000 kg de ingredientes da moega até  o
+      misturador, através de rosca transportadora (legenda nº.6).
+              4) mistura dos ingredientes no misturador horizontal (legenda
+      nº.7);
+              5) transferência da mistura  do  misturador  até  o  silo  de
+      ensaque, através de rosca transportadora (legenda nº.8);
+              6) ensaque do produto acabado (legenda nº.10).
+
+CONTROLE DA MATÉRIA-PRIMA:
+              As matérias-primas obrigatoriamente deverão vir  acompanhadas
+      de  laudo  de   análise,   contendo   a(s)   concentração(ões)   do(s)
+      nutriente(s) de interesse. Os dados declarados pelo  fornecedor  serão
+      utilizados para abastecer a matriz do software de formulação.
+
+CONTROLE DO PRODUTO ACABADO:
+              Durante o processo  produtivo,  periodicamente,  sub-amostras
+      serão coletadas na bica de ensaque e  compostas  numa  única  amostra,
+      datada,  identificada  e  armazenada,  para   futura   análise,   caso
+      necessária.
+
+12)   INDICAÇÕES DE USO E ESPÉCIE ANIMAL A QUE SE DESTINA:
+
+INDICAÇÕES DE USO:
+
+              Ração para alimentação de bovinos de corte  em  confinamento,
+      submetidos a dieta sem volumoso.
+
+ESPÉCIE ANIMAL A QUE SE DESTINA: BOVINOS DE CORTE
+
+13)   MODO DE USAR:
+
+              Esta ração é pronta para uso e seu fornecimento exclusivo aos
+      bovinos (isto é, sem o  fornecimento  de  volumoso)  representará  uma
+      dieta conhecida como “dieta do grão inteiro  de  milho”.  Em  caso  de
+      animais já adaptados à dieta  sem  volumoso,  fornecer  o  equivalente
+      entre 2 a 2,2% do peso corporal diariamente, dividindo o total em pelo
+      menos 5 (cinco) refeições diárias.
+
+              PROTOCOLO DE ADAPTAÇÃO: Inicie  fornecendo  o  equivalente  a
+      1,2% do peso corporal em ração e aumente o fornecimento  em  cerca  de
+      10% a cada dois dias, até chegar ao  limite  de  fornecimento,  que  é
+      entre 2 e 2,2% do peso corporal por volta do 14º  dia.  O  período  de
+      adaptação não deverá ser  reduzido,  sob  o  risco  de  ocorrência  de
+      distúrbios nutricionais. Fornecer a quantidade total diária  de  ração
+      dividida em pelo  menos  5  (cinco)  refeições  e  não  disponibilizar
+      volumoso aos animais confinados. Caso a intenção seja  de  adaptar  os
+      animais  utilizando  também  volumoso  ou  em   caso   de   distúrbios
+      nutricionais, consulte nosso departamento técnico ou  um  profissional
+      habilitado de sua confiança.
+
+              ATENÇÃO: ESTE PRODUTO CONTÉM URÉIA, SENDO  CONTRA-INDICADO  O
+      USO DE URÉIA ADICIONAL. FORNECER O PRODUTO EM COCHOS COBERTOS E/OU QUE
+      EVITEM ACÚMULO DE ÁGUA. NÃO FORNECER O PRODUTO PARA ANIMAIS EM  JEJUM,
+      FAMINTOS E DEBILITADOS. NÃO FORNECER O PRODUTO PARA  EQÜÍDEOS,  OVINOS
+      E/OU QUAISQUER OUTRAS CATEGORIAS OU ESPÉCIES QUE NÃO AS  ESPECIFICADAS
+      NESTE RÓTULO, NEM EM QUANTIDADES ACIMA DO RECOMENDADO. O  FORNECIMENTO
+      DE VOLUMOSO É CONTRA-INDICADO, SALVO QUANDO PRESCRITO POR PROFISSIONAL
+      HABILITADO. NÃO ADMINISTRAR JUNTO  A  OUTROS  PRODUTOS  QUE  CONTENHAM
+      IONÓFOROS. NÃO PERMITIR ACESSO DE EQUINOS AO PRODUTO, POIS A  INGESTÃO
+      PODERÁ SER FATAL. ESTE PRODUTO CONTÉM IONÓFORO E O USO SIMULTÂNEO  COM
+      CERTAS  SUBSTÂNCIAS  MEDICAMENTOSAS  PODE   SER   CONTRA-INDICADA.   A
+      MONENSINA,  SALINOMICINA  E  A  NARASINA  SÃO  INCOMPATÍVEIS   COM   A
+      TIAMULINA.
+
+14)   CONTEÚDO LÍQUIDO EXPRESSO NO SISTEMA DECIMAL:
+
+              30 kg OU 40 kg
+
+15)   PRAZO DE VALIDADE:
+
+              180 dias após a data de fabricação
+
+    16) CONDIÇÕES DE CONSERVAÇÃO:
+
+              Conservar  este  produto  em  local  coberto,  fresco,  seco,
+      arejado, livre de insetos e  roedores,  sobre  estrados,  afastado  de
+      paredes e devidamente embalado. Não armazenar  junto  a  combustíveis,
+      fertilizantes ou produtos tóxicos.
+
+17) RESTRIÇÕES E OUTRAS RECOMENDAÇÕES:
+
+              Este produto contém uréia, sendo  contra-indicado  o  uso  de
+      uréia adicional.
+              Fornecer o produto em cochos cobertos e/ou que evitem acúmulo
+      de água.
+              Não fornecer o produto para  animais  em  jejum,  famintos  e
+      debilitados.
+              Não fornecer o produto para eqüídeos, ovinos  e/ou  quaisquer
+      outras categorias ou espécies que não as especificadas  neste  rótulo,
+      nem em quantidades acima do recomendado.
+              O fornecimento de volumoso junto com  essa  ração  é  contra-
+      indicado, salvo quando prescrito por profissional habilitado.
+              Não  administrar  junto  a  outros  produtos  que   contenham
+      ionóforos.
+              Não permitir acesso de equinos ao produto,  pois  a  ingestão
+      poderá ser fatal.
+              Este produto contém ionóforo e o uso  simultâneo  com  certas
+      substâncias medicamentosas pode ser contra-indicada.
+              A monensina, salinomicina e a narasina são incompatíveis  com
+      a tiamulina.
+
+                                       Monte Aprazível,08 de outubro de 2018
+
+             |Marco Antonio Sartori        |
+|Engenheiro Agronomo          |
+|CRea SP- 5060907799/d        |
+|Responsável  Técnico         |
+|Dukamp Saúde Animal          |
+
+                                    ANEXO
+                            - CROQUI DO RÓTULO -
+
+                   DUKAMP RAÇÃO CONFINAMENTO GRÃO INTEIRO
+                     RAÇÃO PARA ENGORDA DE BOVINOS CORTE
+
+INDICAÇÃO DO PRODUTO
+Ração para alimentação de bovinos de corte em confinamento, submetidos a
+dieta sem volumoso
+
+COMPOSIÇÃO BÁSICA DO PRODUTO
+Farelo de soja*, milho integral moído**, grão de milho**, fosfato
+bicálcico, carbonato de cálcio, uréia pecuária,  o, monesina sódica,
+icarbonato de sódio, premix mineral vitamínico. Espécie doadora de genes
+(em caso de ingrediente transgênico):  *Agrobacterium tumefaciens;
+**Bacillus thuringiensis
+
+NIVEIS DE GARANTIA DO PRODUTO
+Cálcio      mín/máx    5.000 / 21.000  mg/kg
+Fósforo     mín  3.500 mg/kg
+Proteína bruta   mín   125  g/kg
+N.N.P. equiv. em proteína   máx   4.250      mg/kg
+Extrato etéreo   mín/máx    10 / 50    g/kg
+Matéria fibrosa  mín/máx    10 / 110   g/kg
+Fibra em detergente ácido   mín/máx    10 / 120   g/kg
+Matéria mineral  mín/máx    20 / 150   g/kg
+Umidade     máx  130   g/kg
+
+ENRIQUECIDO POR KILO DE PRODUTO COM;
+
+Magnésio    mín  1,9   g/kg
+Enxofre     mín  1,55  g/kg
+Potássio    mín  4,8   g/kg
+Sódio       mín  1,4   g/kg
+Zinco mín   82   mg/kg
+Cobre mín   25   mg/kg
+Manganês    mín  70    mg/kg
+Iodo  mín   0,9  mg/kg
+Cobalto     mín  1     mg//kg
+Selenio     mín  0,35  mg/kg
+Ferro mín   150  mg/kg
+Cromo  .................................mín........................0,21
+mg/kg
+Molibdenio  mín  .........................0,11 mg/kg
+Niquel      mín  ........................0,06 mg/kg
+Fluor máx.  35   mg/kg
+Vitamina A.................................mín........................4300
+ui/kg
+Vitamina D3 mín  ..........................1125 ui/kg
+Vitamina E  mín  26,8  ui/kg
+Monensina sódica mín   .........................22,5mg/kg
+Tamponante..............................mín.........................3000
+mg/kg
+
+MODO DE USAR
+
+Esta ração é pronta para uso e seu fornecimento exclusivo aos bovinos (isto
+é, sem o fornecimento de volumoso) representará uma dieta conhecida como
+“dieta do grão inteiro de milho”. Em caso de animais já adaptados à dieta
+sem volumoso, fornecer o equivalente entre 2 a 2,2% do peso corporal
+diariamente, dividindo o total em pelo menos 5 (cinco) refeições diárias.
+
+PROTOCOLO DE ADAPTAÇÃO: Inicie fornecendo o equivalente a 1,2% do peso
+corporal em ração e aumente o fornecimento em cerca de 10% a cada dois
+dias, até chegar ao limite de fornecimento, que é entre 2 e 2,2% do peso
+corporal por volta do 14º dia. O período de adaptação não deverá ser
+reduzido, sob o risco de ocorrência de distúrbios nutricionais. Fornecer a
+quantidade total diária de ração dividida em pelo menos 5 (cinco) refeições
+e não disponibilizar volumoso aos animais confinados. Caso a intenção seja
+de adaptar os animais utilizando também volumoso ou em caso de distúrbios
+nutricionais, consulte nosso departamento técnico ou um profissional
+habilitado de sua confiança.
+
+ATENÇÃO: ESTE PRODUTO CONTÉM URÉIA, SENDO CONTRA-INDICADO O USO DE URÉIA
+ADICIONAL. FORNECER O PRODUTO EM COCHOS COBERTOS E/OU QUE EVITEM ACÚMULO DE
+ÁGUA. NÃO FORNECER O PRODUTO PARA ANIMAIS EM JEJUM, FAMINTOS E DEBILITADOS.
+NÃO FORNECER O PRODUTO PARA EQÜÍDEOS, OVINOS E/OU QUAISQUER OUTRAS
+CATEGORIAS OU ESPÉCIES QUE NÃO AS ESPECIFICADAS NESTE RÓTULO, NEM EM
+QUANTIDADES ACIMA DO RECOMENDADO. O FORNECIMENTO DE VOLUMOSO É CONTRA-
+INDICADO, SALVO QUANDO PRESCRITO POR PROFISSIONAL HABILITADO. NÃO
+ADMINISTRAR JUNTO A OUTROS PRODUTOS QUE CONTENHAM IONÓFOROS. NÃO PERMITIR
+ACESSO DE EQUINOS AO PRODUTO, POIS A INGESTÃO PODERÁ SER FATAL. ESTE
+PRODUTO CONTÉM IONÓFORO E O USO SIMULTÂNEO COM CERTAS SUBSTÂNCIAS
+MEDICAMENTOSAS PODE SER CONTRA-INDICADA. A MONENSINA, SALINOMICINA E A
+NARASINA SÃO INCOMPATÍVEIS COM A TIAMULINA.
+
+PRAZO DE VALIDADE: 180 dias após a data de fabricação
+
+MODO DE CONSERVAÇÃO
+
+Conservar este produto em local coberto, fresco, seco, arejado, livre de
+insetos e roedores, sobre estrados, afastado de paredes e devidamente
+embalado. Não armazenar junto a combustíveis, fertilizantes ou produtos
+tóxicos.
+
+DADOS DA EMPRESA:
+
+Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+Código SIF: SP-002190-3
+Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+CEP 15150-000, MONTE APRAZÍVEL, SP
+CNPJ: 002.425.166/0001-85
+INSCRIÇÃO ESTADUAL: 462.063.756.110
+FONE/FAX: (17) 3275.3106

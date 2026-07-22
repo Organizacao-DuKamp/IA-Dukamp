@@ -1,0 +1,307 @@
+ARQUIVO DE ORIGEM: rtpi-baldinho-babykamp-ovinos-gold.doc
+CAMINHO ORIGINAL: 04-OUTROS/01-RTPI-E-FICHAS/rtpi-baldinho-babykamp-ovinos-gold.doc
+FORMATO ORIGINAL: .doc
+========================================================================
+
+BABYKAMP OVINOS GOLD
+
+|LOG DE ATUALIZAÇÕES                                                      |
+|         |                                                               |
+|11/07/12 |Criação do documento                                           |
+|08/10/201|Atualizaçao documentos                                         |
+|8        |                                                               |
+|05/11/202|Troca do SIF                                                   |
+|0        |                                                               |
+
+                              RELATÓRIO TÉCNICO
+
+1)    NOME, ENDEREÇO E CNPJ DO ESTABELECIMENTO PROPRIETÁRIO DO PRODUTO:
+
+     Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+     Código SIF: SP-002190-3
+     Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+     CEP 15150-000, MONTE APRAZÍVEL, SP
+     CNPJ: 002.425.166/0001-85
+     INSCRIÇÃO ESTADUAL: 462.063.756.110
+     FONE/FAX: (17) 3275.3106
+
+2)    DESIGNAÇÃO DO PRODUTO POR NOME E MARCA COMERCIAL:
+
+              BABYKAMP OVINOS GOLD
+
+3)    CLASSIFICAÇÃO DO PRODUTO:
+
+              SUPLEMENTO MINERAL PARA MISTURA PARA OVINOS
+
+4)    FORMA FÍSICA DE APRESENTAÇÃO:
+
+              Seco, em pó
+
+5)    CARACTERÍSTICA DA EMBALAGEM E FORMA DE ACONDICIONAMENTO:
+
+              Produto será acondicionado em:
+
+              - opção 1 -   sacaria do tipo ráfia (polipropileno),  nova  e
+                         de uso único
+              - opção 2 -   saco de plástico (polietileno)  como  embalagem
+                         primária e, como embalagem secundária serão usados
+                         balde de plástico ou caixas de papelão.
+
+6)    COMPOSIÇÃO QUALITATIVA:
+
+              aditivo  antioxidante,  monesina  sodica,  aroma  de   leite,
+      carbonato de cálcio, caulim, cloreto de  potássio,  cloreto  de  sódio
+      (sal comum), cromo orgânico,  enxofre  ventilado  (flor  de  enxofre),
+      fosfato bicálcico, iodato  de  cálcio,  leveduras,  melaço,  óxido  de
+      magnésio, palatabilizante,  selenito  de  sódio,  sulfato  de  cálcio,
+      sulfato de colbalto, sulfato de manganês, sulfato  de  zinco,  sulfato
+      ferroso, vitamina A, vitamina D3, vitamina E, vitamina K.
+
+7)    ENRIQUECIMENTO: não há
+
+8)    EVENTUAIS SUBSTITUTIVOS:
+
+              aroma de baunilha, iodato de potássio, lasalocida  de  sódio,
+      sulfato de magnésio.
+
+     9)     NÍVEIS DE GARANTIA:
+
+              |ITEM                        |ESPECIFICAÇÃO   |VALOR         |UNIDADE    |
+|CÁLCIO                      |(min./Max)      |40/150        |g          |
+|FÓSFORO                     |                |50            |g          |
+|MAGNÉSIO                    |                |10            |g          |
+|POTÁSSIO                    |                |27            |g          |
+|SÓDIO                       |                |18            |g          |
+|ENXOFRE                     |                |20            |g          |
+|COBALTO                     |                |20            |mg         |
+|IODO                        |                |35            |mg         |
+|FERRO                       |                |2.500         |mg         |
+|MANGANÊS                    |                |500           |mg         |
+|SELÊNIO                     |                |12            |mg         |
+|ZINCO                       |                |2.000         |mg         |
+|CROMO                       |                |10            |mg         |
+|FLÚOR                       |(máx)           |1.500         |mg         |
+|VITAMINA A                  |                |98.000        |U.I./kg    |
+|VITAMINA D3                 |                |14.000        |U.I./kg    |
+|VITAMINA E                  |                |1.000         |U.I./kg    |
+|ETOXIQUIN                   |                |150           |mg         |
+|MONENSINA SÓDICA            |                |310           |mg         |
+
+10)   DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO E DO CONTROLE DA MATÉRIA-PRIMA E
+     DO PRODUTO ACABADO:
+
+[pic]
+
+DESCRIÇÃO DO PROCESSO DE FABRICAÇÃO:
+              O presente produto será fabricado  no  setor  de  suplementos
+      minerais, cujo fluxograma é apresentado na figura acima.
+              Basicamente,  esse  setor  é  composto  por  uma  moega  para
+      recepção de ingredientes (legenda nº.5), misturador com  1.000  kg  de
+      capacidade  (legenda  nº.7),  silo  de  ensaque   (legenda   nº.9)   e
+      ensacadeira (legenda nº.10).
+              As etapas de produção serão:
+              1) reunião dos ingredientes em volta da moega (legenda nº.5),
+      já pesados em quantidades pré-definidas pelo Departamento Técnico;
+              1.1) no caso  de  ingredientes  considerados  microelementos,
+      eles serão previamente misturados  em  misturador  tipo  ‘Y’  (legenda
+      nº.1), após adicionados ao calcário calcítico em  uma  quantidade  que
+      totalize entre 20 e 30 kg, ao  final  do  qual  procura-se  obter  uma
+      mistura homogênea e em quantidade capaz de ser  bem  homogeneizado  no
+      misturador de 1.000 kg. Essa pré-mistura de ingredientes será  chamada
+      de “premix”
+              2) abastecimento da moega (legenda  nº.5)  com  1.000  kg  de
+      ingredientes (“premix” inclusive) que irão compor o  produto  acabado,
+      ingredientes  estes  qualificados  e  quantificados  em  planilha   de
+      produção
+              3) transferência dos 1.000 kg de ingredientes da moega até  o
+      misturador, através de rosca transportadora (legenda nº.6).
+              4) mistura dos ingredientes no misturador horizontal (legenda
+      nº.7);
+              5) transferência da mistura  do  misturador  até  o  silo  de
+      ensaque, através de rosca transportadora (legenda nº.8);
+              6) ensaque do produto acabado (legenda nº.10).
+
+CONTROLE DA MATÉRIA-PRIMA:
+              As matérias-primas obrigatoriamente deverão vir  acompanhadas
+      de  laudo  de   análise,   contendo   a(s)   concentração(ões)   do(s)
+      nutriente(s) de interesse. Os dados declarados pelo  fornecedor  serão
+      utilizados para abastecer a matriz do software de formulação.
+
+CONTROLE DO PRODUTO ACABADO:
+              Durante o processo  produtivo,  periodicamente,  sub-amostras
+      serão coletadas na bica de ensaque e  compostas  numa  única  amostra,
+      datada,  identificada  e  armazenada,  para   futura   análise,   caso
+      necessária.
+
+11)   INDICAÇÕES DE USO E ESPÉCIE ANIMAL A QUE SE DESTINA:
+
+INDICAÇÕES DE USO:
+
+              Suplemento mineral para mistura, contendo vitaminas, ionóforo
+      e palatabilizante, indicado para potencializar a expressão genética de
+      ovinos, do nascimento até  o  fim  da  fase  de  crescimento,  visando
+      otimizar o ganho de peso e eficiência  alimentar.  Também  é  indicado
+      para o preparo de ovinos de elite para exposições.
+
+ESPÉCIE ANIMAL A QUE SE DESTINA: OVINOS
+
+12)   MODO DE USAR:
+
+              O produto pode ser  administrado  aos  animais  misturado  às
+      rações durante sua confecção ou através do método “top dress”, isto é,
+      polvilhando o produto sobre o alimento no cocho.
+              Para misturar à ração durante a confecção, utilize entre 2  e
+      3% na mistura (ou entre 20 e 30 kg do produto por tonelada de  ração).
+      Da ração preparada, fornecer entre 350 e 500 gramas para cada 10 kg de
+      peso corporal.
+              Caso a opção seja pelo método de polvilhamento sobre a ração,
+      a dose diária por cabeça recomendada é de 1 grama para cada kg de peso
+      corporal.
+
+              |DOSAGEM RECOMENDADA                               |
+|Peso do animal        |Quantidade de BABYKAMP     |
+|                      |OVINOS GOLD                |
+|10 kg                 |10 g/animal/dia            |
+|15 kg                 |15 g/animal/dia            |
+|20 kg                 |20 g/animal/dia            |
+|25 kg                 |25 g/animal/dia            |
+|30 kg                 |30 g/animal/dia            |
+|35 kg                 |35 g/animal/dia            |
+
+              A dosagem, o período e a forma  de  administração  podem  ser
+      alterados conforme recomendações de profissional habilitado.
+              Porventura, padrões diferentes de odor, aparência  e  textura
+      poderão  ser  notados  entre  lotes  conforme  a  disponibilidade   de
+      componentes  básicos  e  eventuais  substitutivos  sem,  no   entanto,
+      comprometer a qualidade nutricional ou os níveis de garantia.
+              Em caso de dúvidas, consulte nosso departamento técnico ou um
+      profissional de sua confiança.
+              Não fornecer o produto para equídeos.
+
+13)   CONTEÚDO LÍQUIDO EXPRESSO NO SISTEMA DECIMAL:
+
+              500 g, 1 kg , 3 kg , 10 kg  , 20 kg , 25 kg , 30 kg , 40 kg
+
+14)   PRAZO DE VALIDADE:
+
+              2 anos após a data de fabricação
+
+15) CONDIÇÕES DE CONSERVAÇÃO:
+
+              Conservar em local coberto, fresco, arejado, livre de insetos
+      e roedores e devidamente embalado. Impedir que entre  em  contato  com
+      luz solar direta  e  umidade.  Não  armazenar  junto  a  combustíveis,
+      fertilizantes, produtos tóxicos e/ou em contato direto com  o  solo  e
+      paredes.
+
+16) RESTRIÇÕES E OUTRAS RECOMENDAÇÕES:
+
+              Não fornecer o produto para equídeos.
+
+                                      Monte Aprazível, 08 de outubro de 2018
+
+         |Marco Antonio Sartori        |
+|ZEngenherio Agronomo         |
+|Crea-sp-5060907799/d         |
+|Responsável  Técnico         |
+|Dukamp Saúde Animal          |
+
+                                    ANEXO
+                            - CROQUI DO RÓTULO -
+
+                            BABYKAMP OVINOS GOLD
+                 SUPLEMENTO MINERAL PARA MISTURA PARA OVINOS
+
+INDICAÇÃO DO PRODUTO:
+
+Suplemento mineral para mistura, contendo vitaminas, ionóforo e
+palatabilizante, indicado para potencializar a expressão genética de
+ovinos, do nascimento até o fim da fase de crescimento, visando otimizar o
+ganho de peso e eficiência alimentar. Também é indicado para o preparo de
+ovinos de elite para exposições.
+
+COMPOSIÇÃO BÁSICA DO PRODUTO:
+
+aditivo antioxidante, monensina sódica , aroma de leite, carbonato de
+cálcio, caulim, cloreto de potássio, cloreto de sódio (sal comum), cromo
+orgânico, enxofre ventilado (flor de enxofre), fosfato bicálcico, iodato de
+cálcio, leveduras, melaço, óxido de magnésio, palatabilizante, selenito de
+sódio, sulfato de cálcio, sulfato de colbalto, sulfato de manganês, sulfato
+de zinco, sulfato ferroso, vitamina A, vitamina D3, vitamina E, vitamina K.
+
+EVENTUAIS SUBSTITUTIVOS:
+
+aroma de baunilha, iodato de potássio, lasalocida de sódio, sulfato de
+magnésio
+
+NIVEIS DE GARANTIA DO PRODUTO:
+
+CÁLCIO           40/150     g
+FÓSFORO          50    g
+MAGNÉSIO         10    g
+POTÁSSIO         27    g
+SÓDIO       18   g
+ENXOFRE          20    g
+COBALTO          20    mg
+IODO        35   mg
+FERRO       2.500      mg
+MANGANÊS         500   mg
+SELÊNIO          12    mg
+ZINCO       2.000      mg
+CROMO       10   mg
+FLÚOR (máx) 1.500      mg
+VITAMINA A       98.000     U.I./kg
+VITAMINA D3      14.000     U.I./kg
+VITAMINA E       1.000 U.I./kg
+ETOXIQUIN        150   mg
+MONENSINA SÓDICA       310  mg
+
+MODO DE USAR:
+
+O produto pode ser administrado aos animais misturado às rações durante  sua
+confecção ou através do método “top dress”, isto é,  polvilhando  o  produto
+sobre o alimento no cocho.
+Para misturar à ração durante a confecção, utilize entre 2 e 3%  na  mistura
+(ou entre 20 e 30 kg do produto por tonelada de ração). Da ração  preparada,
+fornecer entre 350 e 500 gramas para cada 10 kg de peso corporal.
+Caso a opção seja pelo método de polvilhamento sobre a ração, a dose  diária
+por cabeça recomendada é de 1 grama para cada kg de peso corporal.
+
+|DOSAGEM RECOMENDADA                               |
+|Peso do animal        |Quantidade de BABYKAMP     |
+|                      |OVINOS GOLD                |
+|10 kg                 |10 g/animal/dia            |
+|15 kg                 |15 g/animal/dia            |
+|20 kg                 |20 g/animal/dia            |
+|25 kg                 |25 g/animal/dia            |
+|30 kg                 |30 g/animal/dia            |
+|35 kg                 |35 g/animal/dia            |
+
+A dosagem, o  período  e  a  forma  de  administração  podem  ser  alterados
+conforme recomendações de profissional habilitado.
+Porventura, padrões diferentes de odor,  aparência  e  textura  poderão  ser
+notados entre lotes conforme a  disponibilidade  de  componentes  básicos  e
+eventuais  substitutivos  sem,   no   entanto,   comprometer   a   qualidade
+nutricional ou os níveis de garantia.
+Em caso de dúvidas, consulte nosso departamento técnico ou  um  profissional
+de sua confiança.
+Não fornecer o produto para.
+
+PRAZO DE VALIDADE:  2 anos após a data de fabricação
+
+MODO DE CONSERVAÇÃO:
+
+Conservar em local coberto, fresco, arejado, livre de insetos e roedores e
+devidamente embalado. Impedir que entre em contato com luz solar direta e
+umidade. Não armazenar junto a combustíveis, fertilizantes, produtos
+tóxicos e/ou em contato direto com o solo e paredes.
+
+DADOS DA EMPRESA:
+
+Nome do Estabelecimento: DUKAMP SAÚDE ANIMAL LTDA
+Código SIF: SP-002190-3
+Endereço: AVENIDA SANTOS DUMONT, 403, BAIRRO BOM JESUS
+CEP 15150-000, MONTE APRAZÍVEL, SP
+CNPJ: 002.425.166/0001-85
+INSCRIÇÃO ESTADUAL: 462.063.756.110
+FONE/FAX: (17) 3275.3106
