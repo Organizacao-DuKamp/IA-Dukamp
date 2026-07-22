@@ -70,15 +70,25 @@ async function findProductByName(text: string): Promise<
   const norm = normalizeName(text);
   if (norm.length < 3) return { exact: null, ambiguous: null };
 
-  // Pull compact list of aliases + product names.
-  const { data: aliases } = await supabaseAdmin
-    .from("product_aliases")
-    .select("alias_normalized, product_id");
-  const { data: products } = await supabaseAdmin
-    .from("products")
-    .select(
-      "id, official_name, species, category, description, indication, composition, guarantee_levels, consumption, usage_instructions, package_weight, animal_phase, active, is_duplicate, requires_review",
-    );
+  // Pull compact list of aliases + product names. If the service role key is
+  // missing (e.g. on Netlify without SUPABASE_SERVICE_ROLE_KEY), skip the
+  // local lookup — the site fallback downstream will still work.
+  let aliases: Array<{ alias_normalized: string | null; product_id: string }> | null = null;
+  let products: any[] | null = null;
+  try {
+    const res1 = await supabaseAdmin.from("product_aliases").select("alias_normalized, product_id");
+    aliases = res1.data as any;
+    const res2 = await supabaseAdmin
+      .from("products")
+      .select(
+        "id, official_name, species, category, description, indication, composition, guarantee_levels, consumption, usage_instructions, package_weight, animal_phase, active, is_duplicate, requires_review",
+      );
+    products = res2.data;
+  } catch (err) {
+    console.warn("[router] local products lookup skipped:", err instanceof Error ? err.message : err);
+    return { exact: null, ambiguous: null };
+  }
+
 
   const activeById = new Map(
     (products ?? [])
@@ -138,15 +148,19 @@ async function findProductByName(text: string): Promise<
 }
 
 async function countActive(species: SpeciesKey | null): Promise<{ n: number; source: "local" | "site" }> {
-  let q = supabaseAdmin
-    .from("products")
-    .select("id", { count: "exact", head: true })
-    .eq("active", true)
-    .eq("is_duplicate", false)
-    .eq("requires_review", false);
-  if (species) q = q.eq("species", species);
-  const { count } = await q;
-  if ((count ?? 0) > 0) return { n: count ?? 0, source: "local" };
+  try {
+    let q = supabaseAdmin
+      .from("products")
+      .select("id", { count: "exact", head: true })
+      .eq("active", true)
+      .eq("is_duplicate", false)
+      .eq("requires_review", false);
+    if (species) q = q.eq("species", species);
+    const { count } = await q;
+    if ((count ?? 0) > 0) return { n: count ?? 0, source: "local" };
+  } catch (err) {
+    console.warn("[router] local count skipped:", err instanceof Error ? err.message : err);
+  }
 
   // Fallback to the Dukamp site DB (source of truth for the commercial catalog).
   try {
@@ -162,19 +176,25 @@ async function countActive(species: SpeciesKey | null): Promise<{ n: number; sou
   }
 }
 
+
 async function listActive(species: SpeciesKey | null): Promise<string[]> {
-  let q = supabaseAdmin
-    .from("products")
-    .select("official_name")
-    .eq("active", true)
-    .eq("is_duplicate", false)
-    .eq("requires_review", false)
-    .order("official_name", { ascending: true })
-    .limit(200);
-  if (species) q = q.eq("species", species);
-  const { data } = await q;
-  const local = (data ?? []).map((p) => p.official_name);
-  if (local.length > 0) return local;
+  try {
+    let q = supabaseAdmin
+      .from("products")
+      .select("official_name")
+      .eq("active", true)
+      .eq("is_duplicate", false)
+      .eq("requires_review", false)
+      .order("official_name", { ascending: true })
+      .limit(200);
+    if (species) q = q.eq("species", species);
+    const { data } = await q;
+    const local = (data ?? []).map((p) => p.official_name);
+    if (local.length > 0) return local;
+  } catch (err) {
+    console.warn("[router] local list skipped:", err instanceof Error ? err.message : err);
+  }
+
 
   // Fallback to the Dukamp site DB.
   try {
