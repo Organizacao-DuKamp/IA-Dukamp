@@ -339,7 +339,7 @@ export const extractProductsFromKnowledge = createServerFn({ method: "POST" })
     // Insert report items in batches.
     for (let i = 0; i < items.length; i += 100) {
       const batch = items.slice(i, i + 100).map((it) => ({ ...it, report_id: reportId }));
-      await supabaseAdmin.from("import_report_items").insert(batch);
+      await supabaseAdmin.from("import_report_items").insert(batch as never);
     }
 
     // Update the report summary with final counts.
