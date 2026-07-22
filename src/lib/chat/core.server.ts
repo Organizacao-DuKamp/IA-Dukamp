@@ -64,10 +64,35 @@ export async function handleIncoming(
     return { reply: routed.text };
   }
 
-  // 2) Build context: structured product info (if any) + RAG passages.
+  // 2) Build context: structured product info (if any) + RAG passages + site data.
   const contextParts: string[] = [];
   if (routed.productHint) {
     contextParts.push(productContextBlock(routed.productHint.product));
+  }
+
+  // 2a) Site Dukamp lookups (commercial data: price, stock, sellers, categories).
+  try {
+    const { siteIntentHints, searchSiteProducts, listSiteSellers, findSellersByRegion, listSiteCategories, siteBlock } =
+      await import("../site/site-lookup.server");
+    const hints = siteIntentHints(text);
+    const lookup: { products?: any[]; sellers?: any[]; categories?: string[] } = {};
+
+    if (hints.price || routed.productHint) {
+      const query = routed.productHint ? routed.productHint.product.official_name : text;
+      const prods = await searchSiteProducts(query, 6);
+      if (prods.length > 0) lookup.products = prods;
+    }
+    if (hints.seller) {
+      const byRegion = await findSellersByRegion(text);
+      lookup.sellers = byRegion.length > 0 ? byRegion : await listSiteSellers(20);
+    }
+    if (hints.category) {
+      lookup.categories = await listSiteCategories();
+    }
+    const block = siteBlock(lookup);
+    if (block) contextParts.push(block);
+  } catch (err) {
+    console.error("[site] lookup falhou:", err instanceof Error ? err.message : err);
   }
 
   try {
