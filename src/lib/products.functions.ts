@@ -185,9 +185,9 @@ export const extractProductsFromKnowledge = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { parseCandidate, mergeCandidates, type ProductCandidate } = await import(
-      "./products/parser.server"
-    );
+    const parserMod = await import("./products/parser.server");
+    const { parseCandidate, mergeCandidates } = parserMod;
+    type ProductCandidate = import("./products/parser.server").ProductCandidate;
 
     const { data: docs, error } = await supabaseAdmin
       .from("knowledge_documents")
