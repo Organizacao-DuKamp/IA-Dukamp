@@ -387,8 +387,30 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
     return { kind: "structural", text: lines.join("\n") };
   }
 
-  // Sellers — count
+  // Sellers — count (optionally filtered by region mentioned in the same message)
   if (hasSellerWord && hasCount) {
+    const { findSellersByRegion } = await import("@/lib/site/site-lookup.server");
+    const byRegion = await findSellersByRegion(userText);
+    if (byRegion.length > 0 || /\b(em|no|na|nos|nas)\s+[a-zà-ú]/i.test(userText)) {
+      // The user mentioned a region — answer only for that region.
+      const regionLabel = byRegion[0]?.region ?? "essa região";
+      if (byRegion.length === 0) {
+        return {
+          kind: "structural",
+          text: `Não encontrei vendedores DuKamp cadastrados nessa região. Posso listar vendedores de regiões próximas ou passar o contato da matriz, se quiser.`,
+        };
+      }
+      const bullets = byRegion.map((s) => {
+        const parts = [`**${s.name}**`];
+        if (s.role) parts.push(s.role);
+        const contact = s.whatsapp ? ` — WhatsApp: ${s.whatsapp}` : s.phone ? ` — Tel: ${s.phone}` : "";
+        return `- ${parts.join(" — ")}${contact}`;
+      }).join("\n");
+      return {
+        kind: "structural",
+        text: `A DuKamp tem **${byRegion.length} vendedor(es)** em ${regionLabel}:\n\n${bullets}`,
+      };
+    }
     const n = await countSellers();
     return {
       kind: "structural",
@@ -400,16 +422,21 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
 
   // Sellers — list (broadened: "nomes", "quem são", "todos", "equipe", "liste")
   if (hasSellerWord && (hasList || /\b(todos|todas|equipe|nomes?|quem\s+s[aã]o)\b/i.test(userText))) {
-    const list = await listSellersFull();
+    const { findSellersByRegion } = await import("@/lib/site/site-lookup.server");
+    const byRegion = await findSellersByRegion(userText);
+    const list = byRegion.length > 0 ? byRegion : await listSellersFull();
     if (list.length === 0) return { kind: "structural", text: "Nenhum vendedor ativo encontrado." };
     const bullets = list.map((s) => {
       const parts = [`**${s.name}**`];
       if (s.role) parts.push(s.role);
-      if (s.region) parts.push(s.region);
+      if (s.region && byRegion.length === 0) parts.push(s.region);
       const contact = s.whatsapp ? ` — WhatsApp: ${s.whatsapp}` : s.phone ? ` — Tel: ${s.phone}` : "";
       return `- ${parts.join(" — ")}${contact}`;
     }).join("\n");
-    return { kind: "structural", text: `Vendedores DuKamp (${list.length}):\n\n${bullets}` };
+    const header = byRegion.length > 0
+      ? `Vendedores DuKamp em ${byRegion[0].region ?? "essa região"} (${list.length}):`
+      : `Vendedores DuKamp (${list.length}):`;
+    return { kind: "structural", text: `${header}\n\n${bullets}` };
   }
 
   // Sellers — by name

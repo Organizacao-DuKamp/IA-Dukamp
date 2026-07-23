@@ -90,16 +90,35 @@ export async function handleIncoming(
   if (smallTalk) return { reply: smallTalk };
 
   // 1) Router: structural = direct DB answer (no LLM).
-  // Contextual follow-up: bare pronouns ("quem são eles?", "quais são?", "me diga os nomes")
-  // reuse the topic from the last assistant message.
-  const isBareFollowUp = /^(quem\s+s[aã]o(\s+eles|\s+elas)?|quais\s+s[aã]o(\s+eles|\s+elas)?|me\s+diga(\s+os)?(\s+nomes?)?|diga(\s+os)?(\s+nomes?)?|os?\s+nomes?|liste(\s+eles|\s+elas)?|todos|todas)\s*[?.!]*$/i.test(text.trim());
+  // Contextual follow-up: reuse the topic from the last turn so that short
+  // messages like "quem são eles?" or "e em monte aprazível?" don't lose context.
+  const trimmedText = text.trim();
+  const isBareFollowUp = /^(quem\s+s[aã]o(\s+eles|\s+elas)?|quais\s+s[aã]o(\s+eles|\s+elas)?|me\s+diga(\s+os)?(\s+nomes?)?|diga(\s+os)?(\s+nomes?)?|os?\s+nomes?|liste(\s+eles|\s+elas)?|todos|todas)\s*[?.!]*$/i.test(trimmedText);
+  // Region-only follow-up: "e em monte aprazivel?", "em rio preto?", "e no interior?"
+  const regionFollowUp = trimmedText.match(/^(?:e\s+)?(?:em|no|na|nos|nas)\s+([a-zà-ú][a-zà-ú\s.'-]{2,60})\s*[?.!]*$/i);
+  const lastAssistant = [...trimmedHistory].reverse().find((m) => m.role === "assistant");
+  const lastUser = [...trimmedHistory].reverse().find((m) => m.role === "user");
+  const prevBlob = ((lastAssistant?.content ?? "") + " " + (lastUser?.content ?? "")).toLowerCase();
+  const prevTopic: "vendedores" | "categorias" | "produtos" | "unidades" | null =
+    /vendedor|vendedores|representante/.test(prevBlob) ? "vendedores"
+    : /unidade|filial|matriz|endere/.test(prevBlob) ? "unidades"
+    : /categoria|categorias/.test(prevBlob) ? "categorias"
+    : /produto|produtos|destaque/.test(prevBlob) ? "produtos"
+    : null;
+
   let routerInput = text;
   if (isBareFollowUp) {
-    const lastAssistant = [...trimmedHistory].reverse().find((m) => m.role === "assistant");
-    const prev = lastAssistant?.content.toLowerCase() ?? "";
-    if (/vendedor|vendedores|representante/.test(prev)) routerInput = `liste todos os vendedores`;
-    else if (/categoria|categorias/.test(prev)) routerInput = `liste todas as categorias`;
-    else if (/produto|produtos|destaque/.test(prev)) routerInput = `liste os produtos`;
+    if (prevTopic === "vendedores") routerInput = `liste todos os vendedores`;
+    else if (prevTopic === "categorias") routerInput = `liste todas as categorias`;
+    else if (prevTopic === "produtos") routerInput = `liste os produtos`;
+  } else if (regionFollowUp && prevTopic) {
+    const region = regionFollowUp[1].trim();
+    const prevWasCount = /\b(quanto|quantos|quantas|quantidade|n[uú]mero|total)\b/i.test(lastUser?.content ?? "");
+    const verb = prevWasCount ? "quantos" : "quais";
+    if (prevTopic === "vendedores") routerInput = `${verb} vendedores em ${region}`;
+    else if (prevTopic === "unidades") routerInput = `${verb} unidades em ${region}`;
+    else if (prevTopic === "produtos") routerInput = `${verb} produtos em ${region}`;
+    else if (prevTopic === "categorias") routerInput = `${verb} categorias em ${region}`;
   }
 
   let routed;
