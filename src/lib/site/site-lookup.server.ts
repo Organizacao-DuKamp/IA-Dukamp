@@ -32,7 +32,7 @@ export interface SiteLookup {
 }
 
 const PRICE_RE = /\b(pre[cç]o|valor|quanto\s+custa|custo|cotaç[aã]o|comprar|compra|onde\s+compro?|onde\s+encontro|dispon[ií]vel|estoque)\b/i;
-const SELLER_RE = /\b(vendedor|vendedora|vendedores|representante|revenda|revendedor|distribuidor|contato|whats(app)?|telefone|falar\s+com|onde\s+comprar)\b/i;
+const SELLER_RE = /\b(vendedor|vendedora|vendedores|representante|revenda|revendedor|distribuidor|contato|whats(app)?|telefone|falar\s+com|onde\s+comprar|quero\s+comprar|gostaria\s+de\s+comprar|posso\s+comprar|como\s+compro|onde\s+compro|adquirir|fazer\s+(um\s+)?pedido|pedir)\b/i;
 const CATEGORY_RE = /\b(categorias?|linhas?\s+de\s+produtos?|cat[aá]logos?)\b/i;
 
 export function siteIntentHints(text: string) {
@@ -81,12 +81,22 @@ export async function listSiteSellers(limit = 30): Promise<SiteSeller[]> {
 
 export async function findSellersByRegion(text: string): Promise<SiteSeller[]> {
   const all = await listSiteSellers(100);
-  const norm = normalizeName(text);
+  const norm = " " + normalizeName(text) + " ";
+  // aliases → região oficial no cadastro
+  const aliases: Record<string, string[]> = {
+    "sao jose do rio preto": ["rio preto", "sjrp", "s j rio preto", "s. j. do rio preto"],
+    "monte aprazivel": ["monte apraz", "mte aprazivel"],
+    "macaubal": ["macaubal"],
+    "itaruma": ["itaruma"],
+  };
   const filtered = all.filter((s) => {
     if (!s.region) return false;
-    return norm.includes(normalizeName(s.region));
+    const regNorm = normalizeName(s.region);
+    if (norm.includes(" " + regNorm + " ") || norm.includes(regNorm)) return true;
+    const alist = aliases[regNorm] ?? [];
+    return alist.some((a) => norm.includes(a));
   });
-  return filtered.length > 0 ? filtered : [];
+  return filtered;
 }
 
 export async function listSiteCategories(): Promise<string[]> {

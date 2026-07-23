@@ -134,6 +134,11 @@ export async function handleIncoming(
     if (hints.seller) {
       const byRegion = await findSellersByRegion(text);
       lookup.sellers = byRegion.length > 0 ? byRegion : await listSiteSellers(20);
+      if (byRegion.length > 0) {
+        contextParts.push(
+          `INSTRUÇÃO DE ATENDIMENTO (obrigatório): O usuário informou uma cidade/região e demonstrou intenção de compra. Recomende de forma DIRETA **um vendedor específico** da lista de vendedores acima que atende a região citada (escolha o primeiro da lista da mesma região), informando NOME e WhatsApp/telefone, e justifique em 1 frase (ex.: "porque atende sua região"). NÃO mande o usuário ligar para a matriz. NÃO explique detalhes técnicos do produto a menos que o usuário peça. Termine perguntando se pode ajudar com algo mais.`
+        );
+      }
     }
     if (hints.category) {
       lookup.categories = await listSiteCategories();
