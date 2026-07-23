@@ -13,6 +13,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPublicDiagRouteImport } from './routes/api/public/diag'
+import { Route as ApiPublicChatTestRouteImport } from './routes/api/public/chat-test'
 import { Route as AuthenticatedAdminProdutosRouteImport } from './routes/_authenticated/admin.produtos'
 import { Route as AuthenticatedAdminBaseConhecimentoRouteImport } from './routes/_authenticated/admin.base-conhecimento'
 
@@ -35,6 +36,11 @@ const ApiPublicDiagRoute = ApiPublicDiagRouteImport.update({
   path: '/api/public/diag',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicChatTestRoute = ApiPublicChatTestRouteImport.update({
+  id: '/api/public/chat-test',
+  path: '/api/public/chat-test',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminProdutosRoute =
   AuthenticatedAdminProdutosRouteImport.update({
     id: '/admin/produtos',
@@ -53,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/admin/base-conhecimento': typeof AuthenticatedAdminBaseConhecimentoRoute
   '/admin/produtos': typeof AuthenticatedAdminProdutosRoute
+  '/api/public/chat-test': typeof ApiPublicChatTestRoute
   '/api/public/diag': typeof ApiPublicDiagRoute
 }
 export interface FileRoutesByTo {
@@ -60,6 +67,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/admin/base-conhecimento': typeof AuthenticatedAdminBaseConhecimentoRoute
   '/admin/produtos': typeof AuthenticatedAdminProdutosRoute
+  '/api/public/chat-test': typeof ApiPublicChatTestRoute
   '/api/public/diag': typeof ApiPublicDiagRoute
 }
 export interface FileRoutesById {
@@ -69,6 +77,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/admin/base-conhecimento': typeof AuthenticatedAdminBaseConhecimentoRoute
   '/_authenticated/admin/produtos': typeof AuthenticatedAdminProdutosRoute
+  '/api/public/chat-test': typeof ApiPublicChatTestRoute
   '/api/public/diag': typeof ApiPublicDiagRoute
 }
 export interface FileRouteTypes {
@@ -78,6 +87,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/admin/base-conhecimento'
     | '/admin/produtos'
+    | '/api/public/chat-test'
     | '/api/public/diag'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -85,6 +95,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/admin/base-conhecimento'
     | '/admin/produtos'
+    | '/api/public/chat-test'
     | '/api/public/diag'
   id:
     | '__root__'
@@ -93,6 +104,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/admin/base-conhecimento'
     | '/_authenticated/admin/produtos'
+    | '/api/public/chat-test'
     | '/api/public/diag'
   fileRoutesById: FileRoutesById
 }
@@ -100,6 +112,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicChatTestRoute: typeof ApiPublicChatTestRoute
   ApiPublicDiagRoute: typeof ApiPublicDiagRoute
 }
 
@@ -131,6 +144,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/diag'
       fullPath: '/api/public/diag'
       preLoaderRoute: typeof ApiPublicDiagRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/chat-test': {
+      id: '/api/public/chat-test'
+      path: '/api/public/chat-test'
+      fullPath: '/api/public/chat-test'
+      preLoaderRoute: typeof ApiPublicChatTestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin/produtos': {
@@ -168,8 +188,19 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicChatTestRoute: ApiPublicChatTestRoute,
   ApiPublicDiagRoute: ApiPublicDiagRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
