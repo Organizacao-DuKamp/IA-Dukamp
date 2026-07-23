@@ -54,6 +54,11 @@ function detectSmallTalk(raw: string): string | null {
   if (/^(acho\s+que\s+n[aã]o|acho\s+que\s+sim|sei\s+l[aá]|n[aã]o\s+sei|talvez|quem\s+sabe|pode\s+ser|vai\s+que|de\s+repente|hmm+|humm+|n[aã]o|nop|nao\s+mesmo|agora\s+n[aã]o|depois|mais\s+tarde|de\s+boa|tranquilo|suave|nada)$/i.test(t)) {
     return "Sem problema! Se quiser retomar depois — produtos, manejo, vendedores ou preços — é só me chamar.";
   }
+  // Mild scolding / frustration directed at the assistant — never treat as a
+  // dictionary lookup ("toma jeito", "para com isso", "melhora aí", "ta ruim").
+  if (/^(toma\s+jeito+|para\s+com\s+isso|par[ae]\s+com\s+isso|melhora(\s+a[ií])?|se\s+ajeita|ajeita\s+isso|arruma\s+isso|ta\s+ruim|est[aá]\s+ruim|nao\s+ta\s+bom|n[aã]o\s+est[aá]\s+bom|que\s+isso|credo|aff+|eita)$/i.test(t)) {
+    return "Foi mal se não fui útil. 🙏 Me diz com outras palavras o que você quer saber — produto, preço, vendedor, unidade ou manejo — que eu te respondo direto.";
+  }
   return null;
 }
 
