@@ -530,19 +530,30 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
   if (exact) return { kind: "passthrough", productHint: exact };
 
   // Site product name fallback (when local fichas are empty).
-  const siteHits = await findSiteProductByName(userText);
-  if (siteHits.length === 1) {
-    const p = siteHits[0];
-    const desc = stripHtml(p.description);
-    const lines = [`**${p.name}**`];
-    if (p.code) lines.push(`- Código: ${p.code}`);
-    if (p.price != null) lines.push(`- Preço${hasPriceWord ? "" : " (site)"}: ${fmtBRL(p.price)}`);
-    if (desc) lines.push(`\n${desc.slice(0, 1800)}`);
-    return { kind: "structural", text: lines.join("\n") };
-  }
-  if (siteHits.length > 1 && siteHits.length <= 8) {
-    const opts = siteHits.map((p) => `- **${p.name}**`).join("\n");
-    return { kind: "structural", text: `Encontrei mais de um produto no site que pode se encaixar. A qual você se refere?\n\n${opts}` };
+  // Only trigger when the user shows explicit product/commercial intent — otherwise
+  // technical questions (ex.: "como calcular lotação de Brachiaria brizantha")
+  // would incorrectly dump a product card just because a token matched a SKU name.
+  const PRODUCT_INTENT_RE = /\b(pre[cç]o|valor|quanto\s+custa|custo|cotaç[aã]o|comprar|compra|adquirir|pedir|ped[ií]do|or[çc]amento|dispon[ií]vel|disponibilidade|estoque|vende|vendem|onde\s+(compro|acho|encontro)|tem\s+(o|a|esse|essa|algum|alguma)|ficha\s+t[eé]cnica|produto\s+chamado|informa[cç][oõ]es?\s+(do|sobre\s+o|sobre\s+a)\s+produto)\b/i;
+  const explicitProductIntent =
+    hasPriceWord ||
+    mentionsProdutoWord ||
+    PRODUCT_INTENT_RE.test(userText);
+
+  if (explicitProductIntent) {
+    const siteHits = await findSiteProductByName(userText);
+    if (siteHits.length === 1) {
+      const p = siteHits[0];
+      const desc = stripHtml(p.description);
+      const lines = [`**${p.name}**`];
+      if (p.code) lines.push(`- Código: ${p.code}`);
+      if (p.price != null) lines.push(`- Preço${hasPriceWord ? "" : " (site)"}: ${fmtBRL(p.price)}`);
+      if (desc) lines.push(`\n${desc.slice(0, 1800)}`);
+      return { kind: "structural", text: lines.join("\n") };
+    }
+    if (siteHits.length > 1 && siteHits.length <= 8) {
+      const opts = siteHits.map((p) => `- **${p.name}**`).join("\n");
+      return { kind: "structural", text: `Encontrei mais de um produto no site que pode se encaixar. A qual você se refere?\n\n${opts}` };
+    }
   }
 
   return { kind: "passthrough" };
