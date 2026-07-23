@@ -50,6 +50,10 @@ function detectSmallTalk(raw: string): string | null {
   if (/^(tchau|at[eé]\s+mais|falou|flw|adeus|bye)$/i.test(t)) {
     return "Até mais! Qualquer dúvida sobre DuKamp, é só voltar. 👋";
   }
+  // Non-committal / hedged replies — never look these up as dictionary entries.
+  if (/^(acho\s+que\s+n[aã]o|acho\s+que\s+sim|sei\s+l[aá]|n[aã]o\s+sei|talvez|quem\s+sabe|pode\s+ser|vai\s+que|de\s+repente|hmm+|humm+|n[aã]o|nop|nao\s+mesmo|agora\s+n[aã]o|depois|mais\s+tarde|de\s+boa|tranquilo|suave|nada)$/i.test(t)) {
+    return "Sem problema! Se quiser retomar depois — produtos, manejo, vendedores ou preços — é só me chamar.";
+  }
   return null;
 }
 
