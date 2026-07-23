@@ -475,8 +475,11 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
     };
   }
 
-  // Products — list
-  if (hasList && !hasSellerWord && !hasCategoryWord) {
+  // Products — list (only when the user explicitly asked for products/catalog,
+  // or mentioned an animal species). Avoids "quais as maiores empresas..." dumping
+  // the full catalog just because it contains "quais".
+  const mentionsProdutoWord = /\b(produtos?|cat[aá]logo|itens|mercadorias?|ra[cç][oõ]es?|suplementos?|minerais?|n[uú]cleos?|concentrados?)\b/i.test(userText);
+  if (hasList && !hasSellerWord && !hasCategoryWord && (mentionsProdutoWord || species)) {
     const items = await listActive(species);
     if (items.length === 0) return { kind: "structural", text: "Nenhum produto ativo encontrado." };
     const shown = items.slice(0, 60);
