@@ -11,7 +11,7 @@ export const Route = createFileRoute("/api/public/chat-test")({
           const { handleIncoming, ChatError } = await import("@/lib/chat/core.server");
           try {
             const out = await handleIncoming({
-              sessionId: String(body.sessionId ?? "qa-harness"),
+              sessionId: String(body.sessionId ?? `qa-${Math.random().toString(36).slice(2)}-${Date.now()}`),
               text: String(body.text ?? ""),
               history: Array.isArray(body.history) ? body.history : [],
             });
