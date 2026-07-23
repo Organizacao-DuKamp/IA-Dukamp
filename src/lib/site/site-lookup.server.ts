@@ -32,7 +32,7 @@ export interface SiteLookup {
 }
 
 const PRICE_RE = /\b(pre[cç]o|valor|quanto\s+custa|custo|cotaç[aã]o|comprar|compra|onde\s+compro?|onde\s+encontro|dispon[ií]vel|estoque)\b/i;
-const SELLER_RE = /\b(vendedor|vendedora|vendedores|representante|revenda|revendedor|distribuidor|contato|whats(app)?|telefone|falar\s+com|onde\s+comprar)\b/i;
+const SELLER_RE = /\b(vendedor|vendedora|vendedores|representante|revenda|revendedor|distribuidor|contato|whats(app)?|telefone|falar\s+com|onde\s+comprar|quero\s+comprar|gostaria\s+de\s+comprar|posso\s+comprar|como\s+compro|onde\s+compro|adquirir|fazer\s+(um\s+)?pedido|pedir)\b/i;
 const CATEGORY_RE = /\b(categorias?|linhas?\s+de\s+produtos?|cat[aá]logos?)\b/i;
 
 export function siteIntentHints(text: string) {
