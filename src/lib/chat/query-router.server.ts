@@ -533,7 +533,7 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
   // Only trigger when the user shows explicit product/commercial intent — otherwise
   // technical questions (ex.: "como calcular lotação de Brachiaria brizantha")
   // would incorrectly dump a product card just because a token matched a SKU name.
-  const PRODUCT_INTENT_RE = /\b(pre[cç]o|valor|quanto\s+custa|custo|cotaç[aã]o|comprar|compra|adquirir|pedir|ped[ií]do|or[çc]amento|dispon[ií]vel|disponibilidade|estoque|vende|vendem|onde\s+(compro|acho|encontro)|tem\s+(o|a|esse|essa|algum|alguma)|ficha\s+t[eé]cnica|produto\s+chamado|informa[cç][oõ]es?\s+(do|sobre\s+o|sobre\s+a)\s+produto)\b/i;
+  const PRODUCT_INTENT_RE = /\b(pre[cç]o|valor|quanto\s+custa|custo|cotaç[aã]o|comprar|compra|adquirir|pedir|ped[ií]do|or[çc]amento|dispon[ií]vel|disponibilidade|estoque|vende|vendem|onde\s+(compro|acho|encontro)|tem\s+(o|a|esse|essa|algum|alguma)|ficha\s+t[eé]cnica|produto\s+chamado|informa[cç][oõ]es?\s+(do|sobre\s+o|sobre\s+a)\s+produto|me\s+(fale|diga|conte|explique|mostra|mostre|passa|passe)\s+(sobre|do|da|de|o|a)|fala\s+(sobre|do|da)|descreve|descreva|o\s+que\s+[eé]\s+(o|a|esse|essa)|para\s+que\s+serve|pra\s+que\s+serve|quero\s+saber\s+(sobre|do|da)|detalhes\s+(do|da|sobre))\b/i;
   const explicitProductIntent =
     hasPriceWord ||
     mentionsProdutoWord ||
