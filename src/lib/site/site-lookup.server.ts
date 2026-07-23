@@ -81,12 +81,22 @@ export async function listSiteSellers(limit = 30): Promise<SiteSeller[]> {
 
 export async function findSellersByRegion(text: string): Promise<SiteSeller[]> {
   const all = await listSiteSellers(100);
-  const norm = normalizeName(text);
+  const norm = " " + normalizeName(text) + " ";
+  // aliases → região oficial no cadastro
+  const aliases: Record<string, string[]> = {
+    "sao jose do rio preto": ["rio preto", "sjrp", "s j rio preto", "s. j. do rio preto"],
+    "monte aprazivel": ["monte apraz", "mte aprazivel"],
+    "macaubal": ["macaubal"],
+    "itaruma": ["itaruma"],
+  };
   const filtered = all.filter((s) => {
     if (!s.region) return false;
-    return norm.includes(normalizeName(s.region));
+    const regNorm = normalizeName(s.region);
+    if (norm.includes(" " + regNorm + " ") || norm.includes(regNorm)) return true;
+    const alist = aliases[regNorm] ?? [];
+    return alist.some((a) => norm.includes(a));
   });
-  return filtered.length > 0 ? filtered : [];
+  return filtered;
 }
 
 export async function listSiteCategories(): Promise<string[]> {
