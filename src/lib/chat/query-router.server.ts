@@ -502,11 +502,12 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
     };
   }
 
-  // Products — list (only when the user explicitly asked for products/catalog,
-  // or mentioned an animal species). Avoids "quais as maiores empresas..." dumping
-  // the full catalog just because it contains "quais".
+  // Products — list (only when the user explicitly asked for products/catalog).
+  // Mencionar apenas uma espécie (ex.: "cotação do boi gordo") NÃO deve
+  // despejar o catálogo — precisa haver menção explícita a produto/ração/etc.
   const mentionsProdutoWord = /\b(produtos?|cat[aá]logo|itens|mercadorias?|ra[cç][oõ]es?|suplementos?|minerais?|n[uú]cleos?|concentrados?)\b/i.test(userText);
-  if (hasList && !hasSellerWord && !hasCategoryWord && (mentionsProdutoWord || species)) {
+  const marketQuoteIntent = /\b(cotaç[aã]o|cotaç[oõ]es|arroba|@|mercado|bolsa|b3|cepea|scot|indicador|futuros?|f[ií]sico|leil[aã]o|leil[oõ]es)\b/i.test(userText);
+  if (hasList && !hasSellerWord && !hasCategoryWord && mentionsProdutoWord && !marketQuoteIntent) {
     const items = await listActive(species);
     if (items.length === 0) return { kind: "structural", text: "Nenhum produto ativo encontrado." };
     const shown = items.slice(0, 60);
