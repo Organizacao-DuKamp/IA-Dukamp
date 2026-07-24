@@ -8,7 +8,9 @@ import { z } from "zod";
 const RoleSchema = z.enum(["user", "assistant", "system"]);
 const MessageSchema = z.object({
   role: RoleSchema,
-  content: z.string().min(1).max(2000),
+  // Assistant replies (fichas técnicas, listagens) podem ultrapassar 2000 chars
+  // quando voltam no histórico. Aceitamos até 8000 aqui; o core trunca depois.
+  content: z.string().min(1).max(8000),
 });
 
 const InputSchema = z.object({
