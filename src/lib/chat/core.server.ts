@@ -89,9 +89,9 @@ export async function handleIncoming(
   }
 
   const trimmedHistory: ChatMessage[] = (input.history ?? [])
-    .filter((m) => m && typeof m.content === "string" && m.content.length <= MAX_MESSAGE_CHARS)
+    .filter((m) => m && typeof m.content === "string" && m.content.length > 0)
     .slice(-MAX_HISTORY_TURNS)
-    .map((m) => ({ role: m.role, content: sanitize(m.content) }));
+    .map((m) => ({ role: m.role, content: sanitize(m.content).slice(0, MAX_MESSAGE_CHARS * 4) }));
 
   // 0) Small-talk / reactions short-circuit — never send these to Perplexity
   // (its search model turns "ah que legal" into a dictionary definition with citations).
