@@ -80,7 +80,7 @@ function ChatPage() {
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-4">
           <div className="flex items-center gap-3">
             <img
-              src={tpecLogo.url}
+              src={TPEC_LOGO_URL}
               alt="TPEC-IA"
               className="h-10 w-10 rounded-full object-cover"
             />
