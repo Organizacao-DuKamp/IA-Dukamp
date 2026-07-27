@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import ReactMarkdown from "react-markdown";
 import { WebChatAdapter } from "@/lib/chat/web-adapter";
 import { MAX_MESSAGE_CHARS, type ChatMessage } from "@/lib/chat/types";
-import tpecLogo from "@/assets/tpec-logo.png.asset.json";
+const TPEC_LOGO_URL = "/tpec-logo.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -80,7 +80,7 @@ function ChatPage() {
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-4">
           <div className="flex items-center gap-3">
             <img
-              src={tpecLogo.url}
+              src={TPEC_LOGO_URL}
               alt="TPEC-IA"
               className="h-10 w-10 rounded-full object-cover"
             />
