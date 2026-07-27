@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import ReactMarkdown from "react-markdown";
 import { WebChatAdapter } from "@/lib/chat/web-adapter";
 import { MAX_MESSAGE_CHARS, type ChatMessage } from "@/lib/chat/types";
+import tpecLogo from "@/assets/tpec-logo.png.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -78,13 +79,15 @@ function ChatPage() {
       <header className="border-b border-border bg-card/60 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground">
-              <LeafIcon className="h-5 w-5" />
-            </div>
+            <img
+              src={tpecLogo.url}
+              alt="TPEC-IA"
+              className="h-10 w-10 rounded-full object-cover"
+            />
             <div>
-              <h1 className="text-lg font-semibold tracking-tight">TPEC-IA</h1>
+              <h1 className="font-display text-lg font-semibold tracking-[0.12em]">TPEC-IA</h1>
               <p className="text-xs text-muted-foreground">
-                Assistente especialista em pecuária
+                A inteligência artificial da Pecuária
               </p>
             </div>
           </div>
