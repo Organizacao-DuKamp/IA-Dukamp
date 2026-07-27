@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import ReactMarkdown from "react-markdown";
 import { WebChatAdapter } from "@/lib/chat/web-adapter";
 import { MAX_MESSAGE_CHARS, type ChatMessage } from "@/lib/chat/types";
-import tpecLogo from "@/assets/tpec-logo.png.asset.json";
+const TPEC_LOGO_URL = "/tpec-logo.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
