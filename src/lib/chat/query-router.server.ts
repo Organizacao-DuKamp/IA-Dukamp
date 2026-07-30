@@ -610,7 +610,7 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
     const filtered = filterCatalogByPurpose(items, userText);
     const list = filtered.matched.length > 0 ? filtered.matched : items;
     const shown = list.slice(0, 40);
-    const bullets = shown.map((n) => `- ${n}`).join("\n");
+    const bullets = shown.map((n: string) => `- ${n}`).join("\n");
     const more = list.length > shown.length ? `\n\n_(exibindo ${shown.length} de ${list.length})_` : "";
     const header =
       filtered.matched.length > 0
