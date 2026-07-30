@@ -16,6 +16,7 @@ import { Route as ApiPublicMarketIngestRouteImport } from './routes/api/public/m
 import { Route as ApiPublicDiagRouteImport } from './routes/api/public/diag'
 import { Route as ApiPublicChatTestRouteImport } from './routes/api/public/chat-test'
 import { Route as AuthenticatedAdminProdutosRouteImport } from './routes/_authenticated/admin.produtos'
+import { Route as AuthenticatedAdminCotacoesRouteImport } from './routes/_authenticated/admin.cotacoes'
 import { Route as AuthenticatedAdminBaseConhecimentoRouteImport } from './routes/_authenticated/admin.base-conhecimento'
 
 const AuthRoute = AuthRouteImport.update({
@@ -53,6 +54,12 @@ const AuthenticatedAdminProdutosRoute =
     path: '/admin/produtos',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminCotacoesRoute =
+  AuthenticatedAdminCotacoesRouteImport.update({
+    id: '/admin/cotacoes',
+    path: '/admin/cotacoes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminBaseConhecimentoRoute =
   AuthenticatedAdminBaseConhecimentoRouteImport.update({
     id: '/admin/base-conhecimento',
@@ -64,6 +71,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin/base-conhecimento': typeof AuthenticatedAdminBaseConhecimentoRoute
+  '/admin/cotacoes': typeof AuthenticatedAdminCotacoesRoute
   '/admin/produtos': typeof AuthenticatedAdminProdutosRoute
   '/api/public/chat-test': typeof ApiPublicChatTestRoute
   '/api/public/diag': typeof ApiPublicDiagRoute
@@ -73,6 +81,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/admin/base-conhecimento': typeof AuthenticatedAdminBaseConhecimentoRoute
+  '/admin/cotacoes': typeof AuthenticatedAdminCotacoesRoute
   '/admin/produtos': typeof AuthenticatedAdminProdutosRoute
   '/api/public/chat-test': typeof ApiPublicChatTestRoute
   '/api/public/diag': typeof ApiPublicDiagRoute
@@ -84,6 +93,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/admin/base-conhecimento': typeof AuthenticatedAdminBaseConhecimentoRoute
+  '/_authenticated/admin/cotacoes': typeof AuthenticatedAdminCotacoesRoute
   '/_authenticated/admin/produtos': typeof AuthenticatedAdminProdutosRoute
   '/api/public/chat-test': typeof ApiPublicChatTestRoute
   '/api/public/diag': typeof ApiPublicDiagRoute
@@ -95,6 +105,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/admin/base-conhecimento'
+    | '/admin/cotacoes'
     | '/admin/produtos'
     | '/api/public/chat-test'
     | '/api/public/diag'
@@ -104,6 +115,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/admin/base-conhecimento'
+    | '/admin/cotacoes'
     | '/admin/produtos'
     | '/api/public/chat-test'
     | '/api/public/diag'
@@ -114,6 +126,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/admin/base-conhecimento'
+    | '/_authenticated/admin/cotacoes'
     | '/_authenticated/admin/produtos'
     | '/api/public/chat-test'
     | '/api/public/diag'
@@ -180,6 +193,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminProdutosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/cotacoes': {
+      id: '/_authenticated/admin/cotacoes'
+      path: '/admin/cotacoes'
+      fullPath: '/admin/cotacoes'
+      preLoaderRoute: typeof AuthenticatedAdminCotacoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/base-conhecimento': {
       id: '/_authenticated/admin/base-conhecimento'
       path: '/admin/base-conhecimento'
@@ -192,12 +212,14 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminBaseConhecimentoRoute: typeof AuthenticatedAdminBaseConhecimentoRoute
+  AuthenticatedAdminCotacoesRoute: typeof AuthenticatedAdminCotacoesRoute
   AuthenticatedAdminProdutosRoute: typeof AuthenticatedAdminProdutosRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminBaseConhecimentoRoute:
     AuthenticatedAdminBaseConhecimentoRoute,
+  AuthenticatedAdminCotacoesRoute: AuthenticatedAdminCotacoesRoute,
   AuthenticatedAdminProdutosRoute: AuthenticatedAdminProdutosRoute,
 }
 
