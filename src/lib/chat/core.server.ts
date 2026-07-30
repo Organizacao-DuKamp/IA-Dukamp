@@ -50,10 +50,11 @@ function detectSmallTalk(raw: string): string | null {
   if (/^(tchau|at[eé]\s+mais|falou|flw|adeus|bye)$/i.test(t)) {
     return "Até mais! Qualquer dúvida sobre DuKamp, é só voltar. 👋";
   }
-  // Non-committal / hedged replies — never look these up as dictionary entries.
-  if (/^(acho\s+que\s+n[aã]o|acho\s+que\s+sim|sei\s+l[aá]|n[aã]o\s+sei|talvez|quem\s+sabe|pode\s+ser|vai\s+que|de\s+repente|hmm+|humm+|n[aã]o|nop|nao\s+mesmo|agora\s+n[aã]o|depois|mais\s+tarde|de\s+boa|tranquilo|suave|nada)$/i.test(t)) {
+  // Non-committal / declines — never look these up as dictionary entries.
+  if (/^(acho\s+que\s+n[aã]o|sei\s+l[aá]|n[aã]o\s+sei|hmm+|humm+|n[aã]o|nop|nao\s+mesmo|agora\s+n[aã]o|depois|mais\s+tarde|de\s+boa|tranquilo|suave|nada)$/i.test(t)) {
     return "Sem problema! Se quiser retomar depois — produtos, manejo, vendedores ou preços — é só me chamar.";
   }
+
   // Mild scolding / frustration directed at the assistant — never treat as a
   // dictionary lookup ("toma jeito", "para com isso", "melhora aí", "ta ruim").
   if (/^(toma\s+jeito+|para\s+com\s+isso|par[ae]\s+com\s+isso|melhora(\s+a[ií])?|se\s+ajeita|ajeita\s+isso|arruma\s+isso|ta\s+ruim|est[aá]\s+ruim|nao\s+ta\s+bom|n[aã]o\s+est[aá]\s+bom|que\s+isso|credo|aff+|eita)$/i.test(t)) {
@@ -93,20 +94,37 @@ export async function handleIncoming(
     .slice(-MAX_HISTORY_TURNS)
     .map((m) => ({ role: m.role, content: sanitize(m.content).slice(0, MAX_MESSAGE_CHARS * 4) }));
 
-  // 0) Small-talk / reactions short-circuit — never send these to Perplexity
-  // (its search model turns "ah que legal" into a dictionary definition with citations).
-  const smallTalk = detectSmallTalk(text);
-  if (smallTalk) return { reply: smallTalk };
+  const trimmedText = text.trim();
+  const lastAssistant = [...trimmedHistory].reverse().find((m) => m.role === "assistant");
+  const lastUser = [...trimmedHistory].reverse().find((m) => m.role === "user");
+
+  // 0) Aceite de uma oferta feita na resposta anterior ("pode ser", "sim",
+  // "manda", "por favor"). Nunca tratar como conversa fiada quando existe uma
+  // pergunta anterior em aberto — a intenção é continuar aquele assunto.
+  const isAffirmative =
+    /^(sim|isso|claro|pode\s+ser|pode|pode\s+mandar|manda|manda\s+a[ií]|quero|quero\s+sim|por\s+favor|pf|vamos|bora|t[áa]\s+bom|ok(ay)?|beleza|blz|certo|perfeito|acho\s+que\s+sim|talvez|quem\s+sabe|seria\s+[oó]timo|gostaria)\s*[!.?]*$/i.test(
+      trimmedText.toLowerCase(),
+    );
+  const hasPendingOffer =
+    !!lastAssistant &&
+    /(se\s+voc[êe]\s+quiser|posso\s+(te\s+)?(ajudar|passar|buscar|procurar|tentar|verificar|consultar)|quer\s+que\s+eu|deseja|gostaria)/i.test(
+      lastAssistant.content,
+    );
+  const resumingOffer = isAffirmative && !!lastUser && (hasPendingOffer || !!lastAssistant);
+
+  // 0b) Small-talk / reações — nunca enviar para o modelo de busca
+  // (ele transformaria "ah que legal" em um verbete com citações).
+  if (!resumingOffer) {
+    const smallTalk = detectSmallTalk(text);
+    if (smallTalk) return { reply: smallTalk };
+  }
 
   // 1) Router: structural = direct DB answer (no LLM).
   // Contextual follow-up: reuse the topic from the last turn so that short
   // messages like "quem são eles?" or "e em monte aprazível?" don't lose context.
-  const trimmedText = text.trim();
   const isBareFollowUp = /^(quem\s+s[aã]o(\s+eles|\s+elas)?|quais\s+s[aã]o(\s+eles|\s+elas)?|me\s+diga(\s+os)?(\s+nomes?)?|diga(\s+os)?(\s+nomes?)?|os?\s+nomes?|liste(\s+eles|\s+elas)?|todos|todas)\s*[?.!]*$/i.test(trimmedText);
   // Region-only follow-up: "e em monte aprazivel?", "em rio preto?", "e no interior?"
   const regionFollowUp = trimmedText.match(/^(?:e\s+)?(?:em|no|na|nos|nas)\s+([a-zà-ú][a-zà-ú\s.'-]{2,60})\s*[?.!]*$/i);
-  const lastAssistant = [...trimmedHistory].reverse().find((m) => m.role === "assistant");
-  const lastUser = [...trimmedHistory].reverse().find((m) => m.role === "user");
   const prevBlob = ((lastAssistant?.content ?? "") + " " + (lastUser?.content ?? "")).toLowerCase();
   const prevTopic: "vendedores" | "categorias" | "produtos" | "unidades" | null =
     /vendedor|vendedores|representante/.test(prevBlob) ? "vendedores"
@@ -116,7 +134,11 @@ export async function handleIncoming(
     : null;
 
   let routerInput = text;
-  if (isBareFollowUp) {
+  if (resumingOffer && lastUser) {
+    // A mensagem curta é um "sim" à oferta anterior: o assunto real é a última
+    // pergunta do usuário.
+    routerInput = lastUser.content;
+  } else if (isBareFollowUp) {
     if (prevTopic === "vendedores") routerInput = `liste todos os vendedores`;
     else if (prevTopic === "categorias") routerInput = `liste todas as categorias`;
     else if (prevTopic === "produtos") routerInput = `liste os produtos`;
@@ -129,6 +151,7 @@ export async function handleIncoming(
     else if (prevTopic === "produtos") routerInput = `${verb} produtos em ${region}`;
     else if (prevTopic === "categorias") routerInput = `${verb} categorias em ${region}`;
   }
+
 
   let routed;
   try {
@@ -143,6 +166,23 @@ export async function handleIncoming(
 
   // 2) Build context: structured product info (if any) + RAG passages + site data.
   const contextParts: string[] = [];
+
+  // 2.0) Contexto conversacional — a mensagem nova quase sempre depende do que
+  // veio antes. Damos ao modelo o assunto em aberto e o que a mensagem curta
+  // significa dentro dele.
+  if (trimmedHistory.length > 0) {
+    const resumo = [
+      lastUser ? `Última pergunta do usuário: "${lastUser.content.slice(0, 400)}"` : null,
+      lastAssistant ? `Sua última resposta: "${lastAssistant.content.slice(0, 400)}"` : null,
+      resumingOffer
+        ? `INTERPRETAÇÃO: a mensagem atual ("${trimmedText}") é uma CONFIRMAÇÃO/aceite da oferta que você fez na resposta anterior. Execute agora o que você ofereceu, sem repetir a pergunta e sem encerrar a conversa.`
+        : `INTERPRETAÇÃO: leia a mensagem atual como continuação deste assunto. Se ela for curta ou ambígua, resolva os pronomes e o tema a partir do histórico acima antes de responder; só peça esclarecimento se for realmente impossível deduzir.`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+    contextParts.push(`CONTEXTO DA CONVERSA (uso interno, não cite):\n${resumo}`);
+  }
+
   if (routed.marketContext) {
     contextParts.push(routed.marketContext);
   }
@@ -150,20 +190,24 @@ export async function handleIncoming(
     contextParts.push(productContextBlock(routed.productHint.product));
   }
 
+  // Texto usado para as buscas: em follow-ups curtos, o assunto real é o do
+  // turno anterior.
+  const lookupText = routerInput !== text ? `${routerInput} ${text}` : text;
+
   // 2a) Site Dukamp lookups (commercial data: price, stock, sellers, categories).
   try {
     const { siteIntentHints, searchSiteProducts, listSiteSellers, findSellersByRegion, listSiteCategories, siteBlock } =
       await import("../site/site-lookup.server");
-    const hints = siteIntentHints(text);
+    const hints = siteIntentHints(lookupText);
     const lookup: { products?: any[]; sellers?: any[]; categories?: string[] } = {};
 
     if (hints.price || routed.productHint) {
-      const query = routed.productHint ? routed.productHint.product.official_name : text;
+      const query = routed.productHint ? routed.productHint.product.official_name : lookupText;
       const prods = await searchSiteProducts(query, 6);
       if (prods.length > 0) lookup.products = prods;
     }
     if (hints.seller) {
-      const byRegion = await findSellersByRegion(text);
+      const byRegion = await findSellersByRegion(lookupText);
       lookup.sellers = byRegion.length > 0 ? byRegion : await listSiteSellers(20);
       if (byRegion.length > 0) {
         contextParts.push(
@@ -182,7 +226,7 @@ export async function handleIncoming(
 
   try {
     const { searchKnowledge } = await import("../rag/search.server");
-    const matches = await searchKnowledge(text, 6);
+    const matches = await searchKnowledge(lookupText, 6);
     const good = matches.filter((m) => m.similarity >= 0.55);
     if (good.length > 0) {
       const rag = good
@@ -196,6 +240,7 @@ export async function handleIncoming(
   } catch (err) {
     console.error("[RAG] busca falhou:", err instanceof Error ? err.message : err);
   }
+
 
   const contextBlock = contextParts.length > 0 ? contextParts.join("\n\n") : undefined;
   const conversation: ChatMessage[] = [...trimmedHistory, { role: "user", content: text }];
