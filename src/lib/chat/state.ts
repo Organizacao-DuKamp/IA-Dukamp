@@ -18,6 +18,7 @@ import type { ChatMessage } from "./types";
 export type UserIntent =
   | "nova_pergunta"
   | "resposta_a_confirmacao"
+  | "user_acknowledgement"
   | "fornecimento_de_dado"
   | "correcao"
   | "continuacao"
@@ -26,6 +27,8 @@ export type UserIntent =
   | "pedido_de_calculo"
   | "pedido_de_comparacao"
   | "mudanca_de_assunto";
+
+export type ConversationStatus = "idle" | "active";
 
 export type AssistantIntent =
   | "request_confirmation"
