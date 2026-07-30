@@ -361,6 +361,12 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
   const hasUnitWord = UNIT_WORD_RE.test(userText);
   const hasPriceWord = PRICE_WORD_RE.test(userText);
 
+  // ---- Cotações e indicadores de mercado (dados dinâmicos estruturados) ----
+  const marketBlock = await marketAnswer(userText).catch(() => null);
+  if (marketBlock) return { kind: "structural", text: marketBlock };
+
+
+
   // Units / filial / matriz — DuKamp tem 2 unidades: matriz (Monte Aprazível/SP) e filial (São José do Rio Preto/SP).
   if (hasUnitWord && !hasSellerWord) {
     const { getSiteUnits } = await import("@/lib/site/site-lookup.server");
