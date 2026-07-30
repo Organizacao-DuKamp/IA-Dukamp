@@ -387,8 +387,9 @@ async function marketAnswer(userText: string): Promise<string | null> {
     const srcs = await mk.suggestedSources(t.category).catch(() => []);
     const ref = srcs.map((s) => `${s.name} (${s.org}): ${s.url}`).join(" · ");
     blocks.push(
-      `SEM DADO REGISTRADO — não tenho cotação de ${t.label}${state ? ` para ${state}` : ""} na base atualizada, então não vou estimar um valor.` +
-        (ref ? ` Referência oficial para consulta direta: ${ref}.` : ""),
+      `SEM DADO REGISTRADO — não há cotação de ${t.label}${state ? ` para ${state}` : ""} registrada. ` +
+        `INSTRUÇÃO OBRIGATÓRIA: diga com franqueza que você não tem a cotação atualizada de ${t.label} agora e NÃO apresente nenhum valor, data, praça, média ou tendência para ${t.label} — nem de memória, nem de material técnico, nem aproximado. ` +
+        (ref ? `Ofereça a consulta direta na fonte oficial: ${ref}.` : ""),
     );
   }
 
