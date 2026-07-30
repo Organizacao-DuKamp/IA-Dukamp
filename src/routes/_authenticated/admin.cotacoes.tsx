@@ -196,6 +196,10 @@ function AdminMarket() {
           </div>
         )}
 
+        <LivestockQuotesPanel />
+
+
+
         <section className="mb-6 rounded-lg border border-border bg-card p-4">
           <div className="flex flex-wrap items-center gap-2">
             <button
