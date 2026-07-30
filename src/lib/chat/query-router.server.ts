@@ -446,12 +446,12 @@ const PURPOSE_TERMS: Array<{ label: string; re: RegExp; match: RegExp }> = [
   { label: "vacas de cria", re: /\bvacas?\s+de\s+cria\b|\bcria\b|\bmatrizes?\b/i, match: /cria|reprodu|matriz|fosfor/i },
   { label: "recria", re: /\brecria\b|\bnovilh[oa]s?\b|\bgarrote?s?\b/i, match: /recria|crescimento|novilh/i },
   { label: "engorda / terminação", re: /\bengorda\b|\btermina[cç][aã]o\b|\bconfinament\w*\b|\bboi\s+gordo\b/i, match: /engorda|termina|confin|energ/i },
-  { label: "sal mineral", re: /\bsal\s+mineral\b|\bminerali?zaç\w*\b/i, match: /mineral|sal\b|fosfor/i },
+  { label: "sal mineral", re: /\bsal\s+mineral\b|\bminerali?zaç\w*\b/i, match: /sal\s+mineral|suplement\w*\s+mineral|minerali|fosfat|fosfor|nucleo|n[uú]cleo/i },
   { label: "proteinado", re: /\bproteinad[oa]s?\b|\bprote[ií]c[oa]s?\b/i, match: /prote/i },
   { label: "equinos", re: /\bequin[oa]s?\b|\bcavalo?s?\b|\bégua?s?\b/i, match: /equin|cavalo|horse|haras/i },
   { label: "ovinos e caprinos", re: /\bovin[oa]s?\b|\bcaprin[oa]s?\b|\bovelh\w*\b|\bcabr\w*\b/i, match: /ovin|caprin|ovelh|cabr/i },
   { label: "carrapaticidas", re: /\bcarrapat\w*\b|\bmosca\b|\bectoparasit\w*\b/i, match: /carrapat|mosca|ectop|pour|banho/i },
-  { label: "vermífugos", re: /\bverm[ií]fug\w*\b|\bverminose\b|\bendoparasit\w*\b/i, match: /verm|ivermec|albenda|levamis|doramec/i },
+  { label: "vermífugos", re: /\bverm[ií]fug\w*\b|\bverminose\b|\bendoparasit\w*\b/i, match: /verm[ií]fug|vermic|ivermec|ivermic|albenda|levamis|doramec|closant|antihelmint|anti-?helm/i },
   { label: "vacinas", re: /\bvacinas?\b|\bimuniz\w*\b/i, match: /vacin|imuno|soro/i },
 ];
 
@@ -601,6 +601,12 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
       const opts = hits.map((s) => `- **${s.name}**${s.region ? ` (${s.region})` : ""}`).join("\n");
       return { kind: "structural", text: `Encontrei mais de um vendedor. A qual você se refere?\n\n${opts}` };
     }
+    // Nenhum vendedor cadastrado para o que foi citado: nunca cair na web para
+    // "quem atende X" — isso traz telefones de prefeitura/hospital.
+    return {
+      kind: "structural",
+      text: "Não encontrei um vendedor DuKamp cadastrado especificamente para essa cidade. O atendimento pode ser feito pela matriz em Monte Aprazível/SP — (17) 3275-3106 — que direciona para o representante da região. Se você me disser a cidade ou a região exata, eu confirmo o contato comercial.",
+    };
   }
 
   // Categories
