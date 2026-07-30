@@ -14,6 +14,8 @@ export const Route = createFileRoute("/api/public/chat-test")({
               sessionId: String(body.sessionId ?? `qa-${Math.random().toString(36).slice(2)}-${Date.now()}`),
               text: String(body.text ?? ""),
               history: Array.isArray(body.history) ? body.history : [],
+              conversationId: body.conversationId ? String(body.conversationId) : undefined,
+              state: body.state,
             });
             return new Response(JSON.stringify(out), { headers: { "content-type": "application/json" } });
           } catch (err) {
