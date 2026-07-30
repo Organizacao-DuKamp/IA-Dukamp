@@ -18,6 +18,7 @@ import type { ChatMessage } from "./types";
 export type UserIntent =
   | "nova_pergunta"
   | "resposta_a_confirmacao"
+  | "user_acknowledgement"
   | "fornecimento_de_dado"
   | "correcao"
   | "continuacao"
@@ -26,6 +27,8 @@ export type UserIntent =
   | "pedido_de_calculo"
   | "pedido_de_comparacao"
   | "mudanca_de_assunto";
+
+export type ConversationStatus = "idle" | "active";
 
 export type AssistantIntent =
   | "request_confirmation"
@@ -65,6 +68,10 @@ export interface ConversationState {
   corrections: Array<{ field: string; from: string | number; to: string | number }>;
   last_assistant_intent: AssistantIntent;
   last_user_intent: UserIntent | null;
+  /** "idle" = usuário apenas reagiu/encerrou; a IA deve aguardar novo pedido. */
+  conversation_status: ConversationStatus;
+  awaiting_user_request: boolean;
+  should_auto_continue: boolean;
   conversation_summary: ConversationSummary;
   turn_count: number;
   updated_at: string;
@@ -102,6 +109,9 @@ export function createConversationState(conversationId: string): ConversationSta
     corrections: [],
     last_assistant_intent: "none",
     last_user_intent: null,
+    conversation_status: "idle",
+    awaiting_user_request: true,
+    should_auto_continue: false,
     conversation_summary: { ...EMPTY_SUMMARY },
     turn_count: 0,
     updated_at: new Date(0).toISOString(),
@@ -131,6 +141,9 @@ export function normalizeState(
     user_goal: clampOrNull(raw.user_goal, 300),
     turn_count: typeof raw.turn_count === "number" ? Math.max(0, Math.min(raw.turn_count, 9999)) : 0,
     version: typeof raw.version === "number" ? raw.version : 0,
+    conversation_status: raw.conversation_status === "active" ? "active" : "idle",
+    awaiting_user_request: raw.awaiting_user_request !== false,
+    should_auto_continue: raw.should_auto_continue === true,
   };
 }
 
@@ -193,6 +206,82 @@ const CANCEL_RE = /\b(cancela|cancelar|esquece|deixa\s+pra\s+l[áa]|para\s+tudo|
 const TOPIC_CHANGE_RE =
   /\b(mudando\s+de\s+assunto|outra\s+coisa|outra\s+pergunta|deixa\s+isso|agora\s+quero\s+saber|falando\s+em\s+outra)\b/i;
 
+// ---------------------------------------------------------------------------
+// Reconhecimento / reação curta ("user_acknowledgement")
+// ---------------------------------------------------------------------------
+
+/**
+ * Tokens que, sozinhos ou combinados, representam apenas reação, concordância,
+ * agradecimento ou encerramento — nunca um novo pedido.
+ * A classificação NÃO depende só desta lista: ela só vale quando não existe
+ * pergunta/ação pendente e quando não sobra nenhum conteúdo novo na mensagem.
+ */
+const ACK_TOKENS = new Set([
+  "ah", "aah", "aa", "oh", "ooh", "opa", "pois", "então", "entao", "e", "é", "eh",
+  "muito", "mto", "bem", "bastante", "que", "tudo", "isso", "mesmo", "assim",
+  "sim", "ok", "okay", "okey", "blz", "beleza", "certo", "correto", "exato",
+  "exatamente", "entendi", "entendido", "entendida", "entendo", "compreendi",
+  "saquei", "ciente", "agora", "faz", "sentido", "verdade", "claro", "uhum",
+  "aham", "ahan", "hm", "hmm", "hum", "humm", "legal", "bacana", "interessante",
+  "show", "massa", "top", "ótimo", "otimo", "perfeito", "boa", "bom", "joia",
+  "jóia", "maneiro", "dahora", "demais", "tranquilo", "suave", "nossa", "uau",
+  "wow", "caramba", "puxa", "eita", "valeu", "vlw", "obrigado", "obrigada",
+  "obg", "grato", "grata", "thanks", "obrigadão", "obrigadao", "ta", "tá",
+  "tudo bem", "belezinha", "ss", "ahh",
+]);
+
+const THANKS_RE = /\b(valeu|vlw|obrigad|obg|grat[oa]|thanks)\b/i;
+const CLOSING_RE = /\b(tchau|at[ée]\s+mais|falou|flw|adeus|bye|por\s+hoje\s+[ée]\s+s[óo]|era\s+s[óo]\s+isso)\b/i;
+
+/** "hummmm", "hmmm", "aaah" → forma canônica curta. */
+function canonicalToken(w: string): string {
+  if (/^h+[uma]*m+h*$/i.test(w)) return "hmm";
+  if (/^a+h+$/i.test(w)) return "ah";
+  if (/^o+k+$/i.test(w)) return "ok";
+  return w.replace(/(.)\1{2,}/g, "$1$1");
+}
+
+export interface AckAnalysis {
+  isAcknowledgement: boolean;
+  thanks: boolean;
+  closing: boolean;
+  /** Restante da mensagem depois de remover os tokens de reação. */
+  remainder: string;
+}
+
+/**
+ * Detecta se a mensagem é PURA reação/reconhecimento, isto é: não contém
+ * pergunta, pedido, dado novo, correção nem mudança de assunto.
+ */
+export function analyzeAcknowledgement(text: string): AckAnalysis {
+  const raw = text.trim();
+  const thanks = THANKS_RE.test(raw);
+  const closing = CLOSING_RE.test(raw);
+
+  if (!raw || raw.length > 70 || /[?]/.test(raw)) {
+    return { isAcknowledgement: false, thanks, closing, remainder: raw };
+  }
+
+  const words = raw
+    .toLowerCase()
+    .replace(/[!.…,;:"'()]+/g, " ")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map(canonicalToken);
+
+  if (words.length === 0 || words.length > 8) {
+    return { isAcknowledgement: false, thanks, closing, remainder: raw };
+  }
+
+  const leftover = words.filter((w) => !ACK_TOKENS.has(w));
+  return {
+    isAcknowledgement: leftover.length === 0,
+    thanks,
+    closing,
+    remainder: leftover.join(" "),
+  };
+}
+
 const ORDINALS: Record<string, number> = {
   primeiro: 1, primeira: 1, um: 1, "1": 1,
   segundo: 2, segunda: 2, dois: 2, "2": 2,
@@ -248,6 +337,14 @@ export interface IntentAnalysis {
   selectedOption: number | null;
   extracted: Record<string, number>;
   isShort: boolean;
+  /** A mensagem se refere ao assunto anterior? */
+  isContextuallyRelated: boolean;
+  /** A mensagem pede informação nova? */
+  requiresInformationalAnswer: boolean;
+  shouldContinueTopic: boolean;
+  shouldExecuteAction: boolean;
+  shouldSearch: boolean;
+  ack: AckAnalysis;
 }
 
 export function classifyUserIntent(text: string, state: ConversationState): IntentAnalysis {
@@ -266,11 +363,20 @@ export function classifyUserIntent(text: string, state: ConversationState): Inte
 
   const affirmative = isAffirmative(raw);
   const negative = isNegative(raw);
+  const ack = analyzeAcknowledgement(raw);
+
+  // Existe algo pendente que uma resposta curta poderia estar respondendo?
+  const hasPending =
+    (state.awaiting_user_response || state.awaiting_confirmation) &&
+    !!(state.pending_question || state.pending_action);
 
   let intent: UserIntent = "nova_pergunta";
   if (CANCEL_RE.test(raw) && !CALC_RE.test(raw)) intent = "cancelamento";
   else if (CORRECTION_RE.test(raw) && Object.keys(extracted).length > 0) intent = "correcao";
-  else if (state.awaiting_user_response && (affirmative || negative)) intent = "resposta_a_confirmacao";
+  else if (hasPending && (affirmative || negative)) intent = "resposta_a_confirmacao";
+  else if (hasPending && selectedOption !== null) intent = "selecao_de_opcao";
+  // Sem pendência explícita, reação curta é reconhecimento — nunca ordem de continuar.
+  else if (!hasPending && ack.isAcknowledgement) intent = "user_acknowledgement";
   else if (selectedOption !== null) intent = "selecao_de_opcao";
   else if (TOPIC_CHANGE_RE.test(raw)) intent = "mudanca_de_assunto";
   else if (COMPARE_RE.test(raw)) intent = "pedido_de_comparacao";
@@ -280,10 +386,33 @@ export function classifyUserIntent(text: string, state: ConversationState): Inte
     (isShort || state.expected_response_type === "data" || state.awaiting_user_response)
   )
     intent = "fornecimento_de_dado";
-  else if (affirmative || negative) intent = "resposta_a_confirmacao";
+  else if (hasPending && (affirmative || negative)) intent = "resposta_a_confirmacao";
   else if (isShort && state.current_topic) intent = "continuacao";
 
-  return { intent, affirmative, negative, selectedOption, extracted, isShort };
+  const isAck = intent === "user_acknowledgement";
+  const shouldExecuteAction =
+    !isAck &&
+    ((intent === "resposta_a_confirmacao" && affirmative && hasPending) ||
+      intent === "selecao_de_opcao" ||
+      intent === "fornecimento_de_dado" ||
+      intent === "pedido_de_calculo" ||
+      intent === "pedido_de_comparacao" ||
+      intent === "nova_pergunta");
+
+  return {
+    intent,
+    affirmative,
+    negative,
+    selectedOption,
+    extracted,
+    isShort,
+    ack,
+    isContextuallyRelated: isAck || intent === "continuacao" || hasPending,
+    requiresInformationalAnswer: !isAck && intent !== "cancelamento",
+    shouldContinueTopic: !isAck && intent !== "cancelamento",
+    shouldExecuteAction,
+    shouldSearch: !isAck && intent !== "cancelamento",
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -368,10 +497,28 @@ export function applyUserTurn(
     corrections: [...state.corrections],
     conversation_summary: { ...state.conversation_summary },
     last_user_intent: analysis.intent,
+    conversation_status: analysis.intent === "user_acknowledgement" ? "idle" : "active",
+    awaiting_user_request: analysis.intent === "user_acknowledgement",
+    should_auto_continue: false,
     turn_count: state.turn_count + 1,
     version: state.version + 1,
     updated_at: new Date().toISOString(),
   };
+
+  // Reconhecimento/reação: nada de novo objetivo, nada de nova ação. O assunto
+  // permanece disponível como contexto, mas não autoriza continuar falando.
+  if (analysis.intent === "user_acknowledgement") {
+    next.pending_question = null;
+    next.pending_action = null;
+    next.pending_payload = null;
+    next.awaiting_user_response = false;
+    next.awaiting_confirmation = false;
+    next.expected_response_type = null;
+    next.confirmation_options = [];
+    next.conversation_summary.pending_questions = [];
+    next.conversation_summary.next_expected_action = "aguardar novo pedido do usuário";
+    return next;
+  }
 
   // Dados novos / correções — o valor mais recente SEMPRE substitui o anterior.
   for (const [field, value] of Object.entries(analysis.extracted)) {
@@ -462,7 +609,37 @@ export function applyUserTurn(
   return next;
 }
 
-export function applyAssistantTurn(state: ConversationState, reply: string): ConversationState {
+export function applyAssistantTurn(
+  state: ConversationState,
+  reply: string,
+  opts: { acknowledgement?: boolean } = {},
+): ConversationState {
+  // Numa resposta de puro reconhecimento a IA não abre pergunta nem ação: o
+  // estado continua "idle" aguardando o próximo pedido do usuário.
+  if (opts.acknowledgement) {
+    return {
+      ...state,
+      conversation_summary: {
+        ...state.conversation_summary,
+        pending_questions: [],
+        next_expected_action: "aguardar novo pedido do usuário",
+      },
+      version: state.version + 1,
+      updated_at: new Date().toISOString(),
+      last_assistant_intent: "none",
+      pending_question: null,
+      pending_action: null,
+      pending_payload: null,
+      awaiting_user_response: false,
+      awaiting_confirmation: false,
+      expected_response_type: null,
+      confirmation_options: [],
+      conversation_status: "idle",
+      awaiting_user_request: true,
+      should_auto_continue: false,
+    };
+  }
+
   const a = analyzeAssistantReply(reply);
   const next: ConversationState = {
     ...state,
@@ -653,6 +830,9 @@ export function renderStateForModel(state: ConversationState): string {
     corrections: state.corrections.slice(-5),
     last_assistant_intent: state.last_assistant_intent,
     last_user_intent: state.last_user_intent,
+    conversation_status: state.conversation_status,
+    awaiting_user_request: state.awaiting_user_request,
+    should_auto_continue: state.should_auto_continue,
     turn_count: state.turn_count,
   };
   return JSON.stringify(payload, null, 0);
@@ -682,6 +862,15 @@ export function buildInterpretationDirective(
 ): string | null {
   const lines: string[] = [];
   const pq = stateBefore.pending_question;
+
+  if (analysis.intent === "user_acknowledgement") {
+    lines.push(
+      `A mensagem atual ("${text}") é apenas RECONHECIMENTO/REAÇÃO do usuário (${analysis.ack.thanks ? "agradecimento" : analysis.ack.closing ? "encerramento" : "concordância"}). NÃO é um pedido novo nem uma autorização para continuar o assunto.`,
+      `Responda com UMA frase curta e cordial, no máximo 12 palavras. NÃO repita informações já dadas, NÃO recalcule, NÃO liste opções, NÃO cite fontes, NÃO faça nova pergunta técnica, NÃO reabra o tema.`,
+      `Depois disso, pare e aguarde o próximo pedido do usuário.`,
+    );
+    return lines.join("\n");
+  }
 
   if (analysis.intent === "resposta_a_confirmacao" && analysis.affirmative && pq) {
     lines.push(
@@ -726,4 +915,33 @@ export function buildInterpretationDirective(
   }
 
   return lines.length > 0 ? lines.join("\n") : null;
+}
+
+// ---------------------------------------------------------------------------
+// Resposta curta de reconhecimento (sem modelo, sem busca, sem RAG)
+// ---------------------------------------------------------------------------
+
+const ACK_THANKS_REPLIES = [
+  "Disponha! Qualquer coisa, é só chamar.",
+  "Por nada! Estou por aqui se precisar.",
+  "Imagina, foi um prazer ajudar.",
+];
+const ACK_CLOSING_REPLIES = [
+  "Até mais! Qualquer dúvida, é só chamar.",
+  "Combinado. Bom trabalho por aí!",
+];
+const ACK_PLAIN_REPLIES = [
+  "Que bom que ficou claro!",
+  "Isso mesmo.",
+  "Perfeito.",
+  "Fico feliz que tenha ajudado!",
+];
+
+/**
+ * Resposta breve para mensagens de puro reconhecimento. Determinística
+ * (varia pelo turno, para não soar robótica) e sem qualquer conteúdo novo.
+ */
+export function buildAcknowledgementReply(ack: AckAnalysis, turn: number): string {
+  const pool = ack.thanks ? ACK_THANKS_REPLIES : ack.closing ? ACK_CLOSING_REPLIES : ACK_PLAIN_REPLIES;
+  return pool[Math.abs(turn) % pool.length];
 }

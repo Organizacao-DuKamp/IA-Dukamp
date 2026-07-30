@@ -14,6 +14,7 @@ import { checkRateLimit } from "./rate-limit.server";
 import { productContextBlock, routeQuery } from "./query-router.server";
 import {
   applyAssistantTurn,
+  buildAcknowledgementReply,
   applyUserTurn,
   buildHistoryWindow,
   buildInterpretationDirective,
@@ -177,6 +178,29 @@ async function runTurn(
 
   const lastAssistant = [...history].reverse().find((m) => m.role === "assistant");
   const lastUser = [...history].reverse().find((m) => m.role === "user");
+
+  // ---- Reconhecimento puro: encerra o turno aqui.
+  // Nada de RAG, roteador, mercado, site ou modelo. Uma frase curta e ponto:
+  // o usuário só reagiu, não pediu nada novo.
+  if (analysis.intent === "user_acknowledgement") {
+    const reply = buildAcknowledgementReply(analysis.ack, state.turn_count);
+    const finalState = applyAssistantTurn(state, reply, { acknowledgement: true });
+    return {
+      reply,
+      state: finalState,
+      conversationId,
+      diagnostics: diag(
+        conversationId,
+        history,
+        windowed,
+        analysis,
+        stateBefore,
+        [],
+        "acknowledgement-stop",
+      ),
+    };
+  }
+
 
   // Small talk só quando não há nada pendente e a intenção não é continuidade.
   const continuity =
