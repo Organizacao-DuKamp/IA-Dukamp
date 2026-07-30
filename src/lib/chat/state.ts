@@ -860,6 +860,15 @@ export function buildInterpretationDirective(
   const lines: string[] = [];
   const pq = stateBefore.pending_question;
 
+  if (analysis.intent === "user_acknowledgement") {
+    lines.push(
+      `A mensagem atual ("${text}") é apenas RECONHECIMENTO/REAÇÃO do usuário (${analysis.ack.thanks ? "agradecimento" : analysis.ack.closing ? "encerramento" : "concordância"}). NÃO é um pedido novo nem uma autorização para continuar o assunto.`,
+      `Responda com UMA frase curta e cordial, no máximo 12 palavras. NÃO repita informações já dadas, NÃO recalcule, NÃO liste opções, NÃO cite fontes, NÃO faça nova pergunta técnica, NÃO reabra o tema.`,
+      `Depois disso, pare e aguarde o próximo pedido do usuário.`,
+    );
+    return lines.join("\n");
+  }
+
   if (analysis.intent === "resposta_a_confirmacao" && analysis.affirmative && pq) {
     lines.push(
       `A mensagem atual ("${text}") é uma CONFIRMAÇÃO POSITIVA da sua pergunta anterior: "${pq}".`,
