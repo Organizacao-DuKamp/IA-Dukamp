@@ -141,6 +141,9 @@ export function normalizeState(
     user_goal: clampOrNull(raw.user_goal, 300),
     turn_count: typeof raw.turn_count === "number" ? Math.max(0, Math.min(raw.turn_count, 9999)) : 0,
     version: typeof raw.version === "number" ? raw.version : 0,
+    conversation_status: raw.conversation_status === "active" ? "active" : "idle",
+    awaiting_user_request: raw.awaiting_user_request !== false,
+    should_auto_continue: raw.should_auto_continue === true,
   };
 }
 
