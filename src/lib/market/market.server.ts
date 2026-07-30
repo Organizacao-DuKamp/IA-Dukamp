@@ -97,6 +97,177 @@ export function detectState(text: string): string | null {
 }
 
 /* ------------------------------------------------------------------ */
+/* Cidades / praças e proximidade                                       */
+/* ------------------------------------------------------------------ */
+
+export function norm(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+/** Cidades/praças frequentes em consultas de pecuária e grãos, com UF e
+ * coordenadas aproximadas (para escolher a praça mais próxima). */
+const CITIES: Array<{ name: string; uf: string; lat: number; lon: number }> = [
+  { name: "aracatuba", uf: "SP", lat: -21.21, lon: -50.44 },
+  { name: "sao jose do rio preto", uf: "SP", lat: -20.81, lon: -49.38 },
+  { name: "rio preto", uf: "SP", lat: -20.81, lon: -49.38 },
+  { name: "monte aprazivel", uf: "SP", lat: -20.77, lon: -49.71 },
+  { name: "votuporanga", uf: "SP", lat: -20.42, lon: -49.97 },
+  { name: "andradina", uf: "SP", lat: -20.9, lon: -51.38 },
+  { name: "birigui", uf: "SP", lat: -21.29, lon: -50.34 },
+  { name: "presidente prudente", uf: "SP", lat: -22.13, lon: -51.39 },
+  { name: "marilia", uf: "SP", lat: -22.21, lon: -49.95 },
+  { name: "bauru", uf: "SP", lat: -22.31, lon: -49.06 },
+  { name: "barretos", uf: "SP", lat: -20.56, lon: -48.57 },
+  { name: "sao paulo", uf: "SP", lat: -23.55, lon: -46.63 },
+  { name: "campinas", uf: "SP", lat: -22.9, lon: -47.06 },
+  { name: "ribeirao preto", uf: "SP", lat: -21.17, lon: -47.81 },
+  { name: "araraquara", uf: "SP", lat: -21.79, lon: -48.18 },
+  { name: "presidente epitacio", uf: "SP", lat: -21.76, lon: -52.11 },
+  { name: "tres lagoas", uf: "MS", lat: -20.75, lon: -51.68 },
+  { name: "campo grande", uf: "MS", lat: -20.44, lon: -54.65 },
+  { name: "dourados", uf: "MS", lat: -22.22, lon: -54.81 },
+  { name: "cuiaba", uf: "MT", lat: -15.6, lon: -56.1 },
+  { name: "rondonopolis", uf: "MT", lat: -16.47, lon: -54.64 },
+  { name: "sorriso", uf: "MT", lat: -12.55, lon: -55.72 },
+  { name: "sinop", uf: "MT", lat: -11.86, lon: -55.5 },
+  { name: "goiania", uf: "GO", lat: -16.69, lon: -49.26 },
+  { name: "rio verde", uf: "GO", lat: -17.79, lon: -50.93 },
+  { name: "uberlandia", uf: "MG", lat: -18.91, lon: -48.27 },
+  { name: "uberaba", uf: "MG", lat: -19.75, lon: -47.93 },
+  { name: "belo horizonte", uf: "MG", lat: -19.92, lon: -43.94 },
+  { name: "londrina", uf: "PR", lat: -23.31, lon: -51.16 },
+  { name: "maringa", uf: "PR", lat: -23.42, lon: -51.94 },
+  { name: "cascavel", uf: "PR", lat: -24.96, lon: -53.46 },
+  { name: "curitiba", uf: "PR", lat: -25.43, lon: -49.27 },
+  { name: "passo fundo", uf: "RS", lat: -28.26, lon: -52.41 },
+  { name: "porto alegre", uf: "RS", lat: -30.03, lon: -51.23 },
+  { name: "chapeco", uf: "SC", lat: -27.1, lon: -52.62 },
+  { name: "barreiras", uf: "BA", lat: -12.15, lon: -44.99 },
+  { name: "palmas", uf: "TO", lat: -10.18, lon: -48.33 },
+  { name: "maraba", uf: "PA", lat: -5.37, lon: -49.12 },
+  { name: "porto velho", uf: "RO", lat: -8.76, lon: -63.9 },
+  { name: "paranagua", uf: "PR", lat: -25.52, lon: -48.51 },
+  { name: "santos", uf: "SP", lat: -23.96, lon: -46.33 },
+];
+
+export interface GeoRef {
+  name: string;
+  uf: string;
+  lat: number;
+  lon: number;
+}
+
+/** Detecta a cidade/praça citada na pergunta (quando conhecida). */
+export function detectCity(text: string): GeoRef | null {
+  const low = norm(text);
+  let best: GeoRef | null = null;
+  for (const c of CITIES) {
+    if (low.includes(c.name) && (!best || c.name.length > best.name.length)) best = c;
+  }
+  return best;
+}
+
+function distanceKm(a: GeoRef, b: { lat: number; lon: number }): number {
+  const R = 6371;
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const dLon = ((b.lon - a.lon) * Math.PI) / 180;
+  const la1 = (a.lat * Math.PI) / 180;
+  const la2 = (b.lat * Math.PI) / 180;
+  const h =
+    Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) ** 2;
+  return Math.round(2 * R * Math.asin(Math.sqrt(h)));
+}
+
+/** Localiza a geo-referência de uma praça vinda do banco (locality/state). */
+function geoOfQuote(q: MarketQuote): GeoRef | null {
+  const loc = norm(q.locality ?? "");
+  for (const c of CITIES) if (loc.includes(c.name)) return c;
+  return null;
+}
+
+export interface NearestResult {
+  series: MarketQuote[];
+  /** Nota explicando a substituição de praça, quando houver. */
+  note: string | null;
+}
+
+/**
+ * Busca a série da praça pedida; se não existir, cai para a praça mais próxima
+ * (mesma UF primeiro, depois menor distância) e devolve a nota da substituição.
+ */
+export async function getSeriesNearest(
+  slug: string,
+  askedCity: GeoRef | null,
+  askedState: string | null,
+): Promise<NearestResult> {
+  const state = askedState ?? askedCity?.uf ?? null;
+
+  // 1) praça exata pedida
+  if (askedCity) {
+    const all = await getSeries(slug, {}).catch(() => []);
+    const exact = all.filter((q) => norm(q.locality ?? "").includes(askedCity.name));
+    if (exact.length) return { series: exact, note: null };
+
+    // 2) mesma UF
+    const sameUf = all.filter((q) => q.state === askedCity.uf);
+    const pickFrom = (cands: MarketQuote[]): MarketQuote[] => {
+      const byLoc = new Map<string, MarketQuote[]>();
+      for (const q of cands) {
+        const k = `${q.locality}|${q.state ?? ""}`;
+        byLoc.set(k, [...(byLoc.get(k) ?? []), q]);
+      }
+      let bestKey: string | null = null;
+      let bestDist = Infinity;
+      for (const [k, list] of byLoc) {
+        const g = geoOfQuote(list[0]);
+        const d = g ? distanceKm(askedCity, g) : 1500;
+        if (d < bestDist) { bestDist = d; bestKey = k; }
+      }
+      return bestKey ? byLoc.get(bestKey)! : [];
+    };
+
+    const chosen = sameUf.length ? pickFrom(sameUf) : pickFrom(all);
+    if (chosen.length) {
+      const g = geoOfQuote(chosen[0]);
+      const dist = g ? distanceKm(askedCity, g) : null;
+      const cityLabel = askedCity.name.replace(/\b\w/g, (m) => m.toUpperCase());
+      return {
+        series: chosen,
+        note:
+          `PRAÇA SUBSTITUÍDA — não há cotação registrada para ${cityLabel}/${askedCity.uf}. ` +
+          `Os números abaixo são da praça mais próxima com dado publicado: ${chosen[0].locality}` +
+          `${chosen[0].state ? `/${chosen[0].state}` : ""}` +
+          `${dist != null ? ` (cerca de ${dist} km de ${cityLabel})` : ""}. ` +
+          `INSTRUÇÃO: avise o usuário, de forma natural, que o valor é da praça vizinha e não da cidade pedida, e lembre que frete e negociação alteram o preço local.`,
+      };
+    }
+  }
+
+  // 3) sem cidade conhecida: UF e depois nacional
+  if (state) {
+    const byState = await getSeries(slug, { state }).catch(() => []);
+    if (byState.length) return { series: byState, note: null };
+    const all = await getSeries(slug, {}).catch(() => []);
+    if (all.length) {
+      return {
+        series: all,
+        note:
+          `PRAÇA SUBSTITUÍDA — não há cotação registrada para ${state}. ` +
+          `Os números abaixo são de ${all[0].locality}${all[0].state ? `/${all[0].state}` : ""}. ` +
+          `INSTRUÇÃO: avise que a referência é de outra praça e que o preço local varia com frete e negociação.`,
+      };
+    }
+    return { series: [], note: null };
+  }
+
+  return { series: await getSeries(slug, {}).catch(() => []), note: null };
+}
+
+/* ------------------------------------------------------------------ */
 /* Consultas                                                            */
 /* ------------------------------------------------------------------ */
 
