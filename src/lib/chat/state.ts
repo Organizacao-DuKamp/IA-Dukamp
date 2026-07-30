@@ -916,3 +916,32 @@ export function buildInterpretationDirective(
 
   return lines.length > 0 ? lines.join("\n") : null;
 }
+
+// ---------------------------------------------------------------------------
+// Resposta curta de reconhecimento (sem modelo, sem busca, sem RAG)
+// ---------------------------------------------------------------------------
+
+const ACK_THANKS_REPLIES = [
+  "Disponha! Qualquer coisa, é só chamar.",
+  "Por nada! Estou por aqui se precisar.",
+  "Imagina, foi um prazer ajudar.",
+];
+const ACK_CLOSING_REPLIES = [
+  "Até mais! Qualquer dúvida, é só chamar.",
+  "Combinado. Bom trabalho por aí!",
+];
+const ACK_PLAIN_REPLIES = [
+  "Que bom que ficou claro!",
+  "Isso mesmo.",
+  "Perfeito.",
+  "Fico feliz que tenha ajudado!",
+];
+
+/**
+ * Resposta breve para mensagens de puro reconhecimento. Determinística
+ * (varia pelo turno, para não soar robótica) e sem qualquer conteúdo novo.
+ */
+export function buildAcknowledgementReply(ack: AckAnalysis, turn: number): string {
+  const pool = ack.thanks ? ACK_THANKS_REPLIES : ack.closing ? ACK_CLOSING_REPLIES : ACK_PLAIN_REPLIES;
+  return pool[Math.abs(turn) % pool.length];
+}
