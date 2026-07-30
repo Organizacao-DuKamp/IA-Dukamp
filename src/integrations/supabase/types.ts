@@ -14,6 +14,78 @@ export type Database = {
   }
   public: {
     Tables: {
+      cotacoes_pecuarias: {
+        Row: {
+          abrangencia: string
+          categoria: string
+          cidade: string | null
+          cidade_slug: string
+          condicao_pagamento: string | null
+          created_at: string
+          data_coleta: string
+          data_cotacao: string
+          estado: string
+          fonte: string
+          id: string
+          nivel_confiabilidade: string
+          observacao: string | null
+          preco_maximo: number | null
+          preco_minimo: number | null
+          preco_referencia: number
+          raw: Json | null
+          regiao: string
+          unidade: string
+          updated_at: string
+          url_fonte: string | null
+        }
+        Insert: {
+          abrangencia?: string
+          categoria: string
+          cidade?: string | null
+          cidade_slug?: string
+          condicao_pagamento?: string | null
+          created_at?: string
+          data_coleta?: string
+          data_cotacao: string
+          estado?: string
+          fonte: string
+          id?: string
+          nivel_confiabilidade?: string
+          observacao?: string | null
+          preco_maximo?: number | null
+          preco_minimo?: number | null
+          preco_referencia: number
+          raw?: Json | null
+          regiao?: string
+          unidade?: string
+          updated_at?: string
+          url_fonte?: string | null
+        }
+        Update: {
+          abrangencia?: string
+          categoria?: string
+          cidade?: string | null
+          cidade_slug?: string
+          condicao_pagamento?: string | null
+          created_at?: string
+          data_coleta?: string
+          data_cotacao?: string
+          estado?: string
+          fonte?: string
+          id?: string
+          nivel_confiabilidade?: string
+          observacao?: string | null
+          preco_maximo?: number | null
+          preco_minimo?: number | null
+          preco_referencia?: number
+          raw?: Json | null
+          regiao?: string
+          unidade?: string
+          updated_at?: string
+          url_fonte?: string | null
+        }
+        Relationships: []
+      }
       import_report_items: {
         Row: {
           created_at: string
@@ -215,6 +287,135 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      livestock_categories: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          especie: string
+          id: string
+          max_idade_dias: number
+          nome: string
+          ordem: number
+          sinonimos: string[]
+          slug: string
+          unidade_padrao: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          especie?: string
+          id?: string
+          max_idade_dias?: number
+          nome: string
+          ordem?: number
+          sinonimos?: string[]
+          slug: string
+          unidade_padrao?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          especie?: string
+          id?: string
+          max_idade_dias?: number
+          nome?: string
+          ordem?: number
+          sinonimos?: string[]
+          slug?: string
+          unidade_padrao?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      livestock_place_links: {
+        Row: {
+          created_at: string
+          distancia_km: number | null
+          id: string
+          ordem: number
+          origem_slug: string
+          praca_slug: string
+        }
+        Insert: {
+          created_at?: string
+          distancia_km?: number | null
+          id?: string
+          ordem?: number
+          origem_slug: string
+          praca_slug: string
+        }
+        Update: {
+          created_at?: string
+          distancia_km?: number | null
+          id?: string
+          ordem?: number
+          origem_slug?: string
+          praca_slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "livestock_place_links_origem_slug_fkey"
+            columns: ["origem_slug"]
+            isOneToOne: false
+            referencedRelation: "livestock_places"
+            referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "livestock_place_links_praca_slug_fkey"
+            columns: ["praca_slug"]
+            isOneToOne: false
+            referencedRelation: "livestock_places"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      livestock_places: {
+        Row: {
+          apelidos: string[]
+          created_at: string
+          ibge_code: string | null
+          id: string
+          is_praca_pecuaria: boolean
+          lat: number | null
+          lon: number | null
+          municipio: string
+          regiao: string | null
+          slug: string
+          uf: string
+          updated_at: string
+        }
+        Insert: {
+          apelidos?: string[]
+          created_at?: string
+          ibge_code?: string | null
+          id?: string
+          is_praca_pecuaria?: boolean
+          lat?: number | null
+          lon?: number | null
+          municipio: string
+          regiao?: string | null
+          slug: string
+          uf: string
+          updated_at?: string
+        }
+        Update: {
+          apelidos?: string[]
+          created_at?: string
+          ibge_code?: string | null
+          id?: string
+          is_praca_pecuaria?: boolean
+          lat?: number | null
+          lon?: number | null
+          municipio?: string
+          regiao?: string | null
+          slug?: string
+          uf?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       market_quotes: {
         Row: {
