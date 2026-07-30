@@ -14,6 +14,7 @@ import { checkRateLimit } from "./rate-limit.server";
 import { productContextBlock, routeQuery } from "./query-router.server";
 import {
   applyAssistantTurn,
+  buildAcknowledgementReply,
   applyUserTurn,
   buildHistoryWindow,
   buildInterpretationDirective,
