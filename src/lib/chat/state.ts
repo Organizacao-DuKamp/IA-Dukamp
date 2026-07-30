@@ -206,6 +206,82 @@ const CANCEL_RE = /\b(cancela|cancelar|esquece|deixa\s+pra\s+l[áa]|para\s+tudo|
 const TOPIC_CHANGE_RE =
   /\b(mudando\s+de\s+assunto|outra\s+coisa|outra\s+pergunta|deixa\s+isso|agora\s+quero\s+saber|falando\s+em\s+outra)\b/i;
 
+// ---------------------------------------------------------------------------
+// Reconhecimento / reação curta ("user_acknowledgement")
+// ---------------------------------------------------------------------------
+
+/**
+ * Tokens que, sozinhos ou combinados, representam apenas reação, concordância,
+ * agradecimento ou encerramento — nunca um novo pedido.
+ * A classificação NÃO depende só desta lista: ela só vale quando não existe
+ * pergunta/ação pendente e quando não sobra nenhum conteúdo novo na mensagem.
+ */
+const ACK_TOKENS = new Set([
+  "ah", "aah", "aa", "oh", "ooh", "opa", "pois", "então", "entao", "e", "é", "eh",
+  "muito", "mto", "bem", "bastante", "que", "tudo", "isso", "mesmo", "assim",
+  "sim", "ok", "okay", "okey", "blz", "beleza", "certo", "correto", "exato",
+  "exatamente", "entendi", "entendido", "entendida", "entendo", "compreendi",
+  "saquei", "ciente", "agora", "faz", "sentido", "verdade", "claro", "uhum",
+  "aham", "ahan", "hm", "hmm", "hum", "humm", "legal", "bacana", "interessante",
+  "show", "massa", "top", "ótimo", "otimo", "perfeito", "boa", "bom", "joia",
+  "jóia", "maneiro", "dahora", "demais", "tranquilo", "suave", "nossa", "uau",
+  "wow", "caramba", "puxa", "eita", "valeu", "vlw", "obrigado", "obrigada",
+  "obg", "grato", "grata", "thanks", "obrigadão", "obrigadao", "ta", "tá",
+  "tudo bem", "belezinha", "ss", "ahh",
+]);
+
+const THANKS_RE = /\b(valeu|vlw|obrigad|obg|grat[oa]|thanks)\b/i;
+const CLOSING_RE = /\b(tchau|at[ée]\s+mais|falou|flw|adeus|bye|por\s+hoje\s+[ée]\s+s[óo]|era\s+s[óo]\s+isso)\b/i;
+
+/** "hummmm", "hmmm", "aaah" → forma canônica curta. */
+function canonicalToken(w: string): string {
+  if (/^h+[uma]*m+h*$/i.test(w)) return "hmm";
+  if (/^a+h+$/i.test(w)) return "ah";
+  if (/^o+k+$/i.test(w)) return "ok";
+  return w.replace(/(.)\1{2,}/g, "$1$1");
+}
+
+export interface AckAnalysis {
+  isAcknowledgement: boolean;
+  thanks: boolean;
+  closing: boolean;
+  /** Restante da mensagem depois de remover os tokens de reação. */
+  remainder: string;
+}
+
+/**
+ * Detecta se a mensagem é PURA reação/reconhecimento, isto é: não contém
+ * pergunta, pedido, dado novo, correção nem mudança de assunto.
+ */
+export function analyzeAcknowledgement(text: string): AckAnalysis {
+  const raw = text.trim();
+  const thanks = THANKS_RE.test(raw);
+  const closing = CLOSING_RE.test(raw);
+
+  if (!raw || raw.length > 70 || /[?]/.test(raw)) {
+    return { isAcknowledgement: false, thanks, closing, remainder: raw };
+  }
+
+  const words = raw
+    .toLowerCase()
+    .replace(/[!.…,;:"'()]+/g, " ")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map(canonicalToken);
+
+  if (words.length === 0 || words.length > 8) {
+    return { isAcknowledgement: false, thanks, closing, remainder: raw };
+  }
+
+  const leftover = words.filter((w) => !ACK_TOKENS.has(w));
+  return {
+    isAcknowledgement: leftover.length === 0,
+    thanks,
+    closing,
+    remainder: leftover.join(" "),
+  };
+}
+
 const ORDINALS: Record<string, number> = {
   primeiro: 1, primeira: 1, um: 1, "1": 1,
   segundo: 2, segunda: 2, dois: 2, "2": 2,
