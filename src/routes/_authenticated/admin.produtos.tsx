@@ -188,6 +188,9 @@ function AdminProducts() {
             </p>
           </div>
           <div className="flex gap-2 text-sm">
+            <Link to="/admin/cotacoes" className="rounded-md border border-border px-3 py-1.5 hover:bg-accent">
+              Cotações
+            </Link>
             <Link to="/admin/base-conhecimento" className="rounded-md border border-border px-3 py-1.5 hover:bg-accent">
               Base de conhecimento
             </Link>

@@ -160,7 +160,10 @@ function AdminKnowledgeBase() {
           <div>
             <h1 className="text-lg font-semibold">Base de conhecimento</h1>
             <p className="text-xs text-muted-foreground">
-              Gestão RAG da TPEC-IA · <Link to="/admin/produtos" className="underline">Produtos</Link> · <Link to="/" className="underline">voltar ao chat</Link>
+              Gestão RAG da TPEC-IA · <Link to="/admin/cotacoes" className="rounded-md border border-border px-3 py-1.5 hover:bg-accent">
+              Cotações
+            </Link>
+            <Link to="/admin/produtos" className="underline">Produtos</Link> · <Link to="/" className="underline">voltar ao chat</Link>
             </p>
           </div>
           <button
