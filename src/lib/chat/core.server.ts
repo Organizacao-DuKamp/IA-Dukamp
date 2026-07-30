@@ -213,6 +213,12 @@ async function runTurn(
 
   // Resposta estrutural direta (SQL) — só quando não há confirmação em aberto,
   // para nunca atropelar uma ação pendente com uma listagem genérica.
+  const isCalc = analysis.intent === "pedido_de_calculo";
+  // Pedido de cálculo ("quanto de suplemento para 200 bois") nunca deve virar
+  // uma contagem de catálogo — o roteador estrutural é ignorado nesse caso.
+  if (isCalc && routed.kind === "structural") {
+    routed = { kind: "passthrough" as const };
+  }
   if (routed.kind === "structural" && !continuity) {
     const finalState = applyAssistantTurn(state, routed.text);
     return {
