@@ -216,6 +216,132 @@ export type Database = {
           },
         ]
       }
+      market_quotes: {
+        Row: {
+          category: string
+          collected_at: string
+          created_at: string
+          id: string
+          locality: string
+          notes: string | null
+          payment_condition: string | null
+          price: number
+          product: string
+          product_slug: string
+          quote_type: string
+          raw: Json | null
+          reference_date: string
+          source_code: string
+          source_name: string
+          source_updated_at: string | null
+          source_url: string
+          state: string | null
+          unit: string
+          var_daily: number | null
+          var_monthly: number | null
+          var_weekly: number | null
+        }
+        Insert: {
+          category: string
+          collected_at?: string
+          created_at?: string
+          id?: string
+          locality: string
+          notes?: string | null
+          payment_condition?: string | null
+          price: number
+          product: string
+          product_slug: string
+          quote_type?: string
+          raw?: Json | null
+          reference_date: string
+          source_code: string
+          source_name: string
+          source_updated_at?: string | null
+          source_url: string
+          state?: string | null
+          unit: string
+          var_daily?: number | null
+          var_monthly?: number | null
+          var_weekly?: number | null
+        }
+        Update: {
+          category?: string
+          collected_at?: string
+          created_at?: string
+          id?: string
+          locality?: string
+          notes?: string | null
+          payment_condition?: string | null
+          price?: number
+          product?: string
+          product_slug?: string
+          quote_type?: string
+          raw?: Json | null
+          reference_date?: string
+          source_code?: string
+          source_name?: string
+          source_updated_at?: string | null
+          source_url?: string
+          state?: string | null
+          unit?: string
+          var_daily?: number | null
+          var_monthly?: number | null
+          var_weekly?: number | null
+        }
+        Relationships: []
+      }
+      market_sources: {
+        Row: {
+          active: boolean
+          category: string
+          code: string
+          created_at: string
+          id: string
+          ingest_method: string
+          kind: string
+          license_note: string | null
+          name: string
+          org: string
+          phase: number
+          region: string | null
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          active?: boolean
+          category: string
+          code: string
+          created_at?: string
+          id?: string
+          ingest_method?: string
+          kind: string
+          license_note?: string | null
+          name: string
+          org: string
+          phase?: number
+          region?: string | null
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          active?: boolean
+          category?: string
+          code?: string
+          created_at?: string
+          id?: string
+          ingest_method?: string
+          kind?: string
+          license_note?: string | null
+          name?: string
+          org?: string
+          phase?: number
+          region?: string | null
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
       product_aliases: {
         Row: {
           alias: string
