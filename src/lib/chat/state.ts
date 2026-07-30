@@ -609,7 +609,37 @@ export function applyUserTurn(
   return next;
 }
 
-export function applyAssistantTurn(state: ConversationState, reply: string): ConversationState {
+export function applyAssistantTurn(
+  state: ConversationState,
+  reply: string,
+  opts: { acknowledgement?: boolean } = {},
+): ConversationState {
+  // Numa resposta de puro reconhecimento a IA não abre pergunta nem ação: o
+  // estado continua "idle" aguardando o próximo pedido do usuário.
+  if (opts.acknowledgement) {
+    return {
+      ...state,
+      conversation_summary: {
+        ...state.conversation_summary,
+        pending_questions: [],
+        next_expected_action: "aguardar novo pedido do usuário",
+      },
+      version: state.version + 1,
+      updated_at: new Date().toISOString(),
+      last_assistant_intent: "none",
+      pending_question: null,
+      pending_action: null,
+      pending_payload: null,
+      awaiting_user_response: false,
+      awaiting_confirmation: false,
+      expected_response_type: null,
+      confirmation_options: [],
+      conversation_status: "idle",
+      awaiting_user_request: true,
+      should_auto_continue: false,
+    };
+  }
+
   const a = analyzeAssistantReply(reply);
   const next: ConversationState = {
     ...state,
