@@ -425,6 +425,15 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
   const hasCategoryWord = CATEGORY_WORD_RE.test(userText);
   const hasUnitWord = UNIT_WORD_RE.test(userText);
   const hasPriceWord = PRICE_WORD_RE.test(userText);
+  // Palavras que caracterizam consulta ao CATÁLOGO (e não uma pergunta técnica).
+  const mentionsProdutoWord =
+    /\b(produtos?|cat[aá]logo|itens|mercadorias?|ra[cç][oõ]es?|suplementos?|minerais?|n[uú]cleos?|concentrados?|sku|estoque)\b/i.test(
+      userText,
+    );
+  const marketQuoteIntent =
+    /\b(cotaç[aã]o|cotaç[oõ]es|arroba|@|mercado|bolsa|b3|cepea|scot|indicador|futuros?|f[ií]sico|leil[aã]o|leil[oõ]es)\b/i.test(
+      userText,
+    );
 
   // ---- Cotações pecuárias (base própria, cascata cidade→praça→região→UF) ----
   const livestockBlock = await import("@/lib/market/livestock.server")
