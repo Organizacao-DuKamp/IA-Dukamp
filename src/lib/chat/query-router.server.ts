@@ -415,6 +415,37 @@ async function marketAnswer(userText: string): Promise<string | null> {
 
 // ---- Main router ---------------------------------------------------------
 
+/**
+ * Filtra a lista do catálogo pela finalidade citada na pergunta
+ * ("produtos para bezerro", "ração de vaca de leite"). Evita despejar
+ * o catálogo inteiro quando o usuário pediu algo específico.
+ */
+const PURPOSE_TERMS: Array<{ label: string; re: RegExp; match: RegExp }> = [
+  { label: "bezerros", re: /\bbezerr[oa]s?\b|\bcreep\b|\baleitamento\b|\bterneir[oa]s?\b/i, match: /bezerr|creep|baby|inicial|aleita|leite\s*em\s*p|colostr/i },
+  { label: "vacas de leite", re: /\bvacas?\s+(de\s+)?leite\w*\b|\blactaç[aã]o\b|\bleiteir[ao]s?\b/i, match: /leit|lacta|ordenha/i },
+  { label: "vacas de cria", re: /\bvacas?\s+de\s+cria\b|\bcria\b|\bmatrizes?\b/i, match: /cria|reprodu|matriz|fosfor/i },
+  { label: "recria", re: /\brecria\b|\bnovilh[oa]s?\b|\bgarrote?s?\b/i, match: /recria|crescimento|novilh/i },
+  { label: "engorda / terminação", re: /\bengorda\b|\btermina[cç][aã]o\b|\bconfinament\w*\b|\bboi\s+gordo\b/i, match: /engorda|termina|confin|energ/i },
+  { label: "sal mineral", re: /\bsal\s+mineral\b|\bminerali?zaç\w*\b/i, match: /mineral|sal\b|fosfor/i },
+  { label: "proteinado", re: /\bproteinad[oa]s?\b|\bprote[ií]c[oa]s?\b/i, match: /prote/i },
+  { label: "equinos", re: /\bequin[oa]s?\b|\bcavalo?s?\b|\bégua?s?\b/i, match: /equin|cavalo|horse|haras/i },
+  { label: "ovinos e caprinos", re: /\bovin[oa]s?\b|\bcaprin[oa]s?\b|\bovelh\w*\b|\bcabr\w*\b/i, match: /ovin|caprin|ovelh|cabr/i },
+  { label: "carrapaticidas", re: /\bcarrapat\w*\b|\bmosca\b|\bectoparasit\w*\b/i, match: /carrapat|mosca|ectop|pour|banho/i },
+  { label: "vermífugos", re: /\bverm[ií]fug\w*\b|\bverminose\b|\bendoparasit\w*\b/i, match: /verm|ivermec|albenda|levamis|doramec/i },
+  { label: "vacinas", re: /\bvacinas?\b|\bimuniz\w*\b/i, match: /vacin|imuno|soro/i },
+];
+
+function filterCatalogByPurpose(
+  items: string[],
+  userText: string,
+): { matched: string[]; label: string | null } {
+  const hit = PURPOSE_TERMS.find((t) => t.re.test(userText));
+  if (!hit) return { matched: [], label: null };
+  const matched = items.filter((n) => hit.match.test(normalizeName(n)));
+  return { matched, label: hit.label };
+}
+
+
 
 export async function routeQuery(userText: string): Promise<RouterResult> {
   const species = detectSpecies(userText);
