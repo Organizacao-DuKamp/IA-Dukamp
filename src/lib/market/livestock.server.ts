@@ -276,7 +276,7 @@ export function buildLivestockContext(r: LivestockResolution): string {
       `SELO: ${r.sealLabel}`,
       `Categoria: ${category.nome} · Unidade pedida: ${unit} · Local pedido: ${askedLabel}`,
       "SEM COTAÇÃO REGISTRADA na base para essa categoria/praça.",
-      "INSTRUÇÃO OBRIGATÓRIA: diga com franqueza que não há cotação registrada e NÃO apresente nenhum valor, faixa, média, estimativa ou tendência para essa categoria — nem de memória, nem aproximado. Ofereça acompanhar a fonte oficial (CEPEA/ESALQ, Scot Consultoria, B3) ou o contato do time comercial DuKamp.",
+      "INSTRUÇÃO OBRIGATÓRIA (ordem exata): 1) BUSQUE AGORA na web, em fontes oficiais de mercado (CEPEA/ESALQ, Scot Consultoria, B3, Notícias Agrícolas, Canal Rural, IEA, Conab, sindicatos e associações rurais), a cotação mais recente dessa categoria para a cidade/praça pedida ou para a praça publicada mais próxima. 2) Se encontrar, apresente o valor com selo 🟡 (referência de mercado externa) trazendo obrigatoriamente preço + unidade, praça, data de referência e fonte, e diga com naturalidade que o número veio de publicação de mercado e não da base própria — se for de outra praça, avise qual é e lembre que frete, escala e negociação mudam o preço local. 3) Só se a busca não retornar nada confiável, diga com franqueza que não há cotação disponível agora e ofereça acompanhar a fonte oficial ou o time comercial DuKamp. NUNCA invente, estime ou arredonde um valor de memória.",
     ].join("\n");
   }
 
