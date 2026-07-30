@@ -189,7 +189,7 @@ async function collectPtax(days = 10): Promise<QuoteInput[]> {
     quote_type: "cambio",
     reference_date: String(v.dataHoraCotacao).slice(0, 10),
     source_updated_at: new Date(String(v.dataHoraCotacao).replace(" ", "T") + "-03:00").toISOString(),
-    source_code: "bcb-ptax",
+    source_code: "bcb_ptax",
     notes: "PTAX de venda, fechamento oficial do Banco Central.",
     raw: v,
   }));
@@ -234,8 +234,8 @@ export interface CollectorResult {
 export async function runCollectors(): Promise<CollectorResult[]> {
   const jobs: Array<{ name: string; run: () => Promise<QuoteInput[]> }> = [
     { name: "BCB PTAX (dólar)", run: () => collectPtax(15) },
-    { name: "BCB Selic meta", run: () => collectBcbSeries(432, "Selic meta", "% a.a.", "bcb-selic", 12) },
-    { name: "IBGE IPCA (BCB/SGS)", run: () => collectBcbSeries(433, "IPCA mensal", "% a.m.", "bcb-ipca", 12) },
+    { name: "BCB Selic meta", run: () => collectBcbSeries(432, "Selic meta", "% a.a.", "bcb_selic", 12) },
+    { name: "IBGE IPCA (BCB/SGS)", run: () => collectBcbSeries(433, "IPCA mensal", "% a.m.", "bcb_sgs", 12) },
   ];
   const out: CollectorResult[] = [];
   for (const job of jobs) {
