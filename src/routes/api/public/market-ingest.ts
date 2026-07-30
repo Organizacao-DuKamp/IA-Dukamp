@@ -95,11 +95,18 @@ export const Route = createFileRoute("/api/public/market-ingest")({
           );
           const result: Record<string, unknown> = {};
           if (parsed.data.syncSources) result.sources = await syncMarketSources();
+          if (parsed.data.livestock?.length) {
+            const { upsertLivestockQuotes } = await import(
+              "@/lib/market/livestock-ingest.server"
+            );
+            result.livestock = await upsertLivestockQuotes(parsed.data.livestock as any);
+          }
           if (parsed.data.quotes?.length) {
             result.manual = await upsertQuotes(parsed.data.quotes as any);
-          } else {
+          } else if (!parsed.data.livestock?.length) {
             result.collectors = await runCollectors();
           }
+
           return new Response(JSON.stringify({ ok: true, ...result }), {
             headers: { "content-type": "application/json" },
           });
