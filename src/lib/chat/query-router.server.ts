@@ -396,9 +396,12 @@ async function marketAnswer(userText: string): Promise<string | null> {
     const srcs = await mk.suggestedSources(t.category).catch(() => []);
     const ref = srcs.map((s) => `${s.name} (${s.org}): ${s.url}`).join(" · ");
     blocks.push(
-      `SEM DADO REGISTRADO — não há cotação de ${t.label}${placeLabel} nem em praça próxima registrada. ` +
-        `INSTRUÇÃO OBRIGATÓRIA: diga com franqueza que você não tem a cotação atualizada de ${t.label} agora e NÃO apresente nenhum valor, data, praça, média ou tendência para ${t.label} — nem de memória, nem de material técnico, nem aproximado. ` +
-        (ref ? `Ofereça a consulta direta na fonte oficial: ${ref}.` : ""),
+      `SEM DADO REGISTRADO NA BASE PRÓPRIA — não há cotação de ${t.label}${placeLabel} na base interna. ` +
+        `INSTRUÇÃO OBRIGATÓRIA (ordem exata): 1) BUSQUE AGORA na web, em fontes oficiais de mercado (CEPEA/ESALQ, Scot Consultoria, B3, Notícias Agrícolas, Canal Rural, Conab, IEA, cooperativas e bolsas regionais), a cotação mais recente de ${t.label}${placeLabel} — ou, se a cidade pedida não tiver publicação, a da praça publicada mais próxima. ` +
+        `2) Se encontrar, apresente o valor trazendo obrigatoriamente preço + unidade, praça, data de referência e fonte, deixando claro (de forma natural) que é referência de publicação de mercado e não da base própria; se for de outra praça, diga qual e lembre que frete, prazo e negociação alteram o preço local. ` +
+        `3) Só se a busca não retornar nada confiável, diga com franqueza que não tem a cotação atualizada de ${t.label} agora e NÃO apresente valor algum. ` +
+        `NUNCA invente, estime, arredonde ou use preço de memória/material técnico. ` +
+        (ref ? `Fontes oficiais para oferecer ao usuário: ${ref}.` : ""),
     );
   }
 
