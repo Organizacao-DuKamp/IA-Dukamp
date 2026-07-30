@@ -33,7 +33,12 @@ export function norm(s: string): string {
 
 /** Pergunta tem intenção de preço/cotação? */
 export const LIVESTOCK_PRICE_INTENT_RE =
-  /\b(cota[cç][aã]o|cota[cç][oõ]es|pre[cç]o|pre[cç]os|valor|vale|custa|custando|arroba|@|quanto\s+(est[aá]|ta|t[aá]|sai|vale)|mercado|fechamento|indicador)\b/i;
+  /(^|[^a-z0-9])(cotacao|cotacoes|preco|precos|valor|vale|custa|custando|arroba|arrobas|mercado|fechamento|indicador|quanto (esta|ta|sai|vale|custa))([^a-z0-9]|$)/;
+
+/** Testa a intenção de preço sobre o texto já normalizado (sem acento). */
+export function hasPriceIntent(text: string): boolean {
+  return LIVESTOCK_PRICE_INTENT_RE.test(norm(text)) || text.includes("@");
+}
 
 const UF_RE =
   /\b(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/;
@@ -140,7 +145,7 @@ export function parseLivestockQuery(
   categories: LivestockCategoryRow[],
   places: LivestockPlaceRow[],
 ): LivestockQuery | null {
-  if (!LIVESTOCK_PRICE_INTENT_RE.test(text)) return null;
+  if (!hasPriceIntent(text)) return null;
   const category = detectCategory(text, categories);
   if (!category) return null;
   const place = detectPlace(text, places);
