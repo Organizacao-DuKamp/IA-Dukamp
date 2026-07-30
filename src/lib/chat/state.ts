@@ -230,7 +230,7 @@ const ACK_TOKENS = new Set([
   "tudo bem", "belezinha", "ss", "ahh",
 ]);
 
-const THANKS_RE = /\b(valeu|vlw|obrigad|obg|grat[oa]|thanks)\b/i;
+const THANKS_RE = /\b(valeu|vlw|obrigad\w*|obg|grat[oa]|thanks|brigad\w*)\b/i;
 const CLOSING_RE = /\b(tchau|at[ée]\s+mais|falou|flw|adeus|bye|por\s+hoje\s+[ée]\s+s[óo]|era\s+s[óo]\s+isso)\b/i;
 
 /** "hummmm", "hmmm", "aaah" → forma canônica curta. */

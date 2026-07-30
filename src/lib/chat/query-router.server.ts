@@ -25,7 +25,7 @@ function detectSpecies(text: string): SpeciesKey | null {
 const COUNT_RE = /\b(quanto|quanta|quantos|quantas|qual\s+o\s+numero|n[uú]mero\s+de|quantidade\s+de|tem\s+quantos?|tem\s+quantas?|existem?\s+quantos?|total\s+de)\b/i;
 const LIST_RE = /\b(quais|liste|listar|listagem|mostre|mostrar|me\s+diga|diga\s+os?|nomes?\s+d[oe]s?\b(?!\w)|quem\s+s[aã]o|todos\s+os?|todas\s+as?|produtos?\s+(disponi|dispon))/i;
 const FEATURED_RE = /\b(destaque|destaques|em\s+destaque|principais\s+produtos?|produtos?\s+principais|mais\s+vendidos?|top\s+produtos?)\b/i;
-const SELLER_WORD_RE = /\b(vendedor|vendedora|vendedores|representante|revenda|revendedor|distribuidor)\b/i;
+const SELLER_WORD_RE = /\b(vendedor|vendedora|vendedores|representante|revenda|revendedor|distribuidor|consultor\s+t[eé]cnico|quem\s+atende|quem\s+cuida\s+d[ae]|respons[aá]vel\s+pela\s+regi[aã]o|contato\s+comercial|equipe\s+comercial)\b/i;
 const CATEGORY_WORD_RE = /\b(categorias?|linhas?\s+de\s+produtos?|cat[aá]logos?)\b/i;
 const UNIT_WORD_RE = /\b(unidades?|filial|filiais|matriz|endere[cç]os?|localiza[cç][aã]o|onde\s+fica|onde\s+est[aá])\b/i;
 const PRICE_WORD_RE = /\b(pre[cç]o|valor|quanto\s+custa|custo|cotaç[aã]o)\b/i;
@@ -323,6 +323,24 @@ async function findSiteProductByName(text: string): Promise<Array<{ name: string
       return re.test(norm);
     });
   });
+  // Desempate: se um dos nomes aparecer (quase) inteiro na pergunta, ele vence
+  // a ambiguidade — "me fale sobre o DUKAMP PROTÉICO SUPREMO 25KG" não deve
+  // devolver lista de opções.
+  if (filtered.length > 1) {
+    const scored = filtered
+      .map((p) => {
+        const nameTokens = normalizeName(p.name as string)
+          .replace(/[^a-z0-9\s]/g, " ")
+          .split(/\s+/)
+          .filter((t) => t.length >= 3);
+        const hit = nameTokens.filter((t) => q.includes(t)).length;
+        return { p, ratio: nameTokens.length ? hit / nameTokens.length : 0, hit };
+      })
+      .sort((a, b) => b.ratio - a.ratio || b.hit - a.hit);
+    if (scored[0].ratio >= 0.7 && (scored.length === 1 || scored[0].ratio - scored[1].ratio >= 0.2)) {
+      return [scored[0].p];
+    }
+  }
   return filtered.slice(0, 20);
 }
 
@@ -399,7 +417,9 @@ async function marketAnswer(userText: string): Promise<string | null> {
       `SEM DADO REGISTRADO NA BASE PRÓPRIA — não há cotação de ${t.label}${placeLabel} na base interna. ` +
         `INSTRUÇÃO OBRIGATÓRIA (ordem exata): 1) BUSQUE AGORA na web, em fontes oficiais de mercado (CEPEA/ESALQ, Scot Consultoria, B3, Notícias Agrícolas, Canal Rural, Conab, IEA, cooperativas e bolsas regionais), a cotação mais recente de ${t.label}${placeLabel} — ou, se a cidade pedida não tiver publicação, a da praça publicada mais próxima. ` +
         `2) Se encontrar, apresente o valor trazendo obrigatoriamente preço + unidade, praça, data de referência e fonte, deixando claro (de forma natural) que é referência de publicação de mercado e não da base própria; se for de outra praça, diga qual e lembre que frete, prazo e negociação alteram o preço local. ` +
-        `3) Só se a busca não retornar nada confiável, diga com franqueza que não tem a cotação atualizada de ${t.label} agora e NÃO apresente valor algum. ` +
+        `2b) BUSCA APROFUNDADA OBRIGATÓRIA: antes de dizer que não achou, tente em sequência (a) a cidade pedida, (b) praças vizinhas da mesma região, (c) o indicador estadual, (d) o indicador nacional/CEPEA. `+
+        `2c) ENQUADRAMENTO: se encontrar QUALQUER referência confiável, NUNCA comece a resposta com "não encontrei"/"não há cotação". Comece pelo valor com selo 🟡 e só depois explique que é de outra praça/indicador e o que pode mudar o preço local. `+
+        `3) Só se NENHUMA das quatro tentativas retornar algo confiável, diga com franqueza que não tem a cotação atualizada de ${t.label} agora e NÃO apresente valor algum. ` +
         `NUNCA invente, estime, arredonde ou use preço de memória/material técnico. ` +
         (ref ? `Fontes oficiais para oferecer ao usuário: ${ref}.` : ""),
     );
@@ -415,8 +435,47 @@ async function marketAnswer(userText: string): Promise<string | null> {
 
 // ---- Main router ---------------------------------------------------------
 
+/**
+ * Filtra a lista do catálogo pela finalidade citada na pergunta
+ * ("produtos para bezerro", "ração de vaca de leite"). Evita despejar
+ * o catálogo inteiro quando o usuário pediu algo específico.
+ */
+const PURPOSE_TERMS: Array<{ label: string; re: RegExp; match: RegExp }> = [
+  { label: "bezerros", re: /\bbezerr[oa]s?\b|\bcreep\b|\baleitamento\b|\bterneir[oa]s?\b/i, match: /bezerr|creep|baby|inicial|aleita|leite\s*em\s*p|colostr/i },
+  { label: "vacas de leite", re: /\bvacas?\s+(de\s+)?leite\w*\b|\blactaç[aã]o\b|\bleiteir[ao]s?\b/i, match: /leit|lacta|ordenha/i },
+  { label: "vacas de cria", re: /\bvacas?\s+de\s+cria\b|\bcria\b|\bmatrizes?\b/i, match: /cria|reprodu|matriz|fosfor/i },
+  { label: "recria", re: /\brecria\b|\bnovilh[oa]s?\b|\bgarrote?s?\b/i, match: /recria|crescimento|novilh/i },
+  { label: "engorda / terminação", re: /\bengorda\b|\btermina[cç][aã]o\b|\bconfinament\w*\b|\bboi\s+gordo\b/i, match: /engorda|termina|confin|energ/i },
+  { label: "sal mineral", re: /\bsal\s+mineral\b|\bminerali?zaç\w*\b/i, match: /sal\s+mineral|suplement\w*\s+mineral|minerali|fosfat|fosfor|nucleo|n[uú]cleo/i },
+  { label: "proteinado", re: /\bproteinad[oa]s?\b|\bprote[ií]c[oa]s?\b/i, match: /prote/i },
+  { label: "equinos", re: /\bequin[oa]s?\b|\bcavalo?s?\b|\bégua?s?\b/i, match: /equin|cavalo|horse|haras/i },
+  { label: "ovinos e caprinos", re: /\bovin[oa]s?\b|\bcaprin[oa]s?\b|\bovelh\w*\b|\bcabr\w*\b/i, match: /ovin|caprin|ovelh|cabr/i },
+  { label: "carrapaticidas", re: /\bcarrapat\w*\b|\bmosca\b|\bectoparasit\w*\b/i, match: /carrapat|mosca|ectop|pour|banho/i },
+  { label: "vermífugos", re: /\bverm[ií]fug\w*\b|\bverminose\b|\bendoparasit\w*\b/i, match: /verm[ií]fug|vermic|ivermec|ivermic|albenda|levamis|doramec|closant|antihelmint|anti-?helm/i },
+  { label: "vacinas", re: /\bvacinas?\b|\bimuniz\w*\b/i, match: /vacin|imuno|soro/i },
+];
+
+function filterCatalogByPurpose(
+  items: string[],
+  userText: string,
+): { matched: string[]; label: string | null } {
+  const hit = PURPOSE_TERMS.find((t) => t.re.test(userText));
+  if (!hit) return { matched: [], label: null };
+  const matched = items.filter((n) => hit.match.test(normalizeName(n)));
+  return { matched, label: hit.label };
+}
+
+
+
+const PERSONAL_DATA_RE = /\b(cpf|rg|carteira\s+de\s+identidade|sal[aá]rio|comiss[aã]o\s+d[eo]|conta\s+banc[aá]ria|pix\s+pessoal|endere[cç]o\s+residencial|onde\s+mora|data\s+de\s+nascimento|documento\s+pessoal)\b/i;
 
 export async function routeQuery(userText: string): Promise<RouterResult> {
+  if (PERSONAL_DATA_RE.test(userText)) {
+    return {
+      kind: "structural",
+      text: "Não posso compartilhar dados pessoais (documentos, salários, endereços residenciais ou dados bancários) de vendedores ou clientes. Posso passar o contato comercial público do vendedor da sua região, se ajudar.",
+    };
+  }
   const species = detectSpecies(userText);
   const hasCount = COUNT_RE.test(userText);
   const hasList = LIST_RE.test(userText);
@@ -425,6 +484,15 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
   const hasCategoryWord = CATEGORY_WORD_RE.test(userText);
   const hasUnitWord = UNIT_WORD_RE.test(userText);
   const hasPriceWord = PRICE_WORD_RE.test(userText);
+  // Palavras que caracterizam consulta ao CATÁLOGO (e não uma pergunta técnica).
+  const mentionsProdutoWord =
+    /\b(produtos?|cat[aá]logo|itens|mercadorias?|ra[cç][oõ]es?|suplementos?|minerais?|n[uú]cleos?|concentrados?|sal\s+mineral|mineraliza\w*|sku|estoque|verm[ií]fug\w*|carrapaticidas?|vacinas?)\b/i.test(
+      userText,
+    );
+  const marketQuoteIntent =
+    /\b(cotaç[aã]o|cotaç[oõ]es|arroba|@|mercado|bolsa|b3|cepea|scot|indicador|futuros?|f[ií]sico|leil[aã]o|leil[oõ]es)\b/i.test(
+      userText,
+    );
 
   // ---- Cotações pecuárias (base própria, cascata cidade→praça→região→UF) ----
   const livestockBlock = await import("@/lib/market/livestock.server")
@@ -533,6 +601,27 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
       const opts = hits.map((s) => `- **${s.name}**${s.region ? ` (${s.region})` : ""}`).join("\n");
       return { kind: "structural", text: `Encontrei mais de um vendedor. A qual você se refere?\n\n${opts}` };
     }
+    // Antes de desistir, tenta por região/cidade citada.
+    {
+      const { findSellersByRegion } = await import("@/lib/site/site-lookup.server");
+      const byRegion = await findSellersByRegion(userText);
+      if (byRegion.length > 0) {
+        const bullets = byRegion.map((s) => {
+          const parts = [`**${s.name}**`];
+          if (s.role) parts.push(s.role);
+          if (s.region) parts.push(s.region);
+          const contact = s.whatsapp ? ` — WhatsApp: ${s.whatsapp}` : s.phone ? ` — Tel: ${s.phone}` : "";
+          return `- ${parts.join(" — ")}${contact}`;
+        }).join("\n");
+        return { kind: "structural", text: `Atendimento DuKamp para essa região:\n\n${bullets}` };
+      }
+    }
+    // Nenhum vendedor cadastrado para o que foi citado: nunca cair na web para
+    // "quem atende X" — isso traz telefones de prefeitura/hospital.
+    return {
+      kind: "structural",
+      text: "Não encontrei um vendedor DuKamp cadastrado especificamente para essa cidade. O atendimento pode ser feito pela matriz em Monte Aprazível/SP — (17) 3275-3106 — que direciona para o representante da região. Se você me disser a cidade ou a região exata, eu confirmo o contato comercial.",
+    };
   }
 
   // Categories
@@ -564,8 +653,18 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
     return { kind: "structural", text: `Produtos em destaque no site DuKamp:\n\n${bullets}` };
   }
 
-  // Products — count
-  if (hasCount && (!hasSellerWord && !hasCategoryWord)) {
+  // Products — count. Só responde contagem de catálogo quando a pergunta é
+  // claramente sobre produtos/itens da DuKamp. "Quantos piquetes preciso?" ou
+  // "quanto isso custa?" são perguntas técnicas/comerciais, não contagem de SKU.
+  const catalogScope = /\b(dukamp|cat[aá]logo|loja|site|voc[eê]s|estoque|linha)\b/i.test(userText);
+  if (
+    hasCount &&
+    !hasSellerWord &&
+    !hasCategoryWord &&
+    !marketQuoteIntent &&
+    mentionsProdutoWord &&
+    (catalogScope || /\bprodutos?\b|\bitens\b|\bsku\b/i.test(userText))
+  ) {
     const { n, source } = await countActive(species);
     const label = species
       ? ` para ${species === "ovinos_caprinos" ? "ovinos e caprinos" : species}`
@@ -583,17 +682,32 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
   // Products — list (only when the user explicitly asked for products/catalog).
   // Mencionar apenas uma espécie (ex.: "cotação do boi gordo") NÃO deve
   // despejar o catálogo — precisa haver menção explícita a produto/ração/etc.
-  const mentionsProdutoWord = /\b(produtos?|cat[aá]logo|itens|mercadorias?|ra[cç][oõ]es?|suplementos?|minerais?|n[uú]cleos?|concentrados?)\b/i.test(userText);
-  const marketQuoteIntent = /\b(cotaç[aã]o|cotaç[oõ]es|arroba|@|mercado|bolsa|b3|cepea|scot|indicador|futuros?|f[ií]sico|leil[aã]o|leil[oõ]es)\b/i.test(userText);
-  if (hasList && !hasSellerWord && !hasCategoryWord && mentionsProdutoWord && !marketQuoteIntent) {
+  const wantsCatalogList =
+    hasList ||
+    /\b(tem|t[eê]m|tem\s+algum|voc[eê]s\s+t[eê]m|vende[m]?|vendem|procuro|preciso\s+de|quero\s+um|quero\s+uma|indica|indicaç[aã]o\s+de)\b/i.test(
+      userText,
+    );
+  if (wantsCatalogList && !hasSellerWord && !hasCategoryWord && mentionsProdutoWord && !marketQuoteIntent) {
     const items = await listActive(species);
     if (items.length === 0) return { kind: "structural", text: "Nenhum produto ativo encontrado." };
-    const shown = items.slice(0, 60);
-    const bullets = shown.map((n) => `- ${n}`).join("\n");
-    const more = items.length > shown.length ? `\n\n_(exibindo ${shown.length} de ${items.length})_` : "";
+    // Filtro por finalidade/categoria citada na pergunta ("para bezerros",
+    // "para vaca de leite"): evita despejar o catálogo inteiro.
+    const filtered = filterCatalogByPurpose(items, userText);
+    const list = filtered.matched.length > 0 ? filtered.matched : items;
+    const shown = list.slice(0, 40);
+    const bullets = shown.map((n: string) => `- ${n}`).join("\n");
+    const more = list.length > shown.length ? `\n\n_(exibindo ${shown.length} de ${list.length})_` : "";
+    const header =
+      filtered.matched.length > 0
+        ? `Produtos DuKamp relacionados a **${filtered.label}**:`
+        : `Produtos ativos${species ? ` (${species === "ovinos_caprinos" ? "ovinos e caprinos" : species})` : ""}:`;
+    const note =
+      filtered.matched.length === 0 && filtered.label
+        ? `\n\n_(não achei itens com o termo "${filtered.label}" no nome; segue a lista geral)_`
+        : "";
     return {
       kind: "structural",
-      text: `Produtos ativos${species ? ` (${species === "ovinos_caprinos" ? "ovinos e caprinos" : species})` : ""}:\n\n${bullets}${more}`,
+      text: `${header}\n\n${bullets}${more}${note}`,
     };
   }
 
