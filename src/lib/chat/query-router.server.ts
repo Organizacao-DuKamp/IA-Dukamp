@@ -601,6 +601,21 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
       const opts = hits.map((s) => `- **${s.name}**${s.region ? ` (${s.region})` : ""}`).join("\n");
       return { kind: "structural", text: `Encontrei mais de um vendedor. A qual você se refere?\n\n${opts}` };
     }
+    // Antes de desistir, tenta por região/cidade citada.
+    {
+      const { findSellersByRegion } = await import("@/lib/site/site-lookup.server");
+      const byRegion = await findSellersByRegion(userText);
+      if (byRegion.length > 0) {
+        const bullets = byRegion.map((s) => {
+          const parts = [`**${s.name}**`];
+          if (s.role) parts.push(s.role);
+          if (s.region) parts.push(s.region);
+          const contact = s.whatsapp ? ` — WhatsApp: ${s.whatsapp}` : s.phone ? ` — Tel: ${s.phone}` : "";
+          return `- ${parts.join(" — ")}${contact}`;
+        }).join("\n");
+        return { kind: "structural", text: `Atendimento DuKamp para essa região:\n\n${bullets}` };
+      }
+    }
     // Nenhum vendedor cadastrado para o que foi citado: nunca cair na web para
     // "quem atende X" — isso traz telefones de prefeitura/hospital.
     return {
