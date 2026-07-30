@@ -349,7 +349,56 @@ function stripHtml(html: string | null): string {
     .trim();
 }
 
+// ---- Mercado / cotações ---------------------------------------------------
+
+/**
+ * Responde perguntas de cotação a partir da tabela estruturada `market_quotes`.
+ * Retorna null quando a pergunta não é de mercado — aí o fluxo normal segue.
+ * Nunca devolve preço sem data, unidade, praça e fonte.
+ */
+async function marketAnswer(userText: string): Promise<string | null> {
+  const mk = await import("@/lib/market/market.server");
+  if (!mk.MARKET_INTENT_RE.test(userText)) return null;
+  const targets = mk.detectMarketTargets(userText);
+  if (targets.length === 0) return null;
+
+  const state = mk.detectState(userText);
+  const blocks: string[] = [];
+  const missing: typeof targets = [];
+
+  for (const t of targets.slice(0, 3)) {
+    let series = await mk.getSeries(t.slug, { state }).catch(() => []);
+    if (series.length === 0 && state) series = await mk.getSeries(t.slug).catch(() => []);
+    const a = mk.analyze(series);
+    if (!a) { missing.push(t); continue; }
+    blocks.push(mk.quoteBlock(a));
+    const basis = await mk.basisBlock(t.slug, state).catch(() => null);
+    if (basis) blocks.push(basis);
+  }
+
+  if (/\b(rela[cç][aã]o|paridade|poder\s+de\s+compra|troca)\b/i.test(userText)) {
+    const rel = await mk.relations(state).catch(() => []);
+    blocks.push(...rel);
+  }
+
+  for (const t of missing) {
+    const srcs = await mk.suggestedSources(t.category).catch(() => []);
+    const ref = srcs.map((s) => `${s.name} (${s.org}): ${s.url}`).join(" · ");
+    blocks.push(
+      `SEM DADO REGISTRADO — não tenho cotação de ${t.label}${state ? ` para ${state}` : ""} na base atualizada, então não vou estimar um valor.` +
+        (ref ? ` Referência oficial para consulta direta: ${ref}.` : ""),
+    );
+  }
+
+  if (blocks.length === 0) return null;
+  return [
+    "DADOS DE MERCADO (use exatamente estes números; nunca invente ou arredonde para outro valor):",
+    ...blocks,
+  ].join("\n");
+}
+
 // ---- Main router ---------------------------------------------------------
+
 
 export async function routeQuery(userText: string): Promise<RouterResult> {
   const species = detectSpecies(userText);
