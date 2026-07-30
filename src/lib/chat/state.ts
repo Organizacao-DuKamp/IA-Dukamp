@@ -68,6 +68,10 @@ export interface ConversationState {
   corrections: Array<{ field: string; from: string | number; to: string | number }>;
   last_assistant_intent: AssistantIntent;
   last_user_intent: UserIntent | null;
+  /** "idle" = usuário apenas reagiu/encerrou; a IA deve aguardar novo pedido. */
+  conversation_status: ConversationStatus;
+  awaiting_user_request: boolean;
+  should_auto_continue: boolean;
   conversation_summary: ConversationSummary;
   turn_count: number;
   updated_at: string;
