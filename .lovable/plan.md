@@ -1,49 +1,77 @@
-# Plano: QA e melhoria contínua da TPEC-IA
+## Diagnóstico da arquitetura atual
 
-## Objetivo
-Testar a IA em cenários reais, corrigir só o que estiver errado (prompt, roteador, small-talk, lookups) e entregar um relatório com o antes/depois. Nada de reescrever a arquitetura — só cirurgia onde a resposta falhar.
+O que existe hoje:
 
-## Etapas
+- `market_quotes` guarda cotações genéricas (produto, praça, unidade, data, fonte). Serve para grãos, câmbio e boi, tudo no mesmo formato.
+- `src/lib/market/market.server.ts` reconhece o produto por regex (`TARGETS`), detecta cidade por uma lista fixa de ~40 municípios com lat/lon e escolhe a praça mais próxima por distância em linha reta (`getSeriesNearest`).
+- `src/lib/chat/query-router.server.ts` chama `marketAnswer()` antes de tudo; se houver bloco de mercado, devolve como contexto para o modelo.
+- Coletores automáticos existentes: apenas Banco Central (dólar PTAX, Selic, IPCA). **Não há nenhum coletor de boi gordo, vaca, bezerro** — a tabela está praticamente vazia para pecuária, o que explica a IA cair na web e trazer preço de outra região/data.
 
-### 1. Auditoria rápida (leitura, sem mudar código)
-- Reler `src/lib/chat/core.server.ts`, `query-router.server.ts`, `system-prompt.ts`, `site-lookup.server.ts`, `perplexity.server.ts`.
-- Confirmar quais intents já têm short-circuit (small-talk, contagens, listagens, vendedores por região, unidades) e onde ainda vai pra Perplexity.
-- Mapear os pontos que historicamente falharam (definições, listagens acidentais, contexto de follow-up, ficha de produto indevida).
+Causas-raiz dos erros relatados:
 
-### 2. Bateria de testes (via `invoke-server-function` no `/api/chat`)
-Rodar em lotes, sempre passando `history` para simular a conversa. Categorias:
+1. **Base vazia de pecuária** → sem dado local, sobra a busca web genérica.
+2. **Categorias insuficientes**: só existem `boi-gordo`, `vaca-gorda`, `bezerro`. Não há novilha, garrote, boi magro, boi china, bezerra, vaca boiadeira → regex mistura tudo.
+3. **Hierarquia frágil**: distância em linha reta entre 40 cidades, sem noção de praça pecuária real nem de região/mesorregião.
+4. **Sem controle de frescor**: uma cotação de 40 dias entra como se fosse de hoje.
+5. **Sem selo de abrangência**: a resposta não distingue municipal, regional e estadual.
 
-1. **Produtos / catálogo**: "quantos produtos tem a dukamp?", "quais em destaque?", "me fale do dukamp 80/s", "tem ração pra ovino?", "preço do adekamp".
-2. **Vendedores / equipe**: "quantos vendedores?", "quem são eles?", "e em monte aprazível?", "e em rio preto?", "quem atende Bady Bassit?".
-3. **Unidades / institucional**: "onde fica a matriz?", "tem filial?", "qual o telefone?", "atende qual região?".
-4. **Categorias**: "quais categorias vocês têm?", "quantas categorias?".
-5. **Follow-ups / contexto**: sequência "vendedores" → "quem são?" → "e em rio preto?" → "e categorias?".
-6. **Small-talk / reações**: "oi", "ah que legal", "acho que não", "sei lá", "beleza", "hmm".
-7. **Ambíguo / typo / informal**: "quanto produt tem?", "toma jeitoo", "tem dukamp 80s ai?".
-8. **Técnico (pecuária, sem catálogo)**: "como calcular lotação de brachiaria brizantha?", "qual o NRC atual pra bovino de corte?".
-9. **Fora de domínio**: "quais as maiores empresas de pecuária em rio preto?", "qual o preço da soja hoje?".
-10. **Sem dado**: "vocês entregam em Manaus?", "qual o horário de atendimento?".
+## Solução proposta
 
-Para cada resposta, anotar: correção factual, naturalidade, contexto, ausência de invenção, ausência de vazamento de fontes/RAG.
+### 1. Modelo de dados novo (banco)
 
-### 3. Correções focadas
-Só onde a resposta violar um critério. Alvos prováveis (não garantidos até rodar):
-- Ajustes finos no `system-prompt.ts` (tom, quando pedir esclarecimento).
-- Regex do `query-router.server.ts` (falsos positivos/negativos em contagem, listagem, região).
-- Novos casos no `detectSmallTalk` de `core.server.ts`.
-- Filtros extras em `site-lookup.server.ts` (stopwords, aliases de cidade).
-- Preservar tudo que já funciona; nenhuma alteração em schema, RAG ingest, UI admin ou auth.
+**`livestock_categories`** — catálogo canônico: `slug`, `nome`, `especie`, `unidade_padrao` (@ / kg / cabeça), `sinonimos[]`, `ordem`. Cobre: boi gordo, vaca gorda, novilha gorda, boi china, bezerro desmamado, bezerra, garrote, boi magro, vaca boiadeira.
 
-### 4. Regressão
-Depois de cada correção, re-rodar os testes daquela categoria + os cenários históricos que já funcionavam (contagem de produtos, vendedores por região, small-talk, filtro NRC, ficha só com menção explícita).
+**`livestock_places`** — hierarquia geográfica: `slug`, `municipio`, `uf`, `regiao` (ex.: "Noroeste Paulista"), `is_praca_pecuaria`, `lat`, `lon`, `ibge_code`.
 
-### 5. Relatório final
-Tabela por pergunta com: resposta antes → problema identificado → correção → resposta depois. Lista separada do que ficou pendente (ex.: dados que não existem em nenhum banco e precisam de intervenção humana da DuKamp).
+**`livestock_place_links`** — vizinhança explícita e ordenada: `origem_slug`, `praca_slug`, `ordem`, `distancia_km`. Permite exatamente o exemplo pedido: Monte Aprazível → Rio Preto → Mirassol → Araçatuba → Barretos → SP. Semeada com as praças do Noroeste Paulista e das regiões onde a DuKamp atua, e complementada por cálculo de distância quando não houver link manual.
 
-## Fora de escopo
-- Nenhuma mudança de arquitetura, banco, RAG pipeline, UI ou auth.
-- Nada de novos providers de IA.
-- Não vou popular a base local com dados novos — se faltar dado, isso vira item do relatório.
+**`cotacoes_pecuarias`** — a tabela pedida: `categoria`, `estado`, `cidade`, `regiao`, `preco_minimo`, `preco_maximo`, `preco_referencia`, `unidade`, `condicao_pagamento`, `data_cotacao`, `fonte`, `url_fonte`, `nivel_confiabilidade`, `data_coleta`, `abrangencia` (municipal | regional | estadual | nacional). Índices por (categoria, estado, cidade, data_cotacao) e chave única para upsert idempotente.
 
-## Como você acompanha
-Vou postar o relatório final consolidado numa única resposta com o antes/depois e o que ficou pendente. Se preferir que eu pause depois da Etapa 2 (bateria + diagnóstico, antes de mexer em código) pra você revisar os problemas, é só dizer.
+RLS: leitura pública apenas de leitura; escrita só por service role / admin.
+
+### 2. Motor de resolução (`src/lib/market/livestock.server.ts`)
+
+Função única `resolveLivestockQuote({ categoria, cidade, uf, unidade })` que percorre a cascata e devolve sempre um resultado tipado com nível de confiança:
+
+```text
+1. cidade exata, cotação recente          → 🟢 Cotação Local
+2. praça pecuária vinculada (ordem 1..n)  → 🟡 Referência Regional
+3. mesma região                            → 🟡 Referência Regional
+4. indicador estadual                      → 🟠 Referência Estadual
+5. nada recente                            → 🔴 Sem cotação recente
+```
+
+Regras de frescor por categoria: cotação com mais de N dias (7 para boi gordo/vaca, 15 para reposição) sai do nível principal e, se usada, é marcada como "referência antiga" — nunca como preço atual. Nada é inventado: sem linha no banco, o motor devolve `null` e a instrução explícita de não citar valores.
+
+### 3. Extração de intenção determinística
+
+`parseLivestockQuery(texto)` extrai categoria (por sinônimos das `livestock_categories`, com desambiguação boi × vaca × novilha × bezerro), cidade (match contra `livestock_places`, incluindo acentuação e apelidos como "Rio Preto"), UF e unidade. Roda **antes** de RAG e de busca web, dentro de `query-router.server.ts`, substituindo o caminho atual de `marketAnswer` para categorias pecuárias.
+
+### 4. Contexto entregue ao modelo
+
+Bloco estruturado, não texto livre, com selo, categoria, faixa de preço, data, fonte, URL e a justificativa da substituição de praça. O prompt do sistema ganha regra rígida: para preços pecuários, usar **exclusivamente** os números do bloco; se o bloco disser "sem cotação", declarar isso abertamente e oferecer a fonte oficial. Formato de saída alinhado ao exemplo que você mandou, com o selo no início.
+
+### 5. Coleta e atualização
+
+- `src/lib/market/collectors/` com coletores por fonte confiável (CEPEA/ESALQ para indicadores nacionais e estaduais, B3 para futuros, fontes regionais aprovadas). Somente fontes do catálogo `market_sources`; blogs ficam de fora por lista de permissão.
+- `POST /api/public/market-ingest` continua sendo o gatilho protegido por token, agora rodando também os coletores pecuários; ideal apontar um cron externo diário.
+- Painel `/admin/cotacoes` ganha aba de cotações pecuárias: lançamento manual por praça, visualização do frescor de cada categoria e alerta visual quando um dado passou da validade.
+- Busca web fica como **complemento**: só é acionada quando o banco não tem nada recente, e o resultado é apresentado com selo 🟠/🔴, com data e link, nunca como cotação oficial da praça.
+
+### 6. Preservação do restante
+
+Grãos, câmbio, combustível e futuros continuam no fluxo atual de `market_quotes`. Produtos, vendedores, unidades, RAG e o motor de contexto conversacional não são tocados.
+
+## Detalhes técnicos
+
+- Migração SQL única criando as 4 tabelas com GRANTs, RLS e seeds das categorias e das praças/vínculos do Noroeste Paulista.
+- Novos arquivos: `src/lib/market/livestock.server.ts` (resolução em cascata), `src/lib/market/livestock-parse.ts` (extração de categoria/cidade/unidade), `src/lib/market/collectors/*.ts`.
+- Alterados: `src/lib/chat/query-router.server.ts` (nova precedência), `src/lib/chat/system-prompt.ts` (regras de selo e proibição de valor sem fonte), `src/lib/market/ingest.server.ts` (registro dos coletores), `src/routes/_authenticated/admin.cotacoes.tsx` (aba pecuária).
+- Testes de fumaça cobrindo: cidade com cotação, cidade sem cotação com praça vizinha, UF sem dado municipal, categoria inexistente e dado vencido.
+
+## Ordem de execução
+
+1. Migração do banco com categorias, praças, vínculos e `cotacoes_pecuarias`.
+2. Parser de intenção + motor de cascata com testes.
+3. Integração no roteador e no prompt, com os selos.
+4. Coletores e aba admin de lançamento/monitoramento.
