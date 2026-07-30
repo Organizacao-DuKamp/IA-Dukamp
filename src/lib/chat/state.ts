@@ -830,6 +830,9 @@ export function renderStateForModel(state: ConversationState): string {
     corrections: state.corrections.slice(-5),
     last_assistant_intent: state.last_assistant_intent,
     last_user_intent: state.last_user_intent,
+    conversation_status: state.conversation_status,
+    awaiting_user_request: state.awaiting_user_request,
+    should_auto_continue: state.should_auto_continue,
     turn_count: state.turn_count,
   };
   return JSON.stringify(payload, null, 0);
