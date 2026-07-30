@@ -25,7 +25,7 @@ function detectSpecies(text: string): SpeciesKey | null {
 const COUNT_RE = /\b(quanto|quanta|quantos|quantas|qual\s+o\s+numero|n[uú]mero\s+de|quantidade\s+de|tem\s+quantos?|tem\s+quantas?|existem?\s+quantos?|total\s+de)\b/i;
 const LIST_RE = /\b(quais|liste|listar|listagem|mostre|mostrar|me\s+diga|diga\s+os?|nomes?\s+d[oe]s?\b(?!\w)|quem\s+s[aã]o|todos\s+os?|todas\s+as?|produtos?\s+(disponi|dispon))/i;
 const FEATURED_RE = /\b(destaque|destaques|em\s+destaque|principais\s+produtos?|produtos?\s+principais|mais\s+vendidos?|top\s+produtos?)\b/i;
-const SELLER_WORD_RE = /\b(vendedor|vendedora|vendedores|representante|revenda|revendedor|distribuidor)\b/i;
+const SELLER_WORD_RE = /\b(vendedor|vendedora|vendedores|representante|revenda|revendedor|distribuidor|consultor\s+t[eé]cnico|quem\s+atende|quem\s+cuida\s+d[ae]|respons[aá]vel\s+pela\s+regi[aã]o|contato\s+comercial|equipe\s+comercial)\b/i;
 const CATEGORY_WORD_RE = /\b(categorias?|linhas?\s+de\s+produtos?|cat[aá]logos?)\b/i;
 const UNIT_WORD_RE = /\b(unidades?|filial|filiais|matriz|endere[cç]os?|localiza[cç][aã]o|onde\s+fica|onde\s+est[aá])\b/i;
 const PRICE_WORD_RE = /\b(pre[cç]o|valor|quanto\s+custa|custo|cotaç[aã]o)\b/i;
@@ -323,6 +323,24 @@ async function findSiteProductByName(text: string): Promise<Array<{ name: string
       return re.test(norm);
     });
   });
+  // Desempate: se um dos nomes aparecer (quase) inteiro na pergunta, ele vence
+  // a ambiguidade — "me fale sobre o DUKAMP PROTÉICO SUPREMO 25KG" não deve
+  // devolver lista de opções.
+  if (filtered.length > 1) {
+    const scored = filtered
+      .map((p) => {
+        const nameTokens = normalizeName(p.name as string)
+          .replace(/[^a-z0-9\s]/g, " ")
+          .split(/\s+/)
+          .filter((t) => t.length >= 3);
+        const hit = nameTokens.filter((t) => q.includes(t)).length;
+        return { p, ratio: nameTokens.length ? hit / nameTokens.length : 0, hit };
+      })
+      .sort((a, b) => b.ratio - a.ratio || b.hit - a.hit);
+    if (scored[0].ratio >= 0.7 && (scored.length === 1 || scored[0].ratio - scored[1].ratio >= 0.2)) {
+      return [scored[0].p];
+    }
+  }
   return filtered.slice(0, 20);
 }
 
@@ -449,7 +467,15 @@ function filterCatalogByPurpose(
 
 
 
+const PERSONAL_DATA_RE = /\b(cpf|rg|carteira\s+de\s+identidade|sal[aá]rio|comiss[aã]o\s+d[eo]|conta\s+banc[aá]ria|pix\s+pessoal|endere[cç]o\s+residencial|onde\s+mora|data\s+de\s+nascimento|documento\s+pessoal)\b/i;
+
 export async function routeQuery(userText: string): Promise<RouterResult> {
+  if (PERSONAL_DATA_RE.test(userText)) {
+    return {
+      kind: "structural",
+      text: "Não posso compartilhar dados pessoais (documentos, salários, endereços residenciais ou dados bancários) de vendedores ou clientes. Posso passar o contato comercial público do vendedor da sua região, se ajudar.",
+    };
+  }
   const species = detectSpecies(userText);
   const hasCount = COUNT_RE.test(userText);
   const hasList = LIST_RE.test(userText);
@@ -460,7 +486,7 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
   const hasPriceWord = PRICE_WORD_RE.test(userText);
   // Palavras que caracterizam consulta ao CATÁLOGO (e não uma pergunta técnica).
   const mentionsProdutoWord =
-    /\b(produtos?|cat[aá]logo|itens|mercadorias?|ra[cç][oõ]es?|suplementos?|minerais?|n[uú]cleos?|concentrados?|sku|estoque)\b/i.test(
+    /\b(produtos?|cat[aá]logo|itens|mercadorias?|ra[cç][oõ]es?|suplementos?|minerais?|n[uú]cleos?|concentrados?|sal\s+mineral|mineraliza\w*|sku|estoque|verm[ií]fug\w*|carrapaticidas?|vacinas?)\b/i.test(
       userText,
     );
   const marketQuoteIntent =
@@ -635,7 +661,12 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
   // Products — list (only when the user explicitly asked for products/catalog).
   // Mencionar apenas uma espécie (ex.: "cotação do boi gordo") NÃO deve
   // despejar o catálogo — precisa haver menção explícita a produto/ração/etc.
-  if (hasList && !hasSellerWord && !hasCategoryWord && mentionsProdutoWord && !marketQuoteIntent) {
+  const wantsCatalogList =
+    hasList ||
+    /\b(tem|t[eê]m|tem\s+algum|voc[eê]s\s+t[eê]m|vende[m]?|vendem|procuro|preciso\s+de|quero\s+um|quero\s+uma|indica|indicaç[aã]o\s+de)\b/i.test(
+      userText,
+    );
+  if (wantsCatalogList && !hasSellerWord && !hasCategoryWord && mentionsProdutoWord && !marketQuoteIntent) {
     const items = await listActive(species);
     if (items.length === 0) return { kind: "structural", text: "Nenhum produto ativo encontrado." };
     // Filtro por finalidade/categoria citada na pergunta ("para bezerros",
