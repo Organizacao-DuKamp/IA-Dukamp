@@ -291,7 +291,7 @@ export function buildLivestockContext(r: LivestockResolution): string {
     `SELO: ${r.sealLabel}`,
     `Categoria: ${q.categoria === category.slug ? category.nome : q.categoria}`,
     `Local pedido: ${askedLabel}`,
-    `Praça da cotação: ${q.cidade ?? q.regiao || q.estado}${q.estado ? `/${q.estado}` : ""}${
+    `Praça da cotação: ${q.cidade ?? (q.regiao || q.estado)}${q.estado ? `/${q.estado}` : ""}${
       r.distanceKm != null && r.distanceKm > 0 ? ` (cerca de ${r.distanceKm} km do local pedido)` : ""
     }`,
     `Abrangência: ${q.abrangencia}`,
