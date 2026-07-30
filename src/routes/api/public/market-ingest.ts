@@ -28,8 +28,31 @@ const bodySchema = z.object({
     )
     .max(500)
     .optional(),
+  livestock: z
+    .array(
+      z.object({
+        categoria: z.string().min(2).max(60),
+        cidade: z.string().max(120).nullable().optional(),
+        estado: z.string().max(2).optional(),
+        regiao: z.string().max(120).optional(),
+        abrangencia: z.enum(["municipal", "regional", "estadual", "nacional"]).optional(),
+        preco_minimo: z.number().finite().positive().nullable().optional(),
+        preco_maximo: z.number().finite().positive().nullable().optional(),
+        preco_referencia: z.number().finite().positive(),
+        unidade: z.string().min(1).max(20),
+        condicao_pagamento: z.string().max(80).nullable().optional(),
+        data_cotacao: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        fonte: z.string().min(2).max(120),
+        url_fonte: z.string().url().max(500).nullable().optional(),
+        nivel_confiabilidade: z.enum(["alta", "media", "baixa"]).optional(),
+        observacao: z.string().max(500).nullable().optional(),
+      }),
+    )
+    .max(500)
+    .optional(),
   syncSources: z.boolean().optional(),
 });
+
 
 function unauthorized() {
   return new Response(JSON.stringify({ error: "unauthorized" }), {
@@ -72,11 +95,18 @@ export const Route = createFileRoute("/api/public/market-ingest")({
           );
           const result: Record<string, unknown> = {};
           if (parsed.data.syncSources) result.sources = await syncMarketSources();
+          if (parsed.data.livestock?.length) {
+            const { upsertLivestockQuotes } = await import(
+              "@/lib/market/livestock-ingest.server"
+            );
+            result.livestock = await upsertLivestockQuotes(parsed.data.livestock as any);
+          }
           if (parsed.data.quotes?.length) {
             result.manual = await upsertQuotes(parsed.data.quotes as any);
-          } else {
+          } else if (!parsed.data.livestock?.length) {
             result.collectors = await runCollectors();
           }
+
           return new Response(JSON.stringify({ ok: true, ...result }), {
             headers: { "content-type": "application/json" },
           });

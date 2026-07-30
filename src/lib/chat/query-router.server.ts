@@ -423,9 +423,16 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
   const hasUnitWord = UNIT_WORD_RE.test(userText);
   const hasPriceWord = PRICE_WORD_RE.test(userText);
 
+  // ---- Cotações pecuárias (base própria, cascata cidade→praça→região→UF) ----
+  const livestockBlock = await import("@/lib/market/livestock.server")
+    .then((m) => m.livestockMarketAnswer(userText))
+    .catch(() => null);
+  if (livestockBlock) return { kind: "passthrough", marketContext: livestockBlock };
+
   // ---- Cotações e indicadores de mercado (dados dinâmicos estruturados) ----
   const marketBlock = await marketAnswer(userText).catch(() => null);
   if (marketBlock) return { kind: "passthrough", marketContext: marketBlock };
+
 
 
 

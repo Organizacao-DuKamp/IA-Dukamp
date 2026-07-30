@@ -9,6 +9,7 @@ import {
   saveQuotes,
   syncSources,
 } from "@/lib/market.functions";
+import { LivestockQuotesPanel } from "@/components/admin/LivestockQuotesPanel";
 
 export const Route = createFileRoute("/_authenticated/admin/cotacoes")({
   head: () => ({
@@ -195,6 +196,10 @@ function AdminMarket() {
             </button>
           </div>
         )}
+
+        <LivestockQuotesPanel />
+
+
 
         <section className="mb-6 rounded-lg border border-border bg-card p-4">
           <div className="flex flex-wrap items-center gap-2">

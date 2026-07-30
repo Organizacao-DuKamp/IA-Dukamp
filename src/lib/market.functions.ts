@@ -102,3 +102,85 @@ export const collectNow = createServerFn({ method: "POST" })
     const { runCollectors } = await import("./market/ingest.server");
     return await runCollectors();
   });
+
+/* ---------------- Cotações pecuárias ---------------- */
+
+const livestockQuote = z.object({
+  categoria: z.string().min(2).max(60),
+  cidade: z.string().max(120).nullable().optional(),
+  estado: z.string().max(2).optional(),
+  abrangencia: z.enum(["municipal", "regional", "estadual", "nacional"]).default("municipal"),
+  preco_minimo: z.number().finite().positive().nullable().optional(),
+  preco_maximo: z.number().finite().positive().nullable().optional(),
+  preco_referencia: z.number().finite().positive(),
+  unidade: z.string().min(1).max(20),
+  condicao_pagamento: z.string().max(80).nullable().optional(),
+  data_cotacao: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  fonte: z.string().min(2).max(120),
+  url_fonte: z.string().url().max(500).nullable().optional(),
+  nivel_confiabilidade: z.enum(["alta", "media", "baixa"]).default("alta"),
+  observacao: z.string().max(500).nullable().optional(),
+});
+
+export const listLivestockCatalog = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const { loadCategories, loadPlaces } = await import("./market/livestock.server");
+    const [categories, places] = await Promise.all([loadCategories(), loadPlaces()]);
+    return { categories, places };
+  });
+
+export const listLivestockQuotes = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        categoria: z.string().max(60).optional(),
+        limit: z.number().int().min(1).max(200).default(80),
+      })
+      .parse(d ?? {}),
+  )
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    let q = supabaseAdmin
+      .from("cotacoes_pecuarias")
+      .select("*")
+      .order("data_cotacao", { ascending: false })
+      .limit(data.limit);
+    if (data.categoria) q = q.eq("categoria", data.categoria);
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
+
+export const saveLivestockQuotes = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ quotes: z.array(livestockQuote).min(1).max(200) }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const { upsertLivestockQuotes } = await import("./market/livestock-ingest.server");
+    return await upsertLivestockQuotes(data.quotes as any);
+  });
+
+export const deleteLivestockQuote = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("cotacoes_pecuarias").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const livestockStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const { livestockFreshness } = await import("./market/livestock-ingest.server");
+    return await livestockFreshness();
+  });
