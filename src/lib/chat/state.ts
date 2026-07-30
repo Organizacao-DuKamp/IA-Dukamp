@@ -337,6 +337,14 @@ export interface IntentAnalysis {
   selectedOption: number | null;
   extracted: Record<string, number>;
   isShort: boolean;
+  /** A mensagem se refere ao assunto anterior? */
+  isContextuallyRelated: boolean;
+  /** A mensagem pede informação nova? */
+  requiresInformationalAnswer: boolean;
+  shouldContinueTopic: boolean;
+  shouldExecuteAction: boolean;
+  shouldSearch: boolean;
+  ack: AckAnalysis;
 }
 
 export function classifyUserIntent(text: string, state: ConversationState): IntentAnalysis {
@@ -355,11 +363,20 @@ export function classifyUserIntent(text: string, state: ConversationState): Inte
 
   const affirmative = isAffirmative(raw);
   const negative = isNegative(raw);
+  const ack = analyzeAcknowledgement(raw);
+
+  // Existe algo pendente que uma resposta curta poderia estar respondendo?
+  const hasPending =
+    (state.awaiting_user_response || state.awaiting_confirmation) &&
+    !!(state.pending_question || state.pending_action);
 
   let intent: UserIntent = "nova_pergunta";
   if (CANCEL_RE.test(raw) && !CALC_RE.test(raw)) intent = "cancelamento";
   else if (CORRECTION_RE.test(raw) && Object.keys(extracted).length > 0) intent = "correcao";
-  else if (state.awaiting_user_response && (affirmative || negative)) intent = "resposta_a_confirmacao";
+  else if (hasPending && (affirmative || negative)) intent = "resposta_a_confirmacao";
+  else if (hasPending && selectedOption !== null) intent = "selecao_de_opcao";
+  // Sem pendência explícita, reação curta é reconhecimento — nunca ordem de continuar.
+  else if (!hasPending && ack.isAcknowledgement) intent = "user_acknowledgement";
   else if (selectedOption !== null) intent = "selecao_de_opcao";
   else if (TOPIC_CHANGE_RE.test(raw)) intent = "mudanca_de_assunto";
   else if (COMPARE_RE.test(raw)) intent = "pedido_de_comparacao";
@@ -369,10 +386,33 @@ export function classifyUserIntent(text: string, state: ConversationState): Inte
     (isShort || state.expected_response_type === "data" || state.awaiting_user_response)
   )
     intent = "fornecimento_de_dado";
-  else if (affirmative || negative) intent = "resposta_a_confirmacao";
+  else if (hasPending && (affirmative || negative)) intent = "resposta_a_confirmacao";
   else if (isShort && state.current_topic) intent = "continuacao";
 
-  return { intent, affirmative, negative, selectedOption, extracted, isShort };
+  const isAck = intent === "user_acknowledgement";
+  const shouldExecuteAction =
+    !isAck &&
+    ((intent === "resposta_a_confirmacao" && affirmative && hasPending) ||
+      intent === "selecao_de_opcao" ||
+      intent === "fornecimento_de_dado" ||
+      intent === "pedido_de_calculo" ||
+      intent === "pedido_de_comparacao" ||
+      intent === "nova_pergunta");
+
+  return {
+    intent,
+    affirmative,
+    negative,
+    selectedOption,
+    extracted,
+    isShort,
+    ack,
+    isContextuallyRelated: isAck || intent === "continuacao" || hasPending,
+    requiresInformationalAnswer: !isAck && intent !== "cancelamento",
+    shouldContinueTopic: !isAck && intent !== "cancelamento",
+    shouldExecuteAction,
+    shouldSearch: !isAck && intent !== "cancelamento",
+  };
 }
 
 // ---------------------------------------------------------------------------
