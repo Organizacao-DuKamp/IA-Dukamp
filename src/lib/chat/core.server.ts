@@ -143,6 +143,9 @@ export async function handleIncoming(
 
   // 2) Build context: structured product info (if any) + RAG passages + site data.
   const contextParts: string[] = [];
+  if (routed.marketContext) {
+    contextParts.push(routed.marketContext);
+  }
   if (routed.productHint) {
     contextParts.push(productContextBlock(routed.productHint.product));
   }

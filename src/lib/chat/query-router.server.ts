@@ -59,6 +59,8 @@ export interface ProductMention {
 export interface Passthrough {
   kind: "passthrough";
   productHint?: ProductMention;
+  /** Bloco de cotações estruturadas injetado no contexto do modelo. */
+  marketContext?: string;
 }
 
 export type RouterResult = StructuralAnswer | Passthrough;
@@ -412,7 +414,7 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
 
   // ---- Cotações e indicadores de mercado (dados dinâmicos estruturados) ----
   const marketBlock = await marketAnswer(userText).catch(() => null);
-  if (marketBlock) return { kind: "structural", text: marketBlock };
+  if (marketBlock) return { kind: "passthrough", marketContext: marketBlock };
 
 
 

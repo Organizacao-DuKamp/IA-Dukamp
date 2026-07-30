@@ -281,12 +281,19 @@ export async function basisBlock(slug: string, state?: string | null): Promise<s
 
 /** Fontes oficiais indicadas quando ainda não há dado registrado. */
 export async function suggestedSources(category: string): Promise<Array<{ name: string; org: string; url: string }>> {
+  const map: Record<string, string[]> = {
+    cambio: ["cambio"],
+    combustivel: ["diesel"],
+    futuros: ["futuros"],
+    macroeconomia: ["cambio"],
+  };
+  const cats = map[category] ?? ["cotacoes"];
   const { data } = await marketDb()
     .from("market_sources")
     .select("name, org, url")
     .eq("kind", "dynamic")
     .eq("active", true)
-    .in("category", [category, "cotacoes"])
+    .in("category", cats)
     .order("phase", { ascending: true })
     .limit(3);
   return (data ?? []) as any;

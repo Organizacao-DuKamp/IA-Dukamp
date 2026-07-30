@@ -180,7 +180,7 @@ async function collectPtax(days = 10): Promise<QuoteInput[]> {
   if (!res.ok) throw new Error(`PTAX ${res.status}`);
   const json: any = await res.json();
   return (json.value ?? []).map((v: any) => ({
-    product: "Dólar comercial (PTAX venda)",
+    product: "Dólar",
     category: "cambio",
     price: Number(v.cotacaoVenda),
     unit: "R$/US$",
@@ -190,7 +190,7 @@ async function collectPtax(days = 10): Promise<QuoteInput[]> {
     reference_date: String(v.dataHoraCotacao).slice(0, 10),
     source_updated_at: new Date(String(v.dataHoraCotacao).replace(" ", "T") + "-03:00").toISOString(),
     source_code: "bcb_ptax",
-    notes: "PTAX de venda, fechamento oficial do Banco Central.",
+    notes: "Dólar comercial, PTAX de venda (fechamento oficial do Banco Central).",
     raw: v,
   }));
 }
