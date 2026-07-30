@@ -365,14 +365,17 @@ async function marketAnswer(userText: string): Promise<string | null> {
   if (targets.length === 0) return null;
 
   const state = mk.detectState(userText);
+  const city = mk.detectCity(userText);
   const blocks: string[] = [];
   const missing: typeof targets = [];
 
   for (const t of targets.slice(0, 3)) {
-    let series = await mk.getSeries(t.slug, { state }).catch(() => []);
-    if (series.length === 0 && state) series = await mk.getSeries(t.slug).catch(() => []);
-    const a = mk.analyze(series);
+    const { series, note } = await mk
+      .getSeriesNearest(t.slug, city, state)
+      .catch(() => ({ series: [] as any[], note: null }));
+    const a = mk.analyze(series as any);
     if (!a) { missing.push(t); continue; }
+    if (note) blocks.push(note);
     blocks.push(mk.quoteBlock(a));
     const basis = await mk.basisBlock(t.slug, state).catch(() => null);
     if (basis) blocks.push(basis);
@@ -383,15 +386,22 @@ async function marketAnswer(userText: string): Promise<string | null> {
     blocks.push(...rel);
   }
 
+  const placeLabel = city
+    ? ` para ${city.name.replace(/\b\w/g, (m) => m.toUpperCase())}/${city.uf}`
+    : state
+      ? ` para ${state}`
+      : "";
+
   for (const t of missing) {
     const srcs = await mk.suggestedSources(t.category).catch(() => []);
     const ref = srcs.map((s) => `${s.name} (${s.org}): ${s.url}`).join(" · ");
     blocks.push(
-      `SEM DADO REGISTRADO — não há cotação de ${t.label}${state ? ` para ${state}` : ""} registrada. ` +
+      `SEM DADO REGISTRADO — não há cotação de ${t.label}${placeLabel} nem em praça próxima registrada. ` +
         `INSTRUÇÃO OBRIGATÓRIA: diga com franqueza que você não tem a cotação atualizada de ${t.label} agora e NÃO apresente nenhum valor, data, praça, média ou tendência para ${t.label} — nem de memória, nem de material técnico, nem aproximado. ` +
         (ref ? `Ofereça a consulta direta na fonte oficial: ${ref}.` : ""),
     );
   }
+
 
   if (blocks.length === 0) return null;
   return [
