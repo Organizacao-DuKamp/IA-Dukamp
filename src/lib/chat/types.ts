@@ -12,11 +12,18 @@ export interface ChatMessage {
 export interface IncomingMessage {
   /** Stable id of the end-user in the channel (session id on web, phone on WhatsApp). */
   sessionId: string;
+  /** Id estável da conversa — sobrevive a reload da página. */
+  conversationId?: string;
+  /** Chave de idempotência da mensagem (evita duplicar em reenvio). */
+  clientMessageId?: string;
   /** Raw user text. Chat Core will validate/sanitize. */
   text: string;
   /** Prior turns for this session (channel keeps ephemeral context only). */
   history: ChatMessage[];
+  /** Estado estruturado da conversa devolvido pelo canal no turno anterior. */
+  state?: unknown;
 }
+
 
 export interface OutgoingMessage {
   sessionId: string;
@@ -41,4 +48,7 @@ export interface ChatSource {
 }
 
 export const MAX_MESSAGE_CHARS = 2000;
-export const MAX_HISTORY_TURNS = 20;
+export const MAX_HISTORY_TURNS = 40;
+/** Orçamento de tokens reservado ao histórico recente. */
+export const HISTORY_TOKEN_BUDGET = 6000;
+

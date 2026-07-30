@@ -15,17 +15,27 @@ const MessageSchema = z.object({
 
 const InputSchema = z.object({
   sessionId: z.string().min(1).max(128),
+  conversationId: z.string().min(1).max(128).optional(),
+  clientMessageId: z.string().min(1).max(128).optional(),
   text: z.string().min(1).max(2000),
-  history: z.array(MessageSchema).max(40).default([]),
+  history: z.array(MessageSchema).max(60).default([]),
+  // O estado é validado/normalizado no core (normalizeState).
+  state: z.unknown().optional(),
 });
 
 export const sendChatMessage = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => InputSchema.parse(data))
   .handler(async ({ data }) => {
-    const { handleIncoming } = await import("./chat/core.server");
-    const { ChatError } = await import("./chat/core.server");
+    const { handleIncoming, ChatError } = await import("./chat/core.server");
     try {
-      return await handleIncoming(data);
+      const result = await handleIncoming(data);
+      return {
+        reply: result.reply,
+        conversationId: result.conversationId,
+        // Serializado como string: o estado é opaco para o canal.
+        state: JSON.stringify(result.state),
+      };
+
     } catch (err) {
       if (err instanceof ChatError) {
         return { error: err.message, status: err.status } as const;
