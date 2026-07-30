@@ -399,7 +399,9 @@ async function marketAnswer(userText: string): Promise<string | null> {
       `SEM DADO REGISTRADO NA BASE PRÓPRIA — não há cotação de ${t.label}${placeLabel} na base interna. ` +
         `INSTRUÇÃO OBRIGATÓRIA (ordem exata): 1) BUSQUE AGORA na web, em fontes oficiais de mercado (CEPEA/ESALQ, Scot Consultoria, B3, Notícias Agrícolas, Canal Rural, Conab, IEA, cooperativas e bolsas regionais), a cotação mais recente de ${t.label}${placeLabel} — ou, se a cidade pedida não tiver publicação, a da praça publicada mais próxima. ` +
         `2) Se encontrar, apresente o valor trazendo obrigatoriamente preço + unidade, praça, data de referência e fonte, deixando claro (de forma natural) que é referência de publicação de mercado e não da base própria; se for de outra praça, diga qual e lembre que frete, prazo e negociação alteram o preço local. ` +
-        `3) Só se a busca não retornar nada confiável, diga com franqueza que não tem a cotação atualizada de ${t.label} agora e NÃO apresente valor algum. ` +
+        `2b) BUSCA APROFUNDADA OBRIGATÓRIA: antes de dizer que não achou, tente em sequência (a) a cidade pedida, (b) praças vizinhas da mesma região, (c) o indicador estadual, (d) o indicador nacional/CEPEA. `+
+        `2c) ENQUADRAMENTO: se encontrar QUALQUER referência confiável, NUNCA comece a resposta com "não encontrei"/"não há cotação". Comece pelo valor com selo 🟡 e só depois explique que é de outra praça/indicador e o que pode mudar o preço local. `+
+        `3) Só se NENHUMA das quatro tentativas retornar algo confiável, diga com franqueza que não tem a cotação atualizada de ${t.label} agora e NÃO apresente valor algum. ` +
         `NUNCA invente, estime, arredonde ou use preço de memória/material técnico. ` +
         (ref ? `Fontes oficiais para oferecer ao usuário: ${ref}.` : ""),
     );
