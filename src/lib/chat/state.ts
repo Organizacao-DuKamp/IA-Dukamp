@@ -497,10 +497,28 @@ export function applyUserTurn(
     corrections: [...state.corrections],
     conversation_summary: { ...state.conversation_summary },
     last_user_intent: analysis.intent,
+    conversation_status: analysis.intent === "user_acknowledgement" ? "idle" : "active",
+    awaiting_user_request: analysis.intent === "user_acknowledgement",
+    should_auto_continue: false,
     turn_count: state.turn_count + 1,
     version: state.version + 1,
     updated_at: new Date().toISOString(),
   };
+
+  // Reconhecimento/reação: nada de novo objetivo, nada de nova ação. O assunto
+  // permanece disponível como contexto, mas não autoriza continuar falando.
+  if (analysis.intent === "user_acknowledgement") {
+    next.pending_question = null;
+    next.pending_action = null;
+    next.pending_payload = null;
+    next.awaiting_user_response = false;
+    next.awaiting_confirmation = false;
+    next.expected_response_type = null;
+    next.confirmation_options = [];
+    next.conversation_summary.pending_questions = [];
+    next.conversation_summary.next_expected_action = "aguardar novo pedido do usuário";
+    return next;
+  }
 
   // Dados novos / correções — o valor mais recente SEMPRE substitui o anterior.
   for (const [field, value] of Object.entries(analysis.extracted)) {
