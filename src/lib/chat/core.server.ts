@@ -1,13 +1,33 @@
-// Chat Core — channel-agnostic orchestration.
-// 1) Sanitize + rate limit.
-// 2) Run query router: structural answers short-circuit; product hints inject
-//    a structured product block; explanatory queries fall through to RAG.
-// 3) Ask Perplexity with the assembled context.
+// Chat Core — orquestração agnóstica de canal, com contexto em camadas.
+//
+// Pipeline por turno:
+//  1) sanitiza + rate limit + idempotência
+//  2) normaliza o estado da conversa recebido do canal
+//  3) classifica a intenção da mensagem (confirmação, correção, seleção…)
+//  4) resolve mensagens curtas usando a pergunta/ação pendente
+//  5) roteia (SQL estrutural | RAG | mercado | site)
+//  6) monta as camadas de contexto e chama o modelo
+//  7) atualiza o estado a partir da resposta e devolve ao canal
 
 import { askPerplexity, PerplexityError } from "./perplexity.server";
 import { checkRateLimit } from "./rate-limit.server";
 import { productContextBlock, routeQuery } from "./query-router.server";
 import {
+  applyAssistantTurn,
+  applyUserTurn,
+  buildHistoryWindow,
+  buildInterpretationDirective,
+  classifyUserIntent,
+  createConversationState,
+  estimateMessagesTokens,
+  normalizeState,
+  renderStateForModel,
+  renderSummaryForModel,
+  updateSummary,
+  type ConversationState,
+} from "./state";
+import {
+  HISTORY_TOKEN_BUDGET,
   MAX_HISTORY_TURNS,
   MAX_MESSAGE_CHARS,
   type ChatMessage,
@@ -21,42 +41,30 @@ function sanitize(text: string): string {
     .trim();
 }
 
-// Detects casual reactions/acknowledgments/greetings that should NOT be sent
-// to Perplexity's grounded search model (which would turn "ah que legal" into
-// a dictionary entry with citations). Returns a natural human reply, or null.
+// Detecta reações/cumprimentos que NÃO devem ir ao modelo de busca.
+// Só é aplicado quando NÃO há pergunta/ação pendente — caso contrário um "ok"
+// ou "pode" seria tratado como conversa fiada em vez de confirmação.
 function detectSmallTalk(raw: string): string | null {
   const t = raw.trim().toLowerCase().replace(/[!.?…]+$/g, "").replace(/\s+/g, " ");
   if (!t || t.length > 60) return null;
 
-  // Greetings
   if (/^(oi|ol[aá]|e\s?a[ií]|opa|bom\s+dia|boa\s+tarde|boa\s+noite|hey|hi|hello)$/i.test(t)) {
     return "Oi! Sou a TPEC-IA, assistente da DuKamp. Como posso te ajudar hoje — dúvidas sobre produtos, manejo, vendedores ou preços?";
   }
-  // Thanks
   if (/^(obrigad[ao]|valeu|vlw|thanks|obg|grat[oa])$/i.test(t)) {
     return "Por nada! Se precisar de mais alguma coisa, é só chamar.";
   }
-  // Positive reactions
   if (/^(ah\s+)?(que\s+)?(legal|bacana|[óo]timo|show|massa|top|bom|dahora|maneiro|interessante|bem\s+legal|muito\s+bom)$/i.test(t) ||
       /^(nossa|uau|wow|caramba|s[eé]rio|puxa)$/i.test(t) ||
       /^ah\s+(sim|ok|entendi|legal|bacana)$/i.test(t)) {
     return "Que bom! 😊 Precisa de mais alguma coisa sobre os produtos DuKamp, manejo ou algum vendedor?";
   }
-  // Acknowledgements
-  if (/^(ok|okay|beleza|blz|certo|entendi|ciente|t[áa]\s+bom|t[áa]|sim|isso|perfeito)$/i.test(t)) {
-    return "Combinado! Estou aqui se precisar de mais algo.";
-  }
-  // Farewells
   if (/^(tchau|at[eé]\s+mais|falou|flw|adeus|bye)$/i.test(t)) {
     return "Até mais! Qualquer dúvida sobre DuKamp, é só voltar. 👋";
   }
-  // Non-committal / declines — never look these up as dictionary entries.
-  if (/^(acho\s+que\s+n[aã]o|sei\s+l[aá]|n[aã]o\s+sei|hmm+|humm+|n[aã]o|nop|nao\s+mesmo|agora\s+n[aã]o|depois|mais\s+tarde|de\s+boa|tranquilo|suave|nada)$/i.test(t)) {
+  if (/^(acho\s+que\s+n[aã]o|sei\s+l[aá]|n[aã]o\s+sei|hmm+|humm+|nop|nao\s+mesmo|agora\s+n[aã]o|depois|mais\s+tarde|de\s+boa|tranquilo|suave|nada)$/i.test(t)) {
     return "Sem problema! Se quiser retomar depois — produtos, manejo, vendedores ou preços — é só me chamar.";
   }
-
-  // Mild scolding / frustration directed at the assistant — never treat as a
-  // dictionary lookup ("toma jeito", "para com isso", "melhora aí", "ta ruim").
   if (/^(toma\s+jeito+|para\s+com\s+isso|par[ae]\s+com\s+isso|melhora(\s+a[ií])?|se\s+ajeita|ajeita\s+isso|arruma\s+isso|ta\s+ruim|est[aá]\s+ruim|nao\s+ta\s+bom|n[aã]o\s+est[aá]\s+bom|que\s+isso|credo|aff+|eita)$/i.test(t)) {
     return "Foi mal se não fui útil. 🙏 Me diz com outras palavras o que você quer saber — produto, preço, vendedor, unidade ou manejo — que eu te respondo direto.";
   }
@@ -72,16 +80,54 @@ export class ChatError extends Error {
   }
 }
 
-export async function handleIncoming(
-  input: IncomingMessage,
-): Promise<{ reply: string }> {
+export interface ChatResult {
+  reply: string;
+  state: ConversationState;
+  conversationId: string;
+  diagnostics: {
+    conversation_id: string;
+    messages_loaded: number;
+    estimated_tokens: number;
+    current_topic: string | null;
+    user_intent: string;
+    has_pending_action: boolean;
+    last_assistant_question: string | null;
+    model: string;
+    retrieved_blocks: string[];
+    truncation_reason: string | null;
+    state_changed: boolean;
+  };
+}
+
+/** Locks lógicos por conversa: evita condição de corrida entre dois envios. */
+const inFlight = new Map<string, number>();
+const IN_FLIGHT_TTL_MS = 60_000;
+/** Cache de idempotência: mesma clientMessageId ⇒ mesma resposta. */
+const idempotency = new Map<string, { at: number; result: ChatResult }>();
+const IDEMPOTENCY_TTL_MS = 5 * 60_000;
+
+function gc() {
+  const now = Date.now();
+  for (const [k, at] of inFlight) if (now - at > IN_FLIGHT_TTL_MS) inFlight.delete(k);
+  for (const [k, v] of idempotency) if (now - v.at > IDEMPOTENCY_TTL_MS) idempotency.delete(k);
+}
+
+export async function handleIncoming(input: IncomingMessage): Promise<ChatResult> {
+  gc();
   const text = sanitize(input.text ?? "");
   if (!text) throw new ChatError("Mensagem vazia.", 400);
   if (text.length > MAX_MESSAGE_CHARS) {
     throw new ChatError(`Mensagem excede ${MAX_MESSAGE_CHARS} caracteres.`, 400);
   }
 
-  const rl = checkRateLimit(input.sessionId || "anon");
+  const conversationId = (input.conversationId || input.sessionId || "anon").slice(0, 128);
+  const idemKey = input.clientMessageId ? `${conversationId}:${input.clientMessageId}` : null;
+  if (idemKey) {
+    const hit = idempotency.get(idemKey);
+    if (hit) return hit.result;
+  }
+
+  const rl = checkRateLimit(input.sessionId || conversationId);
   if (!rl.ok) {
     throw new ChatError(
       `Muitas mensagens em pouco tempo. Tente novamente em ${rl.retryAfterSec}s.`,
@@ -89,120 +135,122 @@ export async function handleIncoming(
     );
   }
 
-  const trimmedHistory: ChatMessage[] = (input.history ?? [])
+  const lockedAt = inFlight.get(conversationId);
+  if (lockedAt && Date.now() - lockedAt < IN_FLIGHT_TTL_MS) {
+    throw new ChatError(
+      "Ainda estou processando a mensagem anterior desta conversa. Aguarde a resposta antes de enviar outra.",
+      409,
+    );
+  }
+  inFlight.set(conversationId, Date.now());
+
+  try {
+    const result = await runTurn(input, text, conversationId);
+    if (idemKey) idempotency.set(idemKey, { at: Date.now(), result });
+    return result;
+  } finally {
+    inFlight.delete(conversationId);
+  }
+}
+
+async function runTurn(
+  input: IncomingMessage,
+  text: string,
+  conversationId: string,
+): Promise<ChatResult> {
+  // ---- Camada 3: histórico recente completo (usuário + assistente, em ordem)
+  const rawHistory: ChatMessage[] = (input.history ?? [])
     .filter((m) => m && typeof m.content === "string" && m.content.length > 0)
-    .slice(-MAX_HISTORY_TURNS)
-    .map((m) => ({ role: m.role, content: sanitize(m.content).slice(0, MAX_MESSAGE_CHARS * 4) }));
+    .map((m) => ({ role: m.role, content: sanitize(m.content).slice(0, 8000) }));
 
-  const trimmedText = text.trim();
-  const lastAssistant = [...trimmedHistory].reverse().find((m) => m.role === "assistant");
-  const lastUser = [...trimmedHistory].reverse().find((m) => m.role === "user");
+  const windowed = buildHistoryWindow(rawHistory, HISTORY_TOKEN_BUDGET, MAX_HISTORY_TURNS);
+  const history = windowed.kept;
 
-  // 0) Aceite de uma oferta feita na resposta anterior ("pode ser", "sim",
-  // "manda", "por favor"). Nunca tratar como conversa fiada quando existe uma
-  // pergunta anterior em aberto — a intenção é continuar aquele assunto.
-  const isAffirmative =
-    /^(sim|isso|claro|pode\s+ser|pode|pode\s+mandar|manda|manda\s+a[ií]|quero|quero\s+sim|por\s+favor|pf|vamos|bora|t[áa]\s+bom|ok(ay)?|beleza|blz|certo|perfeito|acho\s+que\s+sim|talvez|quem\s+sabe|seria\s+[oó]timo|gostaria)\s*[!.?]*$/i.test(
-      trimmedText.toLowerCase(),
-    );
-  const hasPendingOffer =
-    !!lastAssistant &&
-    /(se\s+voc[êe]\s+quiser|posso\s+(te\s+)?(ajudar|passar|buscar|procurar|tentar|verificar|consultar)|quer\s+que\s+eu|deseja|gostaria)/i.test(
-      lastAssistant.content,
-    );
-  const resumingOffer = isAffirmative && !!lastUser && (hasPendingOffer || !!lastAssistant);
+  // ---- Camada 2: estado da conversa
+  const stateBefore = input.state
+    ? normalizeState(input.state as Partial<ConversationState>, conversationId)
+    : createConversationState(conversationId);
 
-  // 0b) Small-talk / reações — nunca enviar para o modelo de busca
-  // (ele transformaria "ah que legal" em um verbete com citações).
-  if (!resumingOffer) {
+  const analysis = classifyUserIntent(text, stateBefore);
+  let state = applyUserTurn(stateBefore, text, analysis);
+  state.conversation_summary = updateSummary(state, windowed.dropped);
+
+  const lastAssistant = [...history].reverse().find((m) => m.role === "assistant");
+  const lastUser = [...history].reverse().find((m) => m.role === "user");
+
+  // Small talk só quando não há nada pendente e a intenção não é continuidade.
+  const continuity =
+    stateBefore.awaiting_user_response ||
+    analysis.intent === "resposta_a_confirmacao" ||
+    analysis.intent === "selecao_de_opcao" ||
+    analysis.intent === "fornecimento_de_dado" ||
+    analysis.intent === "correcao" ||
+    (analysis.intent === "continuacao" && !!lastAssistant);
+
+  if (!continuity) {
     const smallTalk = detectSmallTalk(text);
-    if (smallTalk) return { reply: smallTalk };
+    if (smallTalk) {
+      const finalState = applyAssistantTurn(state, smallTalk);
+      return {
+        reply: smallTalk,
+        state: finalState,
+        conversationId,
+        diagnostics: diag(conversationId, history, windowed, analysis, stateBefore, [], "small-talk"),
+      };
+    }
   }
 
-  // 1) Router: structural = direct DB answer (no LLM).
-  // Contextual follow-up: reuse the topic from the last turn so that short
-  // messages like "quem são eles?" or "e em monte aprazível?" don't lose context.
-  const isBareFollowUp = /^(quem\s+s[aã]o(\s+eles|\s+elas)?|quais\s+s[aã]o(\s+eles|\s+elas)?|me\s+diga(\s+os)?(\s+nomes?)?|diga(\s+os)?(\s+nomes?)?|os?\s+nomes?|liste(\s+eles|\s+elas)?|todos|todas)\s*[?.!]*$/i.test(trimmedText);
-  // Region-only follow-up: "e em monte aprazivel?", "em rio preto?", "e no interior?"
-  const regionFollowUp = trimmedText.match(/^(?:e\s+)?(?:em|no|na|nos|nas)\s+([a-zà-ú][a-zà-ú\s.'-]{2,60})\s*[?.!]*$/i);
-  const prevBlob = ((lastAssistant?.content ?? "") + " " + (lastUser?.content ?? "")).toLowerCase();
-  const prevTopic: "vendedores" | "categorias" | "produtos" | "unidades" | null =
-    /vendedor|vendedores|representante/.test(prevBlob) ? "vendedores"
-    : /unidade|filial|matriz|endere/.test(prevBlob) ? "unidades"
-    : /categoria|categorias/.test(prevBlob) ? "categorias"
-    : /produto|produtos|destaque/.test(prevBlob) ? "produtos"
-    : null;
+  // ---- Reescrita do texto de busca: mensagens curtas herdam o assunto anterior
+  const routerInput = resolveLookupText(text, analysis, stateBefore, lastUser?.content ?? null, lastAssistant?.content ?? null);
 
-  let routerInput = text;
-  if (resumingOffer && lastUser) {
-    // A mensagem curta é um "sim" à oferta anterior: o assunto real é a última
-    // pergunta do usuário.
-    routerInput = lastUser.content;
-  } else if (isBareFollowUp) {
-    if (prevTopic === "vendedores") routerInput = `liste todos os vendedores`;
-    else if (prevTopic === "categorias") routerInput = `liste todas as categorias`;
-    else if (prevTopic === "produtos") routerInput = `liste os produtos`;
-  } else if (regionFollowUp && prevTopic) {
-    const region = regionFollowUp[1].trim();
-    const prevWasCount = /\b(quanto|quantos|quantas|quantidade|n[uú]mero|total)\b/i.test(lastUser?.content ?? "");
-    const verb = prevWasCount ? "quantos" : "quais";
-    if (prevTopic === "vendedores") routerInput = `${verb} vendedores em ${region}`;
-    else if (prevTopic === "unidades") routerInput = `${verb} unidades em ${region}`;
-    else if (prevTopic === "produtos") routerInput = `${verb} produtos em ${region}`;
-    else if (prevTopic === "categorias") routerInput = `${verb} categorias em ${region}`;
-  }
-
-
-  let routed;
+  let routed: Awaited<ReturnType<typeof routeQuery>>;
   try {
     routed = await routeQuery(routerInput);
   } catch (err) {
     console.error("[router] falhou:", err instanceof Error ? err.message : err);
     routed = { kind: "passthrough" as const };
   }
-  if (routed.kind === "structural") {
-    return { reply: routed.text };
+
+  // Resposta estrutural direta (SQL) — só quando não há confirmação em aberto,
+  // para nunca atropelar uma ação pendente com uma listagem genérica.
+  if (routed.kind === "structural" && !continuity) {
+    const finalState = applyAssistantTurn(state, routed.text);
+    return {
+      reply: routed.text,
+      state: finalState,
+      conversationId,
+      diagnostics: diag(conversationId, history, windowed, analysis, stateBefore, ["sql"], "sql-direto"),
+    };
   }
 
-  // 2) Build context: structured product info (if any) + RAG passages + site data.
+  // ---- Camada 6: recuperação (mercado, produtos, site, RAG)
   const contextParts: string[] = [];
+  const retrieved: string[] = [];
 
-  // 2.0) Contexto conversacional — a mensagem nova quase sempre depende do que
-  // veio antes. Damos ao modelo o assunto em aberto e o que a mensagem curta
-  // significa dentro dele.
-  if (trimmedHistory.length > 0) {
-    const resumo = [
-      lastUser ? `Última pergunta do usuário: "${lastUser.content.slice(0, 400)}"` : null,
-      lastAssistant ? `Sua última resposta: "${lastAssistant.content.slice(0, 400)}"` : null,
-      resumingOffer
-        ? `INTERPRETAÇÃO: a mensagem atual ("${trimmedText}") é uma CONFIRMAÇÃO/aceite da oferta que você fez na resposta anterior. Execute agora o que você ofereceu, sem repetir a pergunta e sem encerrar a conversa.`
-        : `INTERPRETAÇÃO: leia a mensagem atual como continuação deste assunto. Se ela for curta ou ambígua, resolva os pronomes e o tema a partir do histórico acima antes de responder; só peça esclarecimento se for realmente impossível deduzir.`,
-    ]
-      .filter(Boolean)
-      .join("\n");
-    contextParts.push(`CONTEXTO DA CONVERSA (uso interno, não cite):\n${resumo}`);
+  if (routed.kind === "structural") {
+    contextParts.push(`DADOS ESTRUTURADOS DO CATÁLOGO (use se ajudar o pedido atual):\n${routed.text}`);
+    retrieved.push("sql");
   }
-
-  if (routed.marketContext) {
+  if (routed.kind !== "structural" && routed.marketContext) {
     contextParts.push(routed.marketContext);
+    retrieved.push("mercado");
   }
-  if (routed.productHint) {
+  if (routed.kind !== "structural" && routed.productHint) {
     contextParts.push(productContextBlock(routed.productHint.product));
+    retrieved.push("produto");
   }
 
-  // Texto usado para as buscas: em follow-ups curtos, o assunto real é o do
-  // turno anterior.
   const lookupText = routerInput !== text ? `${routerInput} ${text}` : text;
 
-  // 2a) Site Dukamp lookups (commercial data: price, stock, sellers, categories).
   try {
     const { siteIntentHints, searchSiteProducts, listSiteSellers, findSellersByRegion, listSiteCategories, siteBlock } =
       await import("../site/site-lookup.server");
     const hints = siteIntentHints(lookupText);
+    const productHint = routed.kind !== "structural" ? routed.productHint : undefined;
     const lookup: { products?: any[]; sellers?: any[]; categories?: string[] } = {};
 
-    if (hints.price || routed.productHint) {
-      const query = routed.productHint ? routed.productHint.product.official_name : lookupText;
+    if (hints.price || productHint) {
+      const query = productHint ? productHint.product.official_name : lookupText;
       const prods = await searchSiteProducts(query, 6);
       if (prods.length > 0) lookup.products = prods;
     }
@@ -211,45 +259,155 @@ export async function handleIncoming(
       lookup.sellers = byRegion.length > 0 ? byRegion : await listSiteSellers(20);
       if (byRegion.length > 0) {
         contextParts.push(
-          `INSTRUÇÃO DE ATENDIMENTO (obrigatório): O usuário informou uma cidade/região e demonstrou intenção de compra. Recomende de forma DIRETA **um vendedor específico** da lista de vendedores acima que atende a região citada (escolha o primeiro da lista da mesma região), informando NOME e WhatsApp/telefone, e justifique em 1 frase (ex.: "porque atende sua região"). NÃO mande o usuário ligar para a matriz. NÃO explique detalhes técnicos do produto a menos que o usuário peça. Termine perguntando se pode ajudar com algo mais.`
+          `INSTRUÇÃO DE ATENDIMENTO (obrigatório): O usuário informou uma cidade/região e demonstrou intenção de compra. Recomende de forma DIRETA **um vendedor específico** da lista de vendedores acima que atende a região citada (escolha o primeiro da lista da mesma região), informando NOME e WhatsApp/telefone, e justifique em 1 frase. NÃO mande o usuário ligar para a matriz. Termine perguntando se pode ajudar com algo mais.`,
         );
       }
     }
-    if (hints.category) {
-      lookup.categories = await listSiteCategories();
-    }
+    if (hints.category) lookup.categories = await listSiteCategories();
     const block = siteBlock(lookup);
-    if (block) contextParts.push(block);
+    if (block) {
+      contextParts.push(block);
+      retrieved.push("site");
+    }
   } catch (err) {
     console.error("[site] lookup falhou:", err instanceof Error ? err.message : err);
   }
 
-  try {
-    const { searchKnowledge } = await import("../rag/search.server");
-    const matches = await searchKnowledge(lookupText, 6);
-    const good = matches.filter((m) => m.similarity >= 0.55);
-    if (good.length > 0) {
-      const rag = good
-        .map(
-          (m, i) =>
-            `[${i + 1}]\n${m.content}`,
-        )
-        .join("\n\n---\n\n");
-      contextParts.push(`TRECHOS TÉCNICOS DA BASE INTERNA (uso interno; NÃO cite fontes, nomes de arquivos, categorias ou porcentagens ao usuário):\n\n${rag}`);
+  // RAG só quando a mensagem atual pede conteúdo técnico — nunca em respostas
+  // curtas de confirmação (evita que documentos apaguem o pedido corrente).
+  const skipRag =
+    analysis.isShort &&
+    (analysis.intent === "resposta_a_confirmacao" ||
+      analysis.intent === "selecao_de_opcao" ||
+      analysis.intent === "fornecimento_de_dado");
+  if (!skipRag) {
+    try {
+      const { searchKnowledge } = await import("../rag/search.server");
+      const matches = await searchKnowledge(lookupText, 6);
+      const good = matches.filter((m) => m.similarity >= 0.55);
+      if (good.length > 0) {
+        const rag = good.map((m, i) => `[${i + 1}]\n${m.content}`).join("\n\n---\n\n");
+        contextParts.push(
+          `TRECHOS TÉCNICOS DA BASE INTERNA (uso interno; NÃO cite fontes, arquivos nem porcentagens; use só o que servir ao pedido atual):\n\n${rag}`,
+        );
+        retrieved.push(`rag:${good.length}`);
+      }
+    } catch (err) {
+      console.error("[RAG] busca falhou:", err instanceof Error ? err.message : err);
     }
-  } catch (err) {
-    console.error("[RAG] busca falhou:", err instanceof Error ? err.message : err);
   }
 
+  const directive = buildInterpretationDirective(stateBefore, analysis, text);
+  const conversation: ChatMessage[] = [...history, { role: "user", content: text }];
 
-  const contextBlock = contextParts.length > 0 ? contextParts.join("\n\n") : undefined;
-  const conversation: ChatMessage[] = [...trimmedHistory, { role: "user", content: text }];
+  console.info("[chat] turno", {
+    conversation_id: conversationId,
+    messages_loaded: conversation.length,
+    estimated_tokens: estimateMessagesTokens(conversation),
+    current_topic: state.current_topic,
+    user_intent: analysis.intent,
+    has_pending_action: !!stateBefore.pending_action,
+    awaiting_confirmation: stateBefore.awaiting_confirmation,
+    retrieved: retrieved,
+    truncation_reason: windowed.reason,
+  });
 
   try {
-    const reply = await askPerplexity(conversation, contextBlock);
-    return { reply };
+    const reply = await askPerplexity(conversation, {
+      summary: renderSummaryForModel(state.conversation_summary),
+      state: renderStateForModel(state),
+      directive,
+      context: contextParts.length > 0 ? contextParts.join("\n\n") : null,
+    });
+    // O resumo só é atualizado depois que a resposta ficou pronta.
+    const finalState = applyAssistantTurn(state, reply);
+    finalState.conversation_summary = updateSummary(finalState, windowed.dropped);
+    return {
+      reply,
+      state: finalState,
+      conversationId,
+      diagnostics: diag(conversationId, conversation, windowed, analysis, stateBefore, retrieved, "sonar"),
+    };
   } catch (err) {
     if (err instanceof PerplexityError) throw new ChatError(err.message, err.status);
     throw new ChatError("Erro inesperado ao processar a mensagem.", 500);
   }
+}
+
+function resolveLookupText(
+  text: string,
+  analysis: ReturnType<typeof classifyUserIntent>,
+  state: ConversationState,
+  lastUser: string | null,
+  lastAssistant: string | null,
+): string {
+  const trimmed = text.trim();
+
+  // Confirmação/negação/seleção: o assunto real é a pergunta pendente ou o
+  // último pedido do usuário.
+  if (
+    analysis.intent === "resposta_a_confirmacao" ||
+    analysis.intent === "selecao_de_opcao" ||
+    (analysis.intent === "fornecimento_de_dado" && analysis.isShort)
+  ) {
+    const base = state.pending_question || lastUser || trimmed;
+    const picked =
+      analysis.selectedOption !== null ? state.offered_options[analysis.selectedOption - 1] : null;
+    return [state.user_goal, base, picked].filter(Boolean).join(" ").slice(0, 600) || trimmed;
+  }
+
+  const prevBlob = `${lastAssistant ?? ""} ${lastUser ?? ""}`.toLowerCase();
+  const prevTopic: "vendedores" | "categorias" | "produtos" | "unidades" | null =
+    /vendedor|vendedores|representante/.test(prevBlob) ? "vendedores"
+    : /unidade|filial|matriz|endere/.test(prevBlob) ? "unidades"
+    : /categoria|categorias/.test(prevBlob) ? "categorias"
+    : /produto|produtos|destaque/.test(prevBlob) ? "produtos"
+    : null;
+
+  const isBareFollowUp =
+    /^(quem\s+s[aã]o(\s+eles|\s+elas)?|quais\s+s[aã]o(\s+eles|\s+elas)?|me\s+diga(\s+os)?(\s+nomes?)?|diga(\s+os)?(\s+nomes?)?|os?\s+nomes?|liste(\s+eles|\s+elas)?|todos|todas)\s*[?.!]*$/i.test(
+      trimmed,
+    );
+  if (isBareFollowUp) {
+    if (prevTopic === "vendedores") return "liste todos os vendedores";
+    if (prevTopic === "categorias") return "liste todas as categorias";
+    if (prevTopic === "produtos") return "liste os produtos";
+  }
+
+  const regionFollowUp = trimmed.match(
+    /^(?:e\s+)?(?:em|no|na|nos|nas)\s+([a-zà-ú][a-zà-ú\s.'-]{2,60})\s*[?.!]*$/i,
+  );
+  if (regionFollowUp && prevTopic) {
+    const region = regionFollowUp[1].trim();
+    const verb = /\b(quanto|quantos|quantas|quantidade|n[uú]mero|total)\b/i.test(lastUser ?? "")
+      ? "quantos"
+      : "quais";
+    return `${verb} ${prevTopic} em ${region}`;
+  }
+
+  return text;
+}
+
+function diag(
+  conversationId: string,
+  messages: ChatMessage[],
+  windowed: ReturnType<typeof buildHistoryWindow>,
+  analysis: ReturnType<typeof classifyUserIntent>,
+  stateBefore: ConversationState,
+  retrieved: string[],
+  model: string,
+): ChatResult["diagnostics"] {
+  return {
+    conversation_id: conversationId,
+    messages_loaded: messages.length,
+    estimated_tokens: estimateMessagesTokens(messages),
+    current_topic: stateBefore.current_topic,
+    user_intent: analysis.intent,
+    has_pending_action: !!stateBefore.pending_action,
+    last_assistant_question: stateBefore.pending_question,
+    model,
+    retrieved_blocks: retrieved,
+    truncation_reason: windowed.reason,
+    state_changed: true,
+  };
 }

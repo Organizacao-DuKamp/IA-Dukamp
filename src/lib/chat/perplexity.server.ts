@@ -18,9 +18,20 @@ export class PerplexityError extends Error {
   }
 }
 
+export interface AskOptions {
+  /** Resumo estruturado acumulado (JSON) — camada 4. */
+  summary?: string | null;
+  /** Estado atual da conversa (JSON) — camada 2. */
+  state?: string | null;
+  /** Como interpretar a mensagem atual (confirmação, correção, seleção…). */
+  directive?: string | null;
+  /** Trechos recuperados (RAG, site, mercado) — camada de menor prioridade. */
+  context?: string | null;
+}
+
 export async function askPerplexity(
   history: ChatMessage[],
-  context?: string,
+  options: AskOptions = {},
 ): Promise<string> {
   const apiKey = process.env.PERPLEXITY_API_KEY;
   if (!apiKey) {
@@ -28,14 +39,43 @@ export async function askPerplexity(
     throw new PerplexityError("Serviço de IA indisponível no momento.", 500);
   }
 
-  const systemContent = context
-    ? `${TPEC_SYSTEM_PROMPT}\n\n===== BASE DE CONHECIMENTO INTERNA =====\nUse PRIORITARIAMENTE os trechos abaixo (extraídos de documentos técnicos da propriedade) para responder. Se a resposta estiver neles, cite entre parênteses a fonte no formato (Fonte: <título>). Se os trechos não contiverem a resposta, diga isso explicitamente e complemente com conhecimento geral, deixando claro que é conhecimento externo.\n\n${context}\n===== FIM DA BASE =====`
-    : TPEC_SYSTEM_PROMPT;
-
-  const messages = [
-    { role: "system" as const, content: systemContent },
-    ...history.map((m) => ({ role: m.role, content: m.content })),
+  // Camadas de contexto, em ordem de prioridade decrescente. Cada camada é uma
+  // mensagem `system` própria — nunca embutida em uma fala de usuário.
+  const messages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
+    { role: "system", content: TPEC_SYSTEM_PROMPT },
   ];
+
+  if (options.summary) {
+    messages.push({
+      role: "system",
+      content: `RESUMO ESTRUTURADO DA CONVERSA (uso interno, nunca cite nem exiba este JSON):\n${options.summary}`,
+    });
+  }
+  if (options.state) {
+    messages.push({
+      role: "system",
+      content: `ESTADO ATUAL DA CONVERSA (uso interno, nunca cite nem exiba este JSON). Trate confirmed_data como fatos já informados pelo usuário; nunca peça novamente esses dados. Se awaiting_confirmation for true, a próxima mensagem curta do usuário responde a pending_question:\n${options.state}`,
+    });
+  }
+  if (options.directive) {
+    messages.push({
+      role: "system",
+      content: `INTERPRETAÇÃO OBRIGATÓRIA DA MENSAGEM ATUAL (uso interno, não cite):\n${options.directive}`,
+    });
+  }
+  if (options.context) {
+    messages.push({
+      role: "system",
+      content: `===== INFORMAÇÕES RECUPERADAS (apoio, menor prioridade que o pedido atual e o estado da conversa) =====\nUse estes dados apenas quando forem relevantes para o pedido atual. Eles NÃO substituem o histórico, os dados confirmados nem a ação pendente; nunca resuma estes documentos por conta própria e nunca cite nomes de arquivos ou fontes internas.\n\n${options.context}\n===== FIM =====`,
+    });
+  }
+
+  // Histórico recente, em ordem cronológica e com os papéis originais.
+  for (const m of history) {
+    if (!m?.content) continue;
+    messages.push({ role: m.role === "system" ? "user" : m.role, content: m.content });
+  }
+
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);

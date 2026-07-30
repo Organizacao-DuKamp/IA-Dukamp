@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import ReactMarkdown from "react-markdown";
-import { WebChatAdapter } from "@/lib/chat/web-adapter";
+import { WebChatAdapter, loadConversation, saveConversation } from "@/lib/chat/web-adapter";
 import { MAX_MESSAGE_CHARS, type ChatMessage } from "@/lib/chat/types";
 const TPEC_LOGO_URL = "/tpec-logo.png";
 
@@ -30,16 +30,32 @@ export const Route = createFileRoute("/")({
 type UIMessage = ChatMessage & { id: string };
 
 function ChatPage() {
-  const [messages, setMessages] = useState<UIMessage[]>([]);
+  const [conv] = useState(() => loadConversation());
+  const [messages, setMessages] = useState<UIMessage[]>(conv.messages);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  const adapter = useMemo(() => new WebChatAdapter(), []);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const adapter = useMemo(() => new WebChatAdapter(conv), [conv]);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, loading]);
+
+  useEffect(() => {
+    if (!loading) inputRef.current?.focus();
+  }, [loading]);
+
+  function persist(next: UIMessage[]) {
+    saveConversation({
+      conversationId: adapter.getConversationId(),
+      sessionId: adapter.getSessionId(),
+      messages: next,
+      state: adapter.getState(),
+      updatedAt: new Date().toISOString(),
+    });
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -50,17 +66,22 @@ function ChatPage() {
       return;
     }
     setError(null);
-    const userMsg: UIMessage = { id: crypto.randomUUID(), role: "user", content: text };
+    const clientMessageId = crypto.randomUUID();
+    const userMsg: UIMessage = { id: clientMessageId, role: "user", content: text };
     const history = messages.map(({ role, content }) => ({ role, content }));
-    setMessages((prev) => [...prev, userMsg]);
+    const withUser = [...messages, userMsg];
+    setMessages(withUser);
+    persist(withUser);
     setInput("");
     setLoading(true);
     try {
-      const { reply } = await adapter.ask(text, history);
-      setMessages((prev) => [
-        ...prev,
+      const { reply } = await adapter.ask(text, history, clientMessageId);
+      const next: UIMessage[] = [
+        ...withUser,
         { id: crypto.randomUUID(), role: "assistant", content: reply },
-      ]);
+      ];
+      setMessages(next);
+      persist(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao consultar a IA.");
     } finally {
@@ -73,6 +94,7 @@ function ChatPage() {
     setError(null);
     adapter.resetSession();
   }
+
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
@@ -132,7 +154,10 @@ function ChatPage() {
         <form onSubmit={handleSubmit} className="sticky bottom-0 pb-4 pt-2">
           <div className="flex items-end gap-2 rounded-2xl border border-border bg-card p-2 shadow-sm">
             <textarea
+              ref={inputRef}
+              autoFocus
               value={input}
+
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
