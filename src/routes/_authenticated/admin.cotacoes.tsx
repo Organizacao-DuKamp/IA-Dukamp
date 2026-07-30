@@ -9,6 +9,7 @@ import {
   saveQuotes,
   syncSources,
 } from "@/lib/market.functions";
+import { LivestockQuotesPanel } from "@/components/admin/LivestockQuotesPanel";
 
 export const Route = createFileRoute("/_authenticated/admin/cotacoes")({
   head: () => ({
