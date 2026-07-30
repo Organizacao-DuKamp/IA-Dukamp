@@ -166,6 +166,23 @@ export async function handleIncoming(
 
   // 2) Build context: structured product info (if any) + RAG passages + site data.
   const contextParts: string[] = [];
+
+  // 2.0) Contexto conversacional — a mensagem nova quase sempre depende do que
+  // veio antes. Damos ao modelo o assunto em aberto e o que a mensagem curta
+  // significa dentro dele.
+  if (trimmedHistory.length > 0) {
+    const resumo = [
+      lastUser ? `Última pergunta do usuário: "${lastUser.content.slice(0, 400)}"` : null,
+      lastAssistant ? `Sua última resposta: "${lastAssistant.content.slice(0, 400)}"` : null,
+      resumingOffer
+        ? `INTERPRETAÇÃO: a mensagem atual ("${trimmedText}") é uma CONFIRMAÇÃO/aceite da oferta que você fez na resposta anterior. Execute agora o que você ofereceu, sem repetir a pergunta e sem encerrar a conversa.`
+        : `INTERPRETAÇÃO: leia a mensagem atual como continuação deste assunto. Se ela for curta ou ambígua, resolva os pronomes e o tema a partir do histórico acima antes de responder; só peça esclarecimento se for realmente impossível deduzir.`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+    contextParts.push(`CONTEXTO DA CONVERSA (uso interno, não cite):\n${resumo}`);
+  }
+
   if (routed.marketContext) {
     contextParts.push(routed.marketContext);
   }
@@ -173,20 +190,24 @@ export async function handleIncoming(
     contextParts.push(productContextBlock(routed.productHint.product));
   }
 
+  // Texto usado para as buscas: em follow-ups curtos, o assunto real é o do
+  // turno anterior.
+  const lookupText = routerInput !== text ? `${routerInput} ${text}` : text;
+
   // 2a) Site Dukamp lookups (commercial data: price, stock, sellers, categories).
   try {
     const { siteIntentHints, searchSiteProducts, listSiteSellers, findSellersByRegion, listSiteCategories, siteBlock } =
       await import("../site/site-lookup.server");
-    const hints = siteIntentHints(text);
+    const hints = siteIntentHints(lookupText);
     const lookup: { products?: any[]; sellers?: any[]; categories?: string[] } = {};
 
     if (hints.price || routed.productHint) {
-      const query = routed.productHint ? routed.productHint.product.official_name : text;
+      const query = routed.productHint ? routed.productHint.product.official_name : lookupText;
       const prods = await searchSiteProducts(query, 6);
       if (prods.length > 0) lookup.products = prods;
     }
     if (hints.seller) {
-      const byRegion = await findSellersByRegion(text);
+      const byRegion = await findSellersByRegion(lookupText);
       lookup.sellers = byRegion.length > 0 ? byRegion : await listSiteSellers(20);
       if (byRegion.length > 0) {
         contextParts.push(
@@ -205,7 +226,7 @@ export async function handleIncoming(
 
   try {
     const { searchKnowledge } = await import("../rag/search.server");
-    const matches = await searchKnowledge(text, 6);
+    const matches = await searchKnowledge(lookupText, 6);
     const good = matches.filter((m) => m.similarity >= 0.55);
     if (good.length > 0) {
       const rag = good
@@ -219,6 +240,7 @@ export async function handleIncoming(
   } catch (err) {
     console.error("[RAG] busca falhou:", err instanceof Error ? err.message : err);
   }
+
 
   const contextBlock = contextParts.length > 0 ? contextParts.join("\n\n") : undefined;
   const conversation: ChatMessage[] = [...trimmedHistory, { role: "user", content: text }];
