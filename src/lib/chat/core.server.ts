@@ -94,20 +94,37 @@ export async function handleIncoming(
     .slice(-MAX_HISTORY_TURNS)
     .map((m) => ({ role: m.role, content: sanitize(m.content).slice(0, MAX_MESSAGE_CHARS * 4) }));
 
-  // 0) Small-talk / reactions short-circuit — never send these to Perplexity
-  // (its search model turns "ah que legal" into a dictionary definition with citations).
-  const smallTalk = detectSmallTalk(text);
-  if (smallTalk) return { reply: smallTalk };
+  const trimmedText = text.trim();
+  const lastAssistant = [...trimmedHistory].reverse().find((m) => m.role === "assistant");
+  const lastUser = [...trimmedHistory].reverse().find((m) => m.role === "user");
+
+  // 0) Aceite de uma oferta feita na resposta anterior ("pode ser", "sim",
+  // "manda", "por favor"). Nunca tratar como conversa fiada quando existe uma
+  // pergunta anterior em aberto — a intenção é continuar aquele assunto.
+  const isAffirmative =
+    /^(sim|isso|claro|pode\s+ser|pode|pode\s+mandar|manda|manda\s+a[ií]|quero|quero\s+sim|por\s+favor|pf|vamos|bora|t[áa]\s+bom|ok(ay)?|beleza|blz|certo|perfeito|acho\s+que\s+sim|talvez|quem\s+sabe|seria\s+[oó]timo|gostaria)\s*[!.?]*$/i.test(
+      trimmedText.toLowerCase(),
+    );
+  const hasPendingOffer =
+    !!lastAssistant &&
+    /(se\s+voc[êe]\s+quiser|posso\s+(te\s+)?(ajudar|passar|buscar|procurar|tentar|verificar|consultar)|quer\s+que\s+eu|deseja|gostaria)/i.test(
+      lastAssistant.content,
+    );
+  const resumingOffer = isAffirmative && !!lastUser && (hasPendingOffer || !!lastAssistant);
+
+  // 0b) Small-talk / reações — nunca enviar para o modelo de busca
+  // (ele transformaria "ah que legal" em um verbete com citações).
+  if (!resumingOffer) {
+    const smallTalk = detectSmallTalk(text);
+    if (smallTalk) return { reply: smallTalk };
+  }
 
   // 1) Router: structural = direct DB answer (no LLM).
   // Contextual follow-up: reuse the topic from the last turn so that short
   // messages like "quem são eles?" or "e em monte aprazível?" don't lose context.
-  const trimmedText = text.trim();
   const isBareFollowUp = /^(quem\s+s[aã]o(\s+eles|\s+elas)?|quais\s+s[aã]o(\s+eles|\s+elas)?|me\s+diga(\s+os)?(\s+nomes?)?|diga(\s+os)?(\s+nomes?)?|os?\s+nomes?|liste(\s+eles|\s+elas)?|todos|todas)\s*[?.!]*$/i.test(trimmedText);
   // Region-only follow-up: "e em monte aprazivel?", "em rio preto?", "e no interior?"
   const regionFollowUp = trimmedText.match(/^(?:e\s+)?(?:em|no|na|nos|nas)\s+([a-zà-ú][a-zà-ú\s.'-]{2,60})\s*[?.!]*$/i);
-  const lastAssistant = [...trimmedHistory].reverse().find((m) => m.role === "assistant");
-  const lastUser = [...trimmedHistory].reverse().find((m) => m.role === "user");
   const prevBlob = ((lastAssistant?.content ?? "") + " " + (lastUser?.content ?? "")).toLowerCase();
   const prevTopic: "vendedores" | "categorias" | "produtos" | "unidades" | null =
     /vendedor|vendedores|representante/.test(prevBlob) ? "vendedores"
@@ -117,7 +134,11 @@ export async function handleIncoming(
     : null;
 
   let routerInput = text;
-  if (isBareFollowUp) {
+  if (resumingOffer && lastUser) {
+    // A mensagem curta é um "sim" à oferta anterior: o assunto real é a última
+    // pergunta do usuário.
+    routerInput = lastUser.content;
+  } else if (isBareFollowUp) {
     if (prevTopic === "vendedores") routerInput = `liste todos os vendedores`;
     else if (prevTopic === "categorias") routerInput = `liste todas as categorias`;
     else if (prevTopic === "produtos") routerInput = `liste os produtos`;
@@ -130,6 +151,7 @@ export async function handleIncoming(
     else if (prevTopic === "produtos") routerInput = `${verb} produtos em ${region}`;
     else if (prevTopic === "categorias") routerInput = `${verb} categorias em ${region}`;
   }
+
 
   let routed;
   try {
