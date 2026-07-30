@@ -326,7 +326,7 @@ export function LivestockQuotesPanel() {
               <tr key={r.id} className="border-t border-border/60">
                 <td className="py-1 pr-3">{r.categoria}</td>
                 <td className="py-1 pr-3">
-                  {r.cidade ?? r.regiao || r.estado}
+                  {r.cidade ?? (r.regiao || r.estado)}
                   {r.estado ? `/${r.estado}` : ""}{" "}
                   <span className="text-xs text-muted-foreground">({r.abrangencia})</span>
                 </td>
