@@ -573,8 +573,18 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
     return { kind: "structural", text: `Produtos em destaque no site DuKamp:\n\n${bullets}` };
   }
 
-  // Products — count
-  if (hasCount && (!hasSellerWord && !hasCategoryWord)) {
+  // Products — count. Só responde contagem de catálogo quando a pergunta é
+  // claramente sobre produtos/itens da DuKamp. "Quantos piquetes preciso?" ou
+  // "quanto isso custa?" são perguntas técnicas/comerciais, não contagem de SKU.
+  const catalogScope = /\b(dukamp|cat[aá]logo|loja|site|voc[eê]s|estoque|linha)\b/i.test(userText);
+  if (
+    hasCount &&
+    !hasSellerWord &&
+    !hasCategoryWord &&
+    !marketQuoteIntent &&
+    mentionsProdutoWord &&
+    (catalogScope || /\bprodutos?\b|\bitens\b|\bsku\b/i.test(userText))
+  ) {
     const { n, source } = await countActive(species);
     const label = species
       ? ` para ${species === "ovinos_caprinos" ? "ovinos e caprinos" : species}`
@@ -592,17 +602,27 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
   // Products — list (only when the user explicitly asked for products/catalog).
   // Mencionar apenas uma espécie (ex.: "cotação do boi gordo") NÃO deve
   // despejar o catálogo — precisa haver menção explícita a produto/ração/etc.
-  const mentionsProdutoWord = /\b(produtos?|cat[aá]logo|itens|mercadorias?|ra[cç][oõ]es?|suplementos?|minerais?|n[uú]cleos?|concentrados?)\b/i.test(userText);
-  const marketQuoteIntent = /\b(cotaç[aã]o|cotaç[oõ]es|arroba|@|mercado|bolsa|b3|cepea|scot|indicador|futuros?|f[ií]sico|leil[aã]o|leil[oõ]es)\b/i.test(userText);
   if (hasList && !hasSellerWord && !hasCategoryWord && mentionsProdutoWord && !marketQuoteIntent) {
     const items = await listActive(species);
     if (items.length === 0) return { kind: "structural", text: "Nenhum produto ativo encontrado." };
-    const shown = items.slice(0, 60);
+    // Filtro por finalidade/categoria citada na pergunta ("para bezerros",
+    // "para vaca de leite"): evita despejar o catálogo inteiro.
+    const filtered = filterCatalogByPurpose(items, userText);
+    const list = filtered.matched.length > 0 ? filtered.matched : items;
+    const shown = list.slice(0, 40);
     const bullets = shown.map((n) => `- ${n}`).join("\n");
-    const more = items.length > shown.length ? `\n\n_(exibindo ${shown.length} de ${items.length})_` : "";
+    const more = list.length > shown.length ? `\n\n_(exibindo ${shown.length} de ${list.length})_` : "";
+    const header =
+      filtered.matched.length > 0
+        ? `Produtos DuKamp relacionados a **${filtered.label}**:`
+        : `Produtos ativos${species ? ` (${species === "ovinos_caprinos" ? "ovinos e caprinos" : species})` : ""}:`;
+    const note =
+      filtered.matched.length === 0 && filtered.label
+        ? `\n\n_(não achei itens com o termo "${filtered.label}" no nome; segue a lista geral)_`
+        : "";
     return {
       kind: "structural",
-      text: `Produtos ativos${species ? ` (${species === "ovinos_caprinos" ? "ovinos e caprinos" : species})` : ""}:\n\n${bullets}${more}`,
+      text: `${header}\n\n${bullets}${more}${note}`,
     };
   }
 
