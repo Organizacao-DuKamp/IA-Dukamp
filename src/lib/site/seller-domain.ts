@@ -66,18 +66,44 @@ export function matchSellerRequest(query: string, sellers: PublicSeller[]): Sell
   return { kind: "all", sellers, label: null };
 }
 
+/** Descarta placeholders ("indefinido", "-", "n/a") e devolve só contato real. */
+export function cleanContact(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const raw = String(value).trim();
+  if (!raw) return null;
+  if (/^(indefinid[oa]|nao\s*informad[oa]|n[aã]o\s*informad[oa]|sem|s\/?n|n\/?a|null|undefined|-+)$/i.test(raw)) {
+    return null;
+  }
+  const digits = raw.replace(/\D/g, "");
+  if (digits.length < 8) return null;
+  return formatPhone(digits);
+}
+
+export function formatPhone(digits: string): string {
+  const d = digits.replace(/^55(?=\d{10,11}$)/, "");
+  if (d.length === 11) return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+  if (d.length === 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+  return digits;
+}
+
+export function sellerContactLine(seller: PublicSeller): string {
+  const wpp = cleanContact(seller.whatsapp);
+  if (wpp) return ` — WhatsApp: ${wpp}`;
+  const tel = cleanContact(seller.phone);
+  if (tel) return ` — Telefone: ${tel}`;
+  return "";
+}
+
 export function formatSellerList(match: SellerMatch): string {
   const bullets = match.sellers.map((seller) => {
     const details = [`**${seller.name}**`];
     if (seller.role) details.push(seller.role);
     if (seller.region && match.kind !== "region") details.push(seller.region);
-    const contact = seller.whatsapp
-      ? ` — WhatsApp: ${seller.whatsapp}`
-      : seller.phone ? ` — Telefone: ${seller.phone}` : "";
-    return `- ${details.join(" — ")}${contact}`;
+    return `- ${details.join(" — ")}${sellerContactLine(seller)}`;
   });
   const title = match.kind === "region"
     ? `Vendedores DuKamp para ${match.label ?? "essa região"}`
     : match.kind === "name" ? "Contato comercial encontrado" : "Vendedores ativos da DuKamp";
   return `${title} (${match.sellers.length}):\n\n${bullets.join("\n")}`;
 }
+

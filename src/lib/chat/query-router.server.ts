@@ -5,7 +5,7 @@
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { normalizeName } from "@/lib/products/normalize";
-import { formatSellerList, matchSellerRequest, type PublicSeller } from "@/lib/site/seller-domain";
+import { cleanContact, formatSellerList, matchSellerRequest, sellerContactLine, type PublicSeller } from "@/lib/site/seller-domain";
 
 export type SpeciesKey = "bovinos" | "equinos" | "ovinos_caprinos" | "outros";
 const SPECIES_LABELS: Record<SpeciesKey, string[]> = {
@@ -24,7 +24,7 @@ function detectSpecies(text: string): SpeciesKey | null {
 }
 
 const COUNT_RE = /\b(quanto|quanta|quantos|quantas|qual\s+o\s+numero|n[uú]mero\s+de|quantidade\s+de|tem\s+quantos?|tem\s+quantas?|existem?\s+quantos?|total\s+de)\b/i;
-const LIST_RE = /\b(quais|liste|listar|listagem|mostre|mostrar|me\s+diga|diga\s+os?|nomes?\s+d[oe]s?\b(?!\w)|quem\s+s[aã]o|todos\s+os?|todas\s+as?|produtos?\s+(disponi|dispon))/i;
+const LIST_RE = /\b(quais|liste|listar|listagem|lista\s+d|mostre|mostrar|me\s+(diga|mande|manda|envie|passe|passa|traga|mostre|mostra)|mande|manda|envie|enviar|passe|passar|traga|trazer|diga\s+os?|nomes?\s+d[oe]s?\b(?!\w)|quem\s+s[aã]o|todos\s+os?|todas\s+as?|produtos?\s+(disponi|dispon))/i;
 const FEATURED_RE = /\b(destaque|destaques|em\s+destaque|principais\s+produtos?|produtos?\s+principais|mais\s+vendidos?|top\s+produtos?)\b/i;
 const SELLER_WORD_RE = /\b(vendedor|vendedora|vendedores|representante|revenda|revendedor|distribuidor|consultor\s+t[eé]cnico|quem\s+atende|quem\s+cuida\s+d[ae]|respons[aá]vel\s+pela\s+regi[aã]o|contato\s+comercial|equipe\s+comercial)\b/i;
 const CATEGORY_WORD_RE = /\b(categorias?|linhas?\s+de\s+produtos?|cat[aá]logos?)\b/i;
@@ -181,6 +181,9 @@ async function countActive(species: SpeciesKey | null): Promise<{ n: number; sou
 
 
 async function listActive(species: SpeciesKey | null): Promise<string[]> {
+  // Prioridade: catálogo próprio da marca DuKamp (base técnica). O catálogo do
+  // site inclui itens de revenda da agropecuária, então só entra como reforço
+  // (filtrado pela marca) ou como fallback quando a base própria está vazia.
   try {
     let q = supabaseAdmin
       .from("products")
@@ -192,14 +195,12 @@ async function listActive(species: SpeciesKey | null): Promise<string[]> {
       .limit(200);
     if (species) q = q.eq("species", species);
     const { data } = await q;
-    const local = (data ?? []).map((p) => p.official_name);
-    if (local.length > 0) return local;
+    const names = (data ?? []).map((p) => p.official_name);
+    if (names.length > 0) return names;
   } catch (err) {
     console.warn("[router] local list skipped:", err instanceof Error ? err.message : err);
   }
 
-
-  // Fallback to the Dukamp site DB.
   try {
     const { siteSupabase, isSiteConfigured } = await import("@/lib/site/site-client.server");
     if (!isSiteConfigured()) return [];
@@ -209,11 +210,24 @@ async function listActive(species: SpeciesKey | null): Promise<string[]> {
       .eq("active", true)
       .order("name", { ascending: true })
       .limit(300);
-    return (siteData ?? []).map((p: any) => p.name as string);
-  } catch {
+    let names = ((siteData ?? []) as Array<{ name: string }>)
+      .map((p) => p.name)
+      .filter((n) => /kamp/i.test(n));
+    if (species) {
+      const terms = SPECIES_LABELS[species];
+      const filtered = names.filter((n) =>
+        terms.some((t) => normalizeName(n).includes(normalizeName(t))),
+      );
+      if (filtered.length > 0) names = filtered;
+    }
+    return names;
+  } catch (err) {
+    console.warn("[router] site catalog list skipped:", err instanceof Error ? err.message : err);
     return [];
   }
 }
+
+
 
 // ---- Site (Dukamp website) helpers ---------------------------------------
 
@@ -557,7 +571,7 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
       const bullets = byRegion.map((s) => {
         const parts = [`**${s.name}**`];
         if (s.role) parts.push(s.role);
-        const contact = s.whatsapp ? ` — WhatsApp: ${s.whatsapp}` : s.phone ? ` — Tel: ${s.phone}` : "";
+        const contact = sellerContactLine(s as PublicSeller);
         return `- ${parts.join(" — ")}${contact}`;
       }).join("\n");
       return {
@@ -584,7 +598,7 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
       const parts = [`**${s.name}**`];
       if (s.role) parts.push(s.role);
       if (s.region && byRegion.length === 0) parts.push(s.region);
-      const contact = s.whatsapp ? ` — WhatsApp: ${s.whatsapp}` : s.phone ? ` — Tel: ${s.phone}` : "";
+      const contact = sellerContactLine(s as PublicSeller);
       return `- ${parts.join(" — ")}${contact}`;
     }).join("\n");
     const header = byRegion.length > 0
@@ -601,8 +615,10 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
       const lines = [`**${s.name}**`];
       if (s.role) lines.push(`- Cargo: ${s.role}`);
       if (s.region) lines.push(`- Região: ${s.region}`);
-      if (s.whatsapp) lines.push(`- WhatsApp: ${s.whatsapp}`);
-      if (s.phone) lines.push(`- Telefone: ${s.phone}`);
+      const wpp = cleanContact(s.whatsapp);
+      const tel = cleanContact(s.phone);
+      if (wpp) lines.push(`- WhatsApp: ${wpp}`);
+      if (tel && tel !== wpp) lines.push(`- Telefone: ${tel}`);
       return { kind: "structural", text: lines.join("\n") };
     }
     if (hits.length > 1) {
@@ -618,7 +634,7 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
           const parts = [`**${s.name}**`];
           if (s.role) parts.push(s.role);
           if (s.region) parts.push(s.region);
-          const contact = s.whatsapp ? ` — WhatsApp: ${s.whatsapp}` : s.phone ? ` — Tel: ${s.phone}` : "";
+          const contact = sellerContactLine(s as PublicSeller);
           return `- ${parts.join(" — ")}${contact}`;
         }).join("\n");
         return { kind: "structural", text: `Atendimento DuKamp para essa região:\n\n${bullets}` };
