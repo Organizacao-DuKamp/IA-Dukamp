@@ -1,0 +1,11 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  # Evita que o build da Netlify herde o fallback Cloudflare usado pela Lovable.
+  NITRO_PRESET = "netlify"
+  NODE_VERSION = "20"
+  # Estas três variáveis são deliberadamente públicas e entram no bundle Vite.
+  # Sem a exceção, o detector de segredos pode bloquear o deploy ao encontrá-las.
+  SECRETS_SCAN_OMIT_KEYS = "VITE_SUPABASE_URL,VITE_SUPABASE_PUBLISHABLE_KEY,VITE_SUPABASE_PROJECT_ID"
