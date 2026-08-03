@@ -24,7 +24,7 @@ function detectSpecies(text: string): SpeciesKey | null {
 }
 
 const COUNT_RE = /\b(quanto|quanta|quantos|quantas|qual\s+o\s+numero|n[uú]mero\s+de|quantidade\s+de|tem\s+quantos?|tem\s+quantas?|existem?\s+quantos?|total\s+de)\b/i;
-const LIST_RE = /\b(quais|liste|listar|listagem|mostre|mostrar|me\s+diga|diga\s+os?|nomes?\s+d[oe]s?\b(?!\w)|quem\s+s[aã]o|todos\s+os?|todas\s+as?|produtos?\s+(disponi|dispon))/i;
+const LIST_RE = /\b(quais|liste|listar|listagem|lista\s+d|mostre|mostrar|me\s+(diga|mande|manda|envie|passe|passa|traga|mostre|mostra)|mande|manda|envie|enviar|passe|passar|traga|trazer|diga\s+os?|nomes?\s+d[oe]s?\b(?!\w)|quem\s+s[aã]o|todos\s+os?|todas\s+as?|produtos?\s+(disponi|dispon))/i;
 const FEATURED_RE = /\b(destaque|destaques|em\s+destaque|principais\s+produtos?|produtos?\s+principais|mais\s+vendidos?|top\s+produtos?)\b/i;
 const SELLER_WORD_RE = /\b(vendedor|vendedora|vendedores|representante|revenda|revendedor|distribuidor|consultor\s+t[eé]cnico|quem\s+atende|quem\s+cuida\s+d[ae]|respons[aá]vel\s+pela\s+regi[aã]o|contato\s+comercial|equipe\s+comercial)\b/i;
 const CATEGORY_WORD_RE = /\b(categorias?|linhas?\s+de\s+produtos?|cat[aá]logos?)\b/i;
