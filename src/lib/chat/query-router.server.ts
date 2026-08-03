@@ -5,7 +5,7 @@
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { normalizeName } from "@/lib/products/normalize";
-import { formatSellerList, matchSellerRequest, type PublicSeller } from "@/lib/site/seller-domain";
+import { cleanContact, formatSellerList, matchSellerRequest, sellerContactLine, type PublicSeller } from "@/lib/site/seller-domain";
 
 export type SpeciesKey = "bovinos" | "equinos" | "ovinos_caprinos" | "outros";
 const SPECIES_LABELS: Record<SpeciesKey, string[]> = {
@@ -568,7 +568,7 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
       const bullets = byRegion.map((s) => {
         const parts = [`**${s.name}**`];
         if (s.role) parts.push(s.role);
-        const contact = s.whatsapp ? ` — WhatsApp: ${s.whatsapp}` : s.phone ? ` — Tel: ${s.phone}` : "";
+        const contact = sellerContactLine(s as PublicSeller);
         return `- ${parts.join(" — ")}${contact}`;
       }).join("\n");
       return {
@@ -595,7 +595,7 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
       const parts = [`**${s.name}**`];
       if (s.role) parts.push(s.role);
       if (s.region && byRegion.length === 0) parts.push(s.region);
-      const contact = s.whatsapp ? ` — WhatsApp: ${s.whatsapp}` : s.phone ? ` — Tel: ${s.phone}` : "";
+      const contact = sellerContactLine(s as PublicSeller);
       return `- ${parts.join(" — ")}${contact}`;
     }).join("\n");
     const header = byRegion.length > 0
@@ -629,7 +629,7 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
           const parts = [`**${s.name}**`];
           if (s.role) parts.push(s.role);
           if (s.region) parts.push(s.region);
-          const contact = s.whatsapp ? ` — WhatsApp: ${s.whatsapp}` : s.phone ? ` — Tel: ${s.phone}` : "";
+          const contact = sellerContactLine(s as PublicSeller);
           return `- ${parts.join(" — ")}${contact}`;
         }).join("\n");
         return { kind: "structural", text: `Atendimento DuKamp para essa região:\n\n${bullets}` };
