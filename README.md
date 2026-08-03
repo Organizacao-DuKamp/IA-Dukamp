@@ -14,6 +14,16 @@ Assistente de IA especialista em pecuária brasileira. Chat web (com arquitetura
 2. `bun install`
 3. `bun dev` e abra `http://localhost:8080`.
 
+### Supabase comercial da DuKamp
+
+Configure `DUKAMP_SITE_SUPABASE_URL` e `DUKAMP_SITE_SUPABASE_ANON_KEY` somente no
+ambiente do servidor. A tabela pública `sellers` é a fonte dinâmica dos contatos
+comerciais e deve expor apenas os campos públicos `id`, `name`, `role`, `region`,
+`phone`, `whatsapp`, `active` e `display_order`. Ative RLS e permita ao papel
+`anon` somente `SELECT` de registros com `active = true`; e-mail, cidade, unidade
+e especialidade podem ser adicionados posteriormente, mas só devem ser expostos
+quando forem dados comerciais públicos. Nunca use `service_role` no frontend.
+
 A chave **nunca** é exposta ao frontend — vive apenas no runtime do servidor.
 
 ## Arquitetura desacoplada

@@ -5,6 +5,7 @@
 
 import { isSiteConfigured, siteSupabase } from "./site-client.server";
 import { normalizeName } from "@/lib/products/normalize";
+import { matchSellerRequest } from "./seller-domain";
 
 export interface SiteProduct {
   id: string;
@@ -105,22 +106,8 @@ export async function listSiteSellers(limit = 30): Promise<SiteSeller[]> {
 
 export async function findSellersByRegion(text: string): Promise<SiteSeller[]> {
   const all = await listSiteSellers(100);
-  const norm = " " + normalizeName(text) + " ";
-  // aliases → região oficial no cadastro
-  const aliases: Record<string, string[]> = {
-    "sao jose do rio preto": ["rio preto", "sjrp", "s j rio preto", "s. j. do rio preto"],
-    "monte aprazivel": ["monte apraz", "mte aprazivel"],
-    "macaubal": ["macaubal"],
-    "itaruma": ["itaruma"],
-  };
-  const filtered = all.filter((s) => {
-    if (!s.region) return false;
-    const regNorm = normalizeName(s.region);
-    if (norm.includes(" " + regNorm + " ") || norm.includes(regNorm)) return true;
-    const alist = aliases[regNorm] ?? [];
-    return alist.some((a) => norm.includes(a));
-  });
-  return filtered;
+  const match = matchSellerRequest(text, all);
+  return match.kind === "region" ? match.sellers as SiteSeller[] : [];
 }
 
 export async function listSiteCategories(): Promise<string[]> {

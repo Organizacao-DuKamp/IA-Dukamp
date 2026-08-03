@@ -5,6 +5,7 @@
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { normalizeName } from "@/lib/products/normalize";
+import { formatSellerList, matchSellerRequest, type PublicSeller } from "@/lib/site/seller-domain";
 
 export type SpeciesKey = "bovinos" | "equinos" | "ovinos_caprinos" | "outros";
 const SPECIES_LABELS: Record<SpeciesKey, string[]> = {
@@ -238,36 +239,37 @@ async function listFeaturedProducts(): Promise<Array<{ name: string; price: numb
 async function countSellers(): Promise<number> {
   const c = await siteClient();
   if (!c) return 0;
-  const { count } = await c
+  const { count, error } = await c
     .from("sellers")
     .select("id", { count: "exact", head: true })
     .eq("active", true);
+  if (error) {
+    console.error("[site:sellers] count failed", { code: error.code ?? "unknown" });
+    return 0;
+  }
   return count ?? 0;
 }
 
 async function listSellersFull(): Promise<Array<{ name: string; role: string | null; region: string | null; phone: string | null; whatsapp: string | null }>> {
   const c = await siteClient();
   if (!c) return [];
-  const { data } = await c
+  const { data, error } = await c
     .from("sellers")
     .select("name,role,region,phone,whatsapp,active,display_order")
     .eq("active", true)
     .order("display_order", { ascending: true })
     .limit(100);
+  if (error) {
+    console.error("[site:sellers] directory lookup failed", { code: error.code ?? "unknown" });
+    return [];
+  }
   return (data ?? []) as any[];
 }
 
 async function findSellerByName(text: string): Promise<Array<{ name: string; role: string | null; region: string | null; phone: string | null; whatsapp: string | null }>> {
   const all = await listSellersFull();
-  const norm = normalizeName(text);
-  const hits = all.filter((s) => {
-    const key = normalizeName(s.name);
-    if (key.length < 3) return false;
-    // token overlap: first name or full name inside text
-    const firstName = key.split(/\s+/)[0];
-    return norm.includes(key) || norm.includes(firstName);
-  });
-  return hits;
+  const match = matchSellerRequest(text, all);
+  return match.kind === "name" ? match.sellers : [];
 }
 
 async function countCategories(): Promise<number> {
@@ -628,21 +630,28 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
     // cadastro ativo — não concluir, incorretamente, que uma cidade falhou.
     const available = await listSellersFull();
     if (available.length > 0) {
-      const bullets = available.map((s) => {
-        const parts = [`**${s.name}**`];
-        if (s.role) parts.push(s.role);
-        if (s.region) parts.push(s.region);
-        const contact = s.whatsapp ? ` — WhatsApp: ${s.whatsapp}` : s.phone ? ` — Tel: ${s.phone}` : "";
-        return `- ${parts.join(" — ")}${contact}`;
-      }).join("\n");
+      const sellerAnswer = formatSellerList(matchSellerRequest(userText, available as PublicSeller[]));
       return {
         kind: "structural",
-        text: `Estes são os vendedores ativos da DuKamp (${available.length}):\n\n${bullets}\n\nSe você me disser sua cidade, eu separo quem atende mais perto de você.`,
+        text: `${sellerAnswer}\n\nSe você me disser sua cidade, eu separo quem atende mais perto de você.`,
       };
     }
 
     // Nunca cair na web para "quem atende X": isso pode trazer contatos de
     // terceiros. Também não use telefone/endereço fixo como fallback.
+    const { getSiteUnits } = await import("@/lib/site/site-lookup.server");
+    const { headquarters } = await getSiteUnits().catch(() => ({ headquarters: undefined }));
+    if (headquarters?.phone || headquarters?.email) {
+      
+      const channels = [
+        headquarters.phone ? `Telefone/WhatsApp: ${headquarters.phone}` : null,
+        headquarters.email ? `E-mail: ${headquarters.email}` : null,
+      ].filter(Boolean).join(" — ");
+      return {
+        kind: "structural",
+        text: `Não encontrei contatos individuais de vendedores ativos no cadastro agora. Como alternativa, este é o **atendimento institucional da DuKamp**: ${channels}.`,
+      };
+    }
     return {
       kind: "structural",
       text: "Não consegui consultar a lista de vendedores ativos da DuKamp agora. Tente novamente em alguns instantes para eu buscar os contatos atualizados no cadastro oficial.",
