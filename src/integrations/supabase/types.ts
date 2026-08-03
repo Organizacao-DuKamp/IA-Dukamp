@@ -755,6 +755,17 @@ export type Database = {
           title: string
         }[]
       }
+      search_knowledge_lexical: {
+        Args: { match_count?: number; search_query: string }
+        Returns: {
+          category: string
+          content: string
+          filename: string
+          similarity: number
+          subcategory: string | null
+          title: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "user"

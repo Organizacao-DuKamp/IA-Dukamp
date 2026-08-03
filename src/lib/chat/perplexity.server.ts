@@ -25,6 +25,8 @@ export interface AskOptions {
   state?: string | null;
   /** Como interpretar a mensagem atual (confirmação, correção, seleção…). */
   directive?: string | null;
+  /** Ordem de fontes determinada pelo orquestrador após consultar os bancos. */
+  sourcePolicy?: string | null;
   /** Trechos recuperados (RAG, site, mercado) — camada de menor prioridade. */
   context?: string | null;
 }
@@ -63,6 +65,12 @@ export async function askPerplexity(
       content: `INTERPRETAÇÃO OBRIGATÓRIA DA MENSAGEM ATUAL (uso interno, não cite):\n${options.directive}`,
     });
   }
+  if (options.sourcePolicy) {
+    messages.push({
+      role: "system",
+      content: options.sourcePolicy,
+    });
+  }
   if (options.context) {
     messages.push({
       role: "system",
@@ -75,7 +83,6 @@ export async function askPerplexity(
     if (!m?.content) continue;
     messages.push({ role: m.role === "system" ? "user" : m.role, content: m.content });
   }
-
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);

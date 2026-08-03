@@ -12,6 +12,7 @@
 import { askPerplexity, PerplexityError } from "./perplexity.server";
 import { checkRateLimit } from "./rate-limit.server";
 import { productContextBlock, routeQuery } from "./query-router.server";
+import { assessEvidence, sourceDirective } from "./source-policy";
 import {
   applyAssistantTurn,
   buildAcknowledgementReply,
@@ -256,18 +257,25 @@ async function runTurn(
   // ---- Camada 6: recuperação (mercado, produtos, site, RAG)
   const contextParts: string[] = [];
   const retrieved: string[] = [];
+  let hasCatalogEvidence = false;
+  let hasSiteEvidence = false;
+  let hasMarketEvidence = false;
+  const knowledgeScores: number[] = [];
 
   if (routed.kind === "structural") {
     contextParts.push(`DADOS ESTRUTURADOS DO CATÁLOGO (use se ajudar o pedido atual):\n${routed.text}`);
     retrieved.push("sql");
+    hasCatalogEvidence = true;
   }
   if (routed.kind !== "structural" && routed.marketContext) {
     contextParts.push(routed.marketContext);
     retrieved.push("mercado");
+    hasMarketEvidence = true;
   }
   if (routed.kind !== "structural" && routed.productHint) {
     contextParts.push(productContextBlock(routed.productHint.product));
     retrieved.push("produto");
+    hasCatalogEvidence = true;
   }
 
   const lookupText = routerInput !== text ? `${routerInput} ${text}` : text;
@@ -298,6 +306,7 @@ async function runTurn(
     if (block) {
       contextParts.push(block);
       retrieved.push("site");
+      hasSiteEvidence = true;
     }
   } catch (err) {
     console.error("[site] lookup falhou:", err instanceof Error ? err.message : err);
@@ -316,6 +325,7 @@ async function runTurn(
       const matches = await searchKnowledge(lookupText, 6);
       const good = matches.filter((m) => m.similarity >= 0.55);
       if (good.length > 0) {
+        knowledgeScores.push(...good.map((match) => match.similarity));
         const rag = good.map((m, i) => `[${i + 1}]\n${m.content}`).join("\n\n---\n\n");
         contextParts.push(
           `TRECHOS TÉCNICOS DA BASE INTERNA (uso interno; NÃO cite fontes, arquivos nem porcentagens; use só o que servir ao pedido atual):\n\n${rag}`,
@@ -328,6 +338,12 @@ async function runTurn(
   }
 
   const directive = buildInterpretationDirective(stateBefore, analysis, text);
+  const evidence = assessEvidence({
+    catalog: hasCatalogEvidence,
+    site: hasSiteEvidence,
+    market: hasMarketEvidence,
+    knowledgeScores,
+  });
   const conversation: ChatMessage[] = [...history, { role: "user", content: text }];
 
   console.info("[chat] turno", {
@@ -347,6 +363,7 @@ async function runTurn(
       summary: renderSummaryForModel(state.conversation_summary),
       state: renderStateForModel(state),
       directive,
+      sourcePolicy: sourceDirective(evidence),
       context: contextParts.length > 0 ? contextParts.join("\n\n") : null,
     });
     // O resumo só é atualizado depois que a resposta ficou pronta.

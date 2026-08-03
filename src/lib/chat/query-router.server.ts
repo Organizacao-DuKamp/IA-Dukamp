@@ -507,28 +507,34 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
 
 
 
-  // Units / filial / matriz — DuKamp tem 2 unidades: matriz (Monte Aprazível/SP) e filial (São José do Rio Preto/SP).
+  // Unidades: só responda com dados atuais recuperados do site.
   if (hasUnitWord && !hasSellerWord) {
     const { getSiteUnits } = await import("@/lib/site/site-lookup.server");
-    const { headquarters } = await getSiteUnits().catch(() => ({ headquarters: null as any }));
+    const { headquarters, regions } = await getSiteUnits().catch(() => ({
+      headquarters: undefined,
+      regions: [] as string[],
+    }));
 
-    const lines: string[] = [];
-    if (hasCount) {
-      lines.push("A DuKamp tem **2 unidades**: **matriz em Monte Aprazível/SP** e **filial em São José do Rio Preto/SP**.");
-      lines.push("");
+    if (!headquarters) {
+      return {
+        kind: "structural",
+        text: "Não consegui confirmar agora as unidades e os endereços no cadastro oficial da DuKamp. Para não passar uma informação desatualizada, tente novamente em alguns instantes.",
+      };
     }
 
-    lines.push(`**Matriz DuKamp**${headquarters?.razaoSocial ? ` — ${headquarters.razaoSocial}` : " — DUKAMP SAÚDE ANIMAL LTDA"}`);
-    lines.push(`- Endereço: ${headquarters?.address || "Avenida Santos Dumont, 403 - Jardim Bom Jesus, Monte Aprazível/SP"}`);
+    const lines = [`**${headquarters.label} DuKamp**${headquarters.razaoSocial ? ` — ${headquarters.razaoSocial}` : ""}`];
+    if (headquarters.address) lines.push(`- Endereço: ${headquarters.address}`);
     if (headquarters?.cnpj) lines.push(`- CNPJ: ${headquarters.cnpj}`);
     if (headquarters?.phone) lines.push(`- Telefone/WhatsApp: ${headquarters.phone}`);
     if (headquarters?.email) lines.push(`- E-mail: ${headquarters.email}`);
-
-    lines.push("");
-    lines.push("**Filial DuKamp** — São José do Rio Preto/SP");
-
-    lines.push("");
-    lines.push("**Área de atendimento:** a DuKamp atende clientes em **todo o Brasil** através da equipe comercial e da logística própria.");
+    if (!hasCount && regions.length > 0) {
+      lines.push("");
+      lines.push(`Regiões com vendedor ativo no cadastro: ${regions.join(", ")}.`);
+    }
+    if (hasCount) {
+      lines.push("");
+      lines.push("O cadastro consultado confirma esta matriz, mas não fornece uma contagem confiável de todas as unidades. Por isso não vou estimar esse total.");
+    }
 
     return { kind: "structural", text: lines.join("\n") };
   }
