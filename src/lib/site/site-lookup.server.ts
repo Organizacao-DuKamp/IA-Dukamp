@@ -5,6 +5,7 @@
 
 import { isSiteConfigured, siteSupabase } from "./site-client.server";
 import { normalizeName } from "@/lib/products/normalize";
+import { matchSellerRequest } from "./seller-domain";
 
 export interface SiteProduct {
   id: string;
@@ -23,6 +24,7 @@ export interface SiteSeller {
   region: string | null;
   phone: string | null;
   whatsapp: string | null;
+  active?: boolean | null;
 }
 
 export interface SiteLookup {
@@ -34,6 +36,11 @@ export interface SiteLookup {
 const PRICE_RE = /\b(pre[cç]o|valor|quanto\s+custa|custo|cotaç[aã]o|comprar|compra|onde\s+compro?|onde\s+encontro|dispon[ií]vel|estoque)\b/i;
 const SELLER_RE = /\b(vendedor|vendedora|vendedores|representante|revenda|revendedor|distribuidor|contato|whats(app)?|telefone|falar\s+com|onde\s+comprar|quero\s+comprar|gostaria\s+de\s+comprar|posso\s+comprar|como\s+compro|onde\s+compro|adquirir|fazer\s+(um\s+)?pedido|pedir)\b/i;
 const CATEGORY_RE = /\b(categorias?|linhas?\s+de\s+produtos?|cat[aá]logos?)\b/i;
+const PRODUCT_SEARCH_STOPWORDS = new Set([
+  "qual", "quais", "quanto", "custa", "preco", "valor", "produto", "produtos",
+  "dukamp", "comprar", "compra", "estoque", "disponivel", "onde", "como", "para",
+  "sobre", "quero", "saber", "tem", "uma", "com",
+]);
 
 export function siteIntentHints(text: string) {
   return {
@@ -43,33 +50,51 @@ export function siteIntentHints(text: string) {
   };
 }
 
-/** Rough token search over product name/code. */
+/** Busca comercial com pós-filtro: evita transformar qualquer token em produto. */
 export async function searchSiteProducts(query: string, limit = 8): Promise<SiteProduct[]> {
   if (!isSiteConfigured()) return [];
   const q = normalizeName(query).replace(/[^a-z0-9\s/]/g, " ").trim();
-  const tokens = q.split(/\s+/).filter((t) => t.length >= 3).slice(0, 4);
+  const tokens = q
+    .split(/\s+/)
+    .filter((token) => token.length >= 3 && !PRODUCT_SEARCH_STOPWORDS.has(token))
+    .slice(0, 6);
   if (tokens.length === 0) return [];
 
-  // Build OR ilike across name for each token; PostgREST accepts .or()
-  const orExpr = tokens.map((t) => `name.ilike.*${t}*`).join(",");
+  const orExpr = tokens
+    .flatMap((token) => [`name.ilike.*${token}*`, `code.ilike.*${token}*`])
+    .join(",");
   const { data, error } = await siteSupabase()
     .from("products")
     .select("id,name,code,slug,price,active,stock")
     .or(orExpr)
     .eq("active", true)
-    .limit(limit);
+    .limit(Math.min(Math.max(limit * 5, 20), 100));
   if (error) {
     console.error("[site] product search error:", error.message);
     return [];
   }
-  return (data ?? []) as SiteProduct[];
+  return ((data ?? []) as SiteProduct[])
+    .map((product) => {
+      const name = normalizeName(product.name);
+      const code = normalizeName(product.code ?? "");
+      const nameTokens = new Set(name.split(/\s+/).filter(Boolean));
+      const exactPhrase = name.length >= 4 && q.includes(name);
+      const exactCode = code.length >= 2 && q.split(/\s+/).includes(code);
+      const hits = tokens.filter((token) => nameTokens.has(token) || code === token).length;
+      return { product, score: (exactPhrase ? 4 : 0) + (exactCode ? 3 : 0) + hits / tokens.length };
+    })
+    .filter(({ score }) => score >= 0.5)
+    .sort((a, b) => b.score - a.score || a.product.name.localeCompare(b.product.name, "pt-BR"))
+    .slice(0, limit)
+    .map(({ product }) => product);
 }
 
 export async function listSiteSellers(limit = 30): Promise<SiteSeller[]> {
   if (!isSiteConfigured()) return [];
   const { data, error } = await siteSupabase()
     .from("sellers")
-    .select("id,name,role,region,phone,whatsapp")
+    .select("id,name,role,region,phone,whatsapp,active")
+    .eq("active", true)
     .order("name", { ascending: true })
     .limit(limit);
   if (error) {
@@ -81,22 +106,8 @@ export async function listSiteSellers(limit = 30): Promise<SiteSeller[]> {
 
 export async function findSellersByRegion(text: string): Promise<SiteSeller[]> {
   const all = await listSiteSellers(100);
-  const norm = " " + normalizeName(text) + " ";
-  // aliases → região oficial no cadastro
-  const aliases: Record<string, string[]> = {
-    "sao jose do rio preto": ["rio preto", "sjrp", "s j rio preto", "s. j. do rio preto"],
-    "monte aprazivel": ["monte apraz", "mte aprazivel"],
-    "macaubal": ["macaubal"],
-    "itaruma": ["itaruma"],
-  };
-  const filtered = all.filter((s) => {
-    if (!s.region) return false;
-    const regNorm = normalizeName(s.region);
-    if (norm.includes(" " + regNorm + " ") || norm.includes(regNorm)) return true;
-    const alist = aliases[regNorm] ?? [];
-    return alist.some((a) => norm.includes(a));
-  });
-  return filtered;
+  const match = matchSellerRequest(text, all);
+  return match.kind === "region" ? match.sellers as SiteSeller[] : [];
 }
 
 export async function listSiteCategories(): Promise<string[]> {
