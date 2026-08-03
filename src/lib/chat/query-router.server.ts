@@ -642,6 +642,7 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
     const { getSiteUnits } = await import("@/lib/site/site-lookup.server");
     const { headquarters } = await getSiteUnits().catch(() => ({ headquarters: undefined }));
     if (headquarters?.phone || headquarters?.email) {
+      
       const channels = [
         headquarters.phone ? `Telefone/WhatsApp: ${headquarters.phone}` : null,
         headquarters.email ? `E-mail: ${headquarters.email}` : null,
