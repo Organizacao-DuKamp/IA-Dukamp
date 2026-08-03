@@ -507,28 +507,34 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
 
 
 
-  // Units / filial / matriz — DuKamp tem 2 unidades: matriz (Monte Aprazível/SP) e filial (São José do Rio Preto/SP).
+  // Unidades: só responda com dados atuais recuperados do site.
   if (hasUnitWord && !hasSellerWord) {
     const { getSiteUnits } = await import("@/lib/site/site-lookup.server");
-    const { headquarters } = await getSiteUnits().catch(() => ({ headquarters: null as any }));
+    const { headquarters, regions } = await getSiteUnits().catch(() => ({
+      headquarters: undefined,
+      regions: [] as string[],
+    }));
 
-    const lines: string[] = [];
-    if (hasCount) {
-      lines.push("A DuKamp tem **2 unidades**: **matriz em Monte Aprazível/SP** e **filial em São José do Rio Preto/SP**.");
-      lines.push("");
+    if (!headquarters) {
+      return {
+        kind: "structural",
+        text: "Não consegui confirmar agora as unidades e os endereços no cadastro oficial da DuKamp. Para não passar uma informação desatualizada, tente novamente em alguns instantes.",
+      };
     }
 
-    lines.push(`**Matriz DuKamp**${headquarters?.razaoSocial ? ` — ${headquarters.razaoSocial}` : " — DUKAMP SAÚDE ANIMAL LTDA"}`);
-    lines.push(`- Endereço: ${headquarters?.address || "Avenida Santos Dumont, 403 - Jardim Bom Jesus, Monte Aprazível/SP"}`);
+    const lines = [`**${headquarters.label} DuKamp**${headquarters.razaoSocial ? ` — ${headquarters.razaoSocial}` : ""}`];
+    if (headquarters.address) lines.push(`- Endereço: ${headquarters.address}`);
     if (headquarters?.cnpj) lines.push(`- CNPJ: ${headquarters.cnpj}`);
     if (headquarters?.phone) lines.push(`- Telefone/WhatsApp: ${headquarters.phone}`);
     if (headquarters?.email) lines.push(`- E-mail: ${headquarters.email}`);
-
-    lines.push("");
-    lines.push("**Filial DuKamp** — São José do Rio Preto/SP");
-
-    lines.push("");
-    lines.push("**Área de atendimento:** a DuKamp atende clientes em **todo o Brasil** através da equipe comercial e da logística própria.");
+    if (!hasCount && regions.length > 0) {
+      lines.push("");
+      lines.push(`Regiões com vendedor ativo no cadastro: ${regions.join(", ")}.`);
+    }
+    if (hasCount) {
+      lines.push("");
+      lines.push("O cadastro consultado confirma esta matriz, mas não fornece uma contagem confiável de todas as unidades. Por isso não vou estimar esse total.");
+    }
 
     return { kind: "structural", text: lines.join("\n") };
   }
@@ -616,11 +622,30 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
         return { kind: "structural", text: `Atendimento DuKamp para essa região:\n\n${bullets}` };
       }
     }
-    // Nenhum vendedor cadastrado para o que foi citado: nunca cair na web para
-    // "quem atende X" — isso traz telefones de prefeitura/hospital.
+
+    // Um pedido genérico como "quero falar com algum vendedor" não contém
+    // nome nem região. Nesse caso, a ação útil é consultar e apresentar o
+    // cadastro ativo — não concluir, incorretamente, que uma cidade falhou.
+    const available = await listSellersFull();
+    if (available.length > 0) {
+      const bullets = available.map((s) => {
+        const parts = [`**${s.name}**`];
+        if (s.role) parts.push(s.role);
+        if (s.region) parts.push(s.region);
+        const contact = s.whatsapp ? ` — WhatsApp: ${s.whatsapp}` : s.phone ? ` — Tel: ${s.phone}` : "";
+        return `- ${parts.join(" — ")}${contact}`;
+      }).join("\n");
+      return {
+        kind: "structural",
+        text: `Estes são os vendedores ativos da DuKamp (${available.length}):\n\n${bullets}\n\nSe você me disser sua cidade, eu separo quem atende mais perto de você.`,
+      };
+    }
+
+    // Nunca cair na web para "quem atende X": isso pode trazer contatos de
+    // terceiros. Também não use telefone/endereço fixo como fallback.
     return {
       kind: "structural",
-      text: "Não encontrei um vendedor DuKamp cadastrado especificamente para essa cidade. O atendimento pode ser feito pela matriz em Monte Aprazível/SP — (17) 3275-3106 — que direciona para o representante da região. Se você me disser a cidade ou a região exata, eu confirmo o contato comercial.",
+      text: "Não consegui consultar a lista de vendedores ativos da DuKamp agora. Tente novamente em alguns instantes para eu buscar os contatos atualizados no cadastro oficial.",
     };
   }
 
