@@ -181,6 +181,32 @@ async function countActive(species: SpeciesKey | null): Promise<{ n: number; sou
 
 
 async function listActive(species: SpeciesKey | null): Promise<string[]> {
+  // O catálogo comercial do site é a fonte de verdade para "quais produtos a
+  // DuKamp tem" (nomes e embalagens atuais). Só usa a base técnica local como
+  // fallback (ou quando há filtro por espécie sem resultado no site).
+  try {
+    const { siteSupabase, isSiteConfigured } = await import("@/lib/site/site-client.server");
+    if (isSiteConfigured()) {
+      const { data: siteData } = await siteSupabase()
+        .from("products")
+        .select("name")
+        .eq("active", true)
+        .order("name", { ascending: true })
+        .limit(300);
+      let names = (siteData ?? []).map((p: any) => p.name as string);
+      if (species) {
+        const terms = SPECIES_LABELS[species];
+        const filtered = names.filter((n: string) =>
+          terms.some((t) => normalizeName(n).includes(normalizeName(t))),
+        );
+        if (filtered.length > 0) names = filtered;
+      }
+      if (names.length > 0) return names;
+    }
+  } catch (err) {
+    console.warn("[router] site catalog list skipped:", err instanceof Error ? err.message : err);
+  }
+
   try {
     let q = supabaseAdmin
       .from("products")
@@ -192,28 +218,13 @@ async function listActive(species: SpeciesKey | null): Promise<string[]> {
       .limit(200);
     if (species) q = q.eq("species", species);
     const { data } = await q;
-    const local = (data ?? []).map((p) => p.official_name);
-    if (local.length > 0) return local;
+    return (data ?? []).map((p) => p.official_name);
   } catch (err) {
     console.warn("[router] local list skipped:", err instanceof Error ? err.message : err);
-  }
-
-
-  // Fallback to the Dukamp site DB.
-  try {
-    const { siteSupabase, isSiteConfigured } = await import("@/lib/site/site-client.server");
-    if (!isSiteConfigured()) return [];
-    const { data: siteData } = await siteSupabase()
-      .from("products")
-      .select("name")
-      .eq("active", true)
-      .order("name", { ascending: true })
-      .limit(300);
-    return (siteData ?? []).map((p: any) => p.name as string);
-  } catch {
     return [];
   }
 }
+
 
 // ---- Site (Dukamp website) helpers ---------------------------------------
 
