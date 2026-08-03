@@ -612,8 +612,10 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
       const lines = [`**${s.name}**`];
       if (s.role) lines.push(`- Cargo: ${s.role}`);
       if (s.region) lines.push(`- Região: ${s.region}`);
-      if (s.whatsapp) lines.push(`- WhatsApp: ${s.whatsapp}`);
-      if (s.phone) lines.push(`- Telefone: ${s.phone}`);
+      const wpp = cleanContact(s.whatsapp);
+      const tel = cleanContact(s.phone);
+      if (wpp) lines.push(`- WhatsApp: ${wpp}`);
+      if (tel && tel !== wpp) lines.push(`- Telefone: ${tel}`);
       return { kind: "structural", text: lines.join("\n") };
     }
     if (hits.length > 1) {
