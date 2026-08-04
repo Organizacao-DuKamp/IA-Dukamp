@@ -42,7 +42,7 @@ const rules: Array<[IntentClassification["intent"], RegExp, boolean, boolean]> =
   ],
   [
     "seller_contact",
-    /\b(vendedor(?:es)?|representante|consultor|equipe comercial)\b/i,
+    /\b(vendedor(?:es)?|representante(?:s)?|consultor(?:es)?|equipe comercial|contatos? comerciais?)\b/i,
     true,
     false,
   ],
@@ -50,17 +50,30 @@ const rules: Array<[IntentClassification["intent"], RegExp, boolean, boolean]> =
   ["internal_price", /\b(pre[cç]o|valor|quanto custa|estoque)\b/i, true, false],
   [
     "product_recommendation",
-    /\b(recomend\w*|qual produto|qual suplemento|melhor para)\b/i,
+    /\b(recomend\w*|qual produto|qual suplemento|melhor para|indiqu\w*|produto para)\b/i,
     true,
     false,
   ],
-  ["nutrition", /\b(nutri\w*|suplement\w*|ra[cç][aã]o|proteinado|mineral|consumo)\b/i, true, false],
+  // Perguntas de catálogo precisam vir antes de "nutrition"; caso contrário
+  // frases como "quais suplementos vocês têm?" viram dúvida técnica e não
+  // executam a consulta comercial no Supabase da DuKamp.
+  [
+    "product",
+    /\b(produtos?|cat[aá]logo|dukamp|ficha(?:\s+t[eé]cnica)?|composi[cç][aã]o|garantia)\b|\b(?:quais|liste|lista|mostre|voc[eê]s\s+t[eê]m|vendem?)\b.{0,50}\b(suplementos?|ra[cç][oõ]es?|minerais?|proteinados?)\b/i,
+    true,
+    false,
+  ],
+  [
+    "nutrition",
+    /\b(nutri\w*|suplement\w*|ra[cç][aã]o|proteinado|mineral|consumo)\b/i,
+    true,
+    false,
+  ],
   ["management", /\b(manejo|pasto|confinamento|desmama|recria|engorda)\b/i, true, false],
   ["document_or_image", /\b(pdf|documento|arquivo|imagem|foto|anexo|[aá]udio)\b/i, true, false],
   ["store", /\b(loja|unidade|matriz|endere[cç]o|hor[aá]rio)\b/i, true, false],
   ["human_support", /\b(atendente|humano|pessoa|sac|suporte)\b/i, true, false],
   ["current_research", /\b(hoje|agora|atual|not[ií]cia|clima|previs[aã]o)\b/i, false, true],
-  ["product", /\b(produto|dukamp|ficha|composi[cç][aã]o|garantia)\b/i, true, false],
 ];
 
 export function classifyDomainIntent(text: string, hasHistory = false): IntentClassification {
