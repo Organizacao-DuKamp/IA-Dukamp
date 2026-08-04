@@ -1,12 +1,24 @@
 // Read-only client for the Dukamp website Supabase (secondary project).
 // Uses a public anon/publishable key. Never write with this client.
+//
+// The fallback below is intentionally limited to the public anon role. Supabase
+// anon keys are client-facing credentials; security remains enforced by RLS.
+// Server environment variables still take priority and can replace the fallback.
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+
+const PUBLIC_DUKAMP_SITE_URL = "https://pioyrbcdprnplhcoyzam.supabase.co";
+const PUBLIC_DUKAMP_SITE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpb3lyYmNkcHJucGxoY295emFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1MTk2NDYsImV4cCI6MjEwMDA5NTY0Nn0.wIPY4KZUEnP1ziR2lGQBF0sIj-b2p_SIZjTMEZe4WWk";
 
 let _client: SupabaseClient | undefined;
 
 export type SiteConfigurationStatus = "ok" | "not_configured" | "invalid_url";
-export type SiteConfigurationSource = "server_env" | "vite_env_alias" | "missing";
+export type SiteConfigurationSource =
+  | "server_env"
+  | "vite_env_alias"
+  | "public_fallback"
+  | "missing";
 
 export interface ResolvedSiteConfiguration {
   url: string | undefined;
@@ -17,7 +29,8 @@ export interface ResolvedSiteConfiguration {
 /**
  * Netlify/Lovable may expose public Supabase credentials under server names or
  * Vite aliases. Supporting both prevents a valid deployment configuration from
- * being treated as missing, while keeping all lookups server-side.
+ * being treated as missing. The public fallback keeps the read-only commercial
+ * directory available on deployments that do not inherit the secondary env.
  */
 export function resolveSiteConfiguration(): ResolvedSiteConfiguration {
   const serverUrl = process.env.DUKAMP_SITE_SUPABASE_URL?.trim();
@@ -34,6 +47,14 @@ export function resolveSiteConfiguration(): ResolvedSiteConfiguration {
     process.env.VITE_DUKAMP_SITE_SUPABASE_PUBLISHABLE_KEY?.trim();
   if (viteUrl && viteKey) {
     return { url: viteUrl, key: viteKey, source: "vite_env_alias" };
+  }
+
+  if (PUBLIC_DUKAMP_SITE_URL && PUBLIC_DUKAMP_SITE_ANON_KEY) {
+    return {
+      url: PUBLIC_DUKAMP_SITE_URL,
+      key: PUBLIC_DUKAMP_SITE_ANON_KEY,
+      source: "public_fallback",
+    };
   }
 
   return { url: serverUrl || viteUrl, key: serverKey || viteKey, source: "missing" };
