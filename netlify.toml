@@ -4,7 +4,7 @@
 
 [context.deploy-preview]
   # O deploy preview funciona como CI desta integração.
-  command = "npm test && npm run lint && npm run build"
+  command = "npm run audit:privileged && npm test && npm run lint && npm run build"
 
 [build.environment]
   # Mantém o handler SSR/server do TanStack Start gerado pelo Nitro para Netlify.
