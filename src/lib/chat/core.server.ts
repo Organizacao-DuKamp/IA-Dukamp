@@ -13,6 +13,10 @@ import { askPerplexity, PerplexityError } from "./perplexity.server";
 import { checkRateLimit } from "./rate-limit.server";
 import { productContextBlock, routeQuery } from "./query-router.server";
 import { assessEvidence, sourceDirective } from "./source-policy";
+import { classifyDomainIntent } from "./intent";
+import { stripUnmappedCitations, validateGrounding } from "./response-validation";
+import { sanitizeRetrievedContent } from "./security";
+import type { SiteProduct, SiteSeller } from "../site/site-lookup.server";
 import {
   applyAssistantTurn,
   buildAcknowledgementReply,
@@ -37,17 +41,24 @@ import {
 } from "./types";
 
 function sanitize(text: string): string {
-  return text
-    .replace(/[\u0000-\u0008\u000B-\u001F\u007F]/g, "")
-    .replace(/\s+\n/g, "\n")
-    .trim();
+  return (
+    text
+      // eslint-disable-next-line no-control-regex
+      .replace(/[\u0000-\u0008\u000B-\u001F\u007F]/g, "")
+      .replace(/\s+\n/g, "\n")
+      .trim()
+  );
 }
 
 // Detecta reações/cumprimentos que NÃO devem ir ao modelo de busca.
 // Só é aplicado quando NÃO há pergunta/ação pendente — caso contrário um "ok"
 // ou "pode" seria tratado como conversa fiada em vez de confirmação.
 function detectSmallTalk(raw: string): string | null {
-  const t = raw.trim().toLowerCase().replace(/[!.?…]+$/g, "").replace(/\s+/g, " ");
+  const t = raw
+    .trim()
+    .toLowerCase()
+    .replace(/[!.?…]+$/g, "")
+    .replace(/\s+/g, " ");
   if (!t || t.length > 60) return null;
 
   if (/^(oi|ol[aá]|e\s?a[ií]|opa|bom\s+dia|boa\s+tarde|boa\s+noite|hey|hi|hello)$/i.test(t)) {
@@ -56,18 +67,30 @@ function detectSmallTalk(raw: string): string | null {
   if (/^(obrigad[ao]|valeu|vlw|thanks|obg|grat[oa])$/i.test(t)) {
     return "Por nada! Se precisar de mais alguma coisa, é só chamar.";
   }
-  if (/^(ah\s+)?(que\s+)?(legal|bacana|[óo]timo|show|massa|top|bom|dahora|maneiro|interessante|bem\s+legal|muito\s+bom)$/i.test(t) ||
-      /^(nossa|uau|wow|caramba|s[eé]rio|puxa)$/i.test(t) ||
-      /^ah\s+(sim|ok|entendi|legal|bacana)$/i.test(t)) {
+  if (
+    /^(ah\s+)?(que\s+)?(legal|bacana|[óo]timo|show|massa|top|bom|dahora|maneiro|interessante|bem\s+legal|muito\s+bom)$/i.test(
+      t,
+    ) ||
+    /^(nossa|uau|wow|caramba|s[eé]rio|puxa)$/i.test(t) ||
+    /^ah\s+(sim|ok|entendi|legal|bacana)$/i.test(t)
+  ) {
     return "Que bom! 😊 Precisa de mais alguma coisa sobre os produtos DuKamp, manejo ou algum vendedor?";
   }
   if (/^(tchau|at[eé]\s+mais|falou|flw|adeus|bye)$/i.test(t)) {
     return "Até mais! Qualquer dúvida sobre DuKamp, é só voltar. 👋";
   }
-  if (/^(acho\s+que\s+n[aã]o|sei\s+l[aá]|n[aã]o\s+sei|hmm+|humm+|nop|nao\s+mesmo|agora\s+n[aã]o|depois|mais\s+tarde|de\s+boa|tranquilo|suave|nada)$/i.test(t)) {
+  if (
+    /^(acho\s+que\s+n[aã]o|sei\s+l[aá]|n[aã]o\s+sei|hmm+|humm+|nop|nao\s+mesmo|agora\s+n[aã]o|depois|mais\s+tarde|de\s+boa|tranquilo|suave|nada)$/i.test(
+      t,
+    )
+  ) {
     return "Sem problema! Se quiser retomar depois — produtos, manejo, vendedores ou preços — é só me chamar.";
   }
-  if (/^(toma\s+jeito+|para\s+com\s+isso|par[ae]\s+com\s+isso|melhora(\s+a[ií])?|se\s+ajeita|ajeita\s+isso|arruma\s+isso|ta\s+ruim|est[aá]\s+ruim|nao\s+ta\s+bom|n[aã]o\s+est[aá]\s+bom|que\s+isso|credo|aff+|eita)$/i.test(t)) {
+  if (
+    /^(toma\s+jeito+|para\s+com\s+isso|par[ae]\s+com\s+isso|melhora(\s+a[ií])?|se\s+ajeita|ajeita\s+isso|arruma\s+isso|ta\s+ruim|est[aá]\s+ruim|nao\s+ta\s+bom|n[aã]o\s+est[aá]\s+bom|que\s+isso|credo|aff+|eita)$/i.test(
+      t,
+    )
+  ) {
     return "Foi mal se não fui útil. 🙏 Me diz com outras palavras o que você quer saber — produto, preço, vendedor, unidade ou manejo — que eu te respondo direto.";
   }
   return null;
@@ -92,6 +115,7 @@ export interface ChatResult {
     estimated_tokens: number;
     current_topic: string | null;
     user_intent: string;
+    domain_intent: string;
     has_pending_action: boolean;
     last_assistant_question: string | null;
     model: string;
@@ -174,7 +198,8 @@ async function runTurn(
     : createConversationState(conversationId);
 
   const analysis = classifyUserIntent(text, stateBefore);
-  let state = applyUserTurn(stateBefore, text, analysis);
+  const domainIntent = classifyDomainIntent(text, history.length > 0);
+  const state = applyUserTurn(stateBefore, text, analysis);
   state.conversation_summary = updateSummary(state, windowed.dropped);
 
   const lastAssistant = [...history].reverse().find((m) => m.role === "assistant");
@@ -202,7 +227,6 @@ async function runTurn(
     };
   }
 
-
   // Small talk só quando não há nada pendente e a intenção não é continuidade.
   const continuity =
     stateBefore.awaiting_user_response ||
@@ -220,13 +244,27 @@ async function runTurn(
         reply: smallTalk,
         state: finalState,
         conversationId,
-        diagnostics: diag(conversationId, history, windowed, analysis, stateBefore, [], "small-talk"),
+        diagnostics: diag(
+          conversationId,
+          history,
+          windowed,
+          analysis,
+          stateBefore,
+          [],
+          "small-talk",
+        ),
       };
     }
   }
 
   // ---- Reescrita do texto de busca: mensagens curtas herdam o assunto anterior
-  const routerInput = resolveLookupText(text, analysis, stateBefore, lastUser?.content ?? null, lastAssistant?.content ?? null);
+  const routerInput = resolveLookupText(
+    text,
+    analysis,
+    stateBefore,
+    lastUser?.content ?? null,
+    lastAssistant?.content ?? null,
+  );
 
   let routed: Awaited<ReturnType<typeof routeQuery>>;
   try {
@@ -250,7 +288,15 @@ async function runTurn(
       reply: routed.text,
       state: finalState,
       conversationId,
-      diagnostics: diag(conversationId, history, windowed, analysis, stateBefore, ["sql"], "sql-direto"),
+      diagnostics: diag(
+        conversationId,
+        history,
+        windowed,
+        analysis,
+        stateBefore,
+        ["sql"],
+        "sql-direto",
+      ),
     };
   }
 
@@ -263,7 +309,9 @@ async function runTurn(
   const knowledgeScores: number[] = [];
 
   if (routed.kind === "structural") {
-    contextParts.push(`DADOS ESTRUTURADOS DO CATÁLOGO (use se ajudar o pedido atual):\n${routed.text}`);
+    contextParts.push(
+      `DADOS ESTRUTURADOS DO CATÁLOGO (use se ajudar o pedido atual):\n${routed.text}`,
+    );
     retrieved.push("sql");
     hasCatalogEvidence = true;
   }
@@ -281,11 +329,17 @@ async function runTurn(
   const lookupText = routerInput !== text ? `${routerInput} ${text}` : text;
 
   try {
-    const { siteIntentHints, searchSiteProducts, listSiteSellers, findSellersByRegion, listSiteCategories, siteBlock } =
-      await import("../site/site-lookup.server");
+    const {
+      siteIntentHints,
+      searchSiteProducts,
+      listSiteSellers,
+      findSellersByRegion,
+      listSiteCategories,
+      siteBlock,
+    } = await import("../site/site-lookup.server");
     const hints = siteIntentHints(lookupText);
     const productHint = routed.kind !== "structural" ? routed.productHint : undefined;
-    const lookup: { products?: any[]; sellers?: any[]; categories?: string[] } = {};
+    const lookup: { products?: SiteProduct[]; sellers?: SiteSeller[]; categories?: string[] } = {};
 
     if (hints.price || productHint) {
       const query = productHint ? productHint.product.official_name : lookupText;
@@ -326,7 +380,9 @@ async function runTurn(
       const good = matches.filter((m) => m.similarity >= 0.55);
       if (good.length > 0) {
         knowledgeScores.push(...good.map((match) => match.similarity));
-        const rag = good.map((m, i) => `[${i + 1}]\n${m.content}`).join("\n\n---\n\n");
+        const rag = good
+          .map((m, i) => `[TRECHO ${i + 1}]\n${sanitizeRetrievedContent(m.content)}`)
+          .join("\n\n---\n\n");
         contextParts.push(
           `TRECHOS TÉCNICOS DA BASE INTERNA (uso interno; NÃO cite fontes, arquivos nem porcentagens; use só o que servir ao pedido atual):\n\n${rag}`,
         );
@@ -352,6 +408,7 @@ async function runTurn(
     estimated_tokens: estimateMessagesTokens(conversation),
     current_topic: state.current_topic,
     user_intent: analysis.intent,
+    domain_intent: domainIntent.intent,
     has_pending_action: !!stateBefore.pending_action,
     awaiting_confirmation: stateBefore.awaiting_confirmation,
     retrieved: retrieved,
@@ -359,13 +416,21 @@ async function runTurn(
   });
 
   try {
-    const reply = await askPerplexity(conversation, {
+    let reply = await askPerplexity(conversation, {
       summary: renderSummaryForModel(state.conversation_summary),
       state: renderStateForModel(state),
       directive,
       sourcePolicy: sourceDirective(evidence),
       context: contextParts.length > 0 ? contextParts.join("\n\n") : null,
     });
+    const grounding = validateGrounding(reply, {
+      commercial: hasCatalogEvidence || hasSiteEvidence || hasMarketEvidence,
+      citations: 0,
+    });
+    if (grounding.issues.includes("unmapped_citation")) reply = stripUnmappedCitations(reply, 0);
+    if (grounding.issues.includes("unsupported_commercial_fact"))
+      reply =
+        "Não encontrei preço, estoque ou disponibilidade confirmados na base oficial. Posso localizar um vendedor DuKamp para confirmar essa informação.";
     // O resumo só é atualizado depois que a resposta ficou pronta.
     const finalState = applyAssistantTurn(state, reply);
     finalState.conversation_summary = updateSummary(finalState, windowed.dropped);
@@ -373,7 +438,15 @@ async function runTurn(
       reply,
       state: finalState,
       conversationId,
-      diagnostics: diag(conversationId, conversation, windowed, analysis, stateBefore, retrieved, "sonar"),
+      diagnostics: diag(
+        conversationId,
+        conversation,
+        windowed,
+        analysis,
+        stateBefore,
+        retrieved,
+        "sonar",
+      ),
     };
   } catch (err) {
     if (err instanceof PerplexityError) throw new ChatError(err.message, err.status);
@@ -405,11 +478,15 @@ function resolveLookupText(
 
   const prevBlob = `${lastAssistant ?? ""} ${lastUser ?? ""}`.toLowerCase();
   const prevTopic: "vendedores" | "categorias" | "produtos" | "unidades" | null =
-    /vendedor|vendedores|representante/.test(prevBlob) ? "vendedores"
-    : /unidade|filial|matriz|endere/.test(prevBlob) ? "unidades"
-    : /categoria|categorias/.test(prevBlob) ? "categorias"
-    : /produto|produtos|destaque/.test(prevBlob) ? "produtos"
-    : null;
+    /vendedor|vendedores|representante/.test(prevBlob)
+      ? "vendedores"
+      : /unidade|filial|matriz|endere/.test(prevBlob)
+        ? "unidades"
+        : /categoria|categorias/.test(prevBlob)
+          ? "categorias"
+          : /produto|produtos|destaque/.test(prevBlob)
+            ? "produtos"
+            : null;
 
   const isBareFollowUp =
     /^(quem\s+s[aã]o(\s+eles|\s+elas)?|quais\s+s[aã]o(\s+eles|\s+elas)?|me\s+diga(\s+os)?(\s+nomes?)?|diga(\s+os)?(\s+nomes?)?|os?\s+nomes?|liste(\s+eles|\s+elas)?|todos|todas)\s*[?.!]*$/i.test(
@@ -450,6 +527,7 @@ function diag(
     estimated_tokens: estimateMessagesTokens(messages),
     current_topic: stateBefore.current_topic,
     user_intent: analysis.intent,
+    domain_intent: classifyDomainIntent(messages.at(-1)?.content ?? "", messages.length > 1).intent,
     has_pending_action: !!stateBefore.pending_action,
     last_assistant_question: stateBefore.pending_question,
     model,

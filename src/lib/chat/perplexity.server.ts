@@ -6,8 +6,10 @@ import type { ChatMessage } from "./types";
 import { TPEC_SYSTEM_PROMPT } from "./system-prompt";
 
 const PERPLEXITY_URL = "https://api.perplexity.ai/chat/completions";
-const MODEL = "sonar";
 const TIMEOUT_MS = 30_000;
+export function perplexityModel(): string {
+  return process.env.PERPLEXITY_MODEL || "sonar";
+}
 
 export class PerplexityError extends Error {
   constructor(
@@ -96,7 +98,7 @@ export async function askPerplexity(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: MODEL,
+        model: perplexityModel(),
         messages,
         temperature: 0.3,
         max_tokens: 900,
