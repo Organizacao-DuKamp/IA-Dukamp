@@ -16,7 +16,6 @@ import { assessEvidence, sourceDirective } from "./source-policy";
 import { classifyDomainIntent } from "./intent";
 import { stripUnmappedCitations, validateGrounding } from "./response-validation";
 import { sanitizeRetrievedContent } from "./security";
-import type { SiteProduct, SiteSeller } from "../site/site-lookup.server";
 import {
   applyAssistantTurn,
   buildAcknowledgementReply,
@@ -329,33 +328,28 @@ async function runTurn(
   const lookupText = routerInput !== text ? `${routerInput} ${text}` : text;
 
   try {
-    const {
-      siteIntentHints,
-      searchSiteProducts,
-      listSiteSellers,
-      findSellersByRegion,
-      listSiteCategories,
-      siteBlock,
-    } = await import("../site/site-lookup.server");
-    const hints = siteIntentHints(lookupText);
+    const { executeCommercialLookup, querySiteProducts, siteBlock } =
+      await import("../site/site-lookup.server");
     const productHint = routed.kind !== "structural" ? routed.productHint : undefined;
-    const lookup: { products?: SiteProduct[]; sellers?: SiteSeller[]; categories?: string[] } = {};
-
-    if (hints.price || productHint) {
-      const query = productHint ? productHint.product.official_name : lookupText;
-      const prods = await searchSiteProducts(query, 6);
-      if (prods.length > 0) lookup.products = prods;
+    const commercial = await executeCommercialLookup(domainIntent, lookupText);
+    const lookup = commercial.lookup;
+    retrieved.push(...commercial.statuses);
+    if (productHint && !lookup.products) {
+      const result = await querySiteProducts(productHint.product.official_name, 6);
+      if (result.data.length) lookup.products = result.data;
+      retrieved.push(`site-products:${result.status}`);
     }
-    if (hints.seller) {
-      const byRegion = await findSellersByRegion(lookupText);
-      lookup.sellers = byRegion.length > 0 ? byRegion : await listSiteSellers(20);
-      if (byRegion.length > 0) {
+    if (lookup.sellers?.length) {
+      const normalizedLookup = lookupText.toLocaleLowerCase("pt-BR");
+      const matchedRegion = lookup.sellers.some(
+        (seller) =>
+          seller.region && normalizedLookup.includes(seller.region.toLocaleLowerCase("pt-BR")),
+      );
+      if (matchedRegion)
         contextParts.push(
           `INSTRUÇÃO DE ATENDIMENTO (obrigatório): O usuário informou uma cidade/região e demonstrou intenção de compra. Recomende de forma DIRETA **um vendedor específico** da lista de vendedores acima que atende a região citada (escolha o primeiro da lista da mesma região), informando NOME e WhatsApp/telefone, e justifique em 1 frase. NÃO mande o usuário ligar para a matriz. Termine perguntando se pode ajudar com algo mais.`,
         );
-      }
     }
-    if (hints.category) lookup.categories = await listSiteCategories();
     const block = siteBlock(lookup);
     if (block) {
       contextParts.push(block);
