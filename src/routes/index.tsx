@@ -95,7 +95,6 @@ function ChatPage() {
     adapter.resetSession();
   }
 
-
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
       <header className="border-b border-border bg-card/60 backdrop-blur">
@@ -108,9 +107,7 @@ function ChatPage() {
             />
             <div>
               <h1 className="font-display text-lg font-semibold tracking-[0.12em]">TPEC-IA</h1>
-              <p className="text-xs text-muted-foreground">
-                A inteligência artificial da Pecuária
-              </p>
+              <p className="text-xs text-muted-foreground">A inteligência artificial da Pecuária</p>
             </div>
           </div>
           <button
@@ -182,8 +179,8 @@ function ChatPage() {
           </div>
           <p className="mt-2 px-1 text-[11px] text-muted-foreground">
             Respostas geradas por IA. Para diagnósticos e prescrições, consulte um
-            médico-veterinário registrado no CRMV. Nada é salvo — o histórico existe
-            apenas nesta aba.
+            médico-veterinário registrado no CRMV. Nada é salvo — o histórico existe apenas nesta
+            aba.
           </p>
         </form>
       </main>
@@ -228,8 +225,8 @@ function EmptyState({ onPick }: { onPick: (s: string) => void }) {
       </div>
       <h2 className="text-xl font-semibold tracking-tight">Bem-vindo à TPEC-IA</h2>
       <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-        Sua assistente de IA em pecuária. Faça perguntas sobre manejo, nutrição,
-        pastagens, reprodução, sanidade e gestão da propriedade.
+        Sua assistente de IA em pecuária. Faça perguntas sobre manejo, nutrição, pastagens,
+        reprodução, sanidade e gestão da propriedade.
       </p>
       <div className="mt-6 grid gap-2 sm:grid-cols-2">
         {examples.map((ex) => (
@@ -249,7 +246,13 @@ function EmptyState({ onPick }: { onPick: (s: string) => void }) {
 
 function LeafIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      className={className}
+    >
       <path d="M11 20A7 7 0 0 1 4 13V6a2 2 0 0 1 2-2h7a7 7 0 0 1 7 7v0a7 7 0 0 1-7 7h-2Z" />
       <path d="M4 22c4-6 8-8 14-9" strokeLinecap="round" />
     </svg>
@@ -258,7 +261,13 @@ function LeafIcon({ className }: { className?: string }) {
 
 function SendIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      className={className}
+    >
       <path d="m22 2-7 20-4-9-9-4 20-7Z" strokeLinejoin="round" />
     </svg>
   );

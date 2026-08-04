@@ -1,45 +1,36 @@
-// Server function exposed to the WebChatAdapter (browser).
-// Future WhatsAppAdapter would live in src/routes/api/public/whatsapp.ts
-// and call the same handleIncoming() from core.server.ts.
+// Server function mantida por compatibilidade com integrações existentes.
+// A UI web usa /api/public/chat para preservar o status HTTP do backend.
 
 import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
-
-const RoleSchema = z.enum(["user", "assistant", "system"]);
-const MessageSchema = z.object({
-  role: RoleSchema,
-  // Assistant replies (fichas técnicas, listagens) podem ultrapassar 2000 chars
-  // quando voltam no histórico. Aceitamos até 8000 aqui; o core trunca depois.
-  content: z.string().min(1).max(8000),
-});
-
-const InputSchema = z.object({
-  sessionId: z.string().min(1).max(128),
-  conversationId: z.string().min(1).max(128).optional(),
-  clientMessageId: z.string().min(1).max(128).optional(),
-  text: z.string().min(1).max(2000),
-  history: z.array(MessageSchema).max(60).default([]),
-  // O estado é validado/normalizado no core (normalizeState).
-  state: z.unknown().optional(),
-});
+import { ChatInputSchema } from "./chat/input";
 
 export const sendChatMessage = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => InputSchema.parse(data))
+  .inputValidator((data: unknown) => ChatInputSchema.parse(data))
   .handler(async ({ data }) => {
-    const { handleIncoming, ChatError } = await import("./chat/core.server");
     try {
-      const result = await handleIncoming(data);
-      return {
-        reply: result.reply,
-        conversationId: result.conversationId,
-        // Serializado como string: o estado é opaco para o canal.
-        state: JSON.stringify(result.state),
-      };
-
-    } catch (err) {
-      if (err instanceof ChatError) {
-        return { error: err.message, status: err.status } as const;
+      // A decisão local/proxy ocorre antes de qualquer import do core privilegiado.
+      const { dispatchChat } = await import("./chat/backend.server");
+      const result = await dispatchChat(data);
+      if (result.status < 200 || result.status >= 300) {
+        const body = result.body as { error?: string; code?: string };
+        return {
+          error: body.error ?? "Erro ao consultar a IA.",
+          code: body.code,
+          status: result.status,
+        } as const;
       }
-      return { error: "Erro inesperado.", status: 500 } as const;
+      const body = result.body as {
+        reply: string;
+        conversationId: string;
+        state: unknown;
+      };
+      return {
+        reply: body.reply,
+        conversationId: body.conversationId,
+        state: JSON.stringify(body.state),
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Erro inesperado.";
+      return { error: message, status: 500 } as const;
     }
   });

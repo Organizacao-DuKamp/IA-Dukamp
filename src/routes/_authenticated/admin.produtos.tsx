@@ -18,7 +18,10 @@ export const Route = createFileRoute("/_authenticated/admin/produtos")({
       { title: "Produtos · TPEC-IA" },
       { name: "description", content: "Gestão estruturada do catálogo de produtos da Dukamp." },
       { property: "og:title", content: "Produtos · TPEC-IA" },
-      { property: "og:description", content: "Gestão estruturada do catálogo de produtos da Dukamp." },
+      {
+        property: "og:description",
+        content: "Gestão estruturada do catálogo de produtos da Dukamp.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -46,7 +49,14 @@ type Product = {
 };
 
 type Alias = { id: string; alias: string; alias_normalized: string; origin: string };
-type ReviewRow = { id: string; product_id: string | null; reason: string; details: unknown; status: string; created_at: string };
+type ReviewRow = {
+  id: string;
+  product_id: string | null;
+  reason: string;
+  details: unknown;
+  status: string;
+  created_at: string;
+};
 
 function AdminProducts() {
   const list = useServerFn(listProducts);
@@ -96,7 +106,9 @@ function AdminProducts() {
     if (!selected) return;
     try {
       setBusy(`save:${String(field)}`);
-      await update({ data: { id: selected.id, patch: { [field]: value } as Record<string, unknown> as never } });
+      await update({
+        data: { id: selected.id, patch: { [field]: value } as Record<string, unknown> as never },
+      });
       setSelected({ ...selected, [field]: value } as Product);
       await refresh();
     } catch (e) {
@@ -184,14 +196,21 @@ function AdminProducts() {
           <div>
             <h1 className="text-2xl font-bold">Produtos Dukamp</h1>
             <p className="text-sm text-muted-foreground">
-              Catálogo estruturado usado pelo chatbot para respostas diretas (contagem, listagem, especificações).
+              Catálogo estruturado usado pelo chatbot para respostas diretas (contagem, listagem,
+              especificações).
             </p>
           </div>
           <div className="flex gap-2 text-sm">
-            <Link to="/admin/cotacoes" className="rounded-md border border-border px-3 py-1.5 hover:bg-accent">
+            <Link
+              to="/admin/cotacoes"
+              className="rounded-md border border-border px-3 py-1.5 hover:bg-accent"
+            >
               Cotações
             </Link>
-            <Link to="/admin/base-conhecimento" className="rounded-md border border-border px-3 py-1.5 hover:bg-accent">
+            <Link
+              to="/admin/base-conhecimento"
+              className="rounded-md border border-border px-3 py-1.5 hover:bg-accent"
+            >
               Base de conhecimento
             </Link>
             <Link to="/" className="rounded-md border border-border px-3 py-1.5 hover:bg-accent">
@@ -203,7 +222,9 @@ function AdminProducts() {
         {err && (
           <div className="mb-4 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
             {err}
-            <button className="ml-3 underline" onClick={() => setErr(null)}>ok</button>
+            <button className="ml-3 underline" onClick={() => setErr(null)}>
+              ok
+            </button>
           </div>
         )}
 
@@ -279,30 +300,80 @@ function AdminProducts() {
 
           <section className="rounded-lg border border-border bg-card p-4">
             {!selected ? (
-              <p className="text-sm text-muted-foreground">Selecione um produto ao lado para editar.</p>
+              <p className="text-sm text-muted-foreground">
+                Selecione um produto ao lado para editar.
+              </p>
             ) : (
               <div className="space-y-4">
                 <div>
-                  <label className="text-xs font-semibold text-muted-foreground">Nome oficial</label>
+                  <label className="text-xs font-semibold text-muted-foreground">
+                    Nome oficial
+                  </label>
                   <input
                     key={`name-${selected.id}`}
                     defaultValue={selected.official_name}
-                    onBlur={(e) => e.target.value !== selected.official_name && saveField("official_name", e.target.value)}
+                    onBlur={(e) =>
+                      e.target.value !== selected.official_name &&
+                      saveField("official_name", e.target.value)
+                    }
                     className="mt-1 w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm"
                   />
                 </div>
                 <div className="grid grid-cols-3 gap-2">
-                  <TextField label="Espécie" value={selected.species} onSave={(v) => saveField("species", v)} />
-                  <TextField label="Categoria" value={selected.category} onSave={(v) => saveField("category", v)} />
-                  <TextField label="Fase" value={selected.animal_phase} onSave={(v) => saveField("animal_phase", v)} />
+                  <TextField
+                    label="Espécie"
+                    value={selected.species}
+                    onSave={(v) => saveField("species", v)}
+                  />
+                  <TextField
+                    label="Categoria"
+                    value={selected.category}
+                    onSave={(v) => saveField("category", v)}
+                  />
+                  <TextField
+                    label="Fase"
+                    value={selected.animal_phase}
+                    onSave={(v) => saveField("animal_phase", v)}
+                  />
                 </div>
-                <TextField label="Embalagem" value={selected.package_weight} onSave={(v) => saveField("package_weight", v)} />
-                <TextArea label="Indicação" value={selected.indication} onSave={(v) => saveField("indication", v)} />
-                <TextArea label="Consumo diário" value={selected.consumption} onSave={(v) => saveField("consumption", v)} />
-                <TextArea label="Modo de uso" value={selected.usage_instructions} onSave={(v) => saveField("usage_instructions", v)} />
-                <TextArea label="Composição" value={selected.composition} onSave={(v) => saveField("composition", v)} rows={4} />
-                <TextArea label="Níveis de garantia" value={selected.guarantee_levels} onSave={(v) => saveField("guarantee_levels", v)} rows={4} />
-                <TextArea label="Descrição" value={selected.description} onSave={(v) => saveField("description", v)} rows={3} />
+                <TextField
+                  label="Embalagem"
+                  value={selected.package_weight}
+                  onSave={(v) => saveField("package_weight", v)}
+                />
+                <TextArea
+                  label="Indicação"
+                  value={selected.indication}
+                  onSave={(v) => saveField("indication", v)}
+                />
+                <TextArea
+                  label="Consumo diário"
+                  value={selected.consumption}
+                  onSave={(v) => saveField("consumption", v)}
+                />
+                <TextArea
+                  label="Modo de uso"
+                  value={selected.usage_instructions}
+                  onSave={(v) => saveField("usage_instructions", v)}
+                />
+                <TextArea
+                  label="Composição"
+                  value={selected.composition}
+                  onSave={(v) => saveField("composition", v)}
+                  rows={4}
+                />
+                <TextArea
+                  label="Níveis de garantia"
+                  value={selected.guarantee_levels}
+                  onSave={(v) => saveField("guarantee_levels", v)}
+                  rows={4}
+                />
+                <TextArea
+                  label="Descrição"
+                  value={selected.description}
+                  onSave={(v) => saveField("description", v)}
+                  rows={3}
+                />
 
                 <div className="flex items-center gap-4 border-t border-border pt-3 text-sm">
                   <label className="flex items-center gap-2">
@@ -345,7 +416,10 @@ function AdminProducts() {
                   </div>
                   <ul className="flex flex-wrap gap-1.5">
                     {aliases.map((a) => (
-                      <li key={a.id} className="flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-xs">
+                      <li
+                        key={a.id}
+                        className="flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-xs"
+                      >
                         <span>{a.alias}</span>
                         <span className="text-muted-foreground">({a.origin})</span>
                         <button
@@ -357,7 +431,9 @@ function AdminProducts() {
                         </button>
                       </li>
                     ))}
-                    {aliases.length === 0 && <li className="text-xs text-muted-foreground">Nenhum apelido.</li>}
+                    {aliases.length === 0 && (
+                      <li className="text-xs text-muted-foreground">Nenhum apelido.</li>
+                    )}
                   </ul>
                 </div>
               </div>
@@ -369,7 +445,8 @@ function AdminProducts() {
           <div className="border-b border-border p-3">
             <h2 className="text-sm font-semibold">Fila de revisão ({reviews.length})</h2>
             <p className="text-xs text-muted-foreground">
-              Divergências detectadas durante a extração (ex: mesma composição em dois arquivos com nomes diferentes).
+              Divergências detectadas durante a extração (ex: mesma composição em dois arquivos com
+              nomes diferentes).
             </p>
           </div>
           <div className="max-h-[40vh] overflow-auto">
@@ -386,7 +463,9 @@ function AdminProducts() {
                   <tr key={r.id} className="border-b border-border/50">
                     <td className="p-2 font-medium">{r.reason}</td>
                     <td className="p-2 text-xs text-muted-foreground">
-                      <pre className="max-w-xl whitespace-pre-wrap break-words">{JSON.stringify(r.details, null, 2)}</pre>
+                      <pre className="max-w-xl whitespace-pre-wrap break-words">
+                        {JSON.stringify(r.details, null, 2)}
+                      </pre>
                     </td>
                     <td className="p-2">
                       <div className="flex gap-1">
@@ -424,7 +503,15 @@ function AdminProducts() {
   );
 }
 
-function TextField({ label, value, onSave }: { label: string; value: string | null; onSave: (v: string | null) => void }) {
+function TextField({
+  label,
+  value,
+  onSave,
+}: {
+  label: string;
+  value: string | null;
+  onSave: (v: string | null) => void;
+}) {
   return (
     <div>
       <label className="text-xs font-semibold text-muted-foreground">{label}</label>
@@ -441,7 +528,17 @@ function TextField({ label, value, onSave }: { label: string; value: string | nu
   );
 }
 
-function TextArea({ label, value, onSave, rows = 2 }: { label: string; value: string | null; onSave: (v: string | null) => void; rows?: number }) {
+function TextArea({
+  label,
+  value,
+  onSave,
+  rows = 2,
+}: {
+  label: string;
+  value: string | null;
+  onSave: (v: string | null) => void;
+  rows?: number;
+}) {
   return (
     <div>
       <label className="text-xs font-semibold text-muted-foreground">{label}</label>

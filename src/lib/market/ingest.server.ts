@@ -73,7 +73,9 @@ function pct(now: number, before: number): number | null {
 }
 
 /** Grava/atualiza cotações preenchendo fonte, slug e variações calculadas. */
-export async function upsertQuotes(inputs: QuoteInput[]): Promise<{ saved: number; skipped: string[] }> {
+export async function upsertQuotes(
+  inputs: QuoteInput[],
+): Promise<{ saved: number; skipped: string[] }> {
   const db = await admin();
   const skipped: string[] = [];
   const rows: Partial<MarketQuote>[] = [];
@@ -114,11 +116,16 @@ export async function upsertQuotes(inputs: QuoteInput[]): Promise<{ saved: numbe
         let bd = Infinity;
         for (const h of list) {
           const d = Math.abs(new Date(h.reference_date).getTime() - target);
-          if (d < bd) { bd = d; best = h; }
+          if (d < bd) {
+            bd = d;
+            best = h;
+          }
         }
         return best && bd <= (days * 86400_000) / 2 + 3 * 86400_000 ? Number(best.price) : null;
       };
-      const p1 = at(1), p7 = at(7), p30 = at(30);
+      const p1 = at(1),
+        p7 = at(7),
+        p30 = at(30);
       if (vd == null && p1) vd = pct(q.price, p1);
       if (vw == null && p7) vw = pct(q.price, p7);
       if (vm == null && p30) vm = pct(q.price, p30);
@@ -172,7 +179,8 @@ function isoDate(d: Date) {
 async function collectPtax(days = 10): Promise<QuoteInput[]> {
   const end = new Date();
   const start = new Date(Date.now() - days * 86400_000);
-  const f = (d: Date) => `${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}-${d.getFullYear()}`;
+  const f = (d: Date) =>
+    `${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}-${d.getFullYear()}`;
   const url =
     `https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/CotacaoDolarPeriodo(dataInicial=@i,dataFinalCotacao=@f)` +
     `?@i='${f(start)}'&@f='${f(end)}'&$format=json&$select=cotacaoVenda,dataHoraCotacao`;
@@ -188,7 +196,9 @@ async function collectPtax(days = 10): Promise<QuoteInput[]> {
     state: null,
     quote_type: "cambio",
     reference_date: String(v.dataHoraCotacao).slice(0, 10),
-    source_updated_at: new Date(String(v.dataHoraCotacao).replace(" ", "T") + "-03:00").toISOString(),
+    source_updated_at: new Date(
+      String(v.dataHoraCotacao).replace(" ", "T") + "-03:00",
+    ).toISOString(),
     source_code: "bcb_ptax",
     notes: "Dólar comercial, PTAX de venda (fechamento oficial do Banco Central).",
     raw: v,
@@ -234,8 +244,14 @@ export interface CollectorResult {
 export async function runCollectors(): Promise<CollectorResult[]> {
   const jobs: Array<{ name: string; run: () => Promise<QuoteInput[]> }> = [
     { name: "BCB PTAX (dólar)", run: () => collectPtax(15) },
-    { name: "BCB Selic meta", run: () => collectBcbSeries(432, "Selic meta", "% a.a.", "bcb_selic", 12) },
-    { name: "IBGE IPCA (BCB/SGS)", run: () => collectBcbSeries(433, "IPCA mensal", "% a.m.", "bcb_sgs", 12) },
+    {
+      name: "BCB Selic meta",
+      run: () => collectBcbSeries(432, "Selic meta", "% a.a.", "bcb_selic", 12),
+    },
+    {
+      name: "IBGE IPCA (BCB/SGS)",
+      run: () => collectBcbSeries(433, "IPCA mensal", "% a.m.", "bcb_sgs", 12),
+    },
   ];
   const out: CollectorResult[] = [];
   for (const job of jobs) {
@@ -244,7 +260,11 @@ export async function runCollectors(): Promise<CollectorResult[]> {
       const { saved } = await upsertQuotes(quotes);
       out.push({ collector: job.name, saved });
     } catch (e) {
-      out.push({ collector: job.name, saved: 0, error: e instanceof Error ? e.message : String(e) });
+      out.push({
+        collector: job.name,
+        saved: 0,
+        error: e instanceof Error ? e.message : String(e),
+      });
     }
   }
   return out;

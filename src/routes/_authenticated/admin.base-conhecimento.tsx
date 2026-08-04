@@ -36,7 +36,10 @@ type Doc = {
   error_message: string | null;
   updated_at: string;
 };
-type Stats = { docs: { aguardando: number; processando: number; concluido: number; erro: number; total: number }; chunks: number };
+type Stats = {
+  docs: { aguardando: number; processando: number; concluido: number; erro: number; total: number };
+  chunks: number;
+};
 
 function AdminKnowledgeBase() {
   const navigate = useNavigate();
@@ -101,9 +104,7 @@ function AdminKnowledgeBase() {
           break;
         }
         setLog((l) => [
-          r.error
-            ? `❌ ${r.title}: ${r.error}`
-            : `✔ ${r.title} — ${r.chunks} trechos`,
+          r.error ? `❌ ${r.title}: ${r.error}` : `✔ ${r.title} — ${r.chunks} trechos`,
           ...l,
         ]);
         await refresh();
@@ -150,7 +151,6 @@ function AdminKnowledgeBase() {
     }
   }
 
-
   const s = statData?.docs;
 
   return (
@@ -160,10 +160,20 @@ function AdminKnowledgeBase() {
           <div>
             <h1 className="text-lg font-semibold">Base de conhecimento</h1>
             <p className="text-xs text-muted-foreground">
-              Gestão RAG da TPEC-IA · <Link to="/admin/cotacoes" className="rounded-md border border-border px-3 py-1.5 hover:bg-accent">
-              Cotações
-            </Link>
-            <Link to="/admin/produtos" className="underline">Produtos</Link> · <Link to="/" className="underline">voltar ao chat</Link>
+              Gestão RAG da TPEC-IA ·{" "}
+              <Link
+                to="/admin/cotacoes"
+                className="rounded-md border border-border px-3 py-1.5 hover:bg-accent"
+              >
+                Cotações
+              </Link>
+              <Link to="/admin/produtos" className="underline">
+                Produtos
+              </Link>{" "}
+              ·{" "}
+              <Link to="/" className="underline">
+                voltar ao chat
+              </Link>
             </p>
           </div>
           <button
@@ -201,9 +211,9 @@ function AdminKnowledgeBase() {
           <div>
             <h2 className="text-sm font-semibold">Atualizar via ZIP</h2>
             <p className="text-xs text-muted-foreground">
-              Envie o <code>base-conhecimento.zip</code> atualizado. O sistema descompacta,
-              preserva a estrutura de pastas como categoria/subcategoria e enfileira os
-              documentos para reprocessamento. Aceita arquivos <code>.txt</code> e <code>.md</code>.
+              Envie o <code>base-conhecimento.zip</code> atualizado. O sistema descompacta, preserva
+              a estrutura de pastas como categoria/subcategoria e enfileira os documentos para
+              reprocessamento. Aceita arquivos <code>.txt</code> e <code>.md</code>.
             </p>
           </div>
           <label className="flex items-center gap-2 text-xs">
@@ -254,7 +264,6 @@ function AdminKnowledgeBase() {
             Atualizar
           </button>
         </div>
-
 
         {log.length > 0 && (
           <div className="max-h-40 overflow-y-auto rounded-md border border-border bg-card p-3 text-xs">
@@ -322,9 +331,21 @@ function AdminKnowledgeBase() {
   );
 }
 
-function Stat({ label, value, tone }: { label: string; value: number; tone?: "success" | "danger" }) {
+function Stat({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone?: "success" | "danger";
+}) {
   const color =
-    tone === "success" ? "text-primary" : tone === "danger" ? "text-destructive" : "text-foreground";
+    tone === "success"
+      ? "text-primary"
+      : tone === "danger"
+        ? "text-destructive"
+        : "text-foreground";
   return (
     <div className="rounded-lg border border-border bg-card p-3">
       <div className="text-[11px] uppercase text-muted-foreground">{label}</div>
@@ -341,7 +362,9 @@ function StatusBadge({ status }: { status: Doc["status"] }) {
     erro: "bg-destructive/20 text-destructive",
   };
   return (
-    <span className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-medium ${map[status]}`}>
+    <span
+      className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-medium ${map[status]}`}
+    >
       {status}
     </span>
   );

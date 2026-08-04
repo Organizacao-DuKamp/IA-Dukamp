@@ -31,11 +31,7 @@ export type UserIntent =
 export type ConversationStatus = "idle" | "active";
 
 export type AssistantIntent =
-  | "request_confirmation"
-  | "request_data"
-  | "offer_options"
-  | "answer"
-  | "none";
+  "request_confirmation" | "request_data" | "offer_options" | "answer" | "none";
 
 export interface ConversationSummary {
   user_goal: string;
@@ -139,7 +135,8 @@ export function normalizeState(
     pending_action: clampOrNull(raw.pending_action, 120),
     current_topic: clampOrNull(raw.current_topic, 200),
     user_goal: clampOrNull(raw.user_goal, 300),
-    turn_count: typeof raw.turn_count === "number" ? Math.max(0, Math.min(raw.turn_count, 9999)) : 0,
+    turn_count:
+      typeof raw.turn_count === "number" ? Math.max(0, Math.min(raw.turn_count, 9999)) : 0,
     version: typeof raw.version === "number" ? raw.version : 0,
     conversation_status: raw.conversation_status === "active" ? "active" : "idle",
     awaiting_user_request: raw.awaiting_user_request !== false,
@@ -175,8 +172,10 @@ function normalizeSummary(v: unknown): ConversationSummary {
     pending_questions: arr(s.pending_questions, 5),
     important_entities: arr(s.important_entities),
     technical_context: arr(s.technical_context),
-    last_completed_action: typeof s.last_completed_action === "string" ? s.last_completed_action.slice(0, 160) : "",
-    next_expected_action: typeof s.next_expected_action === "string" ? s.next_expected_action.slice(0, 160) : "",
+    last_completed_action:
+      typeof s.last_completed_action === "string" ? s.last_completed_action.slice(0, 160) : "",
+    next_expected_action:
+      typeof s.next_expected_action === "string" ? s.next_expected_action.slice(0, 160) : "",
   };
 }
 
@@ -196,7 +195,8 @@ const CORRECTION_RE =
 const CALC_RE =
   /\b(calcul[ae]|calcular|quanto\s+(de|gasta|preciso|vou|d[áa])|quantos?\s+(sacos?|kg|quilos?)|dimension|estimar|estimativa|consumo\s+total|dieta\s+para)\b/i;
 
-const COMPARE_RE = /\b(compar[ae]|compara[çc][ãa]o|diferen[çc]a\s+entre|melhor\s+entre|x\s+vs|versus)\b/i;
+const COMPARE_RE =
+  /\b(compar[ae]|compara[çc][ãa]o|diferen[çc]a\s+entre|melhor\s+entre|x\s+vs|versus)\b/i;
 
 const OPTION_RE =
   /\b(o|a)\s+(primeir[oa]|segund[oa]|terceir[oa]|quart[oa]|[úu]ltim[oa])\b|\bop[çc][ãa]o\s+(\d|um|dois|tr[êe]s)\b|\bn[úu]mero\s+\d\b/i;
@@ -217,21 +217,101 @@ const TOPIC_CHANGE_RE =
  * pergunta/ação pendente e quando não sobra nenhum conteúdo novo na mensagem.
  */
 const ACK_TOKENS = new Set([
-  "ah", "aah", "aa", "oh", "ooh", "opa", "pois", "então", "entao", "e", "é", "eh",
-  "muito", "mto", "bem", "bastante", "que", "tudo", "isso", "mesmo", "assim",
-  "sim", "ok", "okay", "okey", "blz", "beleza", "certo", "correto", "exato",
-  "exatamente", "entendi", "entendido", "entendida", "entendo", "compreendi",
-  "saquei", "ciente", "agora", "faz", "sentido", "verdade", "claro", "uhum",
-  "aham", "ahan", "hm", "hmm", "hum", "humm", "legal", "bacana", "interessante",
-  "show", "massa", "top", "ótimo", "otimo", "perfeito", "boa", "bom", "joia",
-  "jóia", "maneiro", "dahora", "demais", "tranquilo", "suave", "nossa", "uau",
-  "wow", "caramba", "puxa", "eita", "valeu", "vlw", "obrigado", "obrigada",
-  "obg", "grato", "grata", "thanks", "obrigadão", "obrigadao", "ta", "tá",
-  "tudo bem", "belezinha", "ss", "ahh",
+  "ah",
+  "aah",
+  "aa",
+  "oh",
+  "ooh",
+  "opa",
+  "pois",
+  "então",
+  "entao",
+  "e",
+  "é",
+  "eh",
+  "muito",
+  "mto",
+  "bem",
+  "bastante",
+  "que",
+  "tudo",
+  "isso",
+  "mesmo",
+  "assim",
+  "sim",
+  "ok",
+  "okay",
+  "okey",
+  "blz",
+  "beleza",
+  "certo",
+  "correto",
+  "exato",
+  "exatamente",
+  "entendi",
+  "entendido",
+  "entendida",
+  "entendo",
+  "compreendi",
+  "saquei",
+  "ciente",
+  "agora",
+  "faz",
+  "sentido",
+  "verdade",
+  "claro",
+  "uhum",
+  "aham",
+  "ahan",
+  "hm",
+  "hmm",
+  "hum",
+  "humm",
+  "legal",
+  "bacana",
+  "interessante",
+  "show",
+  "massa",
+  "top",
+  "ótimo",
+  "otimo",
+  "perfeito",
+  "boa",
+  "bom",
+  "joia",
+  "jóia",
+  "maneiro",
+  "dahora",
+  "demais",
+  "tranquilo",
+  "suave",
+  "nossa",
+  "uau",
+  "wow",
+  "caramba",
+  "puxa",
+  "eita",
+  "valeu",
+  "vlw",
+  "obrigado",
+  "obrigada",
+  "obg",
+  "grato",
+  "grata",
+  "thanks",
+  "obrigadão",
+  "obrigadao",
+  "ta",
+  "tá",
+  "tudo bem",
+  "belezinha",
+  "ss",
+  "ahh",
 ]);
 
 const THANKS_RE = /\b(valeu|vlw|obrigad\w*|obg|grat[oa]|thanks|brigad\w*)\b/i;
-const CLOSING_RE = /\b(tchau|at[ée]\s+mais|falou|flw|adeus|bye|por\s+hoje\s+[ée]\s+s[óo]|era\s+s[óo]\s+isso)\b/i;
+const CLOSING_RE =
+  /\b(tchau|at[ée]\s+mais|falou|flw|adeus|bye|por\s+hoje\s+[ée]\s+s[óo]|era\s+s[óo]\s+isso)\b/i;
 
 /** "hummmm", "hmmm", "aaah" → forma canônica curta. */
 function canonicalToken(w: string): string {
@@ -283,22 +363,41 @@ export function analyzeAcknowledgement(text: string): AckAnalysis {
 }
 
 const ORDINALS: Record<string, number> = {
-  primeiro: 1, primeira: 1, um: 1, "1": 1,
-  segundo: 2, segunda: 2, dois: 2, "2": 2,
-  terceiro: 3, terceira: 3, "três": 3, tres: 3, "3": 3,
-  quarto: 4, quarta: 4, quatro: 4, "4": 4,
+  primeiro: 1,
+  primeira: 1,
+  um: 1,
+  "1": 1,
+  segundo: 2,
+  segunda: 2,
+  dois: 2,
+  "2": 2,
+  terceiro: 3,
+  terceira: 3,
+  três: 3,
+  tres: 3,
+  "3": 3,
+  quarto: 4,
+  quarta: 4,
+  quatro: 4,
+  "4": 4,
 };
 
 function stripPunct(t: string): string {
-  return t.trim().toLowerCase().replace(/[!.?…,;]+$/g, "").replace(/\s+/g, " ");
+  return t
+    .trim()
+    .toLowerCase()
+    .replace(/[!.?…,;]+$/g, "")
+    .replace(/\s+/g, " ");
 }
 
 export function isAffirmative(text: string): boolean {
   const t = stripPunct(text);
   if (AFFIRMATIVE_RE.test(t)) return true;
   // "sim, pode fazer", "isso mesmo, o segundo", "pode sim por favor"
-  return /^(sim|isso|claro|pode|ok|beleza|correto|exato|confirmo|perfeito|certo)\b/i.test(t) &&
-    !NEGATIVE_RE.test(t.split(/[, ]/)[0] ?? "");
+  return (
+    /^(sim|isso|claro|pode|ok|beleza|correto|exato|confirmo|perfeito|certo)\b/i.test(t) &&
+    !NEGATIVE_RE.test(t.split(/[, ]/)[0] ?? "")
+  );
 }
 
 export function isNegative(text: string): boolean {
@@ -317,10 +416,16 @@ export function extractDomainData(text: string): Record<string, number> {
     const v = Number.parseFloat(m[1]);
     return Number.isFinite(v) ? v : null;
   };
-  const animais = num(/(\d+(?:\.\d+)?)\s*(?:cabe[çc]as?|animais|animal|bois?|vacas?|novilhas?|bezerros?|garrotes?|ovelhas?|cavalos?)\b/);
+  const animais = num(
+    /(\d+(?:\.\d+)?)\s*(?:cabe[çc]as?|animais|animal|bois?|vacas?|novilhas?|bezerros?|garrotes?|ovelhas?|cavalos?)\b/,
+  );
   if (animais !== null) out.numero_animais = animais;
-  const peso = num(/(\d+(?:\.\d+)?)\s*(?:kg|quilos?|arrobas?\s+de\s+peso)?\s*(?:de\s+)?(?:peso(?:\s+m[ée]dio)?)?\b(?=[^\d]*$|.*\bkg\b)/);
-  const pesoExpl = num(/(?:peso(?:\s+m[ée]dio)?(?:\s+de)?\s*|com\s+|uns?\s+|cerca\s+de\s+|aproximadamente\s+)?(\d+(?:\.\d+)?)\s*(?:kg|quilos?)\b/);
+  const peso = num(
+    /(\d+(?:\.\d+)?)\s*(?:kg|quilos?|arrobas?\s+de\s+peso)?\s*(?:de\s+)?(?:peso(?:\s+m[ée]dio)?)?\b(?=[^\d]*$|.*\bkg\b)/,
+  );
+  const pesoExpl = num(
+    /(?:peso(?:\s+m[ée]dio)?(?:\s+de)?\s*|com\s+|uns?\s+|cerca\s+de\s+|aproximadamente\s+)?(\d+(?:\.\d+)?)\s*(?:kg|quilos?)\b/,
+  );
   if (pesoExpl !== null) out.peso_medio_kg = pesoExpl;
   else if (peso !== null && /kg|quilo/.test(t)) out.peso_medio_kg = peso;
   const dias = num(/(\d+(?:\.\d+)?)\s*dias?\b/);
@@ -356,7 +461,9 @@ export function classifyUserIntent(text: string, state: ConversationState): Inte
   let selectedOption: number | null = null;
   const om = raw.match(OPTION_RE);
   if (om) {
-    const word = (om[0].match(/primeir[oa]|segund[oa]|terceir[oa]|quart[oa]|[úu]ltim[oa]|\d/i)?.[0] ?? "").toLowerCase();
+    const word = (
+      om[0].match(/primeir[oa]|segund[oa]|terceir[oa]|quart[oa]|[úu]ltim[oa]|\d/i)?.[0] ?? ""
+    ).toLowerCase();
     if (/[úu]ltim/.test(word)) selectedOption = state.offered_options.length || null;
     else selectedOption = ORDINALS[word] ?? (Number.isFinite(Number(word)) ? Number(word) : null);
   }
@@ -377,7 +484,6 @@ export function classifyUserIntent(text: string, state: ConversationState): Inte
   else if (hasPending && selectedOption !== null) intent = "selecao_de_opcao";
   // Sem pendência explícita, reação curta é reconhecimento — nunca ordem de continuar.
   else if (!hasPending && ack.isAcknowledgement) intent = "user_acknowledgement";
-  else if (selectedOption !== null) intent = "selecao_de_opcao";
   else if (TOPIC_CHANGE_RE.test(raw)) intent = "mudanca_de_assunto";
   else if (COMPARE_RE.test(raw)) intent = "pedido_de_comparacao";
   else if (CALC_RE.test(raw)) intent = "pedido_de_calculo";
@@ -386,7 +492,6 @@ export function classifyUserIntent(text: string, state: ConversationState): Inte
     (isShort || state.expected_response_type === "data" || state.awaiting_user_response)
   )
     intent = "fornecimento_de_dado";
-  else if (hasPending && (affirmative || negative)) intent = "resposta_a_confirmacao";
   else if (isShort && state.current_topic) intent = "continuacao";
 
   const isAck = intent === "user_acknowledgement";
@@ -458,7 +563,8 @@ export function analyzeAssistantReply(reply: string): {
 /** Deriva um rótulo de ação pendente a partir da pergunta feita pela IA. */
 export function derivePendingAction(question: string | null): string | null {
   if (!question) return null;
-  if (/calcul|consumo|quantidade|dieta|dimension/i.test(question)) return "calcular_quantidade_suplemento";
+  if (/calcul|consumo|quantidade|dieta|dimension/i.test(question))
+    return "calcular_quantidade_suplemento";
   if (/vendedor|contato|whats/i.test(question)) return "indicar_vendedor";
   if (/cota[çc][ãa]o|pre[çc]o|valor/i.test(question)) return "consultar_cotacao";
   if (/compar/i.test(question)) return "comparar_produtos";
@@ -471,8 +577,14 @@ export function derivePendingAction(question: string | null): string | null {
 // ---------------------------------------------------------------------------
 
 const TOPIC_PATTERNS: Array<[RegExp, string]> = [
-  [/proteinad|suplement|mineral|ra[çc][ãa]o|n[úu]cleo|concentrado|creep/i, "suplementação e nutrição animal"],
-  [/cota[çc][ãa]o|pre[çc]o|arroba|saca|mercado|d[óo]lar|boi\s+gordo/i, "cotações e preços de mercado"],
+  [
+    /proteinad|suplement|mineral|ra[çc][ãa]o|n[úu]cleo|concentrado|creep/i,
+    "suplementação e nutrição animal",
+  ],
+  [
+    /cota[çc][ãa]o|pre[çc]o|arroba|saca|mercado|d[óo]lar|boi\s+gordo/i,
+    "cotações e preços de mercado",
+  ],
   [/vendedor|representante|contato|whats/i, "vendedores e atendimento comercial"],
   [/unidade|filial|matriz|endere[çc]o|cnpj/i, "unidades da DuKamp"],
   [/pasto|pastagem|lota[çc][ãa]o|brachiaria|capim/i, "pastagens e lotação"],
@@ -676,18 +788,21 @@ export function applyAssistantTurn(
     next.awaiting_confirmation = false;
     next.expected_response_type = null;
     next.confirmation_options = [];
-    if (state.pending_action) next.conversation_summary.last_completed_action = state.pending_action;
+    if (state.pending_action)
+      next.conversation_summary.last_completed_action = state.pending_action;
     next.pending_action = null;
     next.pending_payload = null;
   }
 
-  next.conversation_summary.pending_questions = next.pending_question ? [next.pending_question] : [];
+  next.conversation_summary.pending_questions = next.pending_question
+    ? [next.pending_question]
+    : [];
   next.conversation_summary.next_expected_action =
     next.expected_response_type === "confirmation"
       ? "aguardar confirmação do usuário e executar a ação pendente"
       : next.expected_response_type === "data"
         ? "aguardar o dado solicitado"
-        : next.pending_action ?? "";
+        : (next.pending_action ?? "");
   return next;
 }
 
@@ -731,16 +846,25 @@ export function updateSummary(
     );
   }
   for (const c of state.corrections.slice(-5)) {
-    s.known_facts = dedupePush(s.known_facts, `correção: ${c.field} passou de ${c.from} para ${c.to}`, 15);
+    s.known_facts = dedupePush(
+      s.known_facts,
+      `correção: ${c.field} passou de ${c.from} para ${c.to}`,
+      15,
+    );
   }
 
   for (const m of droppedMessages) {
     if (m.role !== "user") continue;
     const data = extractDomainData(m.content);
-    for (const [k, v] of Object.entries(data)) s.known_facts = dedupePush(s.known_facts, `${k}=${v}`, 15);
-    const ent = m.content.match(/\b(DUKAMP[\w\s/-]{0,24}|BABYKAMP|ADEKAMP|HORSE\s+POWER|FERTIKAMP|BEEFKAMP)\b/i);
+    for (const [k, v] of Object.entries(data))
+      s.known_facts = dedupePush(s.known_facts, `${k}=${v}`, 15);
+    const ent = m.content.match(
+      /\b(DUKAMP[\w\s/-]{0,24}|BABYKAMP|ADEKAMP|HORSE\s+POWER|FERTIKAMP|BEEFKAMP)\b/i,
+    );
     if (ent) s.important_entities = dedupePush(s.important_entities, ent[0].trim(), 12);
-    const loc = m.content.match(/\b(?:em|no|na)\s+([A-ZÁ-Ú][a-zá-ú]+(?:\s+[A-ZÁ-Ú]?[a-zá-ú]+){0,2})/);
+    const loc = m.content.match(
+      /\b(?:em|no|na)\s+([A-ZÁ-Ú][a-zá-ú]+(?:\s+[A-ZÁ-Ú]?[a-zá-ú]+){0,2})/,
+    );
     if (loc) s.important_entities = dedupePush(s.important_entities, `localidade: ${loc[1]}`, 12);
   }
 
@@ -884,7 +1008,9 @@ export function buildInterpretationDirective(
       `Cancele/revise essa ação. Se o usuário indicou um novo valor na mesma mensagem, use o novo valor e siga com a ação corrigida.`,
     );
   } else if (analysis.intent === "cancelamento") {
-    lines.push(`O usuário cancelou a ação pendente. Confirme o cancelamento em uma frase e pergunte como seguir.`);
+    lines.push(
+      `O usuário cancelou a ação pendente. Confirme o cancelamento em uma frase e pergunte como seguir.`,
+    );
   } else if (analysis.intent === "selecao_de_opcao" && analysis.selectedOption) {
     const picked = stateBefore.offered_options[analysis.selectedOption - 1];
     lines.push(
@@ -942,6 +1068,10 @@ const ACK_PLAIN_REPLIES = [
  * (varia pelo turno, para não soar robótica) e sem qualquer conteúdo novo.
  */
 export function buildAcknowledgementReply(ack: AckAnalysis, turn: number): string {
-  const pool = ack.thanks ? ACK_THANKS_REPLIES : ack.closing ? ACK_CLOSING_REPLIES : ACK_PLAIN_REPLIES;
+  const pool = ack.thanks
+    ? ACK_THANKS_REPLIES
+    : ack.closing
+      ? ACK_CLOSING_REPLIES
+      : ACK_PLAIN_REPLIES;
   return pool[Math.abs(turn) % pool.length];
 }

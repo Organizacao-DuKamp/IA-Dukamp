@@ -58,8 +58,12 @@ export interface LivestockResolution {
 
 let _cats: LivestockCategoryRow[] | null = null;
 let _places: LivestockPlaceRow[] | null = null;
-let _links: Array<{ origem_slug: string; praca_slug: string; ordem: number; distancia_km: number | null }> | null =
-  null;
+let _links: Array<{
+  origem_slug: string;
+  praca_slug: string;
+  ordem: number;
+  distancia_km: number | null;
+}> | null = null;
 
 export async function loadCategories(): Promise<LivestockCategoryRow[]> {
   if (_cats) return _cats;
@@ -128,9 +132,7 @@ const SEAL_LABELS: Record<SealLevel, string> = {
  * Percorre a cascata de localidades e devolve a melhor cotação disponível,
  * sempre acompanhada do selo de abrangência e do controle de frescor.
  */
-export async function resolveLivestockQuote(
-  query: LivestockQuery,
-): Promise<LivestockResolution> {
+export async function resolveLivestockQuote(query: LivestockQuery): Promise<LivestockResolution> {
   const { category, place, uf, unit } = query;
   const maxAge = category.max_idade_dias ?? 10;
   const places = await loadPlaces();
@@ -172,10 +174,7 @@ export async function resolveLivestockQuote(
         const dist =
           link.distancia_km ??
           (place.lat && place.lon && target?.lat && target?.lon
-            ? distanceKm(
-                { lat: place.lat, lon: place.lon },
-                { lat: target.lat, lon: target.lon },
-              )
+            ? distanceKm({ lat: place.lat, lon: place.lon }, { lat: target.lat, lon: target.lon })
             : null);
         return build(
           q,
@@ -190,7 +189,9 @@ export async function resolveLivestockQuote(
     // 2b) fallback geográfico: praça pecuária mais próxima por distância
     if (place.lat != null && place.lon != null) {
       const ranked = places
-        .filter((p) => p.slug !== place.slug && p.is_praca_pecuaria && p.lat != null && p.lon != null)
+        .filter(
+          (p) => p.slug !== place.slug && p.is_praca_pecuaria && p.lat != null && p.lon != null,
+        )
         .map((p) => ({
           p,
           d: distanceKm({ lat: place.lat!, lon: place.lon! }, { lat: p.lat!, lon: p.lon! }),
@@ -264,11 +265,7 @@ export async function resolveLivestockQuote(
 
 export function buildLivestockContext(r: LivestockResolution): string {
   const { category, place, uf, unit } = r.query;
-  const askedLabel = place
-    ? `${place.municipio}/${place.uf}`
-    : uf
-      ? uf
-      : "praça não informada";
+  const askedLabel = place ? `${place.municipio}/${place.uf}` : uf ? uf : "praça não informada";
 
   if (!r.quote) {
     return [
@@ -276,7 +273,7 @@ export function buildLivestockContext(r: LivestockResolution): string {
       `SELO: ${r.sealLabel}`,
       `Categoria: ${category.nome} · Unidade pedida: ${unit} · Local pedido: ${askedLabel}`,
       "SEM COTAÇÃO REGISTRADA na base para essa categoria/praça.",
-      "INSTRUÇÃO OBRIGATÓRIA (ordem exata): 1) BUSQUE AGORA na web, em fontes oficiais de mercado (CEPEA/ESALQ, Scot Consultoria, B3, Notícias Agrícolas, Canal Rural, IEA, Conab, sindicatos e associações rurais), a cotação mais recente dessa categoria para a cidade/praça pedida ou para a praça publicada mais próxima. 2) Se encontrar, apresente o valor com selo 🟡 (referência de mercado externa) trazendo obrigatoriamente preço + unidade, praça, data de referência e fonte, e diga com naturalidade que o número veio de publicação de mercado e não da base própria — se for de outra praça, avise qual é e lembre que frete, escala e negociação mudam o preço local. 2b) BUSCA APROFUNDADA OBRIGATÓRIA: antes de declarar que não encontrou, tente em sequência (a) a cidade pedida, (b) praças pecuárias vizinhas, (c) o indicador estadual, (d) o indicador nacional (CEPEA/B3). 2c) ENQUADRAMENTO: se encontrar QUALQUER referência confiável, NUNCA comece com \"não encontrei\"; comece pelo valor com selo 🟡 e só depois explique a origem e as ressalvas. 3) Só se NENHUMA das quatro tentativas retornar algo confiável, diga com franqueza que não há cotação disponível agora e ofereça acompanhar a fonte oficial ou o time comercial DuKamp. NUNCA invente, estime ou arredonde um valor de memória.",
+      'INSTRUÇÃO OBRIGATÓRIA (ordem exata): 1) BUSQUE AGORA na web, em fontes oficiais de mercado (CEPEA/ESALQ, Scot Consultoria, B3, Notícias Agrícolas, Canal Rural, IEA, Conab, sindicatos e associações rurais), a cotação mais recente dessa categoria para a cidade/praça pedida ou para a praça publicada mais próxima. 2) Se encontrar, apresente o valor com selo 🟡 (referência de mercado externa) trazendo obrigatoriamente preço + unidade, praça, data de referência e fonte, e diga com naturalidade que o número veio de publicação de mercado e não da base própria — se for de outra praça, avise qual é e lembre que frete, escala e negociação mudam o preço local. 2b) BUSCA APROFUNDADA OBRIGATÓRIA: antes de declarar que não encontrou, tente em sequência (a) a cidade pedida, (b) praças pecuárias vizinhas, (c) o indicador estadual, (d) o indicador nacional (CEPEA/B3). 2c) ENQUADRAMENTO: se encontrar QUALQUER referência confiável, NUNCA comece com "não encontrei"; comece pelo valor com selo 🟡 e só depois explique a origem e as ressalvas. 3) Só se NENHUMA das quatro tentativas retornar algo confiável, diga com franqueza que não há cotação disponível agora e ofereça acompanhar a fonte oficial ou o time comercial DuKamp. NUNCA invente, estime ou arredonde um valor de memória.',
     ].join("\n");
   }
 
@@ -292,7 +289,9 @@ export function buildLivestockContext(r: LivestockResolution): string {
     `Categoria: ${q.categoria === category.slug ? category.nome : q.categoria}`,
     `Local pedido: ${askedLabel}`,
     `Praça da cotação: ${q.cidade ?? (q.regiao || q.estado)}${q.estado ? `/${q.estado}` : ""}${
-      r.distanceKm != null && r.distanceKm > 0 ? ` (cerca de ${r.distanceKm} km do local pedido)` : ""
+      r.distanceKm != null && r.distanceKm > 0
+        ? ` (cerca de ${r.distanceKm} km do local pedido)`
+        : ""
     }`,
     `Abrangência: ${q.abrangencia}`,
     `Preço de referência: ${fmtMoney(q.preco_referencia)}/${q.unidade}${faixa ? ` · faixa praticada: ${faixa}` : ""}`,

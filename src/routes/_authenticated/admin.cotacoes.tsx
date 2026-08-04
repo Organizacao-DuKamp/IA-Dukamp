@@ -15,9 +15,15 @@ export const Route = createFileRoute("/_authenticated/admin/cotacoes")({
   head: () => ({
     meta: [
       { title: "Cotações e mercado · TPEC-IA" },
-      { name: "description", content: "Gestão das fontes oficiais e das cotações estruturadas de mercado da TPEC-IA." },
+      {
+        name: "description",
+        content: "Gestão das fontes oficiais e das cotações estruturadas de mercado da TPEC-IA.",
+      },
       { property: "og:title", content: "Cotações e mercado · TPEC-IA" },
-      { property: "og:description", content: "Gestão das fontes oficiais e das cotações estruturadas de mercado da TPEC-IA." },
+      {
+        property: "og:description",
+        content: "Gestão das fontes oficiais e das cotações estruturadas de mercado da TPEC-IA.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -172,14 +178,21 @@ function AdminMarket() {
           <div>
             <h1 className="text-2xl font-bold">Cotações e mercado</h1>
             <p className="text-sm text-muted-foreground">
-              Fontes oficiais e dados dinâmicos usados pela TPEC-IA. Toda cotação exige preço, unidade, praça, data e fonte.
+              Fontes oficiais e dados dinâmicos usados pela TPEC-IA. Toda cotação exige preço,
+              unidade, praça, data e fonte.
             </p>
           </div>
           <div className="flex gap-2 text-sm">
-            <Link to="/admin/produtos" className="rounded-md border border-border px-3 py-1.5 hover:bg-accent">
+            <Link
+              to="/admin/produtos"
+              className="rounded-md border border-border px-3 py-1.5 hover:bg-accent"
+            >
               Produtos
             </Link>
-            <Link to="/admin/base-conhecimento" className="rounded-md border border-border px-3 py-1.5 hover:bg-accent">
+            <Link
+              to="/admin/base-conhecimento"
+              className="rounded-md border border-border px-3 py-1.5 hover:bg-accent"
+            >
               Base de conhecimento
             </Link>
             <Link to="/" className="rounded-md border border-border px-3 py-1.5 hover:bg-accent">
@@ -198,8 +211,6 @@ function AdminMarket() {
         )}
 
         <LivestockQuotesPanel />
-
-
 
         <section className="mb-6 rounded-lg border border-border bg-card p-4">
           <div className="flex flex-wrap items-center gap-2">
@@ -225,13 +236,15 @@ function AdminMarket() {
               Atualizar
             </button>
             <span className="text-xs text-muted-foreground">
-              {sources.length} fontes · {dynamicSources.length} dinâmicas · {quotes.length} cotações recentes
+              {sources.length} fontes · {dynamicSources.length} dinâmicas · {quotes.length} cotações
+              recentes
             </span>
           </div>
           {log && <p className="mt-2 break-all text-xs text-muted-foreground">{log}</p>}
           <p className="mt-2 text-xs text-muted-foreground">
-            Coleta automática cobre apenas APIs abertas (Banco Central). Fontes com licença restrita, como o CEPEA,
-            devem ser lançadas manualmente ou via contrato/assinatura — link público não é autorização de cópia.
+            Coleta automática cobre apenas APIs abertas (Banco Central). Fontes com licença
+            restrita, como o CEPEA, devem ser lançadas manualmente ou via contrato/assinatura — link
+            público não é autorização de cópia.
           </p>
         </section>
 
@@ -271,14 +284,23 @@ function AdminMarket() {
                   {visibleSources.map((s) => (
                     <tr key={s.id} className="border-t border-border/60 align-top">
                       <td className="p-2">
-                        <a href={s.url} target="_blank" rel="noreferrer" className="font-medium underline-offset-2 hover:underline">
+                        <a
+                          href={s.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="font-medium underline-offset-2 hover:underline"
+                        >
                           {s.name}
                         </a>
                         <div className="text-xs text-muted-foreground">{s.org}</div>
-                        {s.license_note && <div className="text-xs text-muted-foreground">{s.license_note}</div>}
+                        {s.license_note && (
+                          <div className="text-xs text-muted-foreground">{s.license_note}</div>
+                        )}
                       </td>
                       <td className="p-2 text-xs">{s.category}</td>
-                      <td className="p-2 text-xs">{s.kind === "dynamic" ? "dinâmico" : "conhecimento"}</td>
+                      <td className="p-2 text-xs">
+                        {s.kind === "dynamic" ? "dinâmico" : "conhecimento"}
+                      </td>
                       <td className="p-2 text-xs">{s.phase}</td>
                     </tr>
                   ))}
@@ -298,29 +320,82 @@ function AdminMarket() {
             <section className="rounded-lg border border-border bg-card p-4">
               <h2 className="mb-3 text-sm font-semibold">Lançar cotação manual</h2>
               <form onSubmit={submitQuote} className="grid grid-cols-2 gap-2">
-                <input className={inputCls} placeholder="Produto (ex.: Boi gordo)" value={form.product} onChange={(e) => setForm({ ...form, product: e.target.value })} />
-                <input className={inputCls} placeholder="Categoria" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
-                <input className={inputCls} placeholder="Preço" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
-                <input className={inputCls} placeholder="Unidade (R$/@)" value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} />
-                <input className={inputCls} placeholder="Praça / cidade" value={form.locality} onChange={(e) => setForm({ ...form, locality: e.target.value })} />
-                <input className={inputCls} placeholder="UF" value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} />
-                <input className={inputCls} placeholder="Pagamento (à vista / 30 dias)" value={form.payment_condition} onChange={(e) => setForm({ ...form, payment_condition: e.target.value })} />
-                <select className={inputCls} value={form.quote_type} onChange={(e) => setForm({ ...form, quote_type: e.target.value })}>
+                <input
+                  className={inputCls}
+                  placeholder="Produto (ex.: Boi gordo)"
+                  value={form.product}
+                  onChange={(e) => setForm({ ...form, product: e.target.value })}
+                />
+                <input
+                  className={inputCls}
+                  placeholder="Categoria"
+                  value={form.category}
+                  onChange={(e) => setForm({ ...form, category: e.target.value })}
+                />
+                <input
+                  className={inputCls}
+                  placeholder="Preço"
+                  value={form.price}
+                  onChange={(e) => setForm({ ...form, price: e.target.value })}
+                />
+                <input
+                  className={inputCls}
+                  placeholder="Unidade (R$/@)"
+                  value={form.unit}
+                  onChange={(e) => setForm({ ...form, unit: e.target.value })}
+                />
+                <input
+                  className={inputCls}
+                  placeholder="Praça / cidade"
+                  value={form.locality}
+                  onChange={(e) => setForm({ ...form, locality: e.target.value })}
+                />
+                <input
+                  className={inputCls}
+                  placeholder="UF"
+                  value={form.state}
+                  onChange={(e) => setForm({ ...form, state: e.target.value })}
+                />
+                <input
+                  className={inputCls}
+                  placeholder="Pagamento (à vista / 30 dias)"
+                  value={form.payment_condition}
+                  onChange={(e) => setForm({ ...form, payment_condition: e.target.value })}
+                />
+                <select
+                  className={inputCls}
+                  value={form.quote_type}
+                  onChange={(e) => setForm({ ...form, quote_type: e.target.value })}
+                >
                   <option value="indicador">indicador</option>
                   <option value="fisico">físico</option>
                   <option value="futuro">futuro</option>
                   <option value="nominal">nominal</option>
                   <option value="leilao">leilão</option>
                 </select>
-                <input className={inputCls} type="date" value={form.reference_date} onChange={(e) => setForm({ ...form, reference_date: e.target.value })} />
-                <select className={inputCls} value={form.source_code} onChange={(e) => setForm({ ...form, source_code: e.target.value })}>
+                <input
+                  className={inputCls}
+                  type="date"
+                  value={form.reference_date}
+                  onChange={(e) => setForm({ ...form, reference_date: e.target.value })}
+                />
+                <select
+                  className={inputCls}
+                  value={form.source_code}
+                  onChange={(e) => setForm({ ...form, source_code: e.target.value })}
+                >
                   {(dynamicSources.length ? dynamicSources : sources).map((s) => (
                     <option key={s.code} value={s.code}>
                       {s.name}
                     </option>
                   ))}
                 </select>
-                <input className={`${inputCls} col-span-2`} placeholder="Observação (opcional)" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+                <input
+                  className={`${inputCls} col-span-2`}
+                  placeholder="Observação (opcional)"
+                  value={form.notes}
+                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                />
                 <button
                   type="submit"
                   disabled={busy !== null}
@@ -354,16 +429,21 @@ function AdminMarket() {
                           <div className="text-xs text-muted-foreground">{q.source_name}</div>
                         </td>
                         <td className="p-2 whitespace-nowrap">
-                          {Number(q.price).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} <span className="text-xs text-muted-foreground">{q.unit}</span>
+                          {Number(q.price).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}{" "}
+                          <span className="text-xs text-muted-foreground">{q.unit}</span>
                         </td>
                         <td className="p-2 text-xs">
                           {q.locality}
                           {q.state ? `/${q.state}` : ""}
                         </td>
-                        <td className="p-2 text-xs whitespace-nowrap">{q.reference_date.split("-").reverse().join("/")}</td>
+                        <td className="p-2 text-xs whitespace-nowrap">
+                          {q.reference_date.split("-").reverse().join("/")}
+                        </td>
                         <td className="p-2 text-right">
                           <button
-                            onClick={() => run(`del:${q.id}`, () => fnDelete({ data: { id: q.id } }))}
+                            onClick={() =>
+                              run(`del:${q.id}`, () => fnDelete({ data: { id: q.id } }))
+                            }
                             className="text-xs text-destructive underline"
                           >
                             remover

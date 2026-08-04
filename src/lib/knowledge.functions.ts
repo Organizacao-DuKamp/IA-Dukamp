@@ -6,8 +6,16 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
-// deno-lint-ignore no-explicit-any
-async function assertAdmin(ctx: any) {
+type SupabaseRpcClient = {
+  rpc: (
+    fn: "has_role",
+    args: { _user_id: string; _role: "admin" },
+  ) => Promise<{ data: boolean | null; error: Error | null }>;
+};
+
+type AdminContext = { supabase: SupabaseRpcClient; userId: string };
+
+async function assertAdmin(ctx: AdminContext) {
   const { data, error } = await ctx.supabase.rpc("has_role", {
     _user_id: ctx.userId,
     _role: "admin",
@@ -21,7 +29,9 @@ export const listKnowledgeDocs = createServerFn({ method: "GET" })
     await assertAdmin(context);
     const { data, error } = await context.supabase
       .from("knowledge_documents")
-      .select("id, title, filename, category, subcategory, status, chunk_count, error_message, updated_at")
+      .select(
+        "id, title, filename, category, subcategory, status, chunk_count, error_message, updated_at",
+      )
       .order("category", { ascending: true })
       .order("subcategory", { ascending: true })
       .order("title", { ascending: true });
@@ -107,8 +117,11 @@ export const processNextPending = createServerFn({ method: "POST" })
     try {
       let text: string | null = doc.content ?? null;
       if (!text) {
-        const seed = listSeedFiles().find((f) => parseSourcePath(f.absPath).sourcePath === doc.source_path);
-        if (!seed) throw new Error("Conteúdo do documento não encontrado (nem no upload nem no seed).");
+        const seed = listSeedFiles().find(
+          (f) => parseSourcePath(f.absPath).sourcePath === doc.source_path,
+        );
+        if (!seed)
+          throw new Error("Conteúdo do documento não encontrado (nem no upload nem no seed).");
         text = await seed.load();
       }
       const count = await ingestDocument(
@@ -135,7 +148,6 @@ export const processNextPending = createServerFn({ method: "POST" })
       return { done: false as const, id: doc.id, title: doc.title, error: msg };
     }
   });
-
 
 const ReprocessInput = z.object({ id: z.string().uuid() });
 export const reprocessDocument = createServerFn({ method: "POST" })
@@ -181,11 +193,20 @@ export const uploadKnowledgeZip = createServerFn({ method: "POST" })
     // Build a report so admins can see per-file outcomes.
     const { data: report } = await supabaseAdmin
       .from("import_reports")
-      .insert({ kind: "zip_upload", summary: { total: entries.length, replaceAll: data.replaceAll } })
+      .insert({
+        kind: "zip_upload",
+        summary: { total: entries.length, replaceAll: data.replaceAll },
+      })
       .select("id")
       .single();
     const reportId = (report?.id as string) || null;
-    const reportItems: Array<{ report_id: string; file_name: string; status: string; message: string; details: Record<string, unknown> }> = [];
+    const reportItems: Array<{
+      report_id: string;
+      file_name: string;
+      status: string;
+      message: string;
+      details: Record<string, unknown>;
+    }> = [];
 
     const rows: Array<{
       title: string;
@@ -234,27 +255,35 @@ export const uploadKnowledgeZip = createServerFn({ method: "POST" })
           content_hash: hash,
           internal_title: p.title,
         });
-        if (reportId) reportItems.push({
-          report_id: reportId,
-          file_name: p.filename,
-          status: "ok",
-          message: `Extraído (${fileType})`,
-          details: { chars: text.length },
-        });
+        if (reportId)
+          reportItems.push({
+            report_id: reportId,
+            file_name: p.filename,
+            status: "ok",
+            message: `Extraído (${fileType})`,
+            details: { chars: text.length },
+          });
       } catch (err) {
-        if (reportId) reportItems.push({
-          report_id: reportId,
-          file_name: p.filename,
-          status: "error",
-          message: err instanceof Error ? err.message : "Erro ao extrair.",
-          details: {},
-        });
+        if (reportId)
+          reportItems.push({
+            report_id: reportId,
+            file_name: p.filename,
+            status: "error",
+            message: err instanceof Error ? err.message : "Erro ao extrair.",
+            details: {},
+          });
       }
     }
 
     if (data.replaceAll) {
-      await supabaseAdmin.from("knowledge_chunks").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-      await supabaseAdmin.from("knowledge_documents").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+      await supabaseAdmin
+        .from("knowledge_chunks")
+        .delete()
+        .neq("id", "00000000-0000-0000-0000-000000000000");
+      await supabaseAdmin
+        .from("knowledge_documents")
+        .delete()
+        .neq("id", "00000000-0000-0000-0000-000000000000");
     } else {
       // Detect duplicates by content_hash against existing docs.
       const hashes = rows.map((r) => r.content_hash);
@@ -264,7 +293,11 @@ export const uploadKnowledgeZip = createServerFn({ method: "POST" })
         .in("content_hash", hashes);
       const dupByHash = new Map<string, { id: string; source_path: string }>();
       for (const e of existing ?? []) {
-        if (e.content_hash) dupByHash.set(e.content_hash as string, { id: e.id as string, source_path: e.source_path as string });
+        if (e.content_hash)
+          dupByHash.set(e.content_hash as string, {
+            id: e.id as string,
+            source_path: e.source_path as string,
+          });
       }
       for (const r of rows) {
         const dup = dupByHash.get(r.content_hash);
@@ -291,19 +324,24 @@ export const uploadKnowledgeZip = createServerFn({ method: "POST" })
 
     if (reportId && reportItems.length > 0) {
       for (let i = 0; i < reportItems.length; i += 100) {
-        await supabaseAdmin.from("import_report_items").insert(reportItems.slice(i, i + 100) as never);
+        await supabaseAdmin
+          .from("import_report_items")
+          .insert(reportItems.slice(i, i + 100) as never);
       }
     }
     if (reportId) {
-      await supabaseAdmin.from("import_reports").update({
-        summary: {
-          total: entries.length,
-          extracted: rows.length,
-          errors: reportItems.filter((r) => r.status === "error").length,
-          duplicates: reportItems.filter((r) => r.status === "duplicate").length,
-          replaceAll: data.replaceAll,
-        },
-      }).eq("id", reportId);
+      await supabaseAdmin
+        .from("import_reports")
+        .update({
+          summary: {
+            total: entries.length,
+            extracted: rows.length,
+            errors: reportItems.filter((r) => r.status === "error").length,
+            duplicates: reportItems.filter((r) => r.status === "duplicate").length,
+            replaceAll: data.replaceAll,
+          },
+        })
+        .eq("id", reportId);
     }
 
     return { total: entries.length, inserted: rows.length, report_id: reportId };
@@ -371,5 +409,3 @@ export const uploadKnowledgeFile = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { duplicate: false as const, ok: true };
   });
-
-

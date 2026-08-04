@@ -63,12 +63,7 @@ const rules: Array<[IntentClassification["intent"], RegExp, boolean, boolean]> =
     true,
     false,
   ],
-  [
-    "nutrition",
-    /\b(nutri\w*|suplement\w*|ra[cç][aã]o|proteinado|mineral|consumo)\b/i,
-    true,
-    false,
-  ],
+  ["nutrition", /\b(nutri\w*|suplement\w*|ra[cç][aã]o|proteinado|mineral|consumo)\b/i, true, false],
   ["management", /\b(manejo|pasto|confinamento|desmama|recria|engorda)\b/i, true, false],
   ["document_or_image", /\b(pdf|documento|arquivo|imagem|foto|anexo|[aá]udio)\b/i, true, false],
   ["store", /\b(loja|unidade|matriz|endere[cç]o|hor[aá]rio)\b/i, true, false],

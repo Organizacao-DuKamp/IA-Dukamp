@@ -24,7 +24,6 @@ export interface IncomingMessage {
   state?: unknown;
 }
 
-
 export interface OutgoingMessage {
   sessionId: string;
   text: string;
@@ -51,4 +50,3 @@ export const MAX_MESSAGE_CHARS = 2000;
 export const MAX_HISTORY_TURNS = 40;
 /** Orçamento de tokens reservado ao histórico recente. */
 export const HISTORY_TOKEN_BUDGET = 6000;
-

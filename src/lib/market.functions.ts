@@ -41,7 +41,10 @@ export const listQuotes = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z
-      .object({ slug: z.string().max(80).optional(), limit: z.number().int().min(1).max(200).default(60) })
+      .object({
+        slug: z.string().max(80).optional(),
+        limit: z.number().int().min(1).max(200).default(60),
+      })
       .parse(d ?? {}),
   )
   .handler(async ({ context, data }) => {
@@ -76,7 +79,9 @@ const manualQuote = z.object({
 /** Lançamento manual de cotações (planilha/observação de campo). */
 export const saveQuotes = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ quotes: z.array(manualQuote).min(1).max(200) }).parse(d))
+  .inputValidator((d: unknown) =>
+    z.object({ quotes: z.array(manualQuote).min(1).max(200) }).parse(d),
+  )
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
     const { upsertQuotes } = await import("./market/ingest.server");

@@ -9,7 +9,7 @@ export function stripDiacritics(s: string): string {
 export function normalizeName(s: string): string {
   return stripDiacritics(s)
     .toLowerCase()
-    .replace(/[\/\\_.,;:!?"'()\[\]{}]/g, " ")
+    .replace(/[/_.,;!?"'()[\]{}]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }

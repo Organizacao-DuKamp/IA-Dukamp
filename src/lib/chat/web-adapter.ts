@@ -3,7 +3,6 @@
 // histórico persistidos em localStorage (só neste navegador), para que um
 // reload não perca o contexto nem a confirmação pendente.
 
-import { sendChatMessage } from "../chat.functions";
 import type { ChannelAdapter, ChatMessage, OutgoingMessage } from "./types";
 
 const STORAGE_KEY = "tpec-ia:conversation:v1";
@@ -36,7 +35,13 @@ export function loadConversation(): PersistedConversation {
     }
   }
   const id = newId();
-  return { conversationId: id, sessionId: id, messages: [], state: null, updatedAt: new Date().toISOString() };
+  return {
+    conversationId: id,
+    sessionId: id,
+    messages: [],
+    state: null,
+    updatedAt: new Date().toISOString(),
+  };
 }
 
 export function saveConversation(conv: PersistedConversation) {
@@ -67,6 +72,14 @@ function safeParse(raw: string): unknown {
     return undefined;
   }
 }
+
+type PublicChatResponse = {
+  reply?: string;
+  error?: string;
+  code?: string;
+  state?: string;
+  conversationId?: string;
+};
 
 export class WebChatAdapter implements ChannelAdapter {
   readonly name = "web";
@@ -105,23 +118,29 @@ export class WebChatAdapter implements ChannelAdapter {
     history: ChatMessage[],
     clientMessageId: string,
   ): Promise<{ reply: string; state: string | null }> {
-    const result = (await sendChatMessage({
-      data: {
+    const response = await fetch("/api/public/chat", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
         sessionId: this.sessionId,
         conversationId: this.conversationId,
         clientMessageId,
         text,
         history,
         state: this.state ? safeParse(this.state) : undefined,
-      },
-    })) as {
-      reply?: string;
-      error?: string;
-      status?: number;
-      state?: string;
-      conversationId?: string;
-    };
-    if (result.error) throw new Error(result.error);
+      }),
+    });
+
+    let result: PublicChatResponse;
+    try {
+      result = (await response.json()) as PublicChatResponse;
+    } catch {
+      throw new Error("O servidor retornou uma resposta inválida.");
+    }
+    if (!response.ok || result.error) {
+      throw new Error(result.error || "Erro ao consultar a IA.");
+    }
+
     const reply = result.reply ?? "";
     if (result.state) this.state = result.state;
     if (result.conversationId) this.conversationId = result.conversationId;

@@ -35,7 +35,7 @@ export async function searchKnowledge(query: string, matchCount = 6): Promise<Ma
   // embeddings costumam ser menos confiáveis. Também mantém a base disponível
   // se o provedor de embeddings estiver temporariamente fora do ar.
   try {
-    const { data, error } = await (supabaseAdmin.rpc as any)("search_knowledge_lexical", {
+    const { data, error } = await supabaseAdmin.rpc("search_knowledge_lexical", {
       search_query: query,
       match_count: matchCount * 2,
     });

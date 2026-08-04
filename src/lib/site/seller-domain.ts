@@ -21,9 +21,23 @@ const REGION_ALIASES: Record<string, string[]> = {
 };
 
 const GENERIC_WORDS = new Set([
-  "algum", "alguma", "contato", "comercial", "dukamp", "equipe", "falar",
-  "gostaria", "lista", "nome", "nomes", "passe", "quero", "representante",
-  "vendedor", "vendedora", "vendedores",
+  "algum",
+  "alguma",
+  "contato",
+  "comercial",
+  "dukamp",
+  "equipe",
+  "falar",
+  "gostaria",
+  "lista",
+  "nome",
+  "nomes",
+  "passe",
+  "quero",
+  "representante",
+  "vendedor",
+  "vendedora",
+  "vendedores",
 ]);
 
 export function normalizeSellerText(value: string): string {
@@ -37,7 +51,7 @@ export function normalizeSellerText(value: string): string {
 }
 
 function containsPhrase(text: string, phrase: string): boolean {
-  return (` ${text} `).includes(` ${phrase} `);
+  return ` ${text} `.includes(` ${phrase} `);
 }
 
 /** Resolve nome/região sobre o cadastro já carregado; sem I/O e testável. */
@@ -48,8 +62,12 @@ export function matchSellerRequest(query: string, sellers: PublicSeller[]): Sell
     const fullName = normalizeSellerText(seller.name);
     if (fullName.length < 3) return false;
     const firstName = fullName.split(" ")[0];
-    return containsPhrase(normalized, fullName) ||
-      (firstName.length >= 3 && !GENERIC_WORDS.has(firstName) && containsPhrase(normalized, firstName));
+    return (
+      containsPhrase(normalized, fullName) ||
+      (firstName.length >= 3 &&
+        !GENERIC_WORDS.has(firstName) &&
+        containsPhrase(normalized, firstName))
+    );
   });
   if (byName.length > 0) return { kind: "name", sellers: byName, label: null };
 
@@ -57,7 +75,10 @@ export function matchSellerRequest(query: string, sellers: PublicSeller[]): Sell
     if (!seller.region) return false;
     const region = normalizeSellerText(seller.region);
     const aliases = REGION_ALIASES[region] ?? [];
-    return containsPhrase(normalized, region) || aliases.some((alias) => containsPhrase(normalized, alias));
+    return (
+      containsPhrase(normalized, region) ||
+      aliases.some((alias) => containsPhrase(normalized, alias))
+    );
   });
   if (byRegion.length > 0) {
     return { kind: "region", sellers: byRegion, label: byRegion[0].region };
@@ -71,7 +92,11 @@ export function cleanContact(value: string | null | undefined): string | null {
   if (!value) return null;
   const raw = String(value).trim();
   if (!raw) return null;
-  if (/^(indefinid[oa]|nao\s*informad[oa]|n[aã]o\s*informad[oa]|sem|s\/?n|n\/?a|null|undefined|-+)$/i.test(raw)) {
+  if (
+    /^(indefinid[oa]|nao\s*informad[oa]|n[aã]o\s*informad[oa]|sem|s\/?n|n\/?a|null|undefined|-+)$/i.test(
+      raw,
+    )
+  ) {
     return null;
   }
   const digits = raw.replace(/\D/g, "");
@@ -101,9 +126,11 @@ export function formatSellerList(match: SellerMatch): string {
     if (seller.region && match.kind !== "region") details.push(seller.region);
     return `- ${details.join(" — ")}${sellerContactLine(seller)}`;
   });
-  const title = match.kind === "region"
-    ? `Vendedores DuKamp para ${match.label ?? "essa região"}`
-    : match.kind === "name" ? "Contato comercial encontrado" : "Vendedores ativos da DuKamp";
+  const title =
+    match.kind === "region"
+      ? `Vendedores DuKamp para ${match.label ?? "essa região"}`
+      : match.kind === "name"
+        ? "Contato comercial encontrado"
+        : "Vendedores ativos da DuKamp";
   return `${title} (${match.sellers.length}):\n\n${bullets.join("\n")}`;
 }
-
