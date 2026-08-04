@@ -47,8 +47,7 @@ export const Route = createFileRoute("/api/public/chat-test")({
           const { handleIncoming } = await import("@/lib/chat/core.server");
           const out = await handleIncoming({
             sessionId:
-              parsed.sessionId ??
-              `qa-${Math.random().toString(36).slice(2)}-${Date.now()}`,
+              parsed.sessionId ?? `qa-${Math.random().toString(36).slice(2)}-${Date.now()}`,
             text: parsed.text,
             history: parsed.history ?? [],
             conversationId: parsed.conversationId,

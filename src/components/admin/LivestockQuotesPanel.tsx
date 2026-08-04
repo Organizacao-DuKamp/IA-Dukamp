@@ -31,6 +31,9 @@ type Row = {
   fonte: string;
   nivel_confiabilidade: string;
 };
+type CatalogResult = { categories?: Category[]; places?: Place[] };
+type Abrangencia = "municipal" | "regional" | "estadual" | "nacional";
+type NivelConfiabilidade = "alta" | "media" | "baixa";
 type Status = {
   categoria: string;
   nome: string;
@@ -82,8 +85,9 @@ export function LivestockQuotesPanel() {
         fnList({ data: { limit: 80 } }),
         fnStatus(),
       ]);
-      setCategories((cat as any).categories ?? []);
-      setPlaces((cat as any).places ?? []);
+      const catalog = cat as CatalogResult;
+      setCategories(catalog.categories ?? []);
+      setPlaces(catalog.places ?? []);
       setRows(list as Row[]);
       setStatus(st as Status[]);
     } catch (e) {
@@ -118,7 +122,7 @@ export function LivestockQuotesPanel() {
               categoria: form.categoria,
               cidade: form.cidade || null,
               estado: place?.uf,
-              abrangencia: form.abrangencia as any,
+              abrangencia: form.abrangencia as Abrangencia,
               preco_minimo: num(form.preco_minimo),
               preco_maximo: num(form.preco_maximo),
               preco_referencia: ref,
@@ -127,7 +131,7 @@ export function LivestockQuotesPanel() {
               data_cotacao: form.data_cotacao,
               fonte: form.fonte,
               url_fonte: form.url_fonte || null,
-              nivel_confiabilidade: form.nivel_confiabilidade as any,
+              nivel_confiabilidade: form.nivel_confiabilidade as NivelConfiabilidade,
               observacao: form.observacao || null,
             },
           ],
@@ -166,8 +170,8 @@ export function LivestockQuotesPanel() {
     <section className="mb-6 rounded-lg border border-border bg-card p-4">
       <h2 className="mb-1 text-lg font-semibold">Cotações pecuárias</h2>
       <p className="mb-4 text-sm text-muted-foreground">
-        Base própria por categoria e praça. A IA responde na ordem cidade → praça vizinha →
-        região → estado, sempre com selo, data e fonte.
+        Base própria por categoria e praça. A IA responde na ordem cidade → praça vizinha → região →
+        estado, sempre com selo, data e fonte.
       </p>
 
       {err && (

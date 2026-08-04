@@ -74,7 +74,10 @@ export const updateProduct = createServerFn({ method: "POST" })
     if (typeof patch.official_name === "string") {
       patch.slug = toSlug(patch.official_name);
     }
-    const { error } = await supabaseAdmin.from("products").update(patch as never).eq("id", data.id);
+    const { error } = await supabaseAdmin
+      .from("products")
+      .update(patch as never)
+      .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -197,7 +200,11 @@ export const extractProductsFromKnowledge = createServerFn({ method: "POST" })
 
     const bySlug = new Map<
       string,
-      { candidate: ProductCandidate; sources: string[]; divergences: Array<{ field: string; a: string; b: string }> }
+      {
+        candidate: ProductCandidate;
+        sources: string[];
+        divergences: Array<{ field: string; a: string; b: string }>;
+      }
     >();
     const skipped: Array<{ file: string; reason: string }> = [];
 
@@ -255,11 +262,12 @@ export const extractProductsFromKnowledge = createServerFn({ method: "POST" })
       items.push({
         file_name: candidate.official_name,
         status: divergences.length > 0 ? "divergence" : requiresReview ? "missing_fields" : "ok",
-        message: divergences.length > 0
-          ? `${divergences.length} campo(s) com divergência entre fichas`
-          : requiresReview
-            ? `Campos ausentes: ${candidate.missing_fields.join(", ")}`
-            : "Ficha completa",
+        message:
+          divergences.length > 0
+            ? `${divergences.length} campo(s) com divergência entre fichas`
+            : requiresReview
+              ? `Campos ausentes: ${candidate.missing_fields.join(", ")}`
+              : "Ficha completa",
         details: {
           slug,
           sources,
@@ -358,9 +366,12 @@ export const countProducts = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => CountSchema.parse(d))
   .handler(async ({ data }) => {
     const { createClient } = await import("@supabase/supabase-js");
-    const key = process.env.SUPABASE_PUBLISHABLE_KEY ??
-      (import.meta as unknown as { env: Record<string, string> }).env?.VITE_SUPABASE_PUBLISHABLE_KEY;
-    const url = process.env.SUPABASE_URL ??
+    const key =
+      process.env.SUPABASE_PUBLISHABLE_KEY ??
+      (import.meta as unknown as { env: Record<string, string> }).env
+        ?.VITE_SUPABASE_PUBLISHABLE_KEY;
+    const url =
+      process.env.SUPABASE_URL ??
       (import.meta as unknown as { env: Record<string, string> }).env?.VITE_SUPABASE_URL;
     if (!key || !url) throw new Error("Supabase indisponível.");
     const sb = createClient(url, key, {
@@ -368,7 +379,8 @@ export const countProducts = createServerFn({ method: "POST" })
       global: {
         fetch: (input, init) => {
           const h = new Headers(init?.headers);
-          if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`) h.delete("Authorization");
+          if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`)
+            h.delete("Authorization");
           h.set("apikey", key);
           return fetch(input, { ...init, headers: h });
         },
@@ -393,9 +405,12 @@ export const listPublicProducts = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => ListSchema.parse(d))
   .handler(async ({ data }) => {
     const { createClient } = await import("@supabase/supabase-js");
-    const key = process.env.SUPABASE_PUBLISHABLE_KEY ??
-      (import.meta as unknown as { env: Record<string, string> }).env?.VITE_SUPABASE_PUBLISHABLE_KEY;
-    const url = process.env.SUPABASE_URL ??
+    const key =
+      process.env.SUPABASE_PUBLISHABLE_KEY ??
+      (import.meta as unknown as { env: Record<string, string> }).env
+        ?.VITE_SUPABASE_PUBLISHABLE_KEY;
+    const url =
+      process.env.SUPABASE_URL ??
       (import.meta as unknown as { env: Record<string, string> }).env?.VITE_SUPABASE_URL;
     if (!key || !url) throw new Error("Supabase indisponível.");
     const sb = createClient(url, key, {
@@ -403,7 +418,8 @@ export const listPublicProducts = createServerFn({ method: "POST" })
       global: {
         fetch: (input, init) => {
           const h = new Headers(init?.headers);
-          if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`) h.delete("Authorization");
+          if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`)
+            h.delete("Authorization");
           h.set("apikey", key);
           return fetch(input, { ...init, headers: h });
         },

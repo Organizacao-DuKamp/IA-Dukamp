@@ -8,10 +8,7 @@ import {
   proxyChat,
   type TpecBackendDependencies,
 } from "../src/lib/chat/backend.server.ts";
-import {
-  handleInternalChatRequest,
-  handlePublicChatRequest,
-} from "../src/lib/chat/http.server.ts";
+import { handleInternalChatRequest, handlePublicChatRequest } from "../src/lib/chat/http.server.ts";
 import type { ChatCoreResult, ChatInput } from "../src/lib/chat/input.ts";
 
 const secret = "tpec-test-secret-" + "x".repeat(40);
@@ -182,9 +179,7 @@ test("timeout do proxy retorna 504", async () => {
   await assert.rejects(
     () => proxyChat(input, { env: proxyEnv(), fetchImpl: abortingFetch }),
     (error: unknown) =>
-      error instanceof TpecBackendError &&
-      error.status === 504 &&
-      error.code === "proxy_timeout",
+      error instanceof TpecBackendError && error.status === 504 && error.code === "proxy_timeout",
   );
 });
 
@@ -210,8 +205,7 @@ test("falta de LOVABLE_BACKEND_URL produz erro claro", async () => {
 test("falta de TPEC_PROXY_SECRET produz erro claro", async () => {
   await assert.rejects(
     () => proxyChat(input, { env: proxyEnv({ TPEC_PROXY_SECRET: undefined }) }),
-    (error: unknown) =>
-      error instanceof TpecBackendError && error.code === "missing_proxy_secret",
+    (error: unknown) => error instanceof TpecBackendError && error.code === "missing_proxy_secret",
   );
 });
 

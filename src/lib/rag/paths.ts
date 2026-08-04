@@ -11,10 +11,7 @@ export interface ParsedPath {
 
 /** "01-PRODUTOS" -> "PRODUTOS"; "02-NUTRICAO-E-MANEJO" -> "NUTRICAO E MANEJO" */
 export function prettifySegment(seg: string): string {
-  return seg
-    .replace(/^\d+-/, "")
-    .replace(/-/g, " ")
-    .trim();
+  return seg.replace(/^\d+-/, "").replace(/-/g, " ").trim();
 }
 
 /** Strip "[DOC]" / "[PDF]" markers and extension. */

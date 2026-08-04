@@ -1,8 +1,4 @@
-import {
-  ChatInputSchema,
-  MAX_CHAT_PROXY_BODY_BYTES,
-  type ChatInput,
-} from "./input.ts";
+import { ChatInputSchema, MAX_CHAT_PROXY_BODY_BYTES, type ChatInput } from "./input.ts";
 import {
   TpecBackendError,
   dispatchChat,
@@ -35,19 +31,11 @@ function safeEqual(a: string, b: string): boolean {
 async function parseInput(request: Request): Promise<ChatInput> {
   const declared = Number(request.headers.get("content-length") ?? 0);
   if (declared > MAX_CHAT_PROXY_BODY_BYTES) {
-    throw new TpecBackendError(
-      "Requisição excedeu o limite permitido.",
-      413,
-      "request_too_large",
-    );
+    throw new TpecBackendError("Requisição excedeu o limite permitido.", 413, "request_too_large");
   }
   const raw = await request.text();
   if (new TextEncoder().encode(raw).byteLength > MAX_CHAT_PROXY_BODY_BYTES) {
-    throw new TpecBackendError(
-      "Requisição excedeu o limite permitido.",
-      413,
-      "request_too_large",
-    );
+    throw new TpecBackendError("Requisição excedeu o limite permitido.", 413, "request_too_large");
   }
   let value: unknown;
   try {

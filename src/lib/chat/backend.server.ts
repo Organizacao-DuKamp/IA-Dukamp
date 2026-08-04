@@ -72,11 +72,7 @@ export function resolveLovableBackendUrl(env: EnvLike = process.env): URL {
   try {
     base = new URL(raw);
   } catch {
-    throw new TpecBackendError(
-      "LOVABLE_BACKEND_URL inválida.",
-      500,
-      "invalid_lovable_backend_url",
-    );
+    throw new TpecBackendError("LOVABLE_BACKEND_URL inválida.", 500, "invalid_lovable_backend_url");
   }
 
   const production = env.NODE_ENV === "production";
@@ -98,11 +94,7 @@ export function resolveLovableBackendUrl(env: EnvLike = process.env): URL {
   const normalizedBase = base.toString().replace(/\/+$/, "");
   const endpoint = new URL(`${normalizedBase}/api/internal/chat`);
   if (endpoint.origin !== base.origin) {
-    throw new TpecBackendError(
-      "Destino do proxy inválido.",
-      500,
-      "unexpected_proxy_origin",
-    );
+    throw new TpecBackendError("Destino do proxy inválido.", 500, "unexpected_proxy_origin");
   }
   return endpoint;
 }
@@ -232,8 +224,7 @@ export async function executeLocalChat(
   deps: TpecBackendDependencies = {},
 ): Promise<BackendDispatchResult> {
   const load =
-    deps.loadLocalBackend ??
-    (() => import("./core.server.ts") as Promise<LocalBackendModule>);
+    deps.loadLocalBackend ?? (() => import("./core.server.ts") as Promise<LocalBackendModule>);
   const local = await load();
   try {
     const result = ChatCoreResultSchema.parse(await local.handleIncoming(input));

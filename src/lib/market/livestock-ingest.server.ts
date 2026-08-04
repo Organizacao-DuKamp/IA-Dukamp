@@ -70,11 +70,7 @@ export async function upsertLivestockQuotes(
       skipped.push(`praça não cadastrada: ${q.cidade ?? slug}`);
       continue;
     }
-    if (
-      q.preco_minimo != null &&
-      q.preco_maximo != null &&
-      q.preco_minimo > q.preco_maximo
-    ) {
+    if (q.preco_minimo != null && q.preco_maximo != null && q.preco_minimo > q.preco_maximo) {
       skipped.push(`${q.categoria}: preço mínimo maior que o máximo`);
       continue;
     }

@@ -11,8 +11,7 @@ let _db: any;
  * (as tabelas de mercado são de leitura pública por RLS). */
 export function marketDb(): any {
   if (_db) return _db;
-  const url =
-    process.env.SUPABASE_URL || (import.meta as any).env?.VITE_SUPABASE_URL;
+  const url = process.env.SUPABASE_URL || (import.meta as any).env?.VITE_SUPABASE_URL;
   const key =
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
     process.env.SUPABASE_PUBLISHABLE_KEY ||
@@ -52,21 +51,57 @@ export interface MarketTarget {
 }
 
 const TARGETS: Array<MarketTarget & { patterns: RegExp }> = [
-  { slug: "boi-gordo", label: "Boi gordo", category: "bovinos", patterns: /\b(boi\s+gordo|arroba\s+do\s+boi|arroba\s+de\s+boi|indicador\s+do\s+boi|@\s*do\s*boi)\b/i },
+  {
+    slug: "boi-gordo",
+    label: "Boi gordo",
+    category: "bovinos",
+    patterns:
+      /\b(boi\s+gordo|arroba\s+do\s+boi|arroba\s+de\s+boi|indicador\s+do\s+boi|@\s*do\s*boi)\b/i,
+  },
   { slug: "vaca-gorda", label: "Vaca gorda", category: "bovinos", patterns: /\bvaca\s+gorda\b/i },
-  { slug: "bezerro", label: "Bezerro", category: "bovinos", patterns: /\b(bezerro|bezerra|reposi[cç][aã]o)\b/i },
+  {
+    slug: "bezerro",
+    label: "Bezerro",
+    category: "bovinos",
+    patterns: /\b(bezerro|bezerra|reposi[cç][aã]o)\b/i,
+  },
   { slug: "milho", label: "Milho", category: "graos", patterns: /\bmilho\b/i },
   { slug: "soja", label: "Soja", category: "graos", patterns: /\b(soja|farelo\s+de\s+soja)\b/i },
   { slug: "leite", label: "Leite ao produtor", category: "leite", patterns: /\bleite\b/i },
   { slug: "frango", label: "Frango", category: "aves", patterns: /\b(frango|ave\s+viva)\b/i },
   { slug: "suino", label: "Suíno vivo", category: "suinos", patterns: /\b(su[ií]no|porco)\b/i },
   { slug: "ovos", label: "Ovos", category: "aves", patterns: /\bovos?\b/i },
-  { slug: "ovinos", label: "Ovinos", category: "ovinos", patterns: /\b(ovino|cordeiro|carneiro)\b/i },
+  {
+    slug: "ovinos",
+    label: "Ovinos",
+    category: "ovinos",
+    patterns: /\b(ovino|cordeiro|carneiro)\b/i,
+  },
   { slug: "tilapia", label: "Tilápia", category: "pescado", patterns: /\btil[aá]pia\b/i },
-  { slug: "dolar", label: "Dólar (PTAX)", category: "cambio", patterns: /\b(d[oó]lar|ptax|c[aâ]mbio|usd)\b/i },
-  { slug: "diesel", label: "Diesel", category: "combustivel", patterns: /\b(diesel|[oó]leo\s+diesel|combust[ií]vel)\b/i },
-  { slug: "boi-gordo-futuro", label: "Boi gordo futuro (B3)", category: "futuros", patterns: /\b(bgi|boi\s+futuro|futuro\s+do\s+boi|ifboi)\b/i },
-  { slug: "milho-futuro", label: "Milho futuro (B3)", category: "futuros", patterns: /\b(ccm|milho\s+futuro|futuro\s+do\s+milho|ifmilho)\b/i },
+  {
+    slug: "dolar",
+    label: "Dólar (PTAX)",
+    category: "cambio",
+    patterns: /\b(d[oó]lar|ptax|c[aâ]mbio|usd)\b/i,
+  },
+  {
+    slug: "diesel",
+    label: "Diesel",
+    category: "combustivel",
+    patterns: /\b(diesel|[oó]leo\s+diesel|combust[ií]vel)\b/i,
+  },
+  {
+    slug: "boi-gordo-futuro",
+    label: "Boi gordo futuro (B3)",
+    category: "futuros",
+    patterns: /\b(bgi|boi\s+futuro|futuro\s+do\s+boi|ifboi)\b/i,
+  },
+  {
+    slug: "milho-futuro",
+    label: "Milho futuro (B3)",
+    category: "futuros",
+    patterns: /\b(ccm|milho\s+futuro|futuro\s+do\s+milho|ifmilho)\b/i,
+  },
 ];
 
 /** Pergunta é sobre cotação/preço de mercado? */
@@ -81,15 +116,29 @@ export function detectMarketTargets(text: string): MarketTarget[] {
   return found;
 }
 
-const UF_RE = /\b(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/;
+const UF_RE =
+  /\b(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/;
 export function detectState(text: string): string | null {
   const m = text.toUpperCase().match(UF_RE);
   if (m) return m[1];
   const map: Record<string, string> = {
-    "são paulo": "SP", "sao paulo": "SP", "mato grosso do sul": "MS", "mato grosso": "MT",
-    "minas gerais": "MG", "goiás": "GO", "goias": "GO", "paraná": "PR", "parana": "PR",
-    "rio grande do sul": "RS", "santa catarina": "SC", "bahia": "BA", "pará": "PA", "para": "PA",
-    "rondônia": "RO", "rondonia": "RO", "tocantins": "TO",
+    "são paulo": "SP",
+    "sao paulo": "SP",
+    "mato grosso do sul": "MS",
+    "mato grosso": "MT",
+    "minas gerais": "MG",
+    goiás: "GO",
+    goias: "GO",
+    paraná: "PR",
+    parana: "PR",
+    "rio grande do sul": "RS",
+    "santa catarina": "SC",
+    bahia: "BA",
+    pará: "PA",
+    para: "PA",
+    rondônia: "RO",
+    rondonia: "RO",
+    tocantins: "TO",
   };
   const low = text.toLowerCase();
   for (const [k, v] of Object.entries(map)) if (low.includes(k)) return v;
@@ -177,8 +226,7 @@ function distanceKm(a: GeoRef, b: { lat: number; lon: number }): number {
   const dLon = ((b.lon - a.lon) * Math.PI) / 180;
   const la1 = (a.lat * Math.PI) / 180;
   const la2 = (b.lat * Math.PI) / 180;
-  const h =
-    Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) ** 2;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) ** 2;
   return Math.round(2 * R * Math.asin(Math.sqrt(h)));
 }
 
@@ -225,7 +273,10 @@ export async function getSeriesNearest(
       for (const [k, list] of byLoc) {
         const g = geoOfQuote(list[0]);
         const d = g ? distanceKm(askedCity, g) : 1500;
-        if (d < bestDist) { bestDist = d; bestKey = k; }
+        if (d < bestDist) {
+          bestDist = d;
+          bestKey = k;
+        }
       }
       return bestKey ? byLoc.get(bestKey)! : [];
     };
@@ -315,7 +366,10 @@ function nearest(series: MarketQuote[], daysBack: number): MarketQuote | null {
   let bestDiff = Infinity;
   for (const q of series.slice(1)) {
     const diff = Math.abs(new Date(q.reference_date).getTime() - target);
-    if (diff < bestDiff) { bestDiff = diff; best = q; }
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      best = q;
+    }
   }
   // tolerância: metade da janela
   if (best && bestDiff > (daysBack * 86400_000) / 2 + 3 * 86400_000) return null;
@@ -345,9 +399,16 @@ export function analyze(series: MarketQuote[]): QuoteAnalytics | null {
   const min = prices.reduce((a, b) => (b.price < a.price ? b : a), prices[0]);
   return {
     last,
-    varDaily: last.var_daily != null ? Number(last.var_daily) : d1 ? pct(price, Number(d1.price)) : null,
-    varWeekly: last.var_weekly != null ? Number(last.var_weekly) : d7 ? pct(price, Number(d7.price)) : null,
-    varMonthly: last.var_monthly != null ? Number(last.var_monthly) : d30 ? pct(price, Number(d30.price)) : null,
+    varDaily:
+      last.var_daily != null ? Number(last.var_daily) : d1 ? pct(price, Number(d1.price)) : null,
+    varWeekly:
+      last.var_weekly != null ? Number(last.var_weekly) : d7 ? pct(price, Number(d7.price)) : null,
+    varMonthly:
+      last.var_monthly != null
+        ? Number(last.var_monthly)
+        : d30
+          ? pct(price, Number(d30.price))
+          : null,
     varYearly: d365 ? pct(price, Number(d365.price)) : null,
     ma7: movingAverage(series, 7),
     ma30: movingAverage(series, 30),
@@ -369,7 +430,9 @@ export async function relations(state?: string | null): Promise<string[]> {
   ]);
   if (boi && bezerro) {
     const r = Number(bezerro.price) / Number(boi.price);
-    out.push(`CÁLCULO — relação bezerro/boi gordo: ${r.toFixed(2)} arrobas de boi para comprar 1 bezerro (bezerro ${fmtMoney(bezerro.price)}/${bezerro.unit} em ${bezerro.locality}, boi ${fmtMoney(boi.price)}/${boi.unit} em ${boi.locality}).`);
+    out.push(
+      `CÁLCULO — relação bezerro/boi gordo: ${r.toFixed(2)} arrobas de boi para comprar 1 bezerro (bezerro ${fmtMoney(bezerro.price)}/${bezerro.unit} em ${bezerro.locality}, boi ${fmtMoney(boi.price)}/${boi.unit} em ${boi.locality}).`,
+    );
   }
   if (boi && milho) {
     const r = Number(boi.price) / Number(milho.price);
@@ -377,7 +440,9 @@ export async function relations(state?: string | null): Promise<string[]> {
   }
   if (leite && milho) {
     const r = Number(milho.price) / Number(leite.price);
-    out.push(`CÁLCULO — relação leite/milho: são necessários ${r.toFixed(1)} litros de leite para comprar 1 saca de milho.`);
+    out.push(
+      `CÁLCULO — relação leite/milho: são necessários ${r.toFixed(1)} litros de leite para comprar 1 saca de milho.`,
+    );
   }
   return out;
 }
@@ -430,15 +495,20 @@ export function quoteBlock(a: QuoteAnalytics): string {
     const dir = a.ma7 > a.ma30 ? "de alta" : a.ma7 < a.ma30 ? "de baixa" : "lateral";
     const gap = Math.abs(((a.ma7 - a.ma30) / a.ma30) * 100);
     const conf = gap > 3 ? "confiança moderada" : "confiança baixa";
-    lines.push(`TENDÊNCIA — curto prazo ${dir} (MM7 vs MM30, ${conf}). Não é garantia de preço futuro.`);
+    lines.push(
+      `TENDÊNCIA — curto prazo ${dir} (MM7 vs MM30, ${conf}). Não é garantia de preço futuro.`,
+    );
   }
-  lines.push(`FONTE: ${q.source_name} — ${q.source_url} (coleta em ${fmtDate((q.collected_at ?? q.reference_date).slice(0, 10))}).`);
+  lines.push(
+    `FONTE: ${q.source_name} — ${q.source_url} (coleta em ${fmtDate((q.collected_at ?? q.reference_date).slice(0, 10))}).`,
+  );
   return lines.join("\n");
 }
 
 /** Diferença físico x futuro (basis) quando as duas séries existem. */
 export async function basisBlock(slug: string, state?: string | null): Promise<string | null> {
-  const futureSlug = slug === "boi-gordo" ? "boi-gordo-futuro" : slug === "milho" ? "milho-futuro" : null;
+  const futureSlug =
+    slug === "boi-gordo" ? "boi-gordo-futuro" : slug === "milho" ? "milho-futuro" : null;
   if (!futureSlug) return null;
   const [fis, fut] = await Promise.all([
     getLatestQuote(slug, { state }).catch(() => null),
@@ -451,7 +521,9 @@ export async function basisBlock(slug: string, state?: string | null): Promise<s
 }
 
 /** Fontes oficiais indicadas quando ainda não há dado registrado. */
-export async function suggestedSources(category: string): Promise<Array<{ name: string; org: string; url: string }>> {
+export async function suggestedSources(
+  category: string,
+): Promise<Array<{ name: string; org: string; url: string }>> {
   const map: Record<string, string[]> = {
     cambio: ["cambio"],
     combustivel: ["diesel"],

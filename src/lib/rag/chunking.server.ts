@@ -5,10 +5,13 @@ const CHUNK_SIZE = 1200;
 const OVERLAP = 180;
 
 export function chunkText(input: string): string[] {
-  const clean = input.replace(/\r\n/g, "\n").replace(/\u0000/g, "").trim();
+  const clean = input.replace(/\r\n/g, "\n").replaceAll("\u0000", "").trim();
   if (!clean) return [];
 
-  const paragraphs = clean.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+  const paragraphs = clean
+    .split(/\n{2,}/)
+    .map((p) => p.trim())
+    .filter(Boolean);
   const chunks: string[] = [];
   let buf = "";
 

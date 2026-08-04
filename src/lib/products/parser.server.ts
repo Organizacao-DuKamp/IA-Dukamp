@@ -55,10 +55,7 @@ function detectKind(sourcePath: string, filename: string): ProductCandidate["raw
 
 /** Clean the RTPI/DOC header lines from converted files. */
 function stripSourceHeader(text: string): string {
-  return text.replace(
-    /^ARQUIVO DE ORIGEM:[\s\S]*?={3,}\s*/i,
-    "",
-  );
+  return text.replace(/^ARQUIVO DE ORIGEM:[\s\S]*?={3,}\s*/i, "");
 }
 
 /** Extract a labelled section like "COMPOSIÇÃO:\n..." until next ALL-CAPS label or blank block. */
@@ -186,7 +183,10 @@ export function parseCandidate(doc: RawDoc): ProductCandidate | null {
 /** Merge two candidates for the same product (same slug) coming from
  *  different documents (typically RTPI + descritivo). Returns the merged
  *  candidate and a list of divergences (same field, different non-null values). */
-export function mergeCandidates(a: ProductCandidate, b: ProductCandidate): {
+export function mergeCandidates(
+  a: ProductCandidate,
+  b: ProductCandidate,
+): {
   merged: ProductCandidate;
   divergences: Array<{ field: string; a: string; b: string }>;
 } {

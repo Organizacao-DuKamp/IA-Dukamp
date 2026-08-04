@@ -79,10 +79,7 @@ export function detectUf(text: string, places: LivestockPlaceRow[]): string | nu
 }
 
 /** Match do município (nome completo ou apelido). Prefere o nome mais longo. */
-export function detectPlace(
-  text: string,
-  places: LivestockPlaceRow[],
-): LivestockPlaceRow | null {
+export function detectPlace(text: string, places: LivestockPlaceRow[]): LivestockPlaceRow | null {
   const low = norm(text);
   let best: { row: LivestockPlaceRow; len: number } | null = null;
   for (const p of places) {
@@ -184,7 +181,6 @@ export function distanceKm(
   const dLon = ((b.lon - a.lon) * Math.PI) / 180;
   const la1 = (a.lat * Math.PI) / 180;
   const la2 = (b.lat * Math.PI) / 180;
-  const h =
-    Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) ** 2;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) ** 2;
   return Math.round(2 * R * Math.asin(Math.sqrt(h)));
 }

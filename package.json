@@ -11,7 +11,9 @@
     "test": "node --test --experimental-strip-types tests/*.test.ts",
     "lint": "eslint .",
     "audit:privileged": "node scripts/audit-privileged-imports.mjs",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "audit:privileged-imports": "node scripts/audit-privileged-imports.mjs",
+    "check:client-secrets": "node scripts/check-client-secrets.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

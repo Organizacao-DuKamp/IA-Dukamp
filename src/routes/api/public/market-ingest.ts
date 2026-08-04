@@ -6,6 +6,8 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
+import type { LivestockQuoteInput } from "@/lib/market/livestock-ingest.server";
+import type { QuoteInput } from "@/lib/market/ingest.server";
 
 const bodySchema = z.object({
   quotes: z
@@ -53,7 +55,6 @@ const bodySchema = z.object({
   syncSources: z.boolean().optional(),
 });
 
-
 function unauthorized() {
   return new Response(JSON.stringify({ error: "unauthorized" }), {
     status: 401,
@@ -90,19 +91,18 @@ export const Route = createFileRoute("/api/public/market-ingest")({
         }
 
         try {
-          const { runCollectors, upsertQuotes, syncMarketSources } = await import(
-            "@/lib/market/ingest.server"
-          );
+          const { runCollectors, upsertQuotes, syncMarketSources } =
+            await import("@/lib/market/ingest.server");
           const result: Record<string, unknown> = {};
           if (parsed.data.syncSources) result.sources = await syncMarketSources();
           if (parsed.data.livestock?.length) {
-            const { upsertLivestockQuotes } = await import(
-              "@/lib/market/livestock-ingest.server"
+            const { upsertLivestockQuotes } = await import("@/lib/market/livestock-ingest.server");
+            result.livestock = await upsertLivestockQuotes(
+              parsed.data.livestock as LivestockQuoteInput[],
             );
-            result.livestock = await upsertLivestockQuotes(parsed.data.livestock as any);
           }
           if (parsed.data.quotes?.length) {
-            result.manual = await upsertQuotes(parsed.data.quotes as any);
+            result.manual = await upsertQuotes(parsed.data.quotes as QuoteInput[]);
           } else if (!parsed.data.livestock?.length) {
             result.collectors = await runCollectors();
           }

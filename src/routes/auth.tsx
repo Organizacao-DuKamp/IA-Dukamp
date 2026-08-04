@@ -8,7 +8,10 @@ export const Route = createFileRoute("/auth")({
       { title: "Entrar · TPEC-IA" },
       { name: "description", content: "Acesso restrito ao painel administrativo da TPEC-IA." },
       { property: "og:title", content: "Entrar · TPEC-IA" },
-      { property: "og:description", content: "Acesso restrito ao painel administrativo da TPEC-IA." },
+      {
+        property: "og:description",
+        content: "Acesso restrito ao painel administrativo da TPEC-IA.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -62,7 +65,11 @@ function AuthPage() {
       <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-sm">
         <h1 className="text-lg font-semibold">TPEC-IA · Admin</h1>
         <p className="mt-1 text-xs text-muted-foreground">
-          Acesso restrito. O chat público continua em <a href="/" className="underline">/</a>.
+          Acesso restrito. O chat público continua em{" "}
+          <a href="/" className="underline">
+            /
+          </a>
+          .
         </p>
         <form onSubmit={handleSubmit} className="mt-5 space-y-3">
           <input
