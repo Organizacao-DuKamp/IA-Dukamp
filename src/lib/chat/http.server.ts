@@ -2,14 +2,14 @@ import {
   ChatInputSchema,
   MAX_CHAT_PROXY_BODY_BYTES,
   type ChatInput,
-} from "./input";
+} from "./input.ts";
 import {
   TpecBackendError,
   dispatchChat,
   executeLocalChat,
   resolveTpecBackendMode,
   type TpecBackendDependencies,
-} from "./backend.server";
+} from "./backend.server.ts";
 
 type EnvLike = Record<string, string | undefined>;
 
@@ -70,13 +70,11 @@ function errorResponse(error: unknown): Response {
   return json({ error: "Erro inesperado ao processar a mensagem." }, 500);
 }
 
-/** Rota pública usada pelo navegador. Não encaminha headers/cookies do usuário. */
 export async function handlePublicChatRequest(
   request: Request,
   deps: TpecBackendDependencies = {},
 ): Promise<Response> {
   if (request.method !== "POST") return json({ error: "method_not_allowed" }, 405);
-  // Uma requisição já marcada como salto interno não pode entrar novamente no proxy público.
   if (request.headers.has("x-tpec-proxy-hop")) {
     return json({ error: "proxy_loop_rejected" }, 508);
   }
@@ -90,7 +88,6 @@ export async function handlePublicChatRequest(
         conversationId: string;
         diagnostics?: unknown;
       };
-      // Mantém o contrato já consumido pelo WebChatAdapter: estado opaco em string.
       return json(
         {
           reply: body.reply,
@@ -106,7 +103,6 @@ export async function handlePublicChatRequest(
   }
 }
 
-/** Endpoint protegido executado somente no Lovable em modo local. */
 export async function handleInternalChatRequest(
   request: Request,
   deps: TpecBackendDependencies = {},
@@ -132,7 +128,6 @@ export async function handleInternalChatRequest(
   try {
     const input = await parseInput(request);
     const result = await executeLocalChat(input, deps);
-    // Resposta interna mantém o ChatResult completo, inclusive diagnostics.
     return json(result.body, result.status);
   } catch (error) {
     return errorResponse(error);
