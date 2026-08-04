@@ -3,8 +3,8 @@
   publish = "dist"
 
 [context.deploy-preview]
-  # Valida a integração real sem imprimir credenciais ou registros.
-  command = "node scripts/verify-dukamp-supabase.mjs && npm run build"
+  # Executa testes e valida a integração real sem imprimir credenciais ou registros.
+  command = "npm test && node scripts/verify-dukamp-supabase.mjs && npm run build"
 
 [build.environment]
   # Evita que o build da Netlify herde o fallback Cloudflare usado pela Lovable.
