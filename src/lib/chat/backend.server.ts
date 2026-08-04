@@ -11,7 +11,6 @@ type EnvLike = Record<string, string | undefined>;
 
 type LocalBackendModule = {
   handleIncoming: (input: ChatInput) => Promise<ChatCoreResult>;
-  ChatError?: abstract new (...args: never[]) => Error & { status: number };
 };
 
 export interface TpecBackendDependencies {
@@ -238,9 +237,9 @@ export async function executeLocalChat(
     const result = ChatCoreResultSchema.parse(await local.handleIncoming(input));
     return { status: 200, body: result };
   } catch (error) {
-    const ChatError = local.ChatError;
-    if (ChatError && error instanceof ChatError) {
-      return { status: error.status, body: { error: error.message } };
+    const status = (error as { status?: unknown } | null)?.status;
+    if (error instanceof Error && typeof status === "number") {
+      return { status, body: { error: error.message } };
     }
     throw error;
   }
