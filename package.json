@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "test": "node --test --experimental-strip-types tests/*.test.ts",
     "lint": "eslint .",
+    "audit:privileged": "node scripts/audit-privileged-imports.mjs",
     "format": "prettier --write ."
   },
   "dependencies": {
