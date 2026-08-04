@@ -4,7 +4,7 @@ import {
   MAX_CHAT_PROXY_RESPONSE_BYTES,
   type ChatCoreResult,
   type ChatInput,
-} from "./input";
+} from "./input.ts";
 
 export type TpecBackendMode = "local" | "proxy";
 type EnvLike = Record<string, string | undefined>;
@@ -233,7 +233,7 @@ export async function executeLocalChat(
 ): Promise<BackendDispatchResult> {
   const load =
     deps.loadLocalBackend ??
-    (() => import("./core.server") as Promise<LocalBackendModule>);
+    (() => import("./core.server.ts") as Promise<LocalBackendModule>);
   const local = await load();
   try {
     const result = ChatCoreResultSchema.parse(await local.handleIncoming(input));
