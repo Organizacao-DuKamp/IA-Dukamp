@@ -26,12 +26,14 @@ export interface BackendDispatchResult {
 }
 
 export class TpecBackendError extends Error {
-  constructor(
-    message: string,
-    readonly status: number,
-    readonly code: string,
-  ) {
+  readonly status: number;
+  readonly code: string;
+
+  constructor(message: string, status: number, code: string) {
     super(message);
+    this.name = "TpecBackendError";
+    this.status = status;
+    this.code = code;
   }
 }
 
