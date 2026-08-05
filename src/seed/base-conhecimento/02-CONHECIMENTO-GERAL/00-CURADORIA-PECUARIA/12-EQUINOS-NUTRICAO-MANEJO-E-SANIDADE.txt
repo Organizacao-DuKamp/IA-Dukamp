@@ -1,0 +1,178 @@
+TPEC-IA — EQUINOS: NUTRIÇÃO, MANEJO, BEM-ESTAR E SANIDADE
+Versão: 2026-08-05
+Status: referência técnica para RAG
+
+OBJETIVO
+Responder sobre equinos, asininos e muares sem aplicar automaticamente recomendações de ruminantes. Equinos são herbívoros monogástricos com fermentação no ceco e cólon. Produtos DuKamp só podem ser recomendados quando houver indicação oficial para equídeos e fase/atividade.
+
+1. DADOS NECESSÁRIOS
+- espécie: equino, asinino ou muar;
+- raça/tipo e idade;
+- peso e escore corporal;
+- objetivo: manutenção, crescimento, reprodução, lactação, trabalho, esporte ou recuperação;
+- intensidade, duração e frequência do exercício;
+- pasto e volumoso;
+- concentrado e suplemento atual;
+- acesso a água e sal;
+- condição dentária;
+- histórico de cólica, laminite, úlcera, doença metabólica ou respiratória;
+- alojamento, tempo de pastejo e comportamento;
+- região/clima e transporte.
+
+2. PRINCÍPIOS DE ALIMENTAÇÃO
+- volumoso de qualidade é base da dieta;
+- mudanças devem ser graduais;
+- evitar longos períodos sem forragem quando o manejo permitir;
+- dividir concentrado em refeições adequadas;
+- não fornecer grandes quantidades de grão de uma vez;
+- água limpa deve estar disponível;
+- monitorar peso, condição corporal e desempenho;
+- armazenamento de feno/ração deve prevenir mofo e poeira;
+- dieta deve ser específica para fase e atividade.
+
+3. NRC PARA EQUINOS
+Referência: Nutrient Requirements of Horses, 6ª edição, NRC 2007.
+Os requerimentos variam com:
+- peso metabólico;
+- mantença;
+- crescimento;
+- gestação e lactação;
+- nível de trabalho;
+- temperatura/ambiente;
+- condição corporal;
+- digestibilidade e composição dos alimentos.
+
+Não apresentar exigência sem edição, categoria, unidade e entradas. O modelo não substitui avaliação do cavalo e análise do alimento.
+
+4. VOLUMOSOS
+Avaliar:
+- espécie forrageira;
+- maturidade;
+- matéria seca;
+- folhas e talos;
+- poeira, mofo e odor;
+- contaminação por plantas tóxicas;
+- armazenamento;
+- análise laboratorial quando necessário.
+
+Feno mofado ou muito empoeirado pode agravar risco respiratório e não deve ser considerado seguro por simples diluição.
+
+5. CONCENTRADOS E SUPLEMENTOS
+Indicação depende de necessidade que o volumoso não atende.
+Verificar:
+- energia e proteína;
+- minerais e vitaminas;
+- amido/açúcares;
+- tamanho da refeição;
+- atividade;
+- risco de obesidade, laminite e doença metabólica;
+- rótulo, espécie e fase.
+
+Núcleo e premix não são automaticamente fornecidos puros. Conferir instrução oficial.
+
+6. UREIA E PRODUTOS PARA RUMINANTES
+Não recomendar ureia ou suplemento formulado para ruminantes a equinos. O metabolismo e a fermentação são diferentes, e o uso pode ser perigoso. Consultar sempre rótulo e responsável técnico.
+
+7. ÁGUA E ELETRÓLITOS
+Necessidade aumenta com:
+- exercício;
+- calor e umidade;
+- lactação;
+- dieta seca;
+- transporte;
+- sudorese.
+
+Eletrólitos devem ser usados conforme necessidade, água disponível, produto e orientação técnica. Não administrar mistura concentrada ou dose improvisada.
+
+8. ESCORE CORPORAL E PESO
+Monitorar:
+- condição corporal;
+- depósitos de gordura regional;
+- fita/pesagem quando disponível;
+- massa muscular;
+- evolução e desempenho;
+- casco e locomoção.
+
+Obesidade e emagrecimento são sinais para revisão de dieta, saúde, dentes e manejo.
+
+9. DENTES E MASTIGAÇÃO
+Problemas dentários podem causar:
+- queda de alimento;
+- mastigação lenta;
+- perda de peso;
+- fibras longas nas fezes;
+- resistência à embocadura;
+- cólica.
+
+Avaliação e procedimentos devem ser realizados por profissional habilitado.
+
+10. CÓLICA — URGÊNCIA
+Sinais podem incluir olhar flanco, deitar/rolar, inquietação, sudorese, ausência de fezes, distensão ou apatia.
+Orientar:
+- chamar veterinário imediatamente;
+- retirar alimento até orientação;
+- manter ambiente seguro;
+- observar sinais e horários;
+- não dar medicamento, óleo ou mistura caseira;
+- não forçar caminhada excessiva;
+- não introduzir sonda.
+
+11. LAMINITE
+Dor nos cascos, postura anormal, relutância em mover e pulsação digital forte requerem veterinário imediato. Fatores podem incluir excesso de carboidrato, doença sistêmica, sobrecarga e distúrbios metabólicos. Não diagnosticar nem tratar à distância.
+
+12. DOENÇAS RESPIRATÓRIAS E AMBIENTE
+Poeira, mofo, ventilação ruim e cama inadequada podem agravar sinais. Avaliar tosse, secreção, febre, esforço respiratório e queda de desempenho.
+Dificuldade respiratória é urgência.
+
+13. SANIDADE OFICIAL
+O PNSE envolve vigilância, trânsito, cadastro e intervenção em suspeitas de doenças obrigatórias.
+Temas importantes:
+- anemia infecciosa equina;
+- mormo;
+- encefalites e outras doenças notificáveis;
+- documentação e exames para trânsito/eventos;
+- uso apenas de insumos registrados;
+- comunicação ao serviço oficial em suspeita.
+
+Regras mudam; consultar MAPA e defesa estadual atual antes de orientar trânsito, exame ou evento.
+
+14. BEM-ESTAR E ALOJAMENTO
+- companhia e comportamento social;
+- exercício e movimentação;
+- sombra/abrigo;
+- cama e ventilação;
+- limpeza;
+- espaço seguro;
+- manejo sem violência;
+- equipamento ajustado;
+- treinamento compatível com condicionamento;
+- períodos de descanso;
+- transporte planejado.
+
+15. REPRODUÇÃO E POTROS
+- condição corporal de égua e garanhão;
+- exame reprodutivo;
+- sanidade;
+- gestação e parto observados;
+- colostro e avaliação neonatal;
+- crescimento e dieta específica;
+- protocolos hormonais e diagnóstico somente com veterinário.
+
+16. PRODUTOS DUKAMP
+Fluxo:
+1) confirmar equino/equídeo, peso, fase e trabalho;
+2) consultar catálogo DuKamp vivo;
+3) só recomendar produto com indicação expressa;
+4) verificar amido/açúcares, consumo, restrições e forma de fornecimento;
+5) não usar produto bovino por analogia;
+6) preço e estoque vêm da fonte viva;
+7) em cólica, laminite, emagrecimento ou doença, não substituir veterinário por suplemento.
+
+17. FONTES
+- NRC. Nutrient Requirements of Horses, 6ª ed., 2007: https://www.nationalacademies.org/publications/11653
+- MAPA — PNSE: https://www.gov.br/agricultura/pt-br/assuntos/sanidade-animal-e-vegetal/saude-animal/programas-de-saude-animal/sanidade-de-equideos
+- MAPA — Boas práticas em equídeos: https://www.gov.br/agricultura/pt-br/assuntos/producao-animal/boas-praticas-de-producao-animal/equideos
+- Embrapa — manejo nutricional de equinos em pastagens nativas no Pantanal.
+- WOAH — Terrestrial Code e Manual.
+
+Revisão: anual e antes de respostas regulatórias atuais.
