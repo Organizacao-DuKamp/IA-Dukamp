@@ -1,0 +1,174 @@
+TPEC-IA — OVINOS E CAPRINOS: NUTRIÇÃO, MANEJO, REPRODUÇÃO E SANIDADE
+Versão: 2026-08-05
+Status: referência técnica para RAG
+
+OBJETIVO
+Evitar que pequenos ruminantes sejam tratados como bovinos em miniatura. Ovinos e caprinos têm diferenças de comportamento, metabolismo, sensibilidade mineral, produção e epidemiologia. Produtos DuKamp só podem ser recomendados quando o rótulo indicar expressamente a espécie e fase.
+
+1. DADOS NECESSÁRIOS
+- ovino ou caprino;
+- aptidão: corte, leite, lã, pele ou reprodução;
+- raça e região;
+- idade, sexo, peso e escore corporal;
+- categoria: cria, desmama, crescimento, terminação, matriz, reprodutor;
+- gestação, número de fetos e lactação;
+- pasto/forragem, estação e sistema;
+- consumo e suplemento atual;
+- histórico de verminose e tratamentos;
+- água, sombra, instalações e lotação;
+- objetivo e mercado.
+
+2. COMPORTAMENTO ALIMENTAR
+Caprinos tendem a selecionar maior variedade de plantas e partes vegetais; ovinos têm padrão de pastejo diferente. A oferta, altura, composição botânica e capacidade de seleção alteram o consumo.
+Não extrapolar consumo e manejo entre espécies sem fonte.
+
+3. NUTRIÇÃO
+Referência internacional principal: NRC Small Ruminants 2007, complementada por Embrapa e pesquisas brasileiras.
+Considerar:
+- mantença, crescimento, gestação, lactação e lã;
+- número de fetos;
+- escore corporal;
+- qualidade e oferta do volumoso;
+- proteína, energia e minerais;
+- água;
+- parasitismo;
+- adaptação ao concentrado;
+- custo e disponibilidade regional.
+
+4. MINERAIS E COBRE
+Ovinos são mais sensíveis ao excesso de cobre do que bovinos e caprinos. O risco depende de concentração, tempo de exposição, molibdênio, enxofre e dieta.
+Regras:
+- não fornecer mineral bovino a ovinos sem indicação expressa;
+- não usar formulação caprina automaticamente em ovinos;
+- verificar rótulo, espécie e níveis de garantia;
+- suspeita de intoxicação requer veterinário.
+
+5. MATRIZES E PERIPARTO
+No final da gestação e início da lactação, exigências aumentam, especialmente com múltiplos fetos.
+Planejar:
+- diagnóstico e número de fetos quando disponível;
+- separação por necessidade;
+- escore corporal;
+- qualidade da dieta;
+- espaço de cocho;
+- prevenção de toxemia da prenhez e hipocalcemia com responsável técnico;
+- local de parto;
+- colostro, umbigo e proteção das crias;
+- identificação de rejeição, hipotermia e baixa ingestão.
+
+Apatia, incapacidade de levantar, sinais neurológicos ou matriz no fim da gestação sem comer são urgências.
+
+6. CRIAS E DESMAMA
+- colostro cedo, suficiente e higiênico;
+- proteção térmica;
+- cura do umbigo;
+- leite/dieta líquida adequada, quando artificial;
+- concentrado inicial e água;
+- prevenção de eimeriose e diarreias;
+- crescimento e pesagem;
+- desmama baseada em desenvolvimento/consumo;
+- formação de lotes e redução de estresse.
+
+7. VERMINOSE E RESISTÊNCIA ANTI-HELMÍNTICA
+Controle moderno é integrado:
+- avaliação clínica e laboratorial;
+- tratamento seletivo quando indicado;
+- rotação e manejo de pastagens;
+- nutrição adequada;
+- quarentena e controle de entrada;
+- registro de princípio ativo e resposta;
+- exame de redução de contagem de ovos quando orientado;
+- evitar vermifugação em calendário indiscriminado.
+
+Não prescrever vermífugo ou dose. Anemia pode ter outras causas.
+
+8. DOENÇAS E PROBLEMAS PRIORITÁRIOS
+- verminose gastrintestinal;
+- eimeriose/coccidiose;
+- clostridioses/enterotoxemia;
+- pododermatite;
+- linfadenite caseosa;
+- ectima contagioso;
+- mastite;
+- broncopneumonia;
+- miíases e ectoparasitas;
+- artrite encefalite caprina (CAEV) em caprinos;
+- problemas reprodutivos e abortos;
+- intoxicações por plantas/minerais;
+- timpanismo;
+- doenças oficiais/zoonoses conforme MAPA.
+
+Sinais não são diagnóstico. Surtos, abortos, neurológicos e mortalidade exigem profissional/serviço oficial.
+
+9. CASCOS E INSTALAÇÕES
+- manter ambiente seco e drenado;
+- pedilúvio dentro de programa técnico;
+- casqueamento correto;
+- reduzir lama e lotação excessiva;
+- quarentena;
+- separar doentes;
+- higienizar sala de ordenha em caprinos/ovinos leiteiros;
+- proteger cochos da chuva e contaminação.
+
+10. REPRODUÇÃO
+Considerar:
+- sazonalidade conforme raça, latitude e sistema;
+- estação de monta;
+- condição corporal;
+- efeito macho;
+- exame de reprodutores;
+- prolificidade;
+- diagnóstico de gestação;
+- lotes por número de fetos;
+- assistência ao parto;
+- mortalidade neonatal;
+- registros de fertilidade.
+
+Hormônios e protocolos são de responsabilidade veterinária.
+
+11. TERMINAÇÃO
+Pode ocorrer a pasto, semiconfinamento ou confinamento.
+Avaliar:
+- peso e idade de entrada;
+- meta e mercado;
+- volumoso e concentrado;
+- adaptação;
+- fibra efetiva;
+- risco de acidose e enterotoxemia;
+- espaço de cocho;
+- parasitismo;
+- custo por kg ganho;
+- uniformidade e acabamento.
+
+12. PRODUTOS DUKAMP
+Fluxo:
+1) identificar ovino/caprino, categoria, peso e objetivo;
+2) consultar catálogo DuKamp;
+3) só oferecer produto com indicação expressa para espécie/fase;
+4) verificar cobre, ureia, aditivos, consumo e restrições oficiais;
+5) não usar produto bovino por analogia;
+6) preço/estoque vêm da fonte viva;
+7) encaminhar ao responsável técnico em formulação, periparto ou sanidade.
+
+13. INDICADORES
+- taxa de parição;
+- prolificidade;
+- mortalidade neonatal;
+- taxa de desmama;
+- ganho médio diário;
+- idade/peso ao abate;
+- incidência de verminose e tratamentos;
+- descarte;
+- produção e qualidade do leite;
+- custo alimentar;
+- kg de cria desmamada por matriz exposta.
+
+14. FONTES
+- NRC. Nutrient Requirements of Small Ruminants, 2007: https://www.nationalacademies.org/read/11654
+- Embrapa — Manejo alimentar de caprinos e ovinos nos trópicos.
+- Embrapa — Manejo sanitário e principais doenças de caprinos e ovinos.
+- Embrapa — Caprinos e ovinos: guia de saúde.
+- Embrapa — Sanidade de caprinos e ovinos: https://www.atermaisdigital.cnptia.embrapa.br/web/caprinos-e-ovinos/manejo/sanidade
+- MAPA — PNSCO e Programas de Saúde Animal.
+
+Revisão: anual e quando houver atualização oficial.
