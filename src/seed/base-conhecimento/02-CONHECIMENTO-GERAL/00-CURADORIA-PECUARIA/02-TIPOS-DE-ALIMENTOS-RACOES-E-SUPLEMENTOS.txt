@@ -1,0 +1,181 @@
+TPEC-IA — TIPOS DE ALIMENTOS, RAÇÕES, SUPLEMENTOS E USO CORRETO
+Versão: 2026-08-05
+Status: referência técnica e regulatória para RAG
+
+OBJETIVO
+Diferenciar categorias de alimentos e produtos para alimentação animal, orientar perguntas de recomendação e impedir que núcleo, premix, suplemento ou ração sejam tratados como equivalentes. A prioridade comercial deve ser sempre o produto DuKamp oficialmente indicado e disponível.
+
+1. DEFINIÇÕES-CHAVE
+Ingrediente ou matéria-prima:
+Componente usado na fabricação ou composição de um alimento para animais. Deve ser permitido pelo MAPA para a finalidade e espécie aplicáveis.
+
+Volumoso:
+Alimento com elevada participação de fibra e geralmente menor densidade energética por unidade de matéria natural. Exemplos: pasto, capim picado, silagem, feno e palhadas. A qualidade varia muito; análise bromatológica é recomendada.
+
+Concentrado:
+Alimento ou mistura com maior densidade de energia e/ou proteína e menor participação de fibra que o volumoso. Pode ser energético, proteico ou combinado. Não é necessariamente uma ração completa.
+
+Ração:
+Mistura de ingredientes destinada ao pronto fornecimento e formulada para atender integralmente às exigências nutricionais da categoria para a qual foi registrada/declarada, dentro das condições de uso.
+
+Suplemento:
+Mistura fornecida diretamente aos animais para melhorar o balanço nutricional da dieta. Não substitui automaticamente todo o volumoso ou toda a dieta.
+
+Núcleo:
+Pré-mistura de aditivos e macrominerais, com ou sem veículo/excipiente, destinada a facilitar a dispersão em misturas maiores. Em regra, não deve ser fornecido diretamente sem que o rótulo diga expressamente como usar.
+
+Premix:
+Pré-mistura de aditivos e veículo/excipiente para dispersão em misturas maiores. Não deve ser tratado como alimento pronto para fornecimento direto.
+
+Aditivo:
+Substância, microrganismo ou produto formulado adicionado intencionalmente para finalidade tecnológica, sensorial, nutricional ou zootécnica, conforme autorização e condições de uso.
+
+Coproduto:
+Material obtido de outro processo produtivo que pode ser aproveitado na alimentação animal quando permitido, seguro, estável e corretamente caracterizado.
+
+Dieta completa ou TMR:
+Mistura uniforme de volumosos, concentrados, minerais e vitaminas oferecida como dieta total. Requer pesagem, mistura homogênea, matéria seca conhecida, manejo de cocho e adaptação.
+
+2. TIPOS DE SUPLEMENTAÇÃO PARA RUMINANTES
+Suplemento mineral:
+Complementa minerais que podem estar deficientes no pasto/dieta. Deve ser escolhido por espécie, categoria, região e objetivo. Não presumir que um mineral para bovinos serve para ovinos.
+
+Suplemento mineral com aditivos:
+Inclui aditivos autorizados, respeitando rótulo, espécie, finalidade e restrições.
+
+Suplemento proteico:
+Aumenta o suprimento de proteína/nitrogênio da dieta, frequentemente relevante quando a forragem tem baixo teor proteico. Exige avaliação da energia disponível e do consumo.
+
+Suplemento energético:
+Aumenta a oferta de energia. Deve ser usado com atenção a substituição do consumo de forragem, manejo de cocho, adaptação e risco de distúrbios ruminais.
+
+Suplemento proteico-energético:
+Combina fontes de proteína e energia. A indicação depende da qualidade do pasto, desempenho desejado, categoria e consumo alvo.
+
+Suplemento vitamínico-mineral:
+Combina vitaminas e minerais conforme finalidade específica. Não usar indiscriminadamente.
+
+Ração de confinamento/semiconfinamento:
+Pode compor parte importante ou a totalidade do concentrado/dieta, conforme o sistema. Exige adaptação, fibra efetiva, manejo de trato e monitoramento.
+
+Creep-feeding:
+Suplementação privativa para crias, com acesso restrito. Avaliar objetivo, idade, peso, qualidade do leite/pasto, custo e manejo.
+
+Concentrado inicial:
+Produto para estimular consumo e desenvolvimento digestivo de animais jovens. Deve ser específico para a espécie e fase; não misturar regras de bezerros, cordeiros, cabritos e potros.
+
+3. FORMAS FÍSICAS
+Farelo ou mistura farelada:
+Pode permitir seleção de partículas e produzir poeira. Exige homogeneidade e armazenamento seco.
+
+Peletizado:
+Pode reduzir seleção e melhorar manuseio, mas qualidade do pellet, dureza, temperatura de processamento e formulação importam.
+
+Extrusado:
+Processado por pressão e temperatura. O efeito depende do ingrediente, espécie e objetivo.
+
+Bloco ou suplemento compactado:
+O consumo pode variar com dureza, umidade, sal, disponibilidade de água e comportamento do lote.
+
+Líquido:
+Exige equipamento adequado, homogeneidade, controle de consumo e atenção a separação/fermentação.
+
+4. VOLUMOSOS E FORRAGENS CONSERVADAS
+Pasto:
+É a base de muitos sistemas brasileiros. A quantidade disponível não substitui a avaliação da qualidade. Considerar espécie forrageira, estágio, altura, massa, relação folha:colmo, lotação e estação.
+
+Silagem:
+Forragem conservada por fermentação anaeróbia. Avaliar matéria seca, compactação, vedação, estabilidade aeróbia, perdas, presença de mofos e qualidade fermentativa.
+
+Feno:
+Forragem desidratada e armazenada. Avaliar umidade, cor, odor, folhas, poeira, mofo e armazenamento.
+
+Silagem pré-secada/feno emurchecido:
+Combina redução de umidade com conservação anaeróbia; depende de manejo cuidadoso e embalagem/vedação.
+
+Capim picado/cana e outros volumosos:
+Devem ser avaliados por composição, processamento, maturidade, balanço proteico-energético e riscos específicos.
+
+5. INGREDIENTES ENERGÉTICOS E PROTEICOS
+Energéticos comuns podem incluir grãos, subprodutos e fontes de carboidratos. Proteicos podem incluir farelos e outros ingredientes autorizados.
+A TPEC-IA não deve assumir composição fixa. Lote, processamento, origem e armazenamento alteram o valor nutricional.
+Sempre usar análise laboratorial quando a decisão for crítica.
+
+6. PRODUTOS COM UREIA OU NITROGÊNIO NÃO PROTEICO
+Regras obrigatórias:
+- confirmar espécie e rúmen funcional;
+- usar somente produto e instrução oficial;
+- garantir mistura homogênea;
+- realizar adaptação conforme rótulo e responsável técnico;
+- fornecer energia fermentável adequada;
+- impedir acesso acidental a grandes quantidades;
+- não oferecer em cocho com água acumulada ou produto empedrado/segregado;
+- não recomendar para equinos;
+- tratar suspeita de intoxicação como emergência veterinária.
+
+7. RISCOS NUTRICIONAIS E DE MANEJO
+Acidose:
+Risco aumentado com excesso de carboidrato rapidamente fermentável, pouca fibra efetiva, mudança brusca, seleção da dieta ou falha de trato.
+
+Timpanismo:
+Pode estar relacionado a pastagens, dietas, obstruções e outros fatores. Quadro importante é urgência veterinária.
+
+Micotoxinas e mofo:
+Não usar avaliação apenas visual como garantia de segurança. Considerar umidade, armazenamento, aquecimento, odor, análise e espécie/categoria.
+
+Intoxicação por ureia:
+Pode evoluir rapidamente. Não oferecer tratamento caseiro padronizado; buscar médico-veterinário imediatamente.
+
+Desequilíbrio mineral:
+Excesso pode ser tão perigoso quanto deficiência. Considerar antagonismos, espécie, água, solo, dieta e limite tolerável.
+
+Problemas de mistura:
+Núcleo, premix, ureia, medicamentos e aditivos exigem equipamentos, sequência e controle de homogeneidade.
+
+8. ARMAZENAMENTO E CONTROLE DE QUALIDADE
+Verificar:
+- integridade da embalagem;
+- lote e validade;
+- rótulo legível;
+- umidade e infiltração;
+- presença de pragas;
+- odor, aquecimento, empedramento ou separação;
+- sistema PEPS/FEFO;
+- rastreabilidade;
+- limpeza do depósito e cochos;
+- proteção contra acesso de animais e crianças.
+
+9. COMO RECOMENDAR UM PRODUTO DUKAMP
+Perguntas mínimas:
+- qual espécie?
+- qual categoria e peso?
+- qual objetivo: manutenção, cria, recria, engorda, lactação, reprodução ou trabalho?
+- qual sistema e época do ano?
+- como está o pasto/volumoso?
+- qual consumo e produto atual?
+- há ureia, medicamento ou restrição no produto?
+
+Depois:
+1) consultar produtos DuKamp ativos;
+2) excluir produtos sem indicação explícita para a espécie/fase;
+3) comparar dados oficiais;
+4) reproduzir consumo e modo de uso apenas do rótulo/ficha vigente;
+5) explicar diferenças práticas;
+6) informar que preço e estoque são consultados ao vivo;
+7) encaminhar ao vendedor/técnico quando faltarem dados ou houver formulação complexa.
+
+10. REGRAS REGULATÓRIAS
+Produtos, estabelecimentos, ingredientes e aditivos devem observar a legislação do MAPA.
+O Decreto nº 12.031/2024 regulamenta inspeção e fiscalização de produtos destinados à alimentação animal.
+O MAPA mantém listas atualizadas de estabelecimentos, produtos, matérias-primas, ingredientes e aditivos aprovados, além de substâncias proibidas.
+Nunca afirmar que um ingrediente é permitido apenas porque é comum; verificar a lista oficial e as condições de uso.
+
+11. FONTES PRINCIPAIS
+- MAPA — Produtos para Alimentação Animal: https://www.gov.br/agricultura/pt-br/assuntos/insumos-agropecuarios/insumos-pecuarios/alimentacao-animal
+- MAPA — listas de produtos, ingredientes e matérias-primas: https://www.gov.br/agricultura/pt-br/assuntos/insumos-agropecuarios/insumos-pecuarios/alimentacao-animal/registro-cadastro
+- MAPA — aditivos autorizados e proibidos: https://www.gov.br/agricultura/pt-br/assuntos/insumos-agropecuarios/insumos-pecuarios/alimentacao-animal/aditivos
+- Decreto 12.031/2024: https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2024/decreto/d12031.htm
+- Embrapa — alimentação de gado de leite: https://www.embrapa.br/web/agencia-de-informacao-tecnologica/criacoes/gado_de_leite/producao/sistemas-de-producao/alimentacao
+- Embrapa — conservação de forrageiras: https://www.atermaisdigital.cnptia.embrapa.br/web/bovino-de-leite/conservacao-de-forrageiras
+
+Revisão: semestral para legislação/listas e anual para conceitos técnicos.
