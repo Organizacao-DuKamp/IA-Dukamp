@@ -43,3 +43,10 @@ Para não depender de tentativa e erro, ainda vou:
 ## Próximo passo que depende de você
 
 Depois de aprovar, me diga qual caminho prefere (A ou B). Para o A, eu gero o valor do `TPEC_PROXY_SECRET` e te passo o que colar na Netlify; para o B, você precisará colocar a chave da Perplexity nas variáveis da Netlify.
+
+## Erros de tipagem já existentes no projeto (corrigir junto)
+
+O projeto hoje não compila limpo — há erros de tipo que precisam ser corrigidos no mesmo trabalho, senão o build da Netlify/Lovable pode falhar:
+
+- `src/lib/knowledge.functions.ts`: o tipo local `AdminContext` não bate mais com o cliente Supabase gerado (7 ocorrências em `assertAdmin`). Ajustar o tipo do parâmetro para aceitar o cliente real.
+- `src/lib/rag/search.server.ts` (linha 38): a função `search_knowledge_lexical` não existe nos tipos gerados do banco. Alinhar a chamada com o padrão já usado logo acima no mesmo arquivo.
