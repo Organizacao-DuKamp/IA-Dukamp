@@ -27,7 +27,8 @@ export const listSources = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { getPrivilegedClient } = await import("@/lib/privileged.server");
+    const supabaseAdmin = await getPrivilegedClient(context.supabase);
     const { data, error } = await supabaseAdmin
       .from("market_sources")
       .select("*")
@@ -49,7 +50,8 @@ export const listQuotes = createServerFn({ method: "GET" })
   )
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { getPrivilegedClient } = await import("@/lib/privileged.server");
+    const supabaseAdmin = await getPrivilegedClient(context.supabase);
     let q = supabaseAdmin
       .from("market_quotes")
       .select("*")
@@ -93,7 +95,8 @@ export const deleteQuote = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { getPrivilegedClient } = await import("@/lib/privileged.server");
+    const supabaseAdmin = await getPrivilegedClient(context.supabase);
     const { error } = await supabaseAdmin.from("market_quotes").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -148,7 +151,8 @@ export const listLivestockQuotes = createServerFn({ method: "GET" })
   )
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { getPrivilegedClient } = await import("@/lib/privileged.server");
+    const supabaseAdmin = await getPrivilegedClient(context.supabase);
     let q = supabaseAdmin
       .from("cotacoes_pecuarias")
       .select("*")
@@ -176,7 +180,8 @@ export const deleteLivestockQuote = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { getPrivilegedClient } = await import("@/lib/privileged.server");
+    const supabaseAdmin = await getPrivilegedClient(context.supabase);
     const { error } = await supabaseAdmin.from("cotacoes_pecuarias").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };

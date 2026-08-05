@@ -19,7 +19,8 @@ export const listProducts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { getPrivilegedClient } = await import("@/lib/privileged.server");
+    const supabaseAdmin = await getPrivilegedClient(context.supabase);
     const { data, error } = await supabaseAdmin
       .from("products")
       .select("*")
@@ -33,7 +34,8 @@ export const listProductAliases = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) => z.object({ product_id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { getPrivilegedClient } = await import("@/lib/privileged.server");
+    const supabaseAdmin = await getPrivilegedClient(context.supabase);
     const { data: rows, error } = await supabaseAdmin
       .from("product_aliases")
       .select("id, alias, alias_normalized, origin, created_at")
@@ -69,7 +71,8 @@ export const updateProduct = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => UpdateSchema.parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { getPrivilegedClient } = await import("@/lib/privileged.server");
+    const supabaseAdmin = await getPrivilegedClient(context.supabase);
     const patch: Record<string, unknown> = { ...data.patch };
     if (typeof patch.official_name === "string") {
       patch.slug = toSlug(patch.official_name);
@@ -91,7 +94,8 @@ export const addProductAlias = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => AliasAddSchema.parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { getPrivilegedClient } = await import("@/lib/privileged.server");
+    const supabaseAdmin = await getPrivilegedClient(context.supabase);
     const { error } = await supabaseAdmin.from("product_aliases").insert({
       product_id: data.product_id,
       alias: data.alias.trim(),
@@ -107,7 +111,8 @@ export const deleteProductAlias = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { getPrivilegedClient } = await import("@/lib/privileged.server");
+    const supabaseAdmin = await getPrivilegedClient(context.supabase);
     const { error } = await supabaseAdmin.from("product_aliases").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -118,7 +123,8 @@ export const listReviewQueue = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { getPrivilegedClient } = await import("@/lib/privileged.server");
+    const supabaseAdmin = await getPrivilegedClient(context.supabase);
     const { data, error } = await supabaseAdmin
       .from("product_review_queue")
       .select("*")
@@ -138,7 +144,8 @@ export const resolveReview = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => ResolveSchema.parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { getPrivilegedClient } = await import("@/lib/privileged.server");
+    const supabaseAdmin = await getPrivilegedClient(context.supabase);
     const { error } = await supabaseAdmin
       .from("product_review_queue")
       .update({ status: data.status, resolution_notes: data.notes ?? null })
@@ -152,7 +159,8 @@ export const listImportReports = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { getPrivilegedClient } = await import("@/lib/privileged.server");
+    const supabaseAdmin = await getPrivilegedClient(context.supabase);
     const { data, error } = await supabaseAdmin
       .from("import_reports")
       .select("id, kind, summary, created_at")
@@ -167,7 +175,8 @@ export const getImportReportItems = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) => z.object({ report_id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { getPrivilegedClient } = await import("@/lib/privileged.server");
+    const supabaseAdmin = await getPrivilegedClient(context.supabase);
     const { data: rows, error } = await supabaseAdmin
       .from("import_report_items")
       .select("*")
@@ -187,7 +196,8 @@ export const extractProductsFromKnowledge = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => ExtractSchema.parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { getPrivilegedClient } = await import("@/lib/privileged.server");
+    const supabaseAdmin = await getPrivilegedClient(context.supabase);
     const parserMod = await import("./products/parser.server");
     const { parseCandidate, mergeCandidates } = parserMod;
     type ProductCandidate = import("./products/parser.server").ProductCandidate;
