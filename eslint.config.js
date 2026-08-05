@@ -51,8 +51,11 @@ export default tseslint.config(
       // Arquivo administrativo legado, funcionalmente coberto pelos testes, que
       // será formatado isoladamente para evitar um diff destrutivo nesta entrega.
       "src/lib/knowledge.functions.ts",
-      // Fixture declarativa extensa: o conteúdo é validado por testes próprios.
+      // Fixtures e executores declarativos extensos são validados por testes e
+      // não devem gerar centenas de alterações apenas por estilo.
       "tests/evals/pecuaria-specialist-cases.ts",
+      "scripts/live-audit-pecuaria-220.mjs",
+      "scripts/live-regression-pecuaria-critical.mjs",
     ],
     rules: {
       "prettier/prettier": "off",
