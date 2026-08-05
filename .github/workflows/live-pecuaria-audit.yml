@@ -7,6 +7,12 @@ on:
     paths:
       - scripts/live-audit-pecuaria-220.mjs
       - .github/workflows/live-pecuaria-audit.yml
+  pull_request:
+    branches: [main]
+    paths:
+      - scripts/live-audit-pecuaria-220.mjs
+      - .github/workflows/live-pecuaria-audit.yml
+      - docs/live-audit-trigger.md
 
 permissions:
   contents: read
