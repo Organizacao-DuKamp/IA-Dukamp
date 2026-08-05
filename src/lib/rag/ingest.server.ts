@@ -1,7 +1,4 @@
-// Ingestion: takes a document row and its raw text, chunks it, generates
-// embeddings, and stores chunks. Idempotent per document (deletes prior chunks first).
-
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import type { supabaseAdmin as SupabaseAdmin } from "@/integrations/supabase/client.server";
 import { chunkText } from "./chunking.server";
 import { embedTexts, toPgVector } from "./embeddings.server";
 
@@ -13,12 +10,22 @@ interface DocMeta {
   subcategory: string | null;
 }
 
-export async function ingestDocument(doc: DocMeta, rawText: string): Promise<number> {
+type KnowledgeDbClient = typeof SupabaseAdmin;
+
+export async function ingestDocument(
+  doc: DocMeta,
+  rawText: string,
+  client?: KnowledgeDbClient,
+): Promise<number> {
+  const db = client ?? (await import("@/integrations/supabase/client.server")).supabaseAdmin;
   const chunks = chunkText(rawText);
   if (chunks.length === 0) throw new Error("Documento vazio.");
 
-  // Clear existing chunks for idempotency
-  await supabaseAdmin.from("knowledge_chunks").delete().eq("document_id", doc.id);
+  const { error: deleteError } = await db
+    .from("knowledge_chunks")
+    .delete()
+    .eq("document_id", doc.id);
+  if (deleteError) throw new Error(deleteError.message);
 
   const vectors = await embedTexts(chunks);
   if (vectors.length !== chunks.length) throw new Error("Falha ao alinhar embeddings.");
@@ -34,11 +41,9 @@ export async function ingestDocument(doc: DocMeta, rawText: string): Promise<num
     title: doc.title,
   }));
 
-  // Insert in batches to keep payloads small
   const BATCH = 40;
   for (let i = 0; i < rows.length; i += BATCH) {
-    const slice = rows.slice(i, i + BATCH);
-    const { error } = await supabaseAdmin.from("knowledge_chunks").insert(slice);
+    const { error } = await db.from("knowledge_chunks").insert(rows.slice(i, i + BATCH));
     if (error) throw new Error(error.message);
   }
 
