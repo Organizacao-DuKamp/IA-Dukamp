@@ -2,8 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const migrationPath =
-  "supabase/migrations/20260805143000_fix_knowledge_admin_rls.sql";
+const migrationPath = "supabase/migrations/20260805143000_fix_knowledge_admin_rls.sql";
 
 test("knowledge migration grants authenticated admins CRUD under RLS", async () => {
   const sql = await readFile(migrationPath, "utf8");
