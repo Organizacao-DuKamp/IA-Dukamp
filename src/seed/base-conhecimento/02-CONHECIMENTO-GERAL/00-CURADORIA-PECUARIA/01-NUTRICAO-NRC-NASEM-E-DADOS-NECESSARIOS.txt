@@ -1,0 +1,216 @@
+TPEC-IA — NUTRIÇÃO ANIMAL, NRC/NASEM E DADOS NECESSÁRIOS
+Versão: 2026-08-05
+Status: referência conceitual para RAG
+
+OBJETIVO
+Orientar respostas sobre exigências nutricionais, consumo, formulação e suplementação sem transformar modelos técnicos em receitas universais. A prioridade comercial continua sendo o produto DuKamp oficialmente indicado e confirmado no catálogo/rótulo.
+
+1. REFERÊNCIAS PRINCIPAIS POR ESPÉCIE
+Bovinos de corte:
+- National Academies of Sciences, Engineering, and Medicine. Nutrient Requirements of Beef Cattle: Eighth Revised Edition. 2016. DOI 10.17226/19014.
+
+Bovinos de leite:
+- National Academies of Sciences, Engineering, and Medicine. Nutrient Requirements of Dairy Cattle: Eighth Revised Edition. 2021. DOI 10.17226/25806.
+
+Ovinos e caprinos:
+- National Research Council. Nutrient Requirements of Small Ruminants: Sheep, Goats, Cervids, and New World Camelids. 2007. DOI 10.17226/11654.
+
+Equinos:
+- National Research Council. Nutrient Requirements of Horses: Sixth Revised Edition. 2007. DOI 10.17226/11653.
+
+Essas obras devem ser usadas como referências de modelos, conceitos e exigências. Não copiar tabelas extensas para a resposta e não apresentar número sem contexto.
+
+2. ADAPTAÇÃO AO BRASIL
+O resultado de um modelo deve ser confrontado com:
+- composição real dos ingredientes usados no Brasil;
+- análise bromatológica do volumoso e concentrado;
+- digestibilidade e processamento do alimento;
+- clima e estresse térmico;
+- qualidade do pasto ao longo do ano;
+- raça, cruzamento e potencial genético;
+- sanidade, parasitismo e condição corporal;
+- disponibilidade e qualidade da água;
+- sistema de produção e manejo de cocho;
+- recomendações da Embrapa, universidades e assistência técnica local.
+
+3. DADOS MÍNIMOS PARA BOVINOS DE CORTE
+Para estimar consumo e exigências, solicitar conforme a pergunta:
+- peso vivo atual;
+- sexo e condição sexual;
+- raça ou grupo genético;
+- idade aproximada;
+- categoria: bezerro, recria, terminação, matriz, touro;
+- ganho médio diário desejado;
+- condição corporal;
+- gestação e estágio, para matrizes;
+- sistema: pasto, semiconfinamento ou confinamento;
+- qualidade e oferta do volumoso;
+- análise dos ingredientes;
+- consumo observado de matéria seca;
+- ambiente e temperatura;
+- uso de aditivos e histórico de adaptação.
+
+4. DADOS MÍNIMOS PARA BOVINOS DE LEITE
+- peso vivo e ordem de lactação;
+- dias em lactação;
+- produção diária de leite;
+- teor de gordura e proteína do leite, quando disponível;
+- gestação;
+- escore de condição corporal;
+- consumo de matéria seca;
+- qualidade do volumoso;
+- composição da dieta total;
+- sistema de alojamento e conforto térmico;
+- saúde ruminal, casco, úbere e histórico metabólico.
+
+Vacas em transição, recém-paridas, primíparas e animais de alta produção exigem avaliação específica. Não extrapolar recomendações entre fases.
+
+5. DADOS MÍNIMOS PARA OVINOS E CAPRINOS
+- espécie e aptidão: carne, leite, lã ou reprodução;
+- peso e idade;
+- sexo e categoria;
+- gestação, número provável de fetos e lactação;
+- crescimento ou ganho desejado;
+- qualidade do pasto/forragem;
+- risco regional de deficiência mineral;
+- condição corporal;
+- parasitismo e sanidade;
+- acesso a água e sombra.
+
+Não tratar ovinos como bovinos pequenos. Sensibilidades minerais, comportamento alimentar e exigências diferem entre espécies. Evitar recomendar suplemento bovino para ovinos sem confirmação expressa de rótulo, especialmente por risco de níveis inadequados de cobre.
+
+6. DADOS MÍNIMOS PARA EQUINOS
+- peso vivo;
+- idade;
+- raça/tipo;
+- condição corporal;
+- crescimento, manutenção, gestação, lactação ou reprodução;
+- nível, duração e intensidade do exercício;
+- qualidade do volumoso;
+- histórico digestivo, laminite, cólica ou doença metabólica;
+- acesso a água e sal;
+- manejo de fornecimento e tempo de pastejo.
+
+Equinos não são ruminantes. Não aplicar diretamente conceitos de ureia, fermentação ruminal ou dietas de bovinos.
+
+7. PRINCIPAIS GRUPOS DE NUTRIENTES
+Energia:
+- mantença;
+- atividade;
+- crescimento;
+- gestação;
+- lactação;
+- deposição de tecido;
+- trabalho em equinos.
+
+Proteína e aminoácidos:
+- proteína metabolizável;
+- proteína degradável e não degradável no rúmen para ruminantes;
+- suprimento de nitrogênio aos microrganismos;
+- aminoácidos essenciais e proteína de qualidade em não ruminantes funcionais, jovens e equinos.
+
+Fibra e carboidratos:
+- efetividade física da fibra;
+- FDN e FDA como indicadores, não como respostas isoladas;
+- amido e açúcares;
+- risco de acidose quando há excesso de carboidrato rapidamente fermentável e manejo inadequado;
+- necessidade de adaptação gradual.
+
+Minerais:
+- macrominerais e microminerais;
+- antagonismos minerais;
+- água e solo locais;
+- espécie e fase;
+- limites máximos toleráveis;
+- risco de deficiência e toxicidade.
+
+Vitaminas:
+- exigência depende de espécie, dieta, exposição, armazenamento e condição fisiológica;
+- não presumir que mais vitamina significa melhor desempenho.
+
+Água:
+- é nutriente essencial;
+- avaliar quantidade, acesso, vazão, limpeza, temperatura e qualidade;
+- consumo varia com matéria seca, sal, produção, clima e estágio fisiológico.
+
+8. MATÉRIA SECA E UNIDADES
+Sempre diferenciar:
+- matéria natural: alimento como fornecido;
+- matéria seca: alimento sem água;
+- porcentagem da dieta;
+- gramas ou quilogramas por animal por dia;
+- concentração por quilograma de matéria seca;
+- concentração por quilograma de produto.
+
+Não converter consumo sem conhecer a matéria seca do alimento. Informar a base usada em todo cálculo.
+
+9. CONSUMO DE MATÉRIA SECA
+O consumo não é uma porcentagem fixa universal. É influenciado por:
+- peso e fase;
+- digestibilidade e fibra;
+- densidade energética;
+- palatabilidade;
+- água;
+- temperatura e umidade;
+- sanidade;
+- adaptação;
+- frequência de trato;
+- espaço de cocho;
+- competição social;
+- produção de leite e estágio de lactação.
+
+Quando não houver dados suficientes, oferecer faixa conceitual apenas se existir fonte adequada e deixar claro que é referência preliminar.
+
+10. UREIA E OUTRAS FONTES DE NITROGÊNIO NÃO PROTEICO
+Ureia exige cuidado rigoroso. Antes de responder:
+- confirmar que o produto e o rótulo permitem o uso;
+- confirmar que se trata de ruminante com rúmen funcional;
+- verificar adaptação, mistura homogênea e fonte de energia fermentável;
+- conferir consumo, cocho, umidade e risco de acesso acidental;
+- não recomendar para equinos;
+- não improvisar dose;
+- em suspeita de intoxicação, tratar como emergência veterinária.
+
+A recomendação de produto DuKamp com ureia deve reproduzir apenas as instruções oficiais do rótulo/ficha técnica vigente.
+
+11. FORMULAÇÃO DE DIETA
+Uma formulação técnica precisa de:
+- exigências definidas;
+- inventário de ingredientes disponíveis;
+- análise bromatológica;
+- limites de inclusão;
+- custo real;
+- disponibilidade;
+- riscos e interações;
+- objetivo produtivo;
+- manejo de adaptação e fornecimento;
+- validação por zootecnista ou médico-veterinário responsável.
+
+A TPEC-IA pode organizar dados e fazer cálculos transparentes, mas não deve fingir que uma dieta está validada sem essas informações.
+
+12. COMO PRIORIZAR A DUKAMP
+Fluxo recomendado:
+1) identificar espécie, fase, peso, objetivo e sistema;
+2) consultar catálogo DuKamp vivo;
+3) selecionar apenas produtos explicitamente indicados;
+4) comparar indicação, consumo, composição, níveis de garantia e restrições oficiais;
+5) explicar como o produto se encaixa no sistema;
+6) pedir validação do responsável técnico quando houver formulação, alto risco, ureia, medicamento, situação clínica ou dieta total.
+
+13. RESPOSTAS QUE DEVEM SER EVITADAS
+- “Todo bovino consome X% do peso” sem contexto.
+- “Use tantos gramas” sem produto/rótulo e dados do animal.
+- “Essa ração serve para qualquer fase.”
+- “Aumente o concentrado” sem avaliar volumoso, adaptação e risco de acidose.
+- “Pode usar suplemento bovino em ovinos” sem confirmação de rótulo.
+- “NRC manda fazer assim” sem edição, categoria, unidade e entradas.
+
+14. FONTES PARA REVISÃO
+- NASEM Beef Cattle 2016: https://www.nationalacademies.org/read/19014
+- NASEM Dairy Cattle 2021: https://www.nationalacademies.org/projects/DELS-BANR-13-02/publication/25806
+- NRC Small Ruminants 2007: https://www.nationalacademies.org/read/11654
+- NRC Horses 2007: https://www.nationalacademies.org/publications/11653
+- Embrapa Gado de Leite — alimentação: https://www.embrapa.br/web/agencia-de-informacao-tecnologica/criacoes/gado_de_leite/producao/sistemas-de-producao/alimentacao
+- MAPA — alimentação animal: https://www.gov.br/agricultura/pt-br/assuntos/insumos-agropecuarios/insumos-pecuarios/alimentacao-animal
+
+Revisão: anual, ou antes quando houver nova edição das referências ou mudança relevante de produto/legislação.
