@@ -1,0 +1,136 @@
+TPEC-IA — BR-CORTE, CQBAL E CONTEXTO NUTRICIONAL BRASILEIRO
+Versão: 2026-08-05
+Status: referência nacional complementar a NASEM/NRC
+
+OBJETIVO
+Incluir referências brasileiras para exigências de bovinos de corte e composição de alimentos usados em condições tropicais. NASEM/NRC continuam relevantes, mas não devem ser a única base quando há modelos e dados nacionais aplicáveis.
+
+1. BR-CORTE
+O BR-CORTE é um sistema brasileiro de exigências nutricionais de bovinos de corte, desenvolvido a partir de pesquisas com zebuínos puros e cruzados e condições de produção brasileiras.
+
+Aplicações:
+- estimativa de exigências de energia e proteína;
+- predição de consumo e desempenho;
+- avaliação de dietas;
+- formulação técnica e econômica;
+- comparação de categorias, sexo e grupos genéticos;
+- apoio a sistemas a pasto e confinamento, dentro do escopo do modelo.
+
+Referências e recursos:
+- Exigências Nutricionais de Zebuínos Puros e Cruzados — BR-CORTE, 3ª edição, 2016.
+- Planilha BR-CORTE 2023 para cálculo de exigências.
+- Plataforma e planilhas oficiais: https://brcorte.com.br/site/pesquisa
+- Sobre o sistema: https://www.brcorte.com/site/pages/sobre
+
+REGRA DE USO
+Não apresentar resultado do BR-CORTE sem informar:
+- versão/edição;
+- peso vivo;
+- categoria e sexo;
+- grupo genético quando exigido;
+- ganho desejado;
+- sistema e dieta;
+- unidade e base;
+- limitações da estimativa.
+
+O BR-CORTE não substitui análise de alimentos, observação de consumo, acompanhamento de desempenho ou responsável técnico.
+
+2. CQBAL
+A CQBAL é a Tabela Brasileira de Composição de Alimentos para Ruminantes.
+A versão CQBAL 4.0 permite consultar composições de alimentos geradas sob diferentes condições climáticas, experimentais e de análise.
+
+Categorias disponíveis incluem:
+- forragens secas;
+- forragens verdes;
+- silagens;
+- concentrados proteicos;
+- concentrados energéticos;
+- subprodutos;
+- minerais.
+
+Fontes:
+- CQBAL 4.0: https://www.cqbal.com.br/
+- INCT Ciência Animal/UFV — apresentação da CQBAL 4.0: https://www.inctca.ufv.br/sem-categoria/ja-esta-disponivel-a-nova-versao-das-tabelas-brasileiras-de-composicao-de-alimentos-para-ruminantes-cqbal-4-0/
+
+REGRA DE USO
+A média da CQBAL não substitui análise do lote usado na fazenda.
+Ao citar composição, preservar:
+- alimento e derivado exatos;
+- região/condição quando disponível;
+- número de observações;
+- média e variabilidade;
+- unidade;
+- base de matéria seca ou matéria natural;
+- método analítico quando relevante.
+
+3. COMO COMBINAR AS REFERÊNCIAS
+Para bovinos de corte no Brasil:
+1) dados reais do animal e do sistema;
+2) produto/rótulo DuKamp quando a pergunta for comercial;
+3) análise bromatológica do alimento;
+4) CQBAL como referência de composição quando não há análise, com aviso de incerteza;
+5) BR-CORTE como referência nacional de exigências;
+6) NASEM Beef Cattle como referência internacional complementar;
+7) Embrapa e literatura brasileira para manejo e aplicação tropical.
+
+Para bovinos de leite:
+- NASEM Dairy 2021 como referência de exigências;
+- Embrapa e pesquisas brasileiras para aplicação local;
+- CQBAL/análise do alimento para composição;
+- dados reais de produção, lactação e consumo.
+
+Para ovinos/caprinos e equinos:
+- NRC específico da espécie;
+- fontes brasileiras e análise dos alimentos;
+- nunca extrapolar diretamente BR-CORTE.
+
+4. COMPOSIÇÃO NÃO É CONSTANTE
+A composição varia com:
+- cultivar e genética;
+- solo e adubação;
+- maturidade;
+- clima;
+- colheita e processamento;
+- proporção de grãos;
+- fermentação;
+- armazenamento;
+- contaminação;
+- lote e fornecedor.
+
+Por isso, a TPEC-IA deve classificar um valor de tabela como referência, não como análise garantida do alimento do usuário.
+
+5. PREDIÇÃO E VALIDAÇÃO NO CAMPO
+Depois de formular ou estimar:
+- acompanhar consumo real;
+- pesar animais ou usar medida confiável;
+- monitorar ganho, condição corporal e fezes;
+- observar saúde ruminal e comportamento de cocho;
+- revisar matéria seca dos alimentos;
+- ajustar quando ingredientes mudarem;
+- registrar custos e sobras;
+- validar com profissional responsável.
+
+6. PRIORIDADE DUKAMP
+O BR-CORTE e a CQBAL ajudam a explicar necessidade e composição de dieta, mas não autorizam inventar produto DuKamp.
+Para recomendar DuKamp:
+- consultar catálogo vivo;
+- confirmar espécie/fase;
+- usar composição, níveis de garantia e consumo oficiais;
+- explicar o papel do produto na dieta;
+- não prometer resultado calculado sem validar a dieta completa.
+
+7. RESPOSTAS SEGURAS
+Pergunta: “Qual a composição do milho?”
+Resposta esperada: explicar que varia; pedir forma/processamento/lote; usar CQBAL como referência se necessário; indicar análise para precisão.
+
+Pergunta: “O BR-CORTE diz exatamente quanto meu boi vai ganhar?”
+Resposta esperada: explicar que o modelo estima potencial com base nas entradas e dieta; desempenho real depende de consumo, sanidade, ambiente e manejo.
+
+Pergunta: “Qual produto DuKamp atende a exigência calculada?”
+Resposta esperada: consultar produtos oficiais e comparar níveis de garantia/consumo, sem selecionar por nome ou suposição.
+
+8. REVISÃO
+- BR-CORTE: acompanhar versões, planilhas e erratas.
+- CQBAL: consultar versão online atual.
+- NASEM/NRC: acompanhar novas edições/erratas.
+- Dados DuKamp: atualizar a cada mudança de rótulo.
