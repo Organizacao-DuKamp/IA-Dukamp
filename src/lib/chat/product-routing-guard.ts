@@ -1,4 +1,4 @@
-import { normalizeName } from "@/lib/products/normalize";
+import { normalizeName } from "../products/normalize.ts";
 
 const CROSS_SPECIES_COMPATIBILITY_RE =
   /\b(posso|pode|podem|serve|servem|usar|fornecer|dar)\b.{0,120}\b(suplemento|mineral|ra[cç][aã]o|produto|ureia)\b.{0,120}\b(ovino|ovinos|ovelha|ovelhas|caprino|caprinos|cabra|cabras|equino|equinos|cavalo|cavalos)\b|\b(ovino|ovinos|ovelha|ovelhas|caprino|caprinos|cabra|cabras|equino|equinos|cavalo|cavalos)\b.{0,120}\b(posso|pode|podem|serve|servem|usar|fornecer|dar)\b.{0,120}\b(suplemento|mineral|ra[cç][aã]o|produto|ureia)\b/i;
