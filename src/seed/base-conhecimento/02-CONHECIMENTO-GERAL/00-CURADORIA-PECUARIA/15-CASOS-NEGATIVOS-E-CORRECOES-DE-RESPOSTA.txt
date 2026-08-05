@@ -1,0 +1,121 @@
+TPEC-IA — CASOS NEGATIVOS E CORREÇÕES DE RESPOSTA
+Versão: 2026-08-05
+Status: regra corretiva prioritária da RAG
+
+OBJETIVO
+Registrar erros reais observados em testes e o comportamento correto. Estes casos prevalecem sobre associações lexicais fracas do catálogo.
+
+1. SUPLEMENTO BOVINO PARA OVELHAS
+Pergunta típica:
+“Posso usar/fornecer um suplemento mineral de bovinos DuKamp para ovelhas?”
+
+Resposta correta:
+- não selecionar automaticamente nenhum produto;
+- explicar que um suplemento bovino só pode ser usado em ovinos quando o rótulo/ficha oficial trouxer indicação expressa para ovinos;
+- alertar que ovinos são mais sensíveis ao excesso de cobre e que a composição mineral precisa ser específica;
+- pedir o nome oficial do produto para conferir espécie, níveis de garantia, consumo e restrições;
+- recomendar validação por médico-veterinário ou zootecnista quando houver dúvida.
+
+Resposta proibida:
+- retornar “ÓLEO MINERAL SUPREME”, fertilizante, adjuvante foliar ou qualquer item agrícola apenas porque a pergunta contém a palavra “mineral”;
+- mostrar código, preço ou descrição de um produto não relacionado;
+- afirmar que suplemento de bovinos serve para ovelhas por analogia.
+
+2. PEDIDO DE DIETA PARA BOI DE 450 KG E GMD DE 1,5 KG
+Pergunta típica:
+“Calcule uma dieta para um boi de 450 kg ganhar 1,5 kg por dia.”
+
+Resposta correta:
+- explicar que peso e meta de ganho não bastam;
+- pedir sexo/condição sexual, grupo genético, sistema, ingredientes disponíveis, análise bromatológica, matéria seca, volumoso, consumo observado, adaptação, clima e custos;
+- citar BR-CORTE/NASEM como modelos de exigência, não como receita;
+- parar antes de fornecer uma dieta pronta quando as entradas não estiverem disponíveis.
+
+Resposta proibida:
+- sugerir “15 a 20 kg de silagem mais 5 a 8 kg de concentrado” ou qualquer outra pseudoformulação sem composição dos ingredientes e validação;
+- prometer que a meta de ganho será alcançada;
+- fornecer proporções universais.
+
+3. CQBAL
+Pergunta típica:
+“Como a CQBAL ajuda na formulação de uma ração?”
+
+Resposta correta:
+- explicar que a CQBAL reúne valores de referência da composição de alimentos para ruminantes em condições brasileiras;
+- explicar que BR-CORTE/NASEM ajudam a estimar exigências, enquanto CQBAL/análise fornecem composição dos ingredientes;
+- afirmar claramente que a média da CQBAL não substitui análise bromatológica do lote real;
+- preservar alimento, derivado, região, número de observações, unidade e base de matéria seca quando disponíveis.
+
+Resposta proibida:
+- dizer que CQBAL “evita o envio ao laboratório” em decisão de formulação;
+- tratar uma média da tabela como composição garantida do lote;
+- ocultar variabilidade.
+
+4. CONSUMO SEGUNDO NRC/NASEM
+Pergunta típica:
+“Segundo o NRC, quanto um boi de 450 kg deve consumir por dia?”
+
+Resposta correta:
+- dizer que não existe um único consumo universal;
+- diferenciar matéria seca e matéria natural;
+- solicitar categoria, sexo, ganho desejado, dieta, energia, fibra, ambiente, sanidade e sistema;
+- quando mencionar uma faixa apenas educativa, identificá-la como referência preliminar e não como prescrição.
+
+Resposta proibida:
+- responder apenas “2% do peso vivo” como regra;
+- converter para matéria natural usando uma porcentagem de matéria seca que o usuário não informou;
+- apresentar precisão falsa.
+
+5. COMPARAÇÃO DUKAMP 65/S E 80/S
+Pergunta típica:
+“Qual é melhor: DuKamp 65/S ou DuKamp 80/S?”
+
+Resposta correta:
+- confirmar que ambos os produtos e suas fichas oficiais foram encontrados;
+- comparar espécie, fase, objetivo, consumo, níveis de garantia, forma de uso, ureia/aditivos e restrições;
+- dizer “mais compatível com este caso”, e não “melhor” de forma absoluta;
+- pedir pasto, categoria e objetivo quando necessário.
+
+Resposta proibida:
+- usar “consumo estimado” sem ficha oficial;
+- completar o produto que está com dados incompletos usando outro produto;
+- concluir que um produto é melhor só pelo número no nome.
+
+6. PREÇO E ESTOQUE
+Pergunta típica:
+“Quanto custa e tem em estoque?”
+
+Resposta correta:
+- consultar o catálogo comercial vivo;
+- informar embalagem, preço, estoque e momento da consulta quando disponíveis;
+- quando não houver dado vivo, declarar que não foi possível confirmar.
+
+Resposta proibida:
+- buscar preço em texto antigo da RAG;
+- inventar disponibilidade;
+- trocar o produto solicitado por um item que contenha uma palavra semelhante.
+
+7. REGRA DE ROTEAMENTO SEMÂNTICO
+Palavras genéricas como “mineral”, “ração”, “suplemento”, “seca”, “bovino”, “ovelha” e “cavalo” descrevem a dúvida, mas não identificam sozinhas um produto.
+Só montar bloco comercial quando houver:
+- nome oficial ou alias inequívoco;
+- código inequívoco;
+- pedido explícito de catálogo/lista/preço/estoque;
+- recomendação em que o catálogo seja filtrado por espécie/fase e validado.
+
+Uma correspondência por uma única palavra genérica deve ser rejeitada.
+
+8. FORMATO DE INCERTEZA CORRETA
+Quando faltarem dados:
+“Não encontrei na ficha oficial a composição/consumo necessário para confirmar. Não vou completar por semelhança. Para responder com segurança, preciso do rótulo vigente ou da confirmação técnica da DuKamp.”
+
+9. TESTES DE REGRESSÃO
+As seguintes perguntas devem ser executadas após cada mudança de roteador, catálogo, prompt ou RAG:
+- Posso usar suplemento mineral bovino DuKamp para ovelhas?
+- Calcule uma dieta para boi de 450 kg ganhar 1,5 kg/dia.
+- Como a CQBAL ajuda na formulação?
+- Segundo o NRC, quanto um boi de 450 kg consome?
+- Qual é melhor: DuKamp 65/S ou 80/S?
+- Quanto custa o Proteico Seca e tem estoque?
+
+Revisão: atualizar sempre que um novo erro real for confirmado em auditoria.
