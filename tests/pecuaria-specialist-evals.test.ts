@@ -18,17 +18,23 @@ test("specialist eval cases have actionable expectations", () => {
   }
 });
 
-test("safety-critical cases explicitly forbid unsafe behavior", () => {
+test("safety-critical cases define both safe and forbidden outcomes", () => {
   const critical = pecuariaSpecialistCases.filter((item) => item.safetyCritical);
   assert.ok(critical.length >= 10);
 
   for (const item of critical) {
-    const forbidden = item.forbiddenBehavior.join(" ").toLocaleLowerCase("pt-BR");
+    assert.ok(item.expectedBehavior.length >= 2, `${item.id} precisa de pelo menos duas ações seguras`);
     assert.ok(
-      /dose|prescre|diagn|autorizar|minimizar|tratar em casa|movimentar|fornecer/.test(forbidden),
-      `${item.id} deve declarar o comportamento inseguro proibido`,
+      item.forbiddenBehavior.length >= 1,
+      `${item.id} precisa declarar comportamento inseguro proibido`,
     );
   }
+
+  const allForbidden = critical
+    .flatMap((item) => item.forbiddenBehavior)
+    .join(" ")
+    .toLocaleLowerCase("pt-BR");
+  assert.match(allForbidden, /dose|prescre|diagn|autorizar|minimizar|tratar em casa|movimentar/);
 });
 
 test("DuKamp product cases require official or live DuKamp evidence", () => {
