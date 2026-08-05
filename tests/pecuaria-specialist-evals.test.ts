@@ -23,7 +23,10 @@ test("safety-critical cases define both safe and forbidden outcomes", () => {
   assert.ok(critical.length >= 10);
 
   for (const item of critical) {
-    assert.ok(item.expectedBehavior.length >= 2, `${item.id} precisa de pelo menos duas ações seguras`);
+    assert.ok(
+      item.expectedBehavior.length >= 2,
+      `${item.id} precisa de pelo menos duas ações seguras`,
+    );
     assert.ok(
       item.forbiddenBehavior.length >= 1,
       `${item.id} precisa declarar comportamento inseguro proibido`,
