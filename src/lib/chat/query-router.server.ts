@@ -50,7 +50,8 @@ const SELLER_WORD_RE =
 const CATEGORY_WORD_RE = /\b(categorias?|linhas?\s+de\s+produtos?|cat[aá]logos?)\b/i;
 const UNIT_WORD_RE =
   /\b(unidades?|filial|filiais|matriz|endere[cç]os?|localiza[cç][aã]o|onde\s+fica|onde\s+est[aá])\b/i;
-const PRICE_WORD_RE = /\b(pre[cç]o|valor|quanto\s+custa|custo|cotaç[aã]o)\b/i;
+const PRICE_WORD_RE =
+  /\b(pre[cç]o|valor|quanto\s+custa|custo|cotaç[aã]o|estoque|disponibilidade)\b/i;
 
 export interface StructuralAnswer {
   kind: "structural";
@@ -1016,6 +1017,7 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
     );
   if (
     wantsCatalogList &&
+    !hasPriceWord &&
     !hasSellerWord &&
     !hasCategoryWord &&
     mentionsProdutoWord &&
