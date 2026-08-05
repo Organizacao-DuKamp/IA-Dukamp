@@ -5,6 +5,7 @@
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { normalizeName } from "@/lib/products/normalize";
+import { shouldSkipGenericProductLookup } from "./product-routing-guard";
 import {
   cleanContact,
   formatSellerList,
@@ -39,7 +40,7 @@ function detectSpecies(text: string): SpeciesKey | null {
 }
 
 const COUNT_RE =
-  /\b(quanto|quanta|quantos|quantas|qual\s+o\s+numero|n[uú]mero\s+de|quantidade\s+de|tem\s+quantos?|tem\s+quantas?|existem?\s+quantos?|total\s+de)\b/i;
+  /\b(quanto(?!\s+custa)|quanta|quantos|quantas|qual\s+o\s+numero|n[uú]mero\s+de|quantidade\s+de|tem\s+quantos?|tem\s+quantas?|existem?\s+quantos?|total\s+de)\b/i;
 const LIST_RE =
   /\b(quais|liste|listar|listagem|lista\s+d|mostre|mostrar|me\s+(diga|mande|manda|envie|passe|passa|traga|mostre|mostra)|mande|manda|envie|enviar|passe|passar|traga|trazer|diga\s+os?|nomes?\s+d[oe]s?\b(?!\w)|quem\s+s[aã]o|todos\s+os?|todas\s+as?|produtos?\s+(disponi|dispon))/i;
 const FEATURED_RE =
@@ -96,6 +97,7 @@ export type RouterResult = StructuralAnswer | Passthrough;
 async function findProductByName(
   text: string,
 ): Promise<{ exact: ProductMention | null; ambiguous: AmbiguousProduct | null }> {
+  if (shouldSkipGenericProductLookup(text)) return { exact: null, ambiguous: null };
   const norm = normalizeName(text);
   if (norm.length < 3) return { exact: null, ambiguous: null };
 
@@ -515,6 +517,7 @@ async function findSiteProductByName(
 ): Promise<
   Array<{ name: string; price: number | null; code: string | null; description: string | null }>
 > {
+  if (shouldSkipGenericProductLookup(text)) return [];
   const c = await siteClient();
   if (!c) return [];
   const q = normalizeName(text)
