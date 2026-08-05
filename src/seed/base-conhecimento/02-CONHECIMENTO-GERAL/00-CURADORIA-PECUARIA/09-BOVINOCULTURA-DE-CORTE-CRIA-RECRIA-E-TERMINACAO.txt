@@ -1,0 +1,180 @@
+TPEC-IA — BOVINOCULTURA DE CORTE: CRIA, RECRIA E TERMINAÇÃO
+Versão: 2026-08-05
+Status: referência técnica para RAG
+
+OBJETIVO
+Organizar respostas sobre sistemas de bovinos de corte no Brasil. O raciocínio deve integrar genética, nutrição, pastagens, sanidade, reprodução, bem-estar, gestão e economia. Para recomendar produto, consultar primeiro o catálogo e a documentação oficial DuKamp.
+
+1. DIAGNÓSTICO ANTES DA RECOMENDAÇÃO
+Identificar:
+- região, clima e época do ano;
+- sistema: cria, recria, terminação a pasto, semiconfinamento ou confinamento;
+- categoria, sexo, condição sexual, raça/grupo genético, idade e peso;
+- número de animais e uniformidade do lote;
+- peso/meta e prazo;
+- ganho médio diário observado e desejado;
+- pasto/volumoso disponível, oferta e análise;
+- suplemento atual, consumo e adaptação;
+- água, cocho, sombra e infraestrutura;
+- situação sanitária e parasitária;
+- custo dos alimentos, preço de compra/venda e capacidade operacional.
+
+2. CRIA
+Objetivos principais:
+- matrizes aptas, sadias e em condição corporal adequada;
+- fertilidade e concentração de partos;
+- sobrevivência e crescimento da cria;
+- colostro, umbigo, identificação e registros;
+- desmama eficiente;
+- descarte orientado por indicadores.
+
+Pontos críticos:
+- condição corporal ao parto e à estação de monta;
+- oferta de forragem no terço final de gestação e lactação;
+- sanidade reprodutiva;
+- exame andrológico dos touros;
+- assistência a partos difíceis;
+- mortalidade perinatal;
+- planejamento de suplementação das matrizes e crias;
+- taxa de prenhez, natalidade e desmama.
+
+Creep-feeding pode ser útil em determinados objetivos e sistemas, mas deve ser avaliado por custo, resposta esperada, qualidade do pasto/leite, idade e mercado. Não recomendar automaticamente.
+
+3. DESMAMA
+Planejar:
+- idade, peso e estado sanitário;
+- disponibilidade de pasto, água e suplemento;
+- método que reduza estresse;
+- formação de lotes homogêneos;
+- manejo sanitário orientado pelo veterinário;
+- acompanhamento de consumo, febre, tosse, diarreia e perda de peso;
+- destino das matrizes.
+
+Mudanças simultâneas de ambiente, dieta, lote e manejo aumentam estresse e risco de doença.
+
+4. RECRIA
+A recria transforma bezerro desmamado em animal pronto para terminação ou reprodução. É frequentemente a fase mais longa e sensível à sazonalidade.
+
+Decisões:
+- ganho alvo compatível com sistema e custo;
+- planejamento forrageiro anual;
+- suplementação estratégica na seca e nas águas;
+- controle de parasitas baseado em diagnóstico e risco;
+- pesagens periódicas;
+- separação por peso/sexo;
+- desenvolvimento de novilhas sem subnutrição ou excesso de gordura;
+- destino: reposição, venda, pasto intensivo, semiconfinamento ou confinamento.
+
+Não usar uma taxa fixa de suplemento sem considerar qualidade/quantidade do pasto e rótulo do produto.
+
+5. TERMINAÇÃO A PASTO
+Avaliar:
+- massa e estrutura do pasto;
+- taxa de lotação;
+- ganho desejado e duração;
+- suplemento mineral/proteico/energético/proteico-energético;
+- interação suplemento-forragem;
+- espaço de cocho e regularidade de fornecimento;
+- adaptação;
+- logística na chuva;
+- custos por arroba produzida;
+- acabamento e mercado.
+
+O aumento de suplemento pode substituir consumo de forragem e elevar risco/custo. A resposta deve considerar ganho por animal e ganho por hectare.
+
+6. SEMICONFINAMENTO
+Combina pasto como fonte de volumoso com concentrado em maior quantidade.
+Requer:
+- pasto disponível e conhecido;
+- adaptação gradual;
+- cocho adequado e acesso uniforme;
+- frequência e horário consistentes;
+- controle de sobras;
+- água e sombra;
+- monitoramento de fezes, timpanismo, consumo e desempenho;
+- ajuste quando a matéria seca do pasto muda.
+
+7. CONFINAMENTO
+Planejamento técnico:
+- escolha de animais e formação de lotes;
+- peso de entrada e meta;
+- instalações, drenagem, sombra e espaço;
+- estoque e qualidade de ingredientes;
+- análise bromatológica;
+- formulação por profissional;
+- protocolo de adaptação;
+- fibra efetiva;
+- mistura homogênea e manejo de trato;
+- leitura de cocho e controle de sobras;
+- saúde ruminal e respiratória;
+- pesagens e projeções;
+- mortalidade, refugo, custo e ponto de venda.
+
+Mudança brusca, falha de mistura, seleção de partículas e inconsistência de trato elevam risco de acidose e timpanismo.
+
+8. NUTRIÇÃO E MODELOS
+Para exigências e dietas:
+- BR-CORTE é referência nacional importante para bovinos de corte;
+- NASEM Beef Cattle 2016 é referência internacional complementar;
+- CQBAL e análise laboratorial ajudam na composição dos alimentos;
+- dados reais do lote e consumo observado são indispensáveis.
+
+Não confundir estimativa de exigência com desempenho garantido.
+
+9. SANIDADE E BIOSSEGURANÇA
+Programa deve ser elaborado com médico-veterinário e considerar:
+- origem e quarentena;
+- vacinação conforme risco e programas oficiais;
+- parasitas e resistência;
+- doenças respiratórias;
+- clostridioses;
+- hemoparasitoses;
+- problemas de casco;
+- intoxicações;
+- identificação e registros;
+- carência de medicamentos;
+- mortalidade e necropsia diagnóstica.
+
+10. BEM-ESTAR E MANEJO
+- condução calma;
+- instalações sem pontos de trauma;
+- água, sombra e conforto térmico;
+- densidade adequada;
+- prevenção de lama;
+- transporte planejado;
+- animais incapazes de locomover-se não devem ser forçados;
+- procedimentos dolorosos exigem técnica e analgesia conforme profissional/legislação.
+
+11. INDICADORES
+- taxa de prenhez, natalidade e desmama;
+- kg de bezerro desmamado por matriz exposta;
+- mortalidade pré e pós-desmama;
+- ganho médio diário;
+- taxa de lotação;
+- ganho por hectare;
+- consumo de suplemento;
+- conversão alimentar no confinamento;
+- rendimento e acabamento de carcaça, quando disponível;
+- custo por cabeça e por arroba produzida;
+- margem e retorno sobre capital;
+- dias em cada fase.
+
+12. PRODUTOS DUKAMP
+Fluxo obrigatório:
+1) identificar categoria, peso, fase, objetivo, pasto e sistema;
+2) consultar produtos ativos DuKamp;
+3) excluir qualquer produto sem indicação oficial;
+4) comparar níveis de garantia, consumo, modo de uso, ureia/aditivos e restrições;
+5) usar preço/estoque somente da fonte viva;
+6) explicar que suplemento complementa, não substitui manejo, água, pasto e sanidade;
+7) não prometer ganho ou prazo sem dieta completa e acompanhamento.
+
+13. FONTES
+- Embrapa — Boas Práticas Agropecuárias: bovinos e bubalinos de corte, 3ª ed., 2022.
+- Embrapa — Programa BPA: https://cloud.cnpgc.embrapa.br/bpa/
+- BR-CORTE: https://brcorte.com.br/
+- CQBAL: https://www.cqbal.com.br/
+- NASEM Beef Cattle 2016: https://www.nationalacademies.org/read/19014
+- MAPA — Programas de Saúde Animal.
+
+Revisão: anual e sempre que houver mudança de produto, modelo ou norma.
