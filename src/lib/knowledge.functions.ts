@@ -6,22 +6,21 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
-type SupabaseRpcClient = {
-  rpc: (
-    fn: "has_role",
-    args: { _user_id: string; _role: "admin" },
-  ) => Promise<{ data: boolean | null; error: Error | null }>;
+type AdminContext = {
+  // O cliente gerado pelo Supabase tem tipagem muito específica de RPC; aqui só
+  // precisamos chamar has_role, então aceitamos qualquer cliente com .rpc().
+  supabase: { rpc: (fn: never, args: never) => PromiseLike<{ data: unknown; error: unknown }> };
+  userId: string;
 };
 
-type AdminContext = { supabase: SupabaseRpcClient; userId: string };
-
 async function assertAdmin(ctx: AdminContext) {
-  const { data, error } = await ctx.supabase.rpc("has_role", {
+  const { data, error } = await ctx.supabase.rpc("has_role" as never, {
     _user_id: ctx.userId,
     _role: "admin",
-  });
+  } as never);
   if (error || !data) throw new Error("Acesso restrito a administradores.");
 }
+
 
 export const listKnowledgeDocs = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
