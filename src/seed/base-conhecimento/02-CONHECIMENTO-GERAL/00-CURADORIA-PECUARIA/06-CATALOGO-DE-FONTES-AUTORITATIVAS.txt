@@ -1,0 +1,164 @@
+TPEC-IA — CATÁLOGO DE FONTES AUTORITATIVAS PARA PECUÁRIA
+Curadoria inicial: 2026-08-05
+Status: índice de fontes; não copiar obras integrais sem licença.
+
+OBJETIVO
+Manter um índice confiável de instituições, publicações e páginas oficiais para atualização da base. O conteúdo técnico deve ser resumido com linguagem própria, preservando autoria, edição, data, escopo e limitações.
+
+PRIORIDADE 1 — DUKAMP
+Fonte: catálogo vivo, Supabase comercial, rótulos, RTPIs e fichas oficiais DuKamp.
+Uso: composição, níveis de garantia, indicação, espécie, fase, consumo, modo de uso, restrições, preço, estoque e vendedores.
+Regra: dados dinâmicos vêm do banco vivo; dados técnicos do produto vêm do documento oficial vigente.
+Frequência de revisão: a cada alteração de produto/rótulo e em cada sincronização do catálogo.
+
+PRIORIDADE 2 — MAPA / GOVERNO FEDERAL
+1. Produtos para Alimentação Animal
+URL: https://www.gov.br/agricultura/pt-br/assuntos/insumos-agropecuarios/insumos-pecuarios/alimentacao-animal
+Abrange: registro, fiscalização, SIPEAGRO, regras e listas.
+Revisão: trimestral.
+
+2. Decreto nº 12.031, de 28 de maio de 2024
+URL: https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2024/decreto/d12031.htm
+Abrange: inspeção e fiscalização obrigatórias de produtos destinados à alimentação animal.
+Revisão: quando houver alteração normativa.
+
+3. Listas de estabelecimentos, produtos, matérias-primas, ingredientes e aditivos
+URL: https://www.gov.br/agricultura/pt-br/assuntos/insumos-agropecuarios/insumos-pecuarios/alimentacao-animal/registro-cadastro
+Abrange: listas atualizadas do MAPA.
+Revisão: mensal ou antes de responder dúvida regulatória específica.
+
+4. Aditivos autorizados e proibidos
+URL: https://www.gov.br/agricultura/pt-br/assuntos/insumos-agropecuarios/insumos-pecuarios/alimentacao-animal/aditivos
+Abrange: classificação, regras e substâncias proibidas.
+Revisão: mensal.
+
+5. Programas de Saúde Animal
+URL: https://www.gov.br/agricultura/pt-br/acesso-a-informacao/institucional/atos-normativos/sda/programas-de-saude-animal
+Abrange: PNEFA, PNCEBT, PNCRH, PNEEB, PNSCO, PNSE e outros programas.
+Revisão: trimestral.
+
+6. Programa Nacional de Vigilância para Febre Aftosa — PNEFA
+URL: https://www.gov.br/agricultura/pt-br/assuntos/sanidade-animal-e-vegetal/saude-animal/programas-de-saude-animal/febre-aftosa
+Abrange: vigilância, normas e situação oficial.
+Revisão: antes de resposta sobre situação sanitária, vacinação ou trânsito.
+
+7. PNCEBT — Brucelose e Tuberculose Animal
+URL: https://www.gov.br/agricultura/pt-br/assuntos/sanidade-animal-e-vegetal/saude-animal/programas-de-saude-animal/pncebt/programa-nacional-de-controle-e-erradicacao-da-brucelose-e-da-tuberculose-animal-pncebt-1
+Abrange: vacinação, diagnóstico, certificação e medidas oficiais.
+Revisão: trimestral.
+
+8. Resistência aos antimicrobianos
+URL: https://www.gov.br/agricultura/pt-br/assuntos/insumos-agropecuarios/insumos-pecuarios/resistencia-aos-antimicrobianos
+Abrange: PAN-BR Agro, uso responsável e legislação.
+Revisão: semestral.
+
+PRIORIDADE 3 — WOAH / OMSA
+1. Codes and Manuals
+URL: https://www.woah.org/en/what-we-do/standards/codes-and-manuals/
+Abrange: Terrestrial Animal Health Code, Terrestrial Manual, comércio, diagnóstico, prevenção e bem-estar.
+Revisão: por edição.
+
+2. Animal Diseases
+URL: https://www.woah.org/en/what-we-do/animal-health-and-welfare/animal-diseases/
+Abrange: doenças listadas, fichas e links para código/manual.
+Revisão: antes de responder sobre doença emergente ou notificação internacional.
+
+3. Official Disease Status
+URL: https://www.woah.org/en/what-we-do/animal-health-and-welfare/official-disease-status/
+Abrange: status oficial de países/zonas para doenças selecionadas.
+Revisão: em tempo real quando o tema for comércio ou status sanitário.
+
+PRIORIDADE 4 — EMBRAPA
+1. Boas Práticas Agropecuárias: bovinos e bubalinos de corte — Manual orientador, 3ª edição, 2022
+URL: https://www.embrapa.br/busca-de-publicacoes/-/publicacao/1150571/boas-praticas-agropecuarias-bovinos-e-bubalinos-de-corte-manual-orientador
+Abrange: gestão, instalações, pastagens, suplementação, sanidade, reprodução, bem-estar, rastreabilidade e sustentabilidade.
+Revisão: quando houver nova edição.
+
+2. Programa BPA — Embrapa Gado de Corte
+URL: https://cloud.cnpgc.embrapa.br/bpa/
+Abrange: capacitação e boas práticas.
+Revisão: anual.
+
+3. Boas práticas em melhoramento genético de gado de corte, 2019
+URL: https://www.embrapa.br/busca-de-publicacoes/-/publicacao/1117240/boas-praticas-em-melhoramento-genetico-de-gado-de-corte
+Abrange: coleta de dados, avaliação genética e aplicação prática.
+Revisão: por edição.
+
+4. Embrapa Gado de Leite — Alimentação
+URL: https://www.embrapa.br/web/agencia-de-informacao-tecnologica/criacoes/gado_de_leite/producao/sistemas-de-producao/alimentacao
+Abrange: alimentação por categoria, volumosos, concentrados e manejo.
+Revisão: anual; confirmar atualidade antes de usar número específico.
+
+5. Conservação de forrageiras — Bovino de Leite
+URL: https://www.atermaisdigital.cnptia.embrapa.br/web/bovino-de-leite/conservacao-de-forrageiras
+Abrange: silagem, fenação e oferta na seca.
+Revisão: anual.
+
+PRIORIDADE 5 — NASEM / NRC
+1. Nutrient Requirements of Beef Cattle: Eighth Revised Edition
+Instituição: NASEM
+Ano: 2016
+DOI: 10.17226/19014
+URL: https://www.nationalacademies.org/read/19014
+Escopo: bovinos de corte.
+Regra: usar modelos e princípios com entradas adequadas; não copiar tabelas extensas.
+
+2. Nutrient Requirements of Dairy Cattle: Eighth Revised Edition
+Instituição: NASEM
+Ano: 2021
+DOI: 10.17226/25806
+URL: https://www.nationalacademies.org/projects/DELS-BANR-13-02/publication/25806
+Escopo: bovinos de leite.
+
+3. Nutrient Requirements of Small Ruminants
+Instituição: NRC
+Ano: 2007
+DOI: 10.17226/11654
+URL: https://www.nationalacademies.org/read/11654
+Escopo: ovinos, caprinos, cervídeos e camelídeos do Novo Mundo.
+
+4. Nutrient Requirements of Horses: Sixth Revised Edition
+Instituição: NRC
+Ano: 2007
+DOI: 10.17226/11653
+URL: https://www.nationalacademies.org/publications/11653
+Escopo: equinos.
+
+PRIORIDADE 6 — FONTES COMPLEMENTARES
+- FAO: sistemas de produção, nutrição, pastagens, saúde única e sustentabilidade.
+- IBGE: efetivos, produção e estatísticas oficiais.
+- Conab: safras, custos e oferta de grãos.
+- CEPEA/ESALQ: indicadores de mercado.
+- B3: contratos e referências de mercado.
+- Banco Central: câmbio e indicadores macroeconômicos.
+- IEA/SP, IMEA, Epagri/Cepa e institutos estaduais: referências regionais.
+- Universidades públicas e serviços oficiais de extensão: materiais técnicos com autoria e data.
+
+CRITÉRIOS DE ACEITAÇÃO DE UMA FONTE
+A fonte deve possuir:
+- instituição/autoria identificável;
+- data ou edição;
+- escopo claro;
+- aplicação à espécie e fase;
+- unidade e método descritos quando houver números;
+- ausência de conflito comercial oculto ou, quando houver, declaração explícita;
+- possibilidade de verificar a origem.
+
+CRITÉRIOS DE REJEIÇÃO/REVISÃO
+- sem autoria ou data;
+- recomenda dose sem espécie/peso/produto;
+- contradiz rótulo oficial;
+- usa legislação revogada;
+- mistura matéria seca e matéria natural;
+- transforma correlação em causa;
+- extrapola estudo de uma espécie para outra;
+- usa preço/estoque antigo como atual;
+- reproduz obra protegida integralmente sem autorização.
+
+POLÍTICA DE DIREITOS AUTORAIS
+Guardar resumos originais, metadados, pontos de decisão e links. Não copiar livros, manuais ou artigos completos quando não houver licença que permita. Trechos curtos devem ser necessários, atribuídos e limitados.
+
+REVISÃO GERAL DO CATÁLOGO
+Periodicidade: trimestral.
+Responsável: administrador técnico da base.
+Ações: verificar links, novas edições, mudanças legais e documentos DuKamp atualizados.
