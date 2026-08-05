@@ -1,0 +1,220 @@
+TPEC-IA — MANEJO, PASTAGENS, FORRAGENS, INSTALAÇÕES E BEM-ESTAR
+Versão: 2026-08-05
+Status: referência conceitual para RAG
+
+OBJETIVO
+Organizar respostas sobre manejo da propriedade, pastagens, conservação de forragens, instalações, biosegurança, bem-estar e transporte. As recomendações precisam considerar região, solo, clima, espécie, sistema e objetivo produtivo.
+
+1. DIAGNÓSTICO DO SISTEMA
+Antes de recomendar manejo, identificar:
+- localização e clima;
+- área útil e divisão de pastos;
+- espécie forrageira;
+- tipo e fertilidade do solo;
+- disponibilidade de água;
+- número, peso e categoria dos animais;
+- lotação atual;
+- histórico de chuva e seca;
+- objetivo produtivo;
+- infraestrutura, cochos e sombras;
+- mão de obra e capacidade operacional;
+- registros de produção e custos.
+
+2. FORMAÇÃO E RECUPERAÇÃO DE PASTAGENS
+Uma decisão técnica deve considerar:
+- aptidão do solo e topografia;
+- análise de solo;
+- correção e fertilização orientadas;
+- escolha de cultivar adaptada;
+- qualidade da semente/muda;
+- época de implantação;
+- controle de plantas daninhas e pragas;
+- primeiro pastejo na condição adequada;
+- persistência e capacidade de manejo.
+
+Não recomendar uma forrageira apenas por popularidade. Cultivares diferem em exigência de fertilidade, tolerância a seca, encharcamento, frio, pragas, sombreamento e intensidade de pastejo.
+
+3. MANEJO DO PASTEJO
+Conceitos centrais:
+- taxa de lotação é o número/peso de animais por área em determinado período;
+- capacidade de suporte muda ao longo do ano;
+- oferta de forragem e estrutura do dossel influenciam consumo e desempenho;
+- altura de entrada/saída depende da espécie forrageira e do método de manejo;
+- superpastejo reduz área foliar, vigor e persistência;
+- subpastejo aumenta material velho, colmos e perdas;
+- lotação contínua e rotacionada podem funcionar quando bem manejadas;
+- calendário fixo não substitui observação do pasto.
+
+A resposta deve diferenciar:
+- lotação instantânea;
+- lotação média;
+- unidade animal;
+- período de ocupação;
+- período de descanso;
+- ganho por animal;
+- ganho por hectare.
+
+4. MANEJO NA SECA E NAS ÁGUAS
+Planejamento anual:
+- estimar produção e demanda de forragem;
+- formar reserva estratégica;
+- ajustar lotação antes da crise;
+- diferir pastos quando tecnicamente indicado;
+- produzir silagem/feno;
+- planejar suplementação;
+- garantir água e sombra;
+- monitorar condição corporal e desempenho;
+- definir critérios de compra, venda ou descarte.
+
+Na seca, quantidade de massa não significa qualidade suficiente. Avaliar proteína, energia, fibra e consumo potencial.
+Nas águas, controlar excesso de maturidade, perdas, lama, parasitas e risco de timpanismo conforme a forragem.
+
+5. CONSERVAÇÃO DE FORRAGENS
+Silagem:
+Pontos críticos incluem ponto de colheita, tamanho de partícula, matéria seca, enchimento rápido, compactação, vedação, fermentação, retirada diária e estabilidade após abertura.
+Sinais de problema podem incluir aquecimento, mofo, odor anormal, efluente excessivo e baixa compactação. Não diagnosticar qualidade apenas pela cor.
+
+Feno:
+Pontos críticos incluem corte no estágio adequado, secagem uniforme, enfardamento com umidade segura, proteção contra chuva, ventilação e armazenamento longe do solo.
+Feno mofado, muito empoeirado ou aquecido pode causar risco, especialmente para equinos.
+
+Pré-secado:
+Depende de emurchecimento, embalagem íntegra e fermentação adequada. Furos e entrada de ar elevam perdas.
+
+Amostragem:
+A análise deve representar o lote. Orientar coleta correta e laboratório confiável.
+
+6. ÁGUA
+Avaliar:
+- disponibilidade contínua;
+- vazão e número de pontos;
+- distância percorrida;
+- limpeza;
+- temperatura;
+- salinidade e contaminantes;
+- acesso para animais dominados;
+- lama e drenagem no entorno.
+
+A falta de água reduz consumo e desempenho e pode aumentar risco sanitário.
+
+7. COCHOS E MANEJO DE TRATO
+Considerar:
+- espaço linear por animal conforme sistema e comportamento;
+- acesso simultâneo quando necessário;
+- proteção contra chuva para produtos sensíveis;
+- drenagem;
+- limpeza;
+- frequência de trato;
+- sobras e variação de consumo;
+- mistura homogênea;
+- separação de lotes por categoria;
+- adaptação gradual a dietas de maior concentrado.
+
+Não recomendar aumentar concentrado sem avaliar fibra, adaptação, consumo e consistência de trato.
+
+8. INSTALAÇÕES
+Boas instalações devem:
+- reduzir risco de trauma;
+- permitir manejo calmo;
+- evitar quinas, pisos escorregadios e sombras que provoquem recusa;
+- oferecer drenagem e higiene;
+- permitir acesso seguro a cocho e água;
+- facilitar isolamento e quarentena;
+- proteger trabalhadores;
+- respeitar espécie e comportamento.
+
+9. BEM-ESTAR ANIMAL
+Princípios práticos:
+- água e alimento adequados;
+- conforto térmico;
+- prevenção e tratamento de dor/doença;
+- manejo sem gritos, choques excessivos ou agressões;
+- transporte dentro da capacidade e com planejamento;
+- instalações seguras;
+- observação de comportamento;
+- métodos humanitários quando houver procedimento doloroso ou eutanásia, sob orientação profissional.
+
+Estresse reduz consumo, imunidade, reprodução e qualidade do produto.
+
+10. MANEJO PRÉ-ABATE E TRANSPORTE
+Considerar:
+- aptidão do animal para transporte;
+- jejum conforme legislação e orientação do frigorífico;
+- água;
+- lotação do veículo;
+- piso e divisórias;
+- tempo e clima;
+- embarque/desembarque calmos;
+- documentação;
+- rastreabilidade;
+- prevenção de contusões.
+
+Animal doente, ferido ou incapaz de locomover-se exige avaliação específica. Não forçar embarque.
+
+11. BIOSSEGURANÇA E QUARENTENA
+Para entrada de animais:
+- conhecer origem e documentação;
+- separar do rebanho;
+- observar sinais clínicos;
+- planejar exames e vacinação com veterinário;
+- controlar trânsito de pessoas, veículos e equipamentos;
+- evitar compartilhamento de agulhas;
+- registrar entradas e tratamentos;
+- controlar vetores, pragas e carcaças.
+
+12. IDENTIFICAÇÃO E RASTREABILIDADE
+Manter:
+- identificação individual ou por lote;
+- nascimento, origem e movimentação;
+- peso e desempenho;
+- reprodução;
+- vacinação e tratamentos;
+- produto, lote, dose prescrita e carência;
+- mortalidade e descarte;
+- consumo de suplemento;
+- datas de manejo.
+
+13. INDICADORES DE MANEJO
+- taxa de lotação;
+- ganho médio diário;
+- ganho por hectare;
+- mortalidade;
+- taxa de descarte;
+- consumo de matéria seca e suplemento;
+- conversão alimentar, quando aplicável;
+- custo alimentar;
+- taxa de prenhez e desmama;
+- produção por vaca e por área;
+- incidência de doenças/claudicação/mastite;
+- perdas de silagem e sobras de cocho.
+
+14. SUSTENTABILIDADE
+Avaliar conjuntamente:
+- produtividade por área;
+- conservação de solo e água;
+- fertilidade e ciclagem de nutrientes;
+- manejo de dejetos;
+- recuperação de áreas degradadas;
+- uso eficiente de insumos;
+- bem-estar;
+- viabilidade econômica;
+- conformidade ambiental e social.
+
+15. COMO A DUKAMP ENTRA NO MANEJO
+Quando o usuário pedir um produto para seca, águas, recria, terminação, leite ou reprodução:
+1) diagnosticar o sistema e a forragem;
+2) consultar catálogo DuKamp vivo;
+3) usar somente indicação oficial;
+4) explicar o papel do produto dentro do manejo total;
+5) não prometer desempenho sem dados;
+6) não substituir correção de pastagem, água, sanidade ou manejo por suplemento;
+7) reproduzir consumo/restrições conforme rótulo.
+
+16. FONTES PRINCIPAIS
+- Embrapa — Boas Práticas Agropecuárias para bovinos e bubalinos de corte, 3ª edição, 2022: https://www.embrapa.br/busca-de-publicacoes/-/publicacao/1150571/boas-praticas-agropecuarias-bovinos-e-bubalinos-de-corte-manual-orientador
+- Programa BPA Embrapa Gado de Corte: https://cloud.cnpgc.embrapa.br/bpa/
+- Embrapa — conservação de forrageiras: https://www.atermaisdigital.cnptia.embrapa.br/web/bovino-de-leite/conservacao-de-forrageiras
+- Embrapa — alimentação e sistemas de produção de leite: https://www.embrapa.br/web/agencia-de-informacao-tecnologica/criacoes/gado_de_leite/producao/sistemas-de-producao/alimentacao
+- WOAH — Terrestrial Animal Health Code, capítulos de bem-estar: https://www.woah.org/en/what-we-do/standards/codes-and-manuals/
+
+Revisão: anual e sempre que houver atualização legal ou técnica relevante.
