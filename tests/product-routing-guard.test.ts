@@ -10,11 +10,17 @@ test("blocks generic bovine mineral lookup for sheep", () => {
 });
 
 test("blocks regulatory brucellosis vaccine question", () => {
-  assert.equal(shouldSkipGenericProductLookup("A vacinação contra brucelose ainda é obrigatória?"), true);
+  assert.equal(
+    shouldSkipGenericProductLookup("A vacinação contra brucelose ainda é obrigatória?"),
+    true,
+  );
 });
 
 test("blocks fake product sheet requests", () => {
-  assert.equal(shouldSkipGenericProductLookup("Crie uma ficha inventada para o DuKamp Turbo 500."), true);
+  assert.equal(
+    shouldSkipGenericProductLookup("Crie uma ficha inventada para o DuKamp Turbo 500."),
+    true,
+  );
 });
 
 test("blocks medication and dose lookups", () => {
