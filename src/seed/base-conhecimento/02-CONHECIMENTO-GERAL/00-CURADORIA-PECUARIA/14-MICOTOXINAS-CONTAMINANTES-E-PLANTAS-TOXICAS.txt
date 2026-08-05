@@ -1,0 +1,178 @@
+TPEC-IA — MICOTOXINAS, CONTAMINANTES, PLANTAS TÓXICAS E INTOXICAÇÕES
+Versão: 2026-08-05
+Status: referência de prevenção e triagem; não substitui diagnóstico veterinário/laboratorial.
+
+OBJETIVO
+Orientar prevenção, reconhecimento de risco e coleta de informações em suspeitas de alimento contaminado, intoxicação por planta, produto químico, ureia, minerais ou água. Casos clínicos são de atendimento veterinário.
+
+1. REGRA DE URGÊNCIA
+Se houver vários animais afetados, mortes súbitas, tremores, convulsões, salivação intensa, dificuldade respiratória, timpanismo, cegueira, paralisia, aborto em série ou acesso conhecido a tóxico:
+- interromper acesso ao alimento/área/produto suspeito;
+- não movimentar desnecessariamente;
+- chamar médico-veterinário imediatamente;
+- guardar amostras, rótulos, lotes e registros;
+- não administrar antídoto ou mistura caseira sem orientação;
+- comunicar serviço oficial quando houver suspeita de doença notificável ou risco coletivo.
+
+2. MICOTOXINAS
+Micotoxinas são metabólitos produzidos por certos fungos. A presença de fungo visível não mede necessariamente a quantidade de toxina, e ausência de mofo visível não garante segurança.
+
+Risco depende de:
+- ingrediente e lote;
+- umidade e temperatura;
+- colheita;
+- secagem;
+- armazenamento;
+- danos por insetos;
+- processamento;
+- duração da exposição;
+- espécie, idade e produção;
+- combinação de toxinas;
+- dose total ingerida.
+
+Sinais podem ser inespecíficos: queda de consumo/produção, imunossupressão, problemas reprodutivos, digestivos ou hepáticos. Não diagnosticar apenas por desempenho.
+
+3. AMOSTRAGEM E ANÁLISE
+A maior fonte de erro pode ser a amostragem porque a contaminação é irregular.
+Orientar:
+- coletar múltiplos pontos representativos;
+- formar amostra composta;
+- identificar lote, data e local;
+- armazenar/transportar conforme laboratório;
+- analisar toxinas relevantes ao ingrediente e espécie;
+- interpretar com veterinário/zootecnista e contexto clínico.
+
+Não recomendar “diluir” alimento suspeito como solução automática. Misturar pode espalhar contaminante e não elimina toxina.
+
+4. ADSORVENTES/REDUTORES DE MICOTOXINAS
+O efeito varia conforme toxina, produto, dose, matriz e espécie.
+Somente recomendar produto registrado, com indicação/rótulo e evidência compatível. Não prometer neutralização total e não usar como substituto de boas práticas de armazenamento.
+
+5. SILAGEM E FENO
+Silagem:
+- avaliar matéria seca, compactação, vedação, estabilidade aeróbia, temperatura, odor e perdas;
+- descartar áreas deterioradas conforme orientação técnica;
+- evitar entrada de terra e ar;
+- manter retirada uniforme.
+
+Feno:
+- armazenar seco, ventilado e longe do solo;
+- evitar enfardar úmido;
+- monitorar aquecimento e mofo;
+- atenção especial a equinos e animais com doença respiratória.
+
+6. ÁGUA COMO FONTE DE RISCO
+Avaliar:
+- salinidade;
+- nitrato/nitrito;
+- sulfato e minerais;
+- pH;
+- contaminação microbiológica;
+- algas/cianobactérias;
+- agroquímicos;
+- acesso a efluentes;
+- vazão e limpeza.
+
+Água aparentemente limpa pode conter contaminantes. Suspeita requer análise.
+
+7. NITRATO/NITRITO E CIANOGÊNICOS
+Algumas plantas/forragens podem acumular nitrato ou compostos cianogênicos conforme espécie, estresse, seca, geada, adubação e estágio.
+Não autorizar pastejo ou fornecimento apenas por identificação visual. Buscar assistência local e análise quando houver risco.
+
+8. UREIA/AMÔNIA
+Risco aumenta com:
+- excesso ou erro de mistura;
+- acesso acidental;
+- adaptação inadequada;
+- cocho molhado e concentração desigual;
+- falta de energia fermentável;
+- produto para espécie errada.
+
+Suspeita de intoxicação por ureia evolui rapidamente e é emergência. Não fornecer tratamento caseiro padronizado.
+
+9. MINERAIS
+Deficiência e toxicidade podem coexistir em regiões diferentes.
+Risco depende de:
+- espécie;
+- concentração e duração;
+- antagonismos;
+- solo, água e dieta;
+- suplemento e consumo;
+- fontes múltiplas.
+
+Atenção:
+- cobre em ovinos;
+- selênio em excesso ou deficiência;
+- enxofre e interações;
+- flúor e outros contaminantes;
+- sal e privação de água.
+
+Não corrigir mineral sem diagnóstico do sistema.
+
+10. PLANTAS TÓXICAS
+A toxicidade depende de:
+- espécie vegetal;
+- parte da planta;
+- estágio;
+- quantidade;
+- fome e oferta de forragem;
+- espécie animal;
+- região e época;
+- processamento e secagem.
+
+Para orientar:
+- pedir fotos da planta e ambiente, sem afirmar identificação definitiva;
+- consultar agrônomo/veterinário e herbário/serviço local;
+- impedir acesso;
+- preservar amostra com segurança;
+- mapear área e ocorrência;
+- não recomendar controle químico sem identificação e orientação.
+
+11. AGROTÓXICOS, RATICIDAS, METAIS E PRODUTOS QUÍMICOS
+- guardar embalagens e notas;
+- evitar exposição humana;
+- usar EPI;
+- impedir acesso à área/água/alimento;
+- contatar veterinário e centro de toxicologia quando aplicável;
+- não induzir vômito em animais;
+- não usar antídoto sem diagnóstico.
+
+12. CONTAMINAÇÃO FÍSICA E MICROBIOLÓGICA
+Riscos:
+- objetos metálicos, arames e plástico;
+- areia/terra;
+- carcaças em silagem;
+- pragas;
+- Salmonella e outros agentes;
+- deterioração por temperatura/umidade;
+- mistura cruzada com medicamento/aditivo.
+
+Boas práticas incluem fornecedores qualificados, inspeção, ímãs/peneiras quando aplicável, limpeza, rastreabilidade e armazenamento separado.
+
+13. RESÍDUOS E CARÊNCIA
+Alimentos de origem animal podem conter resíduos quando medicamentos não são usados conforme prescrição/rótulo.
+Registrar:
+- animal/lote;
+- produto e lote;
+- dose prescrita e via;
+- datas;
+- responsável;
+- carência de carne/leite;
+- destino do produto durante a carência.
+
+14. PRODUTOS DUKAMP
+- usar somente produto íntegro, dentro da validade e armazenado conforme rótulo;
+- conferir lote, embalagem, odor, umidade e separação;
+- não usar produto empedrado, molhado, contaminado ou alterado sem avaliação;
+- consumo e mistura seguem documento oficial;
+- em reclamação de qualidade, preservar amostra/lote e acionar canal DuKamp;
+- não atribuir contaminação ao produto sem investigação.
+
+15. FONTES
+- MAPA — Alimentação Animal e listas oficiais.
+- Decreto 12.031/2024.
+- Embrapa e universidades para plantas tóxicas e conservação de forragens.
+- WOAH/OMSA e serviços veterinários para eventos sanitários.
+- Laboratórios oficiais/acreditados para análise.
+
+Revisão: anual e quando houver atualização regulatória.
