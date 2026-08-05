@@ -24,7 +24,13 @@ export async function askOpenAI(
   options: OpenAIOptions = {},
 ): Promise<string> {
   const key = process.env.OPENAI_API_KEY;
-  if (!key) throw new OpenAIError("Serviço de IA indisponível no momento.", 500);
+  if (!key) {
+    console.error(
+      "[tpec-ai] missing_ai_key: chave do provedor de IA ausente no ambiente deste servidor.",
+    );
+    throw new OpenAIError("Serviço de IA indisponível no momento.", 500);
+  }
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? 30_000);
   try {

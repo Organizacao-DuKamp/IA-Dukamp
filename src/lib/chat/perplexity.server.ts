@@ -40,8 +40,12 @@ export async function askPerplexity(
   const apiKey = process.env.PERPLEXITY_API_KEY;
   if (!apiKey) {
     // Do not include the variable name in the client-facing error.
+    console.error(
+      "[tpec-ai] missing_ai_key: chave do provedor de IA ausente no ambiente deste servidor.",
+    );
     throw new PerplexityError("Serviço de IA indisponível no momento.", 500);
   }
+
 
   // Camadas de contexto, em ordem de prioridade decrescente. Cada camada é uma
   // mensagem `system` própria — nunca embutida em uma fala de usuário.
