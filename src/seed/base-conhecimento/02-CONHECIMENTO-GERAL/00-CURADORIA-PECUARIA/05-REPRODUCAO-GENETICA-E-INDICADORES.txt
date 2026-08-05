@@ -1,0 +1,225 @@
+TPEC-IA — REPRODUÇÃO, GENÉTICA E INDICADORES ZOOTÉCNICOS
+Versão: 2026-08-05
+Status: referência conceitual para RAG
+
+OBJETIVO
+Ajudar a organizar decisões reprodutivas e de melhoramento sem substituir exame, protocolo hormonal, diagnóstico, prescrição ou assistência de médico-veterinário/zootecnista.
+
+1. DADOS ESSENCIAIS
+Antes de orientar reprodução, identificar:
+- espécie e aptidão;
+- raça ou composição racial;
+- idade e peso;
+- escore de condição corporal;
+- categoria: novilha, matriz, touro, vaca em lactação, ovelha, cabra, égua;
+- histórico reprodutivo;
+- data do último parto;
+- dias pós-parto;
+- diagnóstico de gestação;
+- sanidade do rebanho;
+- disponibilidade e qualidade nutricional;
+- estação do ano e clima;
+- objetivo genético e comercial;
+- mão de obra, infraestrutura e método de acasalamento.
+
+2. NUTRIÇÃO E REPRODUÇÃO
+Desempenho reprodutivo depende de:
+- condição corporal adequada;
+- energia e proteína compatíveis com fase e produção;
+- minerais e vitaminas sem deficiência ou excesso;
+- água;
+- saúde uterina, mamária e geral;
+- conforto térmico;
+- ausência de parasitismo/doença importante.
+
+Suplemento não corrige sozinho problema de manejo, doença, baixa oferta de forragem ou falha de detecção de cio.
+
+3. ESTAÇÃO DE MONTA
+Benefícios potenciais:
+- concentração de partos;
+- organização de manejo e vacinação;
+- formação de lotes homogêneos;
+- avaliação de fertilidade;
+- descarte orientado;
+- ajuste da exigência nutricional à oferta de forragem;
+- melhor acompanhamento de indicadores.
+
+A duração e época dependem de clima, sistema, espécie, objetivo e planejamento nutricional.
+
+4. TOUROS E REPRODUTORES
+Avaliar:
+- exame andrológico por veterinário;
+- condição corporal e aprumos;
+- sanidade e vacinação;
+- libido e capacidade de serviço;
+- idade e experiência;
+- número e distribuição de fêmeas;
+- ambiente, topografia e tamanho dos lotes;
+- valor genético e risco de consanguinidade.
+
+Não definir relação touro:vaca como valor universal sem contexto.
+
+5. INSEMINAÇÃO ARTIFICIAL E IATF
+A IA pode explicar conceitos e planejamento, mas protocolo hormonal, fármacos, doses, intervalos, diagnóstico e execução pertencem ao médico-veterinário.
+
+Avaliar antes de implantar:
+- condição corporal;
+- ciclicidade e pós-parto;
+- sanidade reprodutiva;
+- nutrição;
+- qualidade do sêmen e armazenamento;
+- mão de obra e contenção;
+- identificação e registros;
+- calendário;
+- custo e meta;
+- taxa de serviço, concepção e prenhez.
+
+6. DIAGNÓSTICO DE GESTAÇÃO
+Deve ser realizado por profissional habilitado, no momento apropriado ao método. Usar o resultado para:
+- separar lotes;
+- ajustar nutrição;
+- programar parto;
+- identificar vazias;
+- avaliar desempenho do programa;
+- definir descarte ou ressincronização com orientação profissional.
+
+7. PARTO E PÓS-PARTO
+Planejar:
+- local limpo e seguro;
+- observação sem intervenção excessiva;
+- critérios de distocia e chamada ao veterinário;
+- colostro em quantidade, qualidade e tempo adequados;
+- cura de umbigo conforme protocolo técnico;
+- identificação e registro;
+- avaliação da mãe e da cria;
+- prevenção de hipotermia e trauma;
+- acompanhamento de retenção de placenta, apatia e febre.
+
+Parto prolongado, apresentação anormal, feto preso, hemorragia ou animal exausto são urgências.
+
+8. RECRIA DE FÊMEAS DE REPOSIÇÃO
+Objetivos:
+- crescimento consistente;
+- puberdade e cobertura em condição adequada;
+- aprumos e saúde;
+- seleção por desempenho e genética;
+- adaptação ao ambiente;
+- evitar tanto subnutrição quanto excesso de gordura.
+
+Não recomendar idade de cobertura sem considerar peso, raça, desenvolvimento e sistema.
+
+9. DESMAMA
+Planejar:
+- idade e peso;
+- estado sanitário;
+- disponibilidade de alimento e água;
+- método para reduzir estresse;
+- instalações;
+- formação de lotes;
+- vacinação e manejo prévios conforme veterinário;
+- destino das matrizes e crias;
+- acompanhamento de consumo e doença respiratória.
+
+10. MELHORAMENTO GENÉTICO
+Conceitos:
+- objetivo de seleção deve refletir o sistema e mercado;
+- desempenho observado combina genética e ambiente;
+- DEP é diferença esperada na progênie e deve ser interpretada com acurácia, base do programa e característica;
+- índice de seleção combina características e pesos econômicos;
+- herdabilidade não indica destino individual;
+- correlações genéticas podem gerar respostas favoráveis ou desfavoráveis;
+- consanguinidade deve ser monitorada;
+- cruzamento pode explorar complementaridade e heterose;
+- adaptação ao ambiente é essencial.
+
+11. ESCOLHA DE SÊMEN/REPRODUTOR
+Definir primeiro:
+- objetivo: facilidade de parto, crescimento, habilidade materna, carcaça, leite, fertilidade, adaptação, precocidade;
+- limitações do rebanho;
+- categoria de fêmeas;
+- ambiente;
+- mercado;
+- risco de consanguinidade;
+- confiabilidade das avaliações.
+
+Não escolher por uma única DEP ou por aparência do catálogo.
+
+12. INDICADORES REPRODUTIVOS
+- taxa de serviço;
+- taxa de concepção;
+- taxa de prenhez;
+- taxa de natalidade;
+- taxa de desmama;
+- perdas gestacionais;
+- mortalidade perinatal;
+- intervalo entre partos;
+- idade ao primeiro parto;
+- dias abertos em leite;
+- distribuição de partos;
+- porcentagem de matrizes vazias;
+- produtividade por matriz exposta.
+
+Sempre definir numerador, denominador e período. Não comparar fazendas com fórmulas diferentes.
+
+13. INDICADORES PRODUTIVOS E ECONÔMICOS
+- ganho médio diário;
+- peso à desmama ajustado;
+- peso à idade padrão;
+- produção de leite por vaca/dia e por área;
+- sólidos do leite;
+- ganho por hectare;
+- custo por prenhez;
+- custo por bezerro desmamado;
+- custo de reposição;
+- receita por matriz exposta;
+- descarte involuntário;
+- longevidade.
+
+14. REPRODUÇÃO DE OVINOS E CAPRINOS
+Considerar:
+- sazonalidade reprodutiva conforme raça e latitude;
+- condição corporal;
+- efeito macho;
+- prolificidade;
+- nutrição antes e durante cobertura;
+- diagnóstico e número de fetos;
+- manejo de parto;
+- colostro;
+- mortalidade neonatal;
+- sanidade e verminose.
+
+Não transportar protocolos de bovinos diretamente para pequenos ruminantes.
+
+15. REPRODUÇÃO EQUINA
+Considerar:
+- sazonalidade;
+- ciclo estral;
+- exame reprodutivo;
+- condição corporal;
+- qualidade de sêmen;
+- manejo de garanhão;
+- gestação e parto;
+- cuidados neonatais;
+- finalidade esportiva/reprodutiva;
+- registro genealógico.
+
+Protocolos, hormônios e diagnóstico são de responsabilidade veterinária.
+
+16. COMO A DUKAMP ENTRA NA REPRODUÇÃO
+Se a pergunta for sobre suplementação de matrizes, novilhas, touros ou animais em reprodução:
+1) identificar espécie, fase e condição corporal;
+2) avaliar forragem e sistema;
+3) consultar produtos DuKamp oficialmente indicados;
+4) comparar composição, níveis de garantia, consumo e restrições;
+5) não prometer prenhez ou fertilidade como efeito garantido;
+6) explicar que nutrição é parte do programa reprodutivo;
+7) encaminhar ao técnico quando houver formulação ou problema reprodutivo.
+
+17. FONTES PRINCIPAIS
+- Embrapa — Boas práticas em melhoramento genético de gado de corte: https://www.embrapa.br/busca-de-publicacoes/-/publicacao/1117240/boas-praticas-em-melhoramento-genetico-de-gado-de-corte
+- Embrapa — Boas Práticas Agropecuárias bovinos de corte: https://www.embrapa.br/busca-de-publicacoes/-/publicacao/1150571/boas-praticas-agropecuarias-bovinos-e-bubalinos-de-corte-manual-orientador
+- NASEM Beef Cattle 2016: https://www.nationalacademies.org/read/19014
+- NASEM Dairy Cattle 2021: https://www.nationalacademies.org/projects/DELS-BANR-13-02/publication/25806
+- WOAH — Terrestrial Code/Manual: https://www.woah.org/en/what-we-do/standards/codes-and-manuals/
+
+Revisão: anual.
