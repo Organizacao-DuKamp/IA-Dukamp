@@ -1,0 +1,73 @@
+name: Apply Product Routing Guard
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/apply-query-router-guard.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Patch query router safely
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const file = 'src/lib/chat/query-router.server.ts';
+          let source = fs.readFileSync(file, 'utf8');
+
+          const importNeedle = 'import { normalizeName } from "@/lib/products/normalize";';
+          const importLine = 'import { shouldSkipGenericProductLookup } from "./product-routing-guard";';
+          if (!source.includes(importLine)) {
+            if (!source.includes(importNeedle)) throw new Error('normalizeName import not found');
+            source = source.replace(importNeedle, `${importNeedle}\n${importLine}`);
+          }
+
+          const localNeedle = `async function findProductByName(\n  text: string,\n): Promise<{ exact: ProductMention | null; ambiguous: AmbiguousProduct | null }> {\n  const norm = normalizeName(text);`;
+          const localReplacement = `async function findProductByName(\n  text: string,\n): Promise<{ exact: ProductMention | null; ambiguous: AmbiguousProduct | null }> {\n  if (shouldSkipGenericProductLookup(text)) return { exact: null, ambiguous: null };\n  const norm = normalizeName(text);`;
+          if (!source.includes('shouldSkipGenericProductLookup(text)) return { exact: null, ambiguous: null };')) {
+            if (!source.includes(localNeedle)) throw new Error('findProductByName insertion point not found');
+            source = source.replace(localNeedle, localReplacement);
+          }
+
+          const siteStart = source.indexOf('async function findSiteProductByName(');
+          if (siteStart < 0) throw new Error('findSiteProductByName not found');
+          const siteMarker = '\n> {\n  const c = await siteClient();';
+          const siteAt = source.indexOf(siteMarker, siteStart);
+          const siteGuard = '\n> {\n  if (shouldSkipGenericProductLookup(text)) return [];\n  const c = await siteClient();';
+          if (!source.slice(siteStart, siteStart + 1200).includes('shouldSkipGenericProductLookup(text)')) {
+            if (siteAt < 0) throw new Error('findSiteProductByName insertion point not found');
+            source = source.slice(0, siteAt) + siteGuard + source.slice(siteAt + siteMarker.length);
+          }
+
+          const countNeedle = '/\\b(quanto|quanta|quantos|quantas|qual\\s+o\\s+numero|';
+          const countReplacement = '/\\b(quanto(?!\\s+custa)|quanta|quantos|quantas|qual\\s+o\\s+numero|';
+          if (source.includes(countNeedle)) source = source.replace(countNeedle, countReplacement);
+          if (!source.includes('quanto(?!\\s+custa)')) throw new Error('COUNT_RE price guard not applied');
+
+          fs.writeFileSync(file, source);
+          NODE
+      - name: Run focused tests
+        run: npm install && npm test
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/lib/chat/query-router.server.ts
+          if git diff --cached --quiet; then
+            echo "No patch needed"
+          else
+            git commit -m "fix(ai): bloqueia falsos produtos e corrige quanto custa"
+            git push origin main
+          fi
