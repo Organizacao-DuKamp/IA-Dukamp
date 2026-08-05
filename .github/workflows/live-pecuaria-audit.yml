@@ -1,0 +1,37 @@
+name: Live Pecuaria Audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - scripts/live-audit-pecuaria-220.mjs
+      - .github/workflows/live-pecuaria-audit.yml
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      QA_BASE_URL: ${{ vars.TPEC_QA_BASE_URL || 'https://tpec-ia.netlify.app' }}
+      QA_CONCURRENCY: '3'
+      QA_TIMEOUT_MS: '90000'
+      QA_OUTPUT_DIR: qa-results
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run 220 live livestock questions
+        run: node scripts/live-audit-pecuaria-220.mjs
+      - name: Upload full audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tpec-live-pecuaria-audit
+          path: qa-results
+          if-no-files-found: warn
+          retention-days: 30
