@@ -1,0 +1,196 @@
+TPEC-IA — BOVINOCULTURA DE LEITE: BEZERRAS, RECRIA, TRANSIÇÃO E LACTAÇÃO
+Versão: 2026-08-05
+Status: referência técnica para RAG
+
+OBJETIVO
+Organizar respostas sobre sistemas leiteiros brasileiros com foco em cria de bezerras, novilhas, transição, lactação, vaca seca, qualidade do leite, nutrição, conforto e gestão. Para produtos, priorizar catálogo e documentos oficiais DuKamp.
+
+1. DADOS DO SISTEMA
+Antes de recomendar:
+- região, clima e sistema: pasto, compost barn, free stall, tie stall ou misto;
+- raça/grupo genético;
+- número de animais por categoria;
+- produção individual e do tanque;
+- dias em lactação e ordem de parto;
+- gordura e proteína do leite;
+- escore corporal;
+- consumo de matéria seca;
+- volumosos, concentrados e análise da dieta;
+- conforto térmico, cama, lotação, água e cocho;
+- histórico de mastite, casco, reprodução e distúrbios metabólicos;
+- custos e disponibilidade dos ingredientes.
+
+2. NASCIMENTO E COLOSTRO
+Prioridades:
+- parto observado sem intervenção desnecessária;
+- assistência rápida em distocia;
+- avaliação da cria;
+- colostro de boa qualidade, fornecido cedo e em quantidade suficiente segundo protocolo validado;
+- higiene dos utensílios;
+- cura do umbigo conforme orientação técnica;
+- identificação, pesagem e registro;
+- ambiente seco, ventilado e protegido.
+
+A transferência de imunidade deve ser monitorada por protocolo da fazenda e profissional. Não usar um número único como garantia quando faltam qualidade, tempo e peso da bezerra.
+
+3. ALEITAMENTO E DESENVOLVIMENTO RUMINAL
+- dieta líquida adequada e higiênica;
+- concentrado inicial específico e fresco;
+- água limpa desde cedo;
+- volumoso conforme estratégia técnica;
+- consistência de horários e temperatura;
+- monitoramento de consumo, ganho e fezes;
+- prevenção de diarreia e doença respiratória;
+- desaleitamento baseado em consumo e desenvolvimento, não apenas idade.
+
+Mudanças bruscas e higiene ruim elevam risco de doença e perda de desempenho.
+
+4. RECRIA DE NOVILHAS
+Objetivos:
+- crescimento contínuo e econômico;
+- peso e desenvolvimento adequados à reprodução;
+- evitar atraso por subnutrição;
+- evitar excesso de gordura;
+- acompanhar peso/altura e escore;
+- manejo de pasto e lotes;
+- sanidade e casco;
+- idade e peso ao primeiro parto compatíveis com o sistema.
+
+Não definir cobertura só por idade; considerar desenvolvimento, raça, peso e avaliação técnica.
+
+5. PERÍODO SECO E TRANSIÇÃO
+A transição envolve semanas antes e depois do parto e concentra riscos nutricionais, metabólicos e sanitários.
+Avaliar:
+- escore corporal e variação;
+- consumo de matéria seca;
+- conforto e espaço de cocho;
+- densidade e mudanças de lote;
+- qualidade da dieta pré e pós-parto;
+- minerais e balanço dietético;
+- hipocalcemia, cetose, deslocamento de abomaso e retenção de placenta;
+- saúde do úbere e casco;
+- facilidade de acesso a água.
+
+Não prescrever dieta aniônica, sais, cálcio ou outros protocolos sem análise e responsável técnico.
+
+6. VACAS EM LACTAÇÃO
+A dieta deve considerar:
+- peso vivo;
+- dias em lactação;
+- produção e composição do leite;
+- primípara ou multípara;
+- gestação;
+- consumo real de matéria seca;
+- composição e digestibilidade dos ingredientes;
+- fibra fisicamente efetiva;
+- amido, açúcares, proteína e minerais;
+- seleção de partículas e estabilidade da mistura;
+- estresse térmico e tempo de descanso.
+
+NASEM Dairy Cattle 2021 é referência, mas exige entradas corretas. A resposta não deve prometer produção com base em um único nutriente ou produto.
+
+7. TMR E MANEJO DE COCHO
+- pesagem e matéria seca atualizadas;
+- sequência e tempo de mistura;
+- tamanho de partícula;
+- distribuição uniforme;
+- frequência de trato e aproximação do alimento;
+- controle de sobras;
+- lotação e espaço de cocho;
+- limpeza;
+- ajuste por mudanças de silagem/umidade;
+- monitoramento de seleção.
+
+8. PASTO E SUPLEMENTAÇÃO
+Em sistemas a pasto, considerar:
+- oferta e qualidade da forragem;
+- distância e acesso a sombra/água;
+- estação e horário de pastejo;
+- consumo no cocho;
+- substituição entre pasto e concentrado;
+- divisão por produção;
+- custo marginal do concentrado;
+- risco de variação diária.
+
+9. CONFORTO TÉRMICO
+Sinais de estresse incluem aumento de frequência respiratória, aglomeração, redução de consumo e produção.
+Medidas podem envolver:
+- sombra efetiva;
+- ventilação;
+- aspersão bem manejada;
+- água em volume e acesso suficientes;
+- manejo em horários mais amenos;
+- redução de lotação e tempo de espera;
+- dieta e trato adaptados pelo responsável técnico.
+
+10. MASTITE E QUALIDADE DO LEITE
+Controle é sistêmico:
+- rotina de ordenha consistente;
+- higiene de tetos e equipamentos;
+- manutenção e vácuo adequados;
+- identificação de casos;
+- cultura/diagnóstico quando indicado;
+- segregação e descarte conforme orientação;
+- terapia e carência prescritas;
+- ambiente limpo e seco;
+- monitoramento de CCS e CBT;
+- saúde no período seco.
+
+A TPEC-IA não escolhe antibiótico nem dose. Mastite grave com animal abatido, febre ou desidratação é urgência.
+
+11. CASCOS E LOCOMOÇÃO
+- piso e abrasividade;
+- umidade e lama;
+- tempo em pé;
+- conforto de cama;
+- casqueamento funcional;
+- detecção precoce de claudicação;
+- manejo nutricional e ruminal;
+- tratamento veterinário quando necessário.
+
+12. REPRODUÇÃO
+Acompanhar:
+- dias em lactação;
+- retorno à ciclicidade;
+- detecção de cio;
+- taxa de serviço, concepção e prenhez;
+- perdas gestacionais;
+- dias abertos;
+- condição corporal e doenças pós-parto;
+- conforto térmico;
+- protocolos apenas com veterinário.
+
+13. INDICADORES
+- produção por vaca/dia e por área;
+- leite corrigido e sólidos, quando calculados corretamente;
+- consumo de matéria seca;
+- eficiência alimentar;
+- CCS, CBT e incidência de mastite;
+- mortalidade e morbidade de bezerras;
+- idade e peso ao primeiro parto;
+- descarte involuntário;
+- taxa de prenhez;
+- intervalo entre partos;
+- custo alimentar por litro;
+- margem sobre custo alimentar;
+- longevidade.
+
+14. PRODUTOS DUKAMP
+Para recomendar:
+1) identificar categoria: bezerra, novilha, pré-parto, lactação ou vaca seca;
+2) coletar produção, peso, dieta e sistema;
+3) consultar catálogo DuKamp ativo;
+4) usar somente indicação, consumo e níveis oficiais;
+5) verificar se é ração, suplemento, núcleo ou premix;
+6) não substituir formulação da dieta total por produto isolado;
+7) preço e estoque vêm da fonte viva;
+8) encaminhar ao técnico em transição, alta produção, formulação ou doença.
+
+15. FONTES
+- NASEM. Nutrient Requirements of Dairy Cattle, 8ª edição, 2021: https://www.nationalacademies.org/projects/DELS-BANR-13-02/publication/25806
+- Embrapa Gado de Leite — alimentação e sistemas: https://www.embrapa.br/web/agencia-de-informacao-tecnologica/criacoes/gado_de_leite/producao/sistemas-de-producao/alimentacao
+- Embrapa — Bezerras: https://www.embrapa.br/web/agencia-de-informacao-tecnologica/criacoes/gado_de_leite/producao/sistemas-de-producao/alimentacao/bezerras
+- Embrapa — Controle da mastite: https://www.embrapa.br/web/agencia-de-informacao-tecnologica/criacoes/gado_de_leite/producao/sistemas-de-producao/manejo-sanitario/controle-da-mastite
+- CQBAL: https://www.cqbal.com.br/
+
+Revisão: anual e quando houver nova edição, rótulo ou regra.
