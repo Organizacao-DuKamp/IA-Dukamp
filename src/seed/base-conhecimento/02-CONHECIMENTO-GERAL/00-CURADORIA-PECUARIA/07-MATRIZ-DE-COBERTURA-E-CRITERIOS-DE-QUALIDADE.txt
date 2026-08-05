@@ -1,0 +1,272 @@
+TPEC-IA — MATRIZ DE COBERTURA E CRITÉRIOS DE QUALIDADE DA BASE
+Versão: 2026-08-05
+Status: guia de auditoria; não representa automaticamente o conteúdo já processado no Supabase.
+
+OBJETIVO
+Definir o que uma base realmente especializada em pecuária precisa cobrir e como classificar lacunas. Um tema só é considerado coberto quando há conteúdo confiável, atual, específico e testado.
+
+1. NÍVEIS DE COBERTURA
+Nível 0 — ausente:
+Nenhum conteúdo aprovado.
+
+Nível 1 — introdutório:
+Definição e orientação geral, sem capacidade de responder casos práticos.
+
+Nível 2 — operacional:
+Possui fatores de decisão, perguntas necessárias, riscos, exemplos e fontes.
+
+Nível 3 — especializado:
+Possui conteúdo por espécie/fase/sistema, referências oficiais, conflitos resolvidos, testes e atualização definida.
+
+Nível 4 — especialista validado:
+Além do nível 3, possui avaliação periódica por profissional da área, métricas de acerto e dados estruturados/calculadoras validadas.
+
+2. DIMENSÕES OBRIGATÓRIAS DE CADA DOCUMENTO
+- espécie;
+- aptidão;
+- categoria/fase;
+- tema e subtema;
+- sistema de produção;
+- região/clima quando relevante;
+- objetivo;
+- fonte e instituição;
+- data/edição;
+- data da revisão interna;
+- nível de evidência/confiança;
+- limitações;
+- riscos e contraindicações;
+- produto DuKamp relacionado, quando aplicável;
+- status: aprovado, incompleto, divergente, desatualizado ou em revisão.
+
+3. BOVINOS DE CORTE — COBERTURA ESPERADA
+Fases:
+- cria;
+- bezerros lactentes;
+- desmama;
+- recria;
+- terminação a pasto;
+- semiconfinamento;
+- confinamento;
+- matrizes gestantes/lactantes;
+- novilhas de reposição;
+- touros.
+
+Temas:
+- exigências nutricionais;
+- consumo e matéria seca;
+- suplementos minerais, proteicos, energéticos e proteico-energéticos;
+- adaptação a concentrado;
+- ureia/NNP;
+- pastagens e seca;
+- sanidade preventiva;
+- reprodução;
+- genética e DEP;
+- bem-estar, transporte e pré-abate;
+- indicadores e custos;
+- produtos DuKamp por fase.
+
+4. BOVINOS DE LEITE — COBERTURA ESPERADA
+Fases:
+- bezerra pré-desmama;
+- bezerra pós-desmama;
+- novilha;
+- pré-parto;
+- transição;
+- início, meio e final de lactação;
+- vaca seca;
+- touro/reprodução.
+
+Temas:
+- colostro e manejo neonatal;
+- aleitamento e concentrado inicial;
+- crescimento de novilhas;
+- consumo de matéria seca;
+- dieta total e fibra efetiva;
+- energia, proteína e minerais;
+- escore corporal;
+- conforto térmico;
+- mastite e qualidade do leite;
+- distúrbios metabólicos;
+- reprodução;
+- conservação de forragens;
+- custos alimentares;
+- produtos DuKamp por fase.
+
+5. OVINOS E CAPRINOS — COBERTURA ESPERADA
+- diferenças entre ovinos e caprinos;
+- corte, leite e reprodução;
+- cordeiros/cabritos;
+- matrizes gestantes e lactantes;
+- reprodutores;
+- exigências NRC 2007;
+- pastejo e suplementação;
+- minerais e risco de cobre em ovinos;
+- verminose e resistência anti-helmíntica;
+- clostridioses;
+- pododermatite;
+- reprodução e sazonalidade;
+- mortalidade neonatal;
+- produtos DuKamp com indicação expressa.
+
+6. EQUINOS — COBERTURA ESPERADA
+- manutenção;
+- crescimento;
+- reprodução, gestação e lactação;
+- trabalho leve, moderado, intenso e muito intenso;
+- volumosos e concentrados;
+- água e eletrólitos;
+- escore corporal;
+- cólica, laminite e sinais de urgência;
+- manejo dentário e parasitário, sob profissional;
+- armazenamento e qualidade de feno;
+- segurança alimentar;
+- produtos DuKamp indicados para equinos.
+
+7. PASTAGENS E FORRAGENS
+- análise de solo;
+- escolha de cultivar;
+- implantação;
+- correção e adubação;
+- manejo por altura/estrutura;
+- lotação;
+- seca e águas;
+- diferimento;
+- integração lavoura-pecuária;
+- pragas e plantas tóxicas;
+- silagem;
+- feno;
+- pré-secado;
+- análise bromatológica;
+- perdas e armazenamento.
+
+8. SANIDADE
+A base deve distinguir:
+- prevenção;
+- sinal clínico;
+- diagnóstico diferencial;
+- urgência;
+- zoonose;
+- doença de notificação;
+- tratamento exclusivamente veterinário;
+- vacinação oficial;
+- carência e resíduos;
+- resistência antimicrobiana.
+
+Cobertura mínima:
+- febre aftosa e vigilância;
+- brucelose e tuberculose;
+- raiva dos herbívoros;
+- EEB;
+- doenças respiratórias;
+- diarreia neonatal;
+- mastite;
+- clostridioses;
+- hemoparasitoses;
+- parasitoses;
+- problemas de casco;
+- distúrbios metabólicos;
+- abortos;
+- intoxicações;
+- doenças prioritárias de ovinos/caprinos/equinos.
+
+9. ALIMENTAÇÃO ANIMAL E REGULAÇÃO
+- definições de ração, suplemento, núcleo, premix e aditivo;
+- Decreto 12.031/2024;
+- listas MAPA de ingredientes e aditivos;
+- rotulagem e rastreabilidade;
+- armazenamento;
+- micotoxinas e contaminantes;
+- mistura e homogeneidade;
+- ureia/NNP;
+- produtos medicados;
+- carência e uso responsável.
+
+10. GESTÃO E ECONOMIA
+- inventário do rebanho;
+- planejamento forrageiro;
+- orçamento alimentar;
+- custo por cabeça;
+- custo por arroba produzida;
+- custo por litro;
+- margem;
+- ganho médio diário;
+- ganho por hectare;
+- taxa de lotação;
+- mortalidade;
+- descarte;
+- prenhez, natalidade e desmama;
+- registros e rastreabilidade;
+- cenários e sensibilidade.
+
+11. PRODUTOS DUKAMP
+Cada produto deve ter:
+- nome oficial;
+- aliases;
+- categoria;
+- espécie;
+- fase;
+- objetivo;
+- forma física;
+- embalagem;
+- indicação;
+- composição;
+- níveis de garantia;
+- consumo/mode de uso oficiais;
+- restrições;
+- adaptação;
+- diferenciais confirmados;
+- fonte e versão do rótulo;
+- status ativo;
+- preço/estoque somente em fonte viva.
+
+12. CRITÉRIOS PARA MARCAR UMA LACUNA
+Marcar como lacuna quando:
+- existe apenas definição genérica;
+- documento não informa espécie ou fase;
+- número não informa unidade/base;
+- fonte está desatualizada ou sem data;
+- há conflito não resolvido;
+- tema crítico não possui regra de segurança;
+- produto não possui rótulo/ficha oficial;
+- conteúdo não possui testes;
+- resposta depende de dado dinâmico não integrado.
+
+13. CRITÉRIOS DE TESTE
+Para cada tema, testar:
+- pergunta direta;
+- pergunta com erro de digitação;
+- pergunta incompleta;
+- continuação de conversa;
+- espécie/fase errada;
+- conflito entre fontes;
+- pedido de dose/medicamento;
+- emergência;
+- produto DuKamp inexistente;
+- preço/estoque atual;
+- cálculo com unidades;
+- ausência de informação.
+
+14. META DE QUALIDADE
+Uma área só pode ser chamada de “especialista validada” quando:
+- cobertura nível 3 ou 4;
+- nenhum teste crítico de segurança falha;
+- produto DuKamp não é inventado;
+- dados comerciais vêm de fonte viva;
+- sanidade encaminha corretamente;
+- unidades e bases são preservadas;
+- atualização está definida;
+- revisão humana técnica foi registrada.
+
+15. CICLO DE MELHORIA
+1) inventariar documentos e chunks;
+2) classificar por espécie/fase/tema;
+3) medir lacunas;
+4) adicionar fontes autoritativas;
+5) resumir sem copiar integralmente;
+6) processar embeddings;
+7) executar testes;
+8) revisar respostas problemáticas;
+9) aprovar por profissional;
+10) monitorar e atualizar.
+
+Este documento deve orientar o painel administrativo e as auditorias futuras.
