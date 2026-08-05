@@ -1,77 +1,52 @@
-## Diagnóstico da arquitetura atual
+# Corrigir "Serviço de IA indisponível no momento" na Netlify
 
-O que existe hoje:
+## O que foi verificado agora
 
-- `market_quotes` guarda cotações genéricas (produto, praça, unidade, data, fonte). Serve para grãos, câmbio e boi, tudo no mesmo formato.
-- `src/lib/market/market.server.ts` reconhece o produto por regex (`TARGETS`), detecta cidade por uma lista fixa de ~40 municípios com lat/lon e escolhe a praça mais próxima por distância em linha reta (`getSeriesNearest`).
-- `src/lib/chat/query-router.server.ts` chama `marketAnswer()` antes de tudo; se houver bloco de mercado, devolve como contexto para o modelo.
-- Coletores automáticos existentes: apenas Banco Central (dólar PTAX, Selic, IPCA). **Não há nenhum coletor de boi gordo, vaca, bezerro** — a tabela está praticamente vazia para pecuária, o que explica a IA cair na web e trazer preço de outra região/data.
+- No preview do Lovable o chat responde normalmente (testei com "oi" e com uma pergunta técnica real, ambas com resposta completa do modelo). Ou seja, o backend e a chave da IA estão certos aqui.
+- Essa frase exata só é gerada em um ponto do código: quando o servidor tenta chamar o modelo e **não encontra a chave da IA no ambiente** (`PERPLEXITY_API_KEY`, ou `OPENAI_API_KEY` no caminho alternativo). Não é erro de rede nem de crédito — nesses casos as mensagens seriam outras ("Muitas requisições", "créditos esgotados", "demorou demais").
+- Conclusão: a Netlify está executando o backend do chat **em modo local** (rodando tudo lá) sem a chave da IA configurada nas variáveis do site.
+- Detalhe importante: o app publicado no Lovable (tpecia.lovable.app) hoje responde **404** nas rotas de API (`/api/public/chat` e `/api/internal/chat`). Então, se a ideia for apontar a Netlify para o Lovable (modo proxy), é preciso republicar o app antes, senão o proxy também falha.
 
-Causas-raiz dos erros relatados:
+## Como corrigir
 
-1. **Base vazia de pecuária** → sem dado local, sobra a busca web genérica.
-2. **Categorias insuficientes**: só existem `boi-gordo`, `vaca-gorda`, `bezerro`. Não há novilha, garrote, boi magro, boi china, bezerra, vaca boiadeira → regex mistura tudo.
-3. **Hierarquia frágil**: distância em linha reta entre 40 cidades, sem noção de praça pecuária real nem de região/mesorregião.
-4. **Sem controle de frescor**: uma cotação de 40 dias entra como se fosse de hoje.
-5. **Sem selo de abrangência**: a resposta não distingue municipal, regional e estadual.
+Existem dois caminhos. Recomendo o A.
 
-## Solução proposta
+### Caminho A — Netlify em modo proxy (recomendado)
 
-### 1. Modelo de dados novo (banco)
+A Netlify serve apenas a interface e encaminha o chat para o app do Lovable, que já tem todas as chaves e bancos configurados. Nenhuma credencial sensível fica na Netlify.
 
-**`livestock_categories`** — catálogo canônico: `slug`, `nome`, `especie`, `unidade_padrao` (@ / kg / cabeça), `sinonimos[]`, `ordem`. Cobre: boi gordo, vaca gorda, novilha gorda, boi china, bezerro desmamado, bezerra, garrote, boi magro, vaca boiadeira.
+1. Republicar o app no Lovable (hoje as rotas de API do publicado estão fora do ar).
+2. Nas variáveis de ambiente da Netlify, definir:
+   - `TPEC_BACKEND_MODE=proxy`
+   - `LOVABLE_BACKEND_URL=https://tpecia.lovable.app`
+   - `TPEC_PROXY_SECRET=<mesmo valor grande e aleatório usado no Lovable, 32+ caracteres>`
+3. Guardar o mesmo `TPEC_PROXY_SECRET` nos segredos do projeto Lovable (hoje ele não existe lá).
+4. Redeploy na Netlify e teste do chat ponta a ponta.
 
-**`livestock_places`** — hierarquia geográfica: `slug`, `municipio`, `uf`, `regiao` (ex.: "Noroeste Paulista"), `is_praca_pecuaria`, `lat`, `lon`, `ibge_code`.
+### Caminho B — Netlify em modo local
 
-**`livestock_place_links`** — vizinhança explícita e ordenada: `origem_slug`, `praca_slug`, `ordem`, `distancia_km`. Permite exatamente o exemplo pedido: Monte Aprazível → Rio Preto → Mirassol → Araçatuba → Barretos → SP. Semeada com as praças do Noroeste Paulista e das regiões onde a DuKamp atua, e complementada por cálculo de distância quando não houver link manual.
+A Netlify roda o backend inteiro. Aí é preciso ter na Netlify: `PERPLEXITY_API_KEY` (e `PERPLEXITY_MODEL=sonar`), além das chaves de Supabase principal e do site DuKamp. Mais superfície de risco e mais variáveis para manter em dois lugares.
 
-**`cotacoes_pecuarias`** — a tabela pedida: `categoria`, `estado`, `cidade`, `regiao`, `preco_minimo`, `preco_maximo`, `preco_referencia`, `unidade`, `condicao_pagamento`, `data_cotacao`, `fonte`, `url_fonte`, `nivel_confiabilidade`, `data_coleta`, `abrangencia` (municipal | regional | estadual | nacional). Índices por (categoria, estado, cidade, data_cotacao) e chave única para upsert idempotente.
+## Melhorias de diagnóstico incluídas
 
-RLS: leitura pública apenas de leitura; escrita só por service role / admin.
+Para não depender de tentativa e erro, ainda vou:
 
-### 2. Motor de resolução (`src/lib/market/livestock.server.ts`)
-
-Função única `resolveLivestockQuote({ categoria, cidade, uf, unidade })` que percorre a cascata e devolve sempre um resultado tipado com nível de confiança:
-
-```text
-1. cidade exata, cotação recente          → 🟢 Cotação Local
-2. praça pecuária vinculada (ordem 1..n)  → 🟡 Referência Regional
-3. mesma região                            → 🟡 Referência Regional
-4. indicador estadual                      → 🟠 Referência Estadual
-5. nada recente                            → 🔴 Sem cotação recente
-```
-
-Regras de frescor por categoria: cotação com mais de N dias (7 para boi gordo/vaca, 15 para reposição) sai do nível principal e, se usada, é marcada como "referência antiga" — nunca como preço atual. Nada é inventado: sem linha no banco, o motor devolve `null` e a instrução explícita de não citar valores.
-
-### 3. Extração de intenção determinística
-
-`parseLivestockQuery(texto)` extrai categoria (por sinônimos das `livestock_categories`, com desambiguação boi × vaca × novilha × bezerro), cidade (match contra `livestock_places`, incluindo acentuação e apelidos como "Rio Preto"), UF e unidade. Roda **antes** de RAG e de busca web, dentro de `query-router.server.ts`, substituindo o caminho atual de `marketAnswer` para categorias pecuárias.
-
-### 4. Contexto entregue ao modelo
-
-Bloco estruturado, não texto livre, com selo, categoria, faixa de preço, data, fonte, URL e a justificativa da substituição de praça. O prompt do sistema ganha regra rígida: para preços pecuários, usar **exclusivamente** os números do bloco; se o bloco disser "sem cotação", declarar isso abertamente e oferecer a fonte oficial. Formato de saída alinhado ao exemplo que você mandou, com o selo no início.
-
-### 5. Coleta e atualização
-
-- `src/lib/market/collectors/` com coletores por fonte confiável (CEPEA/ESALQ para indicadores nacionais e estaduais, B3 para futuros, fontes regionais aprovadas). Somente fontes do catálogo `market_sources`; blogs ficam de fora por lista de permissão.
-- `POST /api/public/market-ingest` continua sendo o gatilho protegido por token, agora rodando também os coletores pecuários; ideal apontar um cron externo diário.
-- Painel `/admin/cotacoes` ganha aba de cotações pecuárias: lançamento manual por praça, visualização do frescor de cada categoria e alerta visual quando um dado passou da validade.
-- Busca web fica como **complemento**: só é acionada quando o banco não tem nada recente, e o resultado é apresentado com selo 🟠/🔴, com data e link, nunca como cotação oficial da praça.
-
-### 6. Preservação do restante
-
-Grãos, câmbio, combustível e futuros continuam no fluxo atual de `market_quotes`. Produtos, vendedores, unidades, RAG e o motor de contexto conversacional não são tocados.
+- Tornar a mensagem de erro específica por causa, sem vazar nomes de segredo ao usuário final, mas registrando no log do servidor um código claro (`missing_ai_key`, `proxy_unavailable`, `missing_proxy_secret`) para identificar a origem em segundos.
+- Reativar um endpoint de diagnóstico protegido por token (`/api/public/diag`, exigindo o cabeçalho com `QA_TEST_TOKEN`) que responde apenas com "configurada / ausente" para cada variável esperada — nunca o valor. Isso permite conferir o ambiente da Netlify de fora sem expor nada.
 
 ## Detalhes técnicos
 
-- Migração SQL única criando as 4 tabelas com GRANTs, RLS e seeds das categorias e das praças/vínculos do Noroeste Paulista.
-- Novos arquivos: `src/lib/market/livestock.server.ts` (resolução em cascata), `src/lib/market/livestock-parse.ts` (extração de categoria/cidade/unidade), `src/lib/market/collectors/*.ts`.
-- Alterados: `src/lib/chat/query-router.server.ts` (nova precedência), `src/lib/chat/system-prompt.ts` (regras de selo e proibição de valor sem fonte), `src/lib/market/ingest.server.ts` (registro dos coletores), `src/routes/_authenticated/admin.cotacoes.tsx` (aba pecuária).
-- Testes de fumaça cobrindo: cidade com cotação, cidade sem cotação com praça vizinha, UF sem dado municipal, categoria inexistente e dado vencido.
+- Origem da mensagem: `src/lib/chat/perplexity.server.ts` (e o equivalente em `openai.server.ts`), quando `process.env.PERPLEXITY_API_KEY` está vazio.
+- Seleção de modo: `src/lib/chat/backend.server.ts` → `resolveTpecBackendMode`, que assume `local` quando `TPEC_BACKEND_MODE` não está definido. É por isso que a Netlify, sem essa variável, tenta rodar o backend sozinha.
+- O endpoint de diagnóstico será uma rota `createFileRoute` sob `src/routes/api/public/`, com comparação de token em tempo constante e resposta booleana por variável.
 
-## Ordem de execução
+## Próximo passo que depende de você
 
-1. Migração do banco com categorias, praças, vínculos e `cotacoes_pecuarias`.
-2. Parser de intenção + motor de cascata com testes.
-3. Integração no roteador e no prompt, com os selos.
-4. Coletores e aba admin de lançamento/monitoramento.
+Depois de aprovar, me diga qual caminho prefere (A ou B). Para o A, eu gero o valor do `TPEC_PROXY_SECRET` e te passo o que colar na Netlify; para o B, você precisará colocar a chave da Perplexity nas variáveis da Netlify.
+
+## Erros de tipagem já existentes no projeto (corrigir junto)
+
+O projeto hoje não compila limpo — há erros de tipo que precisam ser corrigidos no mesmo trabalho, senão o build da Netlify/Lovable pode falhar:
+
+- `src/lib/knowledge.functions.ts`: o tipo local `AdminContext` não bate mais com o cliente Supabase gerado (7 ocorrências em `assertAdmin`). Ajustar o tipo do parâmetro para aceitar o cliente real.
+- `src/lib/rag/search.server.ts` (linha 38): a função `search_knowledge_lexical` não existe nos tipos gerados do banco. Alinhar a chamada com o padrão já usado logo acima no mesmo arquivo.
