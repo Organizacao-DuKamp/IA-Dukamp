@@ -46,7 +46,6 @@ export async function askPerplexity(
     throw new PerplexityError("Serviço de IA indisponível no momento.", 500);
   }
 
-
   // Camadas de contexto, em ordem de prioridade decrescente. Cada camada é uma
   // mensagem `system` própria — nunca embutida em uma fala de usuário.
   const messages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
