@@ -43,7 +43,7 @@ export const knowledgeStats = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     await assertAdmin(context);
     const { getPrivilegedClient } = await import("@/lib/privileged.server");
-    const supabaseAdmin = await getPrivilegedClient(context.supabase as never);
+    const supabaseAdmin = await getPrivilegedClient(context.supabase);
     const [docsQ, chunksQ] = await Promise.all([
       supabaseAdmin.from("knowledge_documents").select("status", { count: "exact", head: false }),
       supabaseAdmin.from("knowledge_chunks").select("id", { count: "exact", head: true }),
@@ -61,7 +61,7 @@ export const registerSeed = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     await assertAdmin(context);
     const { getPrivilegedClient } = await import("@/lib/privileged.server");
-    const supabaseAdmin = await getPrivilegedClient(context.supabase as never);
+    const supabaseAdmin = await getPrivilegedClient(context.supabase);
     const { listSeedFiles } = await import("./rag/seed-loader.server");
     const { parseSourcePath } = await import("./rag/paths");
 
@@ -96,7 +96,7 @@ export const processNextPending = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     await assertAdmin(context);
     const { getPrivilegedClient } = await import("@/lib/privileged.server");
-    const supabaseAdmin = await getPrivilegedClient(context.supabase as never);
+    const supabaseAdmin = await getPrivilegedClient(context.supabase);
     const { listSeedFiles } = await import("./rag/seed-loader.server");
     const { parseSourcePath } = await import("./rag/paths");
     const { ingestDocument } = await import("./rag/ingest.server");
@@ -158,7 +158,7 @@ export const reprocessDocument = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
     const { getPrivilegedClient } = await import("@/lib/privileged.server");
-    const supabaseAdmin = await getPrivilegedClient(context.supabase as never);
+    const supabaseAdmin = await getPrivilegedClient(context.supabase);
     await supabaseAdmin
       .from("knowledge_documents")
       .update({ status: "aguardando", error_message: null, chunk_count: 0 })
@@ -179,7 +179,7 @@ export const uploadKnowledgeZip = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
     const { getPrivilegedClient } = await import("@/lib/privileged.server");
-    const supabaseAdmin = await getPrivilegedClient(context.supabase as never);
+    const supabaseAdmin = await getPrivilegedClient(context.supabase);
     const { parseSourcePath } = await import("./rag/paths");
     const { extractText, sha256Hex } = await import("./rag/text-extract.server");
     const JSZip = (await import("jszip")).default;
@@ -365,7 +365,7 @@ export const uploadKnowledgeFile = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
     const { getPrivilegedClient } = await import("@/lib/privileged.server");
-    const supabaseAdmin = await getPrivilegedClient(context.supabase as never);
+    const supabaseAdmin = await getPrivilegedClient(context.supabase);
     const { extractText, sha256Hex } = await import("./rag/text-extract.server");
     const { parseSourcePath } = await import("./rag/paths");
 
