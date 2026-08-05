@@ -1,0 +1,39 @@
+name: Live Pecuaria Critical Regression
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - docs/live-regression-trigger.md
+
+permissions:
+  contents: read
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      QA_BASE_URL: ${{ vars.TPEC_QA_BASE_URL || 'https://tpec-ia.netlify.app' }}
+      QA_TIMEOUT_MS: '90000'
+      QA_OUTPUT_DIR: qa-regression-results
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Wait for public deployment
+        run: sleep 180
+      - name: Run critical live regression
+        run: node scripts/live-regression-pecuaria-critical.mjs
+      - name: Upload regression report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tpec-live-pecuaria-critical-regression
+          path: qa-regression-results
+          if-no-files-found: warn
+          retention-days: 30
