@@ -1,0 +1,150 @@
+TPEC-IA — CÁLCULOS ZOOTÉCNICOS, UNIDADES E VALIDAÇÃO
+Versão: 2026-08-05
+Status: referência de cálculo seguro para RAG
+
+OBJETIVO
+Padronizar cálculos para que a IA mostre entradas, fórmula, unidade, período, arredondamento e limitações. Nenhum cálculo deve transformar estimativa em garantia de desempenho.
+
+1. REGRAS GERAIS
+Antes de calcular:
+- listar os dados recebidos;
+- confirmar se são por animal, por lote, por dia ou por período;
+- converter unidades explicitamente;
+- diferenciar matéria seca e matéria natural;
+- identificar dados ausentes;
+- usar casas decimais compatíveis com a precisão real;
+- explicar arredondamento;
+- não ocultar suposições;
+- não usar preço, estoque ou cotação desatualizados.
+
+2. CONVERSÕES BÁSICAS
+1 kg = 1.000 g.
+1 tonelada = 1.000 kg.
+1 hectare = 10.000 m².
+1 arroba bovina de carcaça usada comercialmente no Brasil = 15 kg, mas confirmar contexto antes de converter peso vivo, carcaça ou preço.
+1 unidade animal é frequentemente referida como 450 kg de peso vivo; informar a convenção usada e não confundir com número de cabeças.
+
+3. CONSUMO DO LOTE
+Consumo diário do lote:
+número de animais × consumo por animal por dia.
+
+Consumo do período:
+consumo diário do lote × número de dias.
+
+Sacos necessários:
+consumo total em kg ÷ peso líquido do saco em kg.
+Para compra, arredondar para cima e informar sobra estimada.
+
+Exemplo estrutural, sem substituir o rótulo:
+- animais: 180;
+- consumo: 120 g/animal/dia = 0,120 kg;
+- consumo diário: 180 × 0,120 = 21,6 kg/dia;
+- 30 dias: 648 kg;
+- saco de 30 kg: 648 ÷ 30 = 21,6; compra mínima prática: 22 sacos;
+- sobra teórica: 12 kg.
+
+4. MATÉRIA SECA
+Matéria seca fornecida:
+matéria natural × fração de matéria seca.
+
+Matéria natural necessária:
+matéria seca desejada ÷ fração de matéria seca.
+
+Exemplo:
+Se o alimento tem 35% de MS, usar 0,35 na fórmula. Não calcular a quantidade final sem conhecer a MS desejada.
+
+Misturas com vários alimentos devem ser calculadas ingrediente por ingrediente.
+
+5. GANHO MÉDIO DIÁRIO
+GMD = (peso final − peso inicial) ÷ número de dias.
+
+Cuidados:
+- usar pesagens comparáveis;
+- considerar jejum, conteúdo gastrointestinal e balança;
+- registrar mortalidade/entrada/saída;
+- não projetar indefinidamente o mesmo GMD.
+
+6. CONVERSÃO ALIMENTAR E EFICIÊNCIA
+Conversão alimentar = consumo de matéria seca ÷ ganho de peso.
+Eficiência alimentar = ganho de peso ÷ consumo de matéria seca.
+
+Informar se o consumo é individual ou estimado por lote. Não comparar sistemas com bases diferentes.
+
+7. TAXA DE LOTAÇÃO
+UA do lote = soma dos pesos vivos ÷ peso convencional da UA.
+Taxa de lotação = UA médias ÷ hectares utilizados no período.
+
+Não usar apenas cabeças/hectare. Considerar duração, peso e área efetivamente pastejada.
+
+8. GANHO POR ÁREA
+Ganho por hectare = kg de peso produzido no período ÷ hectares.
+Incluir entradas, saídas, mortes e período. Distinguir ganho por animal de ganho por área.
+
+9. ÍNDICES REPRODUTIVOS
+Taxa de prenhez = fêmeas prenhes ÷ fêmeas expostas × 100.
+Taxa de natalidade = crias nascidas ÷ fêmeas expostas × 100, conforme definição adotada.
+Taxa de desmama = crias desmamadas ÷ fêmeas expostas × 100.
+Mortalidade = mortes ÷ população exposta × 100.
+
+Sempre declarar numerador, denominador, janela e tratamento de vendas/transferências.
+
+10. CUSTOS
+Custo diário do suplemento:
+consumo diário em kg × preço por kg.
+
+Custo por animal no período:
+consumo por animal no período × preço por kg.
+
+Custo por kg de ganho:
+custo associado ÷ kg adicionais atribuíveis, somente quando há desenho de comparação confiável.
+
+Custo por arroba produzida:
+custos considerados ÷ arrobas produzidas. Explicar quais custos entraram.
+
+Margem não é receita. Diferenciar:
+- receita bruta;
+- custo variável;
+- custo operacional;
+- depreciação;
+- custo de oportunidade;
+- margem bruta;
+- lucro.
+
+11. COTAÇÕES E RELAÇÃO DE TROCA
+Uma cotação deve conter preço, unidade, praça, data e fonte.
+Relação de troca deve usar valores da mesma data ou declarar diferença temporal.
+Não misturar preço de saco, tonelada, kg e saca sem conversão.
+
+12. DIETAS E EXIGÊNCIAS
+Cálculos NASEM/BR-CORTE exigem entradas e modelos específicos. A IA deve:
+- informar edição/modelo;
+- listar entradas;
+- separar exigência de fornecimento;
+- usar análise dos ingredientes;
+- considerar consumo previsto;
+- verificar limites e balanço;
+- declarar que a dieta precisa de validação profissional.
+
+13. ARREDONDAMENTO E INCERTEZA
+- compra de sacos: arredondar para cima;
+- animais e eventos: inteiros;
+- consumo: precisão coerente com balança/manejo;
+- porcentagens: não usar muitas casas;
+- estimativa: apresentar faixa quando apropriado;
+- não transformar média de tabela em valor exato do lote.
+
+14. ERROS PROIBIDOS
+- misturar g e kg;
+- multiplicar percentual como número inteiro em vez de fração;
+- confundir matéria seca com natural;
+- usar 30 dias quando o usuário informou outro período;
+- pedir de novo dado já confirmado;
+- calcular dose de medicamento;
+- usar preço de memória;
+- converter peso vivo em arroba de carcaça sem rendimento;
+- assumir UA sem dizer a convenção.
+
+15. PRIORIDADE DUKAMP
+Consumo de produto DuKamp deve vir do rótulo/ficha oficial vigente. O cálculo apenas escala esse consumo para o lote e período. Se o rótulo trouxer faixa, apresentar cenários mínimo e máximo ou pedir consumo-alvo definido pelo técnico.
+
+Revisão: anual.
