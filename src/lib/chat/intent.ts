@@ -54,6 +54,17 @@ const rules: Array<[IntentClassification["intent"], RegExp, boolean, boolean]> =
     true,
     false,
   ],
+  // Perguntas de compatibilidade entre espécies são dúvidas técnicas de
+  // segurança, não pedidos para despejar o catálogo comercial. Um produto
+  // nomeado ainda pode ser localizado pelo roteador de aliases e entrar como
+  // evidência oficial, mas termos genéricos como "mineral" não devem retornar
+  // itens irrelevantes do site (ex.: óleo mineral agrícola para uma ovelha).
+  [
+    "nutrition",
+    /\b(posso|pode|podem|serve|servem|usar|fornecer|dar)\b.{0,100}\b(suplemento|mineral|ra[cç][aã]o|produto|ureia)\b.{0,100}\b(ovino|ovinos|ovelha|ovelhas|caprino|caprinos|cabra|cabras|equino|equinos|cavalo|cavalos)\b|\b(ovino|ovinos|ovelha|ovelhas|caprino|caprinos|cabra|cabras|equino|equinos|cavalo|cavalos)\b.{0,100}\b(posso|pode|podem|serve|servem|usar|fornecer|dar)\b.{0,100}\b(suplemento|mineral|ra[cç][aã]o|produto|ureia)\b/i,
+    true,
+    false,
+  ],
   // Perguntas de catálogo precisam vir antes de "nutrition"; caso contrário
   // frases como "quais suplementos vocês têm?" viram dúvida técnica e não
   // executam a consulta comercial no Supabase da DuKamp.
