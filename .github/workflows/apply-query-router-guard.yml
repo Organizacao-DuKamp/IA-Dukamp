@@ -6,6 +6,10 @@ on:
     branches: [main]
     paths:
       - .github/workflows/apply-query-router-guard.yml
+  pull_request:
+    branches: [main]
+    paths:
+      - docs/apply-router-trigger.md
 
 permissions:
   contents: write
