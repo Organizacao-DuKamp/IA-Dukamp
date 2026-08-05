@@ -1,4 +1,5 @@
 import type { supabaseAdmin as SupabaseAdmin } from "@/integrations/supabase/client.server";
+import { getRequestPrivilegedClient } from "@/lib/privileged.server";
 import { chunkText } from "./chunking.server";
 import { embedTexts, toPgVector } from "./embeddings.server";
 
@@ -12,12 +13,19 @@ interface DocMeta {
 
 type KnowledgeDbClient = typeof SupabaseAdmin;
 
+async function resolveClient(client?: KnowledgeDbClient): Promise<KnowledgeDbClient> {
+  if (client) return client;
+  const requestScoped = getRequestPrivilegedClient();
+  if (requestScoped) return requestScoped;
+  return (await import("@/integrations/supabase/client.server")).supabaseAdmin;
+}
+
 export async function ingestDocument(
   doc: DocMeta,
   rawText: string,
   client?: KnowledgeDbClient,
 ): Promise<number> {
-  const db = client ?? (await import("@/integrations/supabase/client.server")).supabaseAdmin;
+  const db = await resolveClient(client);
   const chunks = chunkText(rawText);
   if (chunks.length === 0) throw new Error("Documento vazio.");
 
