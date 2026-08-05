@@ -60,6 +60,20 @@ jobs:
           if (source.includes(countNeedle)) source = source.replace(countNeedle, countReplacement);
           if (!source.includes('quanto(?!\\s+custa)')) throw new Error('COUNT_RE price guard not applied');
 
+          const priceNeedle = 'const PRICE_WORD_RE = /\\b(pre[cç]o|valor|quanto\\s+custa|custo|cotaç[aã]o)\\b/i;';
+          const priceReplacement = 'const PRICE_WORD_RE =\n  /\\b(pre[cç]o|valor|quanto\\s+custa|custo|cotaç[aã]o|estoque|disponibilidade)\\b/i;';
+          if (source.includes(priceNeedle)) source = source.replace(priceNeedle, priceReplacement);
+          if (!source.includes('cotaç[aã]o|estoque|disponibilidade')) {
+            throw new Error('PRICE_WORD_RE stock guard not applied');
+          }
+
+          const listNeedle = `  if (\n    wantsCatalogList &&\n    !hasSellerWord &&`;
+          const listReplacement = `  if (\n    wantsCatalogList &&\n    !hasPriceWord &&\n    !hasSellerWord &&`;
+          if (!source.includes('wantsCatalogList &&\n    !hasPriceWord')) {
+            if (!source.includes(listNeedle)) throw new Error('catalog list insertion point not found');
+            source = source.replace(listNeedle, listReplacement);
+          }
+
           fs.writeFileSync(file, source);
           NODE
       - name: Run focused tests
@@ -72,6 +86,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "No patch needed"
           else
-            git commit -m "fix(ai): bloqueia falsos produtos e corrige quanto custa"
+            git commit -m "fix(ai): prioriza produto específico em preço e estoque"
             git push origin main
           fi
