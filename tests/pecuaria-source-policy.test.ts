@@ -28,6 +28,7 @@ test("source policy blocks unsafe veterinary prescribing", () => {
 
   assert.match(directive, /não feche diagnóstico/i);
   assert.match(directive, /prescreva medicamento, dose, via ou protocolo/i);
+  assert.match(directive, /NÃO forneça nomes de princípios ativos nem números de dose/i);
   assert.match(directive, /serviço oficial/i);
 });
 
@@ -50,4 +51,27 @@ test("source policy prevents generic cross-species catalog dumps", () => {
 
   assert.match(directive, /não despeje catálogo/i);
   assert.match(directive, /correspondência oficial inequívoca/i);
+});
+
+test("source policy identifies NASEM beef and dairy editions", () => {
+  const directive = sourceDirective(assessEvidence({ knowledgeScores: [0.8] }));
+
+  assert.match(directive, /bovinos de corte em 2016/i);
+  assert.match(directive, /bovinos de leite em 2021/i);
+  assert.match(directive, /Nunca descreva NASEM como referência apenas de leite/i);
+});
+
+test("source policy refuses invented DuKamp product sheets", () => {
+  const directive = sourceDirective(assessEvidence({}));
+
+  assert.match(directive, /recuse inventar ficha/i);
+  assert.match(directive, /não ofereça uma ficha comercial simulada/i);
+});
+
+test("current regulation must use dated official evidence", () => {
+  const directive = sourceDirective(assessEvidence({}));
+
+  assert.match(directive, /fonte oficial atual do MAPA\/WOAH/i);
+  assert.match(directive, /informe data de referência/i);
+  assert.match(directive, /não use catálogo comercial como resposta/i);
 });
