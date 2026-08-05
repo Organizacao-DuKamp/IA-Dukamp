@@ -29,8 +29,14 @@ export type IntentClassification = z.infer<typeof IntentSchema>;
 
 const rules: Array<[IntentClassification["intent"], RegExp, boolean, boolean]> = [
   [
+    "current_research",
+    /\b(ainda|atual(?:mente)?|hoje|vigente|obrigat[oó]ri[oa]|permitid[oa]|proibid[oa]|status)\b.{0,120}\b(brucelose|tuberculose|febre\s+aftosa|vacina[cç][aã]o|aditivo|monensina|mapa|pncebt|pnefa)\b|\b(brucelose|tuberculose|febre\s+aftosa|vacina[cç][aã]o|aditivo|monensina|mapa|pncebt|pnefa)\b.{0,120}\b(ainda|atual(?:mente)?|hoje|vigente|obrigat[oó]ri[oa]|permitid[oa]|proibid[oa]|status)\b/i,
+    true,
+    true,
+  ],
+  [
     "animal_health",
-    /\b(doente|febre|diarreia|timpanismo|convuls|intoxica|veterin|medicamento|dose|dosagem)\b/i,
+    /\b(doente|febre|diarreia|timpanismo|convuls|intoxica|veterin|medicamento|dose|dosagem|antibi[oó]tico|verm[ií]fugo|anemi|aborto|abortaram|c[oó]lica|mastite|pneumonia|ca[ií]do|n[aã]o\s+levanta|dificuldade\s+para\s+respirar|ferida\w*\s+na\s+boca)\b/i,
     true,
     false,
   ],
@@ -48,6 +54,12 @@ const rules: Array<[IntentClassification["intent"], RegExp, boolean, boolean]> =
   ],
   ["order", /\b(pedido|rastre|entrega|nota fiscal)\b/i, true, false],
   ["internal_price", /\b(pre[cç]o|valor|quanto custa|estoque)\b/i, true, false],
+  [
+    "out_of_scope",
+    /\b(crie|monte|fa[cç]a)\b.{0,80}\b(ficha|produto)\b.{0,80}\b(inventad[oa]|fict[ií]ci[oa]|simulad[oa])\b|\b(inventad[oa]|fict[ií]ci[oa]|simulad[oa])\b.{0,80}\bdukamp\b/i,
+    false,
+    false,
+  ],
   [
     "product_recommendation",
     /\b(recomend\w*|qual produto|qual suplemento|melhor para|indiqu\w*|produto para)\b/i,
