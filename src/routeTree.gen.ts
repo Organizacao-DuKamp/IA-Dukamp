@@ -13,6 +13,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPublicMarketIngestRouteImport } from './routes/api/public/market-ingest'
+import { Route as ApiPublicDiagRouteImport } from './routes/api/public/diag'
 import { Route as ApiPublicChatTestRouteImport } from './routes/api/public/chat-test'
 import { Route as ApiPublicChatRouteImport } from './routes/api/public/chat'
 import { Route as ApiInternalChatRouteImport } from './routes/api/internal/chat'
@@ -37,6 +38,11 @@ const IndexRoute = IndexRouteImport.update({
 const ApiPublicMarketIngestRoute = ApiPublicMarketIngestRouteImport.update({
   id: '/api/public/market-ingest',
   path: '/api/public/market-ingest',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicDiagRoute = ApiPublicDiagRouteImport.update({
+  id: '/api/public/diag',
+  path: '/api/public/diag',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicChatTestRoute = ApiPublicChatTestRouteImport.update({
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/api/internal/chat': typeof ApiInternalChatRoute
   '/api/public/chat': typeof ApiPublicChatRoute
   '/api/public/chat-test': typeof ApiPublicChatTestRoute
+  '/api/public/diag': typeof ApiPublicDiagRoute
   '/api/public/market-ingest': typeof ApiPublicMarketIngestRoute
 }
 export interface FileRoutesByTo {
@@ -93,6 +100,7 @@ export interface FileRoutesByTo {
   '/api/internal/chat': typeof ApiInternalChatRoute
   '/api/public/chat': typeof ApiPublicChatRoute
   '/api/public/chat-test': typeof ApiPublicChatTestRoute
+  '/api/public/diag': typeof ApiPublicDiagRoute
   '/api/public/market-ingest': typeof ApiPublicMarketIngestRoute
 }
 export interface FileRoutesById {
@@ -106,6 +114,7 @@ export interface FileRoutesById {
   '/api/internal/chat': typeof ApiInternalChatRoute
   '/api/public/chat': typeof ApiPublicChatRoute
   '/api/public/chat-test': typeof ApiPublicChatTestRoute
+  '/api/public/diag': typeof ApiPublicDiagRoute
   '/api/public/market-ingest': typeof ApiPublicMarketIngestRoute
 }
 export interface FileRouteTypes {
@@ -119,6 +128,7 @@ export interface FileRouteTypes {
     | '/api/internal/chat'
     | '/api/public/chat'
     | '/api/public/chat-test'
+    | '/api/public/diag'
     | '/api/public/market-ingest'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -130,6 +140,7 @@ export interface FileRouteTypes {
     | '/api/internal/chat'
     | '/api/public/chat'
     | '/api/public/chat-test'
+    | '/api/public/diag'
     | '/api/public/market-ingest'
   id:
     | '__root__'
@@ -142,6 +153,7 @@ export interface FileRouteTypes {
     | '/api/internal/chat'
     | '/api/public/chat'
     | '/api/public/chat-test'
+    | '/api/public/diag'
     | '/api/public/market-ingest'
   fileRoutesById: FileRoutesById
 }
@@ -152,6 +164,7 @@ export interface RootRouteChildren {
   ApiInternalChatRoute: typeof ApiInternalChatRoute
   ApiPublicChatRoute: typeof ApiPublicChatRoute
   ApiPublicChatTestRoute: typeof ApiPublicChatTestRoute
+  ApiPublicDiagRoute: typeof ApiPublicDiagRoute
   ApiPublicMarketIngestRoute: typeof ApiPublicMarketIngestRoute
 }
 
@@ -183,6 +196,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/market-ingest'
       fullPath: '/api/public/market-ingest'
       preLoaderRoute: typeof ApiPublicMarketIngestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/diag': {
+      id: '/api/public/diag'
+      path: '/api/public/diag'
+      fullPath: '/api/public/diag'
+      preLoaderRoute: typeof ApiPublicDiagRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/chat-test': {
@@ -253,8 +273,19 @@ const rootRouteChildren: RootRouteChildren = {
   ApiInternalChatRoute: ApiInternalChatRoute,
   ApiPublicChatRoute: ApiPublicChatRoute,
   ApiPublicChatTestRoute: ApiPublicChatTestRoute,
+  ApiPublicDiagRoute: ApiPublicDiagRoute,
   ApiPublicMarketIngestRoute: ApiPublicMarketIngestRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
