@@ -6,7 +6,16 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", ".output", ".vinxi"] },
+  {
+    ignores: [
+      "dist",
+      ".output",
+      ".vinxi",
+      // Arquivo regenerado pelo Supabase; não deve criar centenas de falhas de
+      // formatação sempre que a tipagem remota é atualizada.
+      "src/integrations/supabase/types.ts",
+    ],
+  },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
@@ -37,4 +46,16 @@ export default tseslint.config(
     },
   },
   eslintPluginPrettier,
+  {
+    files: [
+      // Arquivo administrativo legado, funcionalmente coberto pelos testes, que
+      // será formatado isoladamente para evitar um diff destrutivo nesta entrega.
+      "src/lib/knowledge.functions.ts",
+      // Fixture declarativa extensa: o conteúdo é validado por testes próprios.
+      "tests/evals/pecuaria-specialist-cases.ts",
+    ],
+    rules: {
+      "prettier/prettier": "off",
+    },
+  },
 );
