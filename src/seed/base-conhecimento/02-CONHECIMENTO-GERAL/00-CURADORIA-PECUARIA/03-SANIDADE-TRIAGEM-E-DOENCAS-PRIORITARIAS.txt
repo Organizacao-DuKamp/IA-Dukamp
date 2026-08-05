@@ -1,0 +1,177 @@
+TPEC-IA — SANIDADE, TRIAGEM E DOENÇAS PRIORITÁRIAS
+Versão: 2026-08-05
+Status: referência de segurança e encaminhamento
+
+OBJETIVO
+Ajudar a reconhecer sinais de alerta, organizar informações e orientar prevenção sem substituir diagnóstico, exame, prescrição ou atendimento veterinário.
+
+REGRA CENTRAL
+A TPEC-IA não fecha diagnóstico e não prescreve medicamento, dose, via, intervalo ou duração. Quando houver risco, orientar atendimento por médico-veterinário e, em suspeita de doença de notificação obrigatória, contato com o serviço veterinário oficial.
+
+1. TRIAGEM INICIAL
+Antes de orientar, identificar:
+- espécie, categoria, idade e peso aproximado;
+- quantidade de animais afetados;
+- início e evolução dos sinais;
+- temperatura, se medida corretamente;
+- consumo de água e alimento;
+- fezes e urina;
+- respiração;
+- condição de locomoção;
+- presença de distensão abdominal;
+- secreções, feridas, lesões de boca/casco/úbere;
+- aborto, parto recente ou retenção de placenta;
+- mudança de ração, pasto, água ou medicamento;
+- acesso a plantas, produtos químicos, ureia ou alimento mofado;
+- vacinação, vermifugação, quarentena e entrada recente de animais;
+- mortes recentes e padrão no lote.
+
+2. URGÊNCIAS VETERINÁRIAS
+Encaminhar imediatamente quando houver:
+- dificuldade respiratória intensa, língua arroxeada ou animal sufocando;
+- animal caído e incapaz de levantar;
+- distensão abdominal importante/timpanismo;
+- convulsão, paralisia, cegueira súbita ou comportamento neurológico;
+- trauma grave, hemorragia ou dor intensa;
+- parto prolongado ou feto preso;
+- intoxicação suspeita;
+- desidratação grave;
+- várias mortes ou vários animais adoecendo rapidamente;
+- febre alta com apatia intensa;
+- mastite grave com sinais sistêmicos;
+- cólica intensa em equinos;
+- laminite aguda/sinais de dor intensa nos cascos;
+- salivação excessiva com feridas/vesículas em boca, tetos ou entre os cascos;
+- aborto em série;
+- suspeita de raiva.
+
+3. AÇÕES SEGURAS ENQUANTO AGUARDA O PROFISSIONAL
+- manter o animal em local calmo, seguro e sombreado;
+- evitar movimentação desnecessária;
+- separar o animal do lote quando houver risco de contágio, sem causar estresse;
+- disponibilizar água limpa se o animal conseguir beber com segurança;
+- impedir acesso ao alimento, planta ou produto suspeito;
+- guardar rótulos, amostras e registros do que foi fornecido;
+- anotar horários, temperatura e evolução;
+- usar equipamentos de proteção quando houver risco zoonótico;
+- não administrar medicamento ou mistura caseira sem orientação profissional.
+
+4. DOENÇAS E PROGRAMAS OFICIAIS NO BRASIL
+Febre aftosa — PNEFA:
+Doença viral altamente contagiosa de animais de casco fendido. Sinais suspeitos podem incluir febre, salivação, vesículas/feridas em boca, tetos e cascos, claudicação e queda de produção. Diante de suspeita: não movimentar animais e comunicar imediatamente o serviço veterinário oficial. O Brasil recebeu reconhecimento internacional como país livre de febre aftosa sem vacinação em maio de 2025; a vigilância continua essencial.
+
+Brucelose e tuberculose — PNCEBT:
+Brucelose é zoonose associada a aborto, falhas reprodutivas e eliminação do agente. Tuberculose bovina é zoonose crônica. Diagnóstico e medidas oficiais exigem médico-veterinário habilitado e serviço oficial. A vacinação obrigatória contra brucelose segue regras do programa; nunca orientar vacinação ou teste fora do PNCEBT.
+
+Raiva dos herbívoros — PNCRH:
+Suspeitar em alterações neurológicas progressivas, dificuldade de deglutição, paralisia, mudança de comportamento ou morte. Não manipular boca/saliva. Isolar com segurança e chamar veterinário/serviço oficial.
+
+Encefalopatia espongiforme bovina — PNEEB:
+Doença neurológica de controle oficial. A prevenção envolve vigilância e regras de alimentação animal. Não diagnosticar por sinais isolados.
+
+Sanidade de caprinos e ovinos — PNSCO:
+Inclui vigilância e controle de doenças relevantes aos pequenos ruminantes. Orientações devem considerar espécie, região e serviço oficial.
+
+Sanidade dos equídeos — PNSE:
+Inclui vigilância de enfermidades de interesse oficial. Trânsito e eventos podem exigir documentação e exames específicos.
+
+5. GRUPOS DE PROBLEMAS FREQUENTES — BOVINOS
+Doenças respiratórias:
+Observar tosse, secreção nasal, febre, respiração rápida, esforço respiratório, queda de consumo e agrupamento de casos. Fatores de risco incluem transporte, mistura de lotes, poeira, ventilação ruim e estresse. Diagnóstico e antimicrobianos dependem de veterinário.
+
+Diarreia neonatal:
+Risco elevado de desidratação. Registrar idade, aspecto das fezes, ingestão de colostro, ambiente, quantidade afetada e temperatura. Vários agentes e causas nutricionais podem produzir sinais semelhantes.
+
+Mastite:
+Observar alterações no leite, úbere quente/dolorido, redução de produção e sinais sistêmicos. Casos graves exigem atendimento imediato. Respeitar cultura, prescrição, carência e descarte de leite.
+
+Doenças clostridiais:
+Podem causar evolução rápida e morte súbita. Prevenção depende de programa vacinal adequado e manejo. Não assumir causa sem necropsia e diagnóstico.
+
+Tristeza parasitária bovina e hemoparasitoses:
+Podem envolver febre, anemia, icterícia, apatia e queda de produção. Carrapato e situação epidemiológica importam. Exigem diagnóstico e tratamento veterinário.
+
+Parasitismo gastrointestinal:
+Avaliar categoria, condição corporal, fezes, ganho, manejo de pasto e histórico de vermifugação. Evitar vermifugação indiscriminada; resistência anti-helmíntica é relevante.
+
+Pododermatites e problemas de casco:
+Avaliar piso, umidade, trauma, nutrição, aprumo e infecção. Claudicação persistente requer exame.
+
+Distúrbios metabólicos/nutricionais:
+Acidose, timpanismo, hipocalcemia, cetose, intoxicações e deficiências podem ter sinais sobrepostos. Não usar um único sinal para diagnosticar.
+
+6. OVINOS E CAPRINOS
+Prioridades incluem:
+- verminoses e resistência anti-helmíntica;
+- anemia e avaliação clínica orientada por profissional;
+- pododermatite;
+- enterotoxemia e outras clostridioses;
+- ectima contagioso;
+- linfadenite caseosa;
+- mastite;
+- problemas reprodutivos e abortos;
+- intoxicação mineral, inclusive excesso de cobre em ovinos;
+- língua azul e peste dos pequenos ruminantes como enfermidades de relevância internacional/oficial.
+
+Não aplicar automaticamente doses, minerais ou produtos formulados para bovinos.
+
+7. EQUINOS
+Sinais prioritários:
+- cólica;
+- dificuldade respiratória;
+- laminite;
+- feridas e hemorragias;
+- alterações neurológicas;
+- febre e surtos respiratórios;
+- dificuldade de urinar;
+- parto distócico;
+- recusa alimentar prolongada.
+
+Em cólica, não administrar medicamento por conta própria nem obrigar exercício excessivo. Chamar veterinário e observar frequência cardíaca/respiratória, mucosas, fezes e evolução somente se houver treinamento seguro.
+
+8. ZOONOSES E BIOSSEGURANÇA
+Algumas doenças animais podem infectar pessoas. Usar cautela em:
+- abortos, placentas e fetos;
+- leite cru de animais doentes;
+- feridas e secreções;
+- animais com sinais neurológicos;
+- carcaças e necropsias;
+- material perfurocortante;
+- manipulação de produtos veterinários.
+
+Usar EPI, higiene, descarte adequado e orientação profissional. Não consumir leite cru ou carne de animal doente.
+
+9. VACINAÇÃO
+Não existe calendário único universal. Programa vacinal depende de:
+- espécie e categoria;
+- risco regional;
+- sistema e movimentação;
+- histórico do rebanho;
+- produtos registrados;
+- programas oficiais;
+- orientação do médico-veterinário.
+
+A TPEC-IA pode explicar objetivos de vacinas, mas não deve montar protocolo fechado sem dados e validação profissional.
+
+10. ANTIMICROBIANOS, ANTIPARASITÁRIOS E CARÊNCIA
+- usar somente sob orientação e conforme legislação/rótulo;
+- respeitar espécie, peso, via, intervalo e duração prescritos;
+- registrar lote tratado;
+- respeitar carência de carne e leite;
+- não reutilizar receita antiga;
+- não interromper ou prolongar por conta própria;
+- considerar diagnóstico laboratorial e resistência sempre que possível;
+- não recomendar antibiótico como promotor de crescimento.
+
+11. DOENÇAS DE NOTIFICAÇÃO E SERVIÇO OFICIAL
+A lista e as regras podem mudar. A TPEC-IA deve consultar MAPA e serviço veterinário estadual quando a pergunta envolver notificação, trânsito, foco, interdição, vacinação oficial ou situação sanitária atual.
+
+12. FONTES AUTORITATIVAS
+- MAPA — Programas de Saúde Animal: https://www.gov.br/agricultura/pt-br/acesso-a-informacao/institucional/atos-normativos/sda/programas-de-saude-animal
+- MAPA — PNEFA: https://www.gov.br/agricultura/pt-br/assuntos/sanidade-animal-e-vegetal/saude-animal/programas-de-saude-animal/febre-aftosa
+- MAPA — PNCEBT: https://www.gov.br/agricultura/pt-br/assuntos/sanidade-animal-e-vegetal/saude-animal/programas-de-saude-animal/pncebt/programa-nacional-de-controle-e-erradicacao-da-brucelose-e-da-tuberculose-animal-pncebt-1
+- MAPA — resistência aos antimicrobianos: https://www.gov.br/agricultura/pt-br/assuntos/insumos-agropecuarios/insumos-pecuarios/resistencia-aos-antimicrobianos
+- WOAH — Codes and Manuals: https://www.woah.org/en/what-we-do/standards/codes-and-manuals/
+- WOAH — Animal Diseases: https://www.woah.org/en/what-we-do/animal-health-and-welfare/animal-diseases/
+
+Revisão: trimestral para regras oficiais e anual para conteúdo geral.
