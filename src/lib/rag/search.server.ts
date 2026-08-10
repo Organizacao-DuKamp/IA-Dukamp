@@ -34,6 +34,7 @@ export async function searchKnowledge(query: string, matchCount = 6): Promise<Ma
   // Busca lexical recupera nomes, códigos, siglas e números exatos, nos quais
   // embeddings costumam ser menos confiáveis. Também mantém a base disponível
   // se o provedor de embeddings estiver temporariamente fora do ar.
+  try {
     const { data, error } = await supabaseAdmin.rpc("search_knowledge_lexical" as any, {
       search_query: query,
       match_count: matchCount * 2,
