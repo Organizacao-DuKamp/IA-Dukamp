@@ -7,9 +7,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
 type AdminContext = {
-  // O cliente gerado pelo Supabase tem tipagem muito específica de RPC; aqui só
-  // precisamos chamar has_role, então aceitamos qualquer cliente com .rpc().
-  supabase: { rpc: (fn: never, args: never) => PromiseLike<{ data: unknown; error: unknown }> };
+  // Aceita o cliente gerado real ou o mock de teste
+  supabase: any;
   userId: string;
 };
 

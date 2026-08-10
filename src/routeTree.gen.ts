@@ -9,36 +9,61 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedAdminBaseConhecimentoRouteImport } from './routes/_authenticated/admin.base-conhecimento'
-import { Route as AuthenticatedAdminCotacoesRouteImport } from './routes/_authenticated/admin.cotacoes'
-import { Route as AuthenticatedAdminProdutosRouteImport } from './routes/_authenticated/admin.produtos'
-import { Route as ApiInternalChatRouteImport } from './routes/api/internal/chat'
-import { Route as ApiPublicChatRouteImport } from './routes/api/public/chat'
-import { Route as ApiPublicChatTestRouteImport } from './routes/api/public/chat-test'
-import { Route as ApiPublicDiagRouteImport } from './routes/api/public/diag'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPublicMarketIngestRouteImport } from './routes/api/public/market-ingest'
+import { Route as ApiPublicDiagRouteImport } from './routes/api/public/diag'
+import { Route as ApiPublicChatTestRouteImport } from './routes/api/public/chat-test'
+import { Route as ApiPublicChatRouteImport } from './routes/api/public/chat'
+import { Route as ApiInternalChatRouteImport } from './routes/api/internal/chat'
+import { Route as AuthenticatedAdminProdutosRouteImport } from './routes/_authenticated/admin.produtos'
+import { Route as AuthenticatedAdminCotacoesRouteImport } from './routes/_authenticated/admin.cotacoes'
+import { Route as AuthenticatedAdminBaseConhecimentoRouteImport } from './routes/_authenticated/admin.base-conhecimento'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedAdminBaseConhecimentoRoute =
-  AuthenticatedAdminBaseConhecimentoRouteImport.update({
-    id: '/admin/base-conhecimento',
-    path: '/admin/base-conhecimento',
+const ApiPublicMarketIngestRoute = ApiPublicMarketIngestRouteImport.update({
+  id: '/api/public/market-ingest',
+  path: '/api/public/market-ingest',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicDiagRoute = ApiPublicDiagRouteImport.update({
+  id: '/api/public/diag',
+  path: '/api/public/diag',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicChatTestRoute = ApiPublicChatTestRouteImport.update({
+  id: '/api/public/chat-test',
+  path: '/api/public/chat-test',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicChatRoute = ApiPublicChatRouteImport.update({
+  id: '/api/public/chat',
+  path: '/api/public/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiInternalChatRoute = ApiInternalChatRouteImport.update({
+  id: '/api/internal/chat',
+  path: '/api/internal/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAdminProdutosRoute =
+  AuthenticatedAdminProdutosRouteImport.update({
+    id: '/admin/produtos',
+    path: '/admin/produtos',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminCotacoesRoute =
@@ -47,37 +72,12 @@ const AuthenticatedAdminCotacoesRoute =
     path: '/admin/cotacoes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedAdminProdutosRoute =
-  AuthenticatedAdminProdutosRouteImport.update({
-    id: '/admin/produtos',
-    path: '/admin/produtos',
+const AuthenticatedAdminBaseConhecimentoRoute =
+  AuthenticatedAdminBaseConhecimentoRouteImport.update({
+    id: '/admin/base-conhecimento',
+    path: '/admin/base-conhecimento',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const ApiInternalChatRoute = ApiInternalChatRouteImport.update({
-  id: '/api/internal/chat',
-  path: '/api/internal/chat',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicChatRoute = ApiPublicChatRouteImport.update({
-  id: '/api/public/chat',
-  path: '/api/public/chat',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicChatTestRoute = ApiPublicChatTestRouteImport.update({
-  id: '/api/public/chat-test',
-  path: '/api/public/chat-test',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicDiagRoute = ApiPublicDiagRouteImport.update({
-  id: '/api/public/diag',
-  path: '/api/public/diag',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicMarketIngestRoute = ApiPublicMarketIngestRouteImport.update({
-  id: '/api/public/market-ingest',
-  path: '/api/public/market-ingest',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -170,11 +170,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -184,53 +184,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/admin/base-conhecimento': {
-      id: '/_authenticated/admin/base-conhecimento'
-      path: '/admin/base-conhecimento'
-      fullPath: '/admin/base-conhecimento'
-      preLoaderRoute: typeof AuthenticatedAdminBaseConhecimentoRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/cotacoes': {
-      id: '/_authenticated/admin/cotacoes'
-      path: '/admin/cotacoes'
-      fullPath: '/admin/cotacoes'
-      preLoaderRoute: typeof AuthenticatedAdminCotacoesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/produtos': {
-      id: '/_authenticated/admin/produtos'
-      path: '/admin/produtos'
-      fullPath: '/admin/produtos'
-      preLoaderRoute: typeof AuthenticatedAdminProdutosRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/api/internal/chat': {
-      id: '/api/internal/chat'
-      path: '/api/internal/chat'
-      fullPath: '/api/internal/chat'
-      preLoaderRoute: typeof ApiInternalChatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/chat': {
-      id: '/api/public/chat'
-      path: '/api/public/chat'
-      fullPath: '/api/public/chat'
-      preLoaderRoute: typeof ApiPublicChatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/chat-test': {
-      id: '/api/public/chat-test'
-      path: '/api/public/chat-test'
-      fullPath: '/api/public/chat-test'
-      preLoaderRoute: typeof ApiPublicChatTestRouteImport
+    '/api/public/market-ingest': {
+      id: '/api/public/market-ingest'
+      path: '/api/public/market-ingest'
+      fullPath: '/api/public/market-ingest'
+      preLoaderRoute: typeof ApiPublicMarketIngestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/diag': {
@@ -240,12 +205,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicDiagRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/market-ingest': {
-      id: '/api/public/market-ingest'
-      path: '/api/public/market-ingest'
-      fullPath: '/api/public/market-ingest'
-      preLoaderRoute: typeof ApiPublicMarketIngestRouteImport
+    '/api/public/chat-test': {
+      id: '/api/public/chat-test'
+      path: '/api/public/chat-test'
+      fullPath: '/api/public/chat-test'
+      preLoaderRoute: typeof ApiPublicChatTestRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/public/chat': {
+      id: '/api/public/chat'
+      path: '/api/public/chat'
+      fullPath: '/api/public/chat'
+      preLoaderRoute: typeof ApiPublicChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/internal/chat': {
+      id: '/api/internal/chat'
+      path: '/api/internal/chat'
+      fullPath: '/api/internal/chat'
+      preLoaderRoute: typeof ApiInternalChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/admin/produtos': {
+      id: '/_authenticated/admin/produtos'
+      path: '/admin/produtos'
+      fullPath: '/admin/produtos'
+      preLoaderRoute: typeof AuthenticatedAdminProdutosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/cotacoes': {
+      id: '/_authenticated/admin/cotacoes'
+      path: '/admin/cotacoes'
+      fullPath: '/admin/cotacoes'
+      preLoaderRoute: typeof AuthenticatedAdminCotacoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/base-conhecimento': {
+      id: '/_authenticated/admin/base-conhecimento'
+      path: '/admin/base-conhecimento'
+      fullPath: '/admin/base-conhecimento'
+      preLoaderRoute: typeof AuthenticatedAdminBaseConhecimentoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
@@ -279,3 +279,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
