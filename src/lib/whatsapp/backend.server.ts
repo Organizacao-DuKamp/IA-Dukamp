@@ -1,5 +1,4 @@
 import { resolveTpecBackendMode, TpecBackendError } from "../chat/backend.server.ts";
-import { processWhatsAppChat } from "./conversation.server.ts";
 import {
   WhatsAppChatResultSchema,
   type WhatsAppChatInput,
@@ -87,7 +86,9 @@ export async function dispatchWhatsAppChat(
   const env = envOf(dependencies);
   const mode = resolveTpecBackendMode(env);
   if (mode === "local") {
-    return (dependencies.processLocal ?? processWhatsAppChat)(input);
+    const processLocal =
+      dependencies.processLocal ?? (await import("./conversation.server.ts")).processWhatsAppChat;
+    return processLocal(input);
   }
 
   const endpoint = resolveInternalWhatsAppUrl(env);
