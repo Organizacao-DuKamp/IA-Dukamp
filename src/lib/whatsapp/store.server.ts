@@ -8,9 +8,7 @@ export interface WhatsAppConversationSnapshot {
 }
 
 export type WhatsAppMessageClaim =
-  | { kind: "claimed" }
-  | { kind: "completed"; reply: string }
-  | { kind: "processing" };
+  { kind: "claimed" } | { kind: "completed"; reply: string } | { kind: "processing" };
 
 const MAX_STORED_HISTORY = 40;
 const PROCESSING_STALE_MS = 2 * 60_000;
