@@ -1,13 +1,16 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 
-const candidateRoots = ["dist/client", ".output/public", "build/client"];
+const candidateRoots = ["dist", "dist/client", ".output/public", "build/client"];
 const forbidden = [
   "TPEC_PROXY_SECRET",
   "SUPABASE_SERVICE_ROLE_KEY",
   "LOVABLE_API_KEY",
   "OPENAI_API_KEY",
   "PERPLEXITY_API_KEY",
+  "WHATSAPP_ACCESS_TOKEN",
+  "WHATSAPP_APP_SECRET",
+  "WHATSAPP_VERIFY_TOKEN",
 ];
 const extensions = /\.(?:js|mjs|cjs|map|html)$/i;
 
