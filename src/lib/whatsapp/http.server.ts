@@ -2,7 +2,6 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 
 import { resolveTpecBackendMode } from "../chat/backend.server.ts";
 import { dispatchWhatsAppChat } from "./backend.server.ts";
-import { processWhatsAppChat } from "./conversation.server.ts";
 import {
   WhatsAppChatInputSchema,
   type WhatsAppChatInput,
@@ -296,7 +295,9 @@ export async function handleInternalWhatsAppChatRequest(
   if (!parsed.success) return json({ error: "invalid_request" }, 400);
 
   try {
-    const result = await (dependencies.processLocal ?? processWhatsAppChat)(parsed.data);
+    const processLocal =
+      dependencies.processLocal ?? (await import("./conversation.server.ts")).processWhatsAppChat;
+    const result = await processLocal(parsed.data);
     return json(result, 200);
   } catch {
     console.error("[whatsapp] internal chat processing failed");
