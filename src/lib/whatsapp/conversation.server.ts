@@ -17,9 +17,7 @@ export interface WhatsAppConversationSnapshot {
 }
 
 export type WhatsAppMessageClaim =
-  | { kind: "claimed" }
-  | { kind: "completed"; reply: string }
-  | { kind: "processing" };
+  { kind: "claimed" } | { kind: "completed"; reply: string } | { kind: "processing" };
 
 interface MemoryConversationEntry {
   snapshot: WhatsAppConversationSnapshot;
@@ -99,10 +97,7 @@ async function memoryClaimMessage(messageId: string, phone: string): Promise<Wha
   if (existing?.status === "completed" && existing.reply) {
     return { kind: "completed", reply: existing.reply };
   }
-  if (
-    existing?.status === "processing" &&
-    now - existing.updatedAt <= MEMORY_PROCESSING_STALE_MS
-  ) {
+  if (existing?.status === "processing" && now - existing.updatedAt <= MEMORY_PROCESSING_STALE_MS) {
     return { kind: "processing" };
   }
 
