@@ -9,7 +9,7 @@ export const WhatsAppChatInputSchema = z.object({
 export type WhatsAppChatInput = z.infer<typeof WhatsAppChatInputSchema>;
 
 export const WhatsAppChatResultSchema = z.object({
-  reply: z.string().min(1),
+  reply: z.string().optional(),
   duplicate: z.boolean().default(false),
   shouldSend: z.boolean().default(true),
 });
