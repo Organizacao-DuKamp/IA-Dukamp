@@ -19,10 +19,7 @@ export interface WhatsAppConversationDependencies {
   completeMessage?: (messageId: string, reply: string) => Promise<void>;
   releaseMessage?: (messageId: string) => Promise<void>;
   loadConversation?: (phone: string) => Promise<WhatsAppConversationSnapshot | null>;
-  saveConversation?: (
-    phone: string,
-    snapshot: WhatsAppConversationSnapshot,
-  ) => Promise<void>;
+  saveConversation?: (phone: string, snapshot: WhatsAppConversationSnapshot) => Promise<void>;
   executeChat?: (input: ChatInput) => Promise<{ status: number; body: unknown }>;
 }
 
