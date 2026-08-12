@@ -1,5 +1,5 @@
 import type { ChatMessage } from "../chat/types.ts";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { supabaseAdmin } from "../../integrations/supabase/client.server.ts";
 
 export interface WhatsAppConversationSnapshot {
   conversationId: string;
