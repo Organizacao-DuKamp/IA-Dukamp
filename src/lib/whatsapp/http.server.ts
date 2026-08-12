@@ -3,7 +3,11 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { resolveTpecBackendMode } from "../chat/backend.server.ts";
 import { dispatchWhatsAppChat } from "./backend.server.ts";
 import { processWhatsAppChat } from "./conversation.server.ts";
-import { WhatsAppChatInputSchema, type WhatsAppChatInput, type WhatsAppChatResult } from "./types.ts";
+import {
+  WhatsAppChatInputSchema,
+  type WhatsAppChatInput,
+  type WhatsAppChatResult,
+} from "./types.ts";
 
 type EnvLike = Record<string, string | undefined>;
 
@@ -61,7 +65,11 @@ function requireEnv(env: EnvLike, key: string): string {
   return value;
 }
 
-function verifyWebhookSignature(rawBody: string, signature: string | null, appSecret: string): boolean {
+function verifyWebhookSignature(
+  rawBody: string,
+  signature: string | null,
+  appSecret: string,
+): boolean {
   if (!signature?.startsWith("sha256=")) return false;
   const expected = `sha256=${createHmac("sha256", appSecret).update(rawBody, "utf8").digest("hex")}`;
   return safeEqual(signature, expected);
@@ -97,7 +105,8 @@ function extractTextMessages(payload: unknown): IncomingTextMessage[] {
       if (!change || change.field !== "messages") continue;
       const value = asRecord(change.value);
       const metadata = asRecord(value?.metadata);
-      const phoneNumberId = typeof metadata?.phone_number_id === "string" ? metadata.phone_number_id : "";
+      const phoneNumberId =
+        typeof metadata?.phone_number_id === "string" ? metadata.phone_number_id : "";
       if (!value || !phoneNumberId || !Array.isArray(value.messages)) continue;
 
       for (const rawMessage of value.messages) {
@@ -187,7 +196,13 @@ export async function handleWhatsAppWebhookRequest(
     const challenge = url.searchParams.get("hub.challenge") ?? "";
     const expected = env.WHATSAPP_VERIFY_TOKEN?.trim() ?? "";
 
-    if (mode === "subscribe" && expected && provided && safeEqual(expected, provided) && challenge) {
+    if (
+      mode === "subscribe" &&
+      expected &&
+      provided &&
+      safeEqual(expected, provided) &&
+      challenge
+    ) {
       return text(challenge, 200);
     }
     return text("Forbidden", 403);
