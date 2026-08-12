@@ -287,7 +287,11 @@ test("endpoint interno exige segredo e só funciona no backend local", async () 
     }),
     {
       env: localEnv,
-      processLocal: async () => ({ reply: "Olá pelo WhatsApp", duplicate: false, shouldSend: true }),
+      processLocal: async () => ({
+        reply: "Olá pelo WhatsApp",
+        duplicate: false,
+        shouldSend: true,
+      }),
     },
   );
   assert.equal(authorized.status, 200);
