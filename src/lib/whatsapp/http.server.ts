@@ -64,6 +64,15 @@ function requireEnv(env: EnvLike, key: string): string {
   return value;
 }
 
+function errorDetails(error: unknown): string {
+  if (!(error instanceof Error)) return "unknown_error";
+  const candidate = error as Error & { code?: unknown; status?: unknown };
+  const parts = [`name=${candidate.name}`, `message=${candidate.message}`];
+  if (typeof candidate.code === "string") parts.push(`code=${candidate.code}`);
+  if (typeof candidate.status === "number") parts.push(`status=${candidate.status}`);
+  return parts.join(" ");
+}
+
 function verifyWebhookSignature(
   rawBody: string,
   signature: string | null,
@@ -156,7 +165,10 @@ async function sendWhatsAppText(
   const version = (env.WHATSAPP_GRAPH_API_VERSION?.trim() || "v25.0").replace(/^\/+|\/+$/g, "");
   if (!/^v\d+\.\d+$/.test(version)) throw new Error("invalid_whatsapp_graph_api_version");
 
-  for (const chunk of splitOutboundText(body)) {
+  const chunks = splitOutboundText(body);
+  console.info(`[whatsapp] outbound start chunks=${chunks.length} reply_chars=${Array.from(body).length}`);
+
+  for (let index = 0; index < chunks.length; index += 1) {
     const response = await fetchImpl(
       `https://graph.facebook.com/${version}/${encodeURIComponent(phoneNumberId)}/messages`,
       {
@@ -170,16 +182,43 @@ async function sendWhatsAppText(
           recipient_type: "individual",
           to,
           type: "text",
-          text: { preview_url: false, body: chunk },
+          text: { preview_url: false, body: chunks[index] },
         }),
         redirect: "error",
       },
     );
 
+    console.info(`[whatsapp] graph response chunk=${index + 1}/${chunks.length} status=${response.status} ok=${response.ok}`);
+
     if (!response.ok) {
+      let graphError = "";
+      try {
+        const raw = await response.text();
+        if (raw) {
+          const parsed = JSON.parse(raw) as {
+            error?: { message?: unknown; type?: unknown; code?: unknown; error_subcode?: unknown };
+          };
+          const err = parsed?.error;
+          if (err) {
+            graphError = [
+              typeof err.code === "number" ? `code=${err.code}` : "",
+              typeof err.error_subcode === "number" ? `subcode=${err.error_subcode}` : "",
+              typeof err.type === "string" ? `type=${err.type}` : "",
+              typeof err.message === "string" ? `message=${err.message}` : "",
+            ]
+              .filter(Boolean)
+              .join(" ");
+          }
+        }
+      } catch {
+        graphError = "unreadable_graph_error";
+      }
+      console.error(`[whatsapp] graph send failed status=${response.status}${graphError ? ` ${graphError}` : ""}`);
       throw new Error(`whatsapp_send_failed:${response.status}`);
     }
   }
+
+  console.info("[whatsapp] outbound completed");
 }
 
 export async function handleWhatsAppWebhookRequest(
@@ -195,48 +234,87 @@ export async function handleWhatsAppWebhookRequest(
     const challenge = url.searchParams.get("hub.challenge") ?? "";
     const expected = env.WHATSAPP_VERIFY_TOKEN?.trim() ?? "";
 
-    if (
+    const verified = Boolean(
       mode === "subscribe" &&
-      expected &&
-      provided &&
-      safeEqual(expected, provided) &&
-      challenge
-    ) {
-      return text(challenge, 200);
-    }
+        expected &&
+        provided &&
+        safeEqual(expected, provided) &&
+        challenge,
+    );
+    console.info(`[whatsapp] webhook verification verified=${verified} verify_token_configured=${Boolean(expected)}`);
+
+    if (verified) return text(challenge, 200);
     return text("Forbidden", 403);
   }
 
   if (request.method !== "POST") return text("Method Not Allowed", 405);
 
+  console.info("[whatsapp] webhook POST received");
+
   let rawBody: string;
   try {
     rawBody = await readLimitedBody(request);
-  } catch {
+    console.info(`[whatsapp] webhook body received bytes=${new TextEncoder().encode(rawBody).byteLength}`);
+  } catch (error) {
+    console.error(`[whatsapp] webhook body rejected ${errorDetails(error)}`);
     return text("Payload Too Large", 413);
   }
 
   const appSecret = env.WHATSAPP_APP_SECRET?.trim() ?? "";
+  console.info(`[whatsapp] app_secret_configured=${Boolean(appSecret)} signature_header_present=${request.headers.has("x-hub-signature-256")}`);
   if (!appSecret) {
     console.error("[whatsapp] WHATSAPP_APP_SECRET is not configured");
     return text("Webhook not configured", 503);
   }
-  if (!verifyWebhookSignature(rawBody, request.headers.get("x-hub-signature-256"), appSecret)) {
+
+  const signatureValid = verifyWebhookSignature(
+    rawBody,
+    request.headers.get("x-hub-signature-256"),
+    appSecret,
+  );
+  console.info(`[whatsapp] signature_valid=${signatureValid}`);
+  if (!signatureValid) {
+    console.error("[whatsapp] webhook rejected: invalid Meta signature");
     return text("Unauthorized", 401);
   }
 
   let payload: unknown;
   try {
     payload = JSON.parse(rawBody);
-  } catch {
+  } catch (error) {
+    console.error(`[whatsapp] invalid JSON ${errorDetails(error)}`);
     return text("Invalid JSON", 400);
   }
 
   const configuredPhoneNumberId = env.WHATSAPP_PHONE_NUMBER_ID?.trim() ?? "";
-  const incoming = extractTextMessages(payload).filter(
+  const extracted = extractTextMessages(payload);
+  const incoming = extracted.filter(
     (message) => !configuredPhoneNumberId || message.phoneNumberId === configuredPhoneNumberId,
   );
-  if (incoming.length === 0) return json({ received: true });
+  console.info(
+    `[whatsapp] parsed text_messages=${extracted.length} matched_messages=${incoming.length} phone_number_id_configured=${Boolean(configuredPhoneNumberId)}`,
+  );
+
+  if (extracted.length > 0 && incoming.length === 0) {
+    console.error("[whatsapp] message ignored: webhook phone_number_id does not match WHATSAPP_PHONE_NUMBER_ID");
+  }
+  if (incoming.length === 0) {
+    console.info("[whatsapp] no processable text message; acknowledging webhook");
+    return json({ received: true });
+  }
+
+  let backendMode = "invalid";
+  try {
+    backendMode = resolveTpecBackendMode(env);
+    console.info(`[whatsapp] backend_mode=${backendMode}`);
+  } catch (error) {
+    console.error(`[whatsapp] backend mode error ${errorDetails(error)}`);
+    return json({ error: "whatsapp_processing_failed" }, 500);
+  }
+
+  console.info(
+    `[whatsapp] env access_token_configured=${Boolean(env.WHATSAPP_ACCESS_TOKEN?.trim())} proxy_url_configured=${Boolean(env.LOVABLE_BACKEND_URL?.trim())} proxy_secret_configured=${Boolean(env.TPEC_PROXY_SECRET?.trim())}`,
+  );
 
   const fetchImpl = dependencies.fetchImpl ?? fetch;
   const dispatch =
@@ -245,19 +323,31 @@ export async function handleWhatsAppWebhookRequest(
       dispatchWhatsAppChat(input, { env, fetchImpl: dependencies.fetchImpl }));
 
   try {
-    for (const message of incoming) {
+    for (let index = 0; index < incoming.length; index += 1) {
+      const message = incoming[index];
+      console.info(
+        `[whatsapp] dispatch start message=${index + 1}/${incoming.length} text_chars=${Array.from(message.text).length}`,
+      );
+      const started = Date.now();
       const result = await dispatch({
         phone: message.phone,
         messageId: message.messageId,
         text: message.text,
       });
+      console.info(
+        `[whatsapp] dispatch completed duration_ms=${Date.now() - started} should_send=${result.shouldSend} has_reply=${Boolean(result.reply)} reply_chars=${result.reply ? Array.from(result.reply).length : 0}`,
+      );
       if (result.shouldSend && result.reply) {
+        console.info("[whatsapp] sending reply to Graph API");
         await sendWhatsAppText(message.phone, result.reply, env, fetchImpl);
+      } else {
+        console.info("[whatsapp] reply not sent because dispatch returned shouldSend=false or empty reply");
       }
     }
+    console.info("[whatsapp] webhook processing completed successfully");
     return json({ received: true });
-  } catch {
-    console.error("[whatsapp] webhook processing failed");
+  } catch (error) {
+    console.error(`[whatsapp] webhook processing failed ${errorDetails(error)}`);
     return json({ error: "whatsapp_processing_failed" }, 500);
   }
 }
@@ -269,38 +359,56 @@ export async function handleInternalWhatsAppChatRequest(
   if (request.method !== "POST") return json({ error: "not_found" }, 404);
   const env = envOf(dependencies);
 
+  console.info("[whatsapp-internal] request received");
+
   let mode;
   try {
     mode = resolveTpecBackendMode(env);
-  } catch {
+    console.info(`[whatsapp-internal] backend_mode=${mode}`);
+  } catch (error) {
+    console.error(`[whatsapp-internal] invalid backend mode ${errorDetails(error)}`);
     return json({ error: "invalid_backend_mode" }, 500);
   }
-  if (mode !== "local") return json({ error: "not_found" }, 404);
+  if (mode !== "local") {
+    console.error("[whatsapp-internal] rejected because backend is not local");
+    return json({ error: "not_found" }, 404);
+  }
 
   const expected = env.TPEC_PROXY_SECRET?.trim() ?? "";
   const provided = request.headers.get("x-tpec-proxy-secret")?.trim() ?? "";
   const hop = request.headers.get("x-tpec-proxy-hop") ?? "";
-  if (expected.length < 32 || !provided || !safeEqual(expected, provided)) {
-    return json({ error: "unauthorized" }, 401);
-  }
+  const proxyAuthorized = expected.length >= 32 && Boolean(provided) && safeEqual(expected, provided);
+  console.info(
+    `[whatsapp-internal] proxy_secret_configured=${expected.length >= 32} proxy_authorized=${proxyAuthorized} proxy_hop=${hop || "missing"}`,
+  );
+  if (!proxyAuthorized) return json({ error: "unauthorized" }, 401);
   if (hop !== "1") return json({ error: "invalid_proxy_hop" }, 400);
 
   let value: unknown;
   try {
     value = JSON.parse(await readLimitedBody(request));
-  } catch {
+  } catch (error) {
+    console.error(`[whatsapp-internal] invalid request body ${errorDetails(error)}`);
     return json({ error: "invalid_json" }, 400);
   }
   const parsed = WhatsAppChatInputSchema.safeParse(value);
-  if (!parsed.success) return json({ error: "invalid_request" }, 400);
+  if (!parsed.success) {
+    console.error("[whatsapp-internal] invalid WhatsApp chat input");
+    return json({ error: "invalid_request" }, 400);
+  }
 
   try {
+    console.info(`[whatsapp-internal] processing text_chars=${Array.from(parsed.data.text).length}`);
+    const started = Date.now();
     const processLocal =
       dependencies.processLocal ?? (await import("./conversation.server.ts")).processWhatsAppChat;
     const result = await processLocal(parsed.data);
+    console.info(
+      `[whatsapp-internal] completed duration_ms=${Date.now() - started} should_send=${result.shouldSend} has_reply=${Boolean(result.reply)}`,
+    );
     return json(result, 200);
-  } catch {
-    console.error("[whatsapp] internal chat processing failed");
+  } catch (error) {
+    console.error(`[whatsapp-internal] chat processing failed ${errorDetails(error)}`);
     return json({ error: "whatsapp_chat_failed" }, 500);
   }
 }
