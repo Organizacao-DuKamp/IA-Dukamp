@@ -1,7 +1,7 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 
-const candidateRoots = ["dist", "dist/client", ".output/public", "build/client"];
+const candidateRoots = ["dist/client", ".output/public", "build/client"];
 const forbidden = [
   "TPEC_PROXY_SECRET",
   "SUPABASE_SERVICE_ROLE_KEY",
