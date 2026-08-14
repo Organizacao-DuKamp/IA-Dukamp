@@ -17,7 +17,9 @@ async function resolveClient(client?: KnowledgeDbClient): Promise<KnowledgeDbCli
   if (client) return client;
   const requestScoped = getRequestPrivilegedClient();
   if (requestScoped) return requestScoped;
-  return (await import("@/integrations/supabase/client.server")).supabaseAdmin;
+  // Fallback to client.server only if no context is provided
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin;
 }
 
 export async function ingestDocument(

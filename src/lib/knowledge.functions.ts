@@ -134,6 +134,7 @@ export const processNextPending = createServerFn({ method: "POST" })
           subcategory: doc.subcategory,
         },
         text,
+        supabaseAdmin,
       );
       await supabaseAdmin
         .from("knowledge_documents")
