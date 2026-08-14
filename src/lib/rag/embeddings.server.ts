@@ -58,7 +58,9 @@ async function embedBatch(inputs: string[], apiKey: string): Promise<number[][]>
 
 export async function embedTexts(texts: string[]): Promise<number[][]> {
   const apiKey = process.env.OPENAI_API_KEY || process.env.LOVABLE_API_KEY;
-  if (!apiKey) throw new EmbeddingError("Serviço de embeddings indisponível (chave ausente).", 500);
+  if (!apiKey || apiKey === 'sb_publishable_HzYTfOGtBle5ySM2uQ-s9w_aPU4slqQ') {
+    throw new EmbeddingError("Serviço de embeddings indisponível (chave ausente ou inválida no backend).", 500);
+  }
   if (texts.length === 0) return [];
   const all: number[][] = [];
   for (let i = 0; i < texts.length; i += BATCH) {
