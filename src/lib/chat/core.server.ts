@@ -38,6 +38,7 @@ import {
   type ChatMessage,
   type IncomingMessage,
 } from "./types";
+import type { LivestockConversationContext } from "@/lib/market/livestock-parse";
 
 function sanitize(text: string): string {
   return (
@@ -47,6 +48,20 @@ function sanitize(text: string): string {
       .replace(/\s+\n/g, "\n")
       .trim()
   );
+}
+
+function livestockContextFromState(state: ConversationState): LivestockConversationContext | null {
+  const read = (key: string) => {
+    const value = state.confirmed_data[key];
+    return typeof value === "string" && value.length > 0 ? value : null;
+  };
+  const context: LivestockConversationContext = {
+    categorySlug: read("market_category"),
+    placeSlug: read("market_place"),
+    uf: read("market_uf"),
+    unit: read("market_unit"),
+  };
+  return Object.values(context).some(Boolean) ? context : null;
 }
 
 // Detecta reações/cumprimentos que NÃO devem ir ao modelo de busca.
@@ -267,10 +282,28 @@ async function runTurn(
 
   let routed: Awaited<ReturnType<typeof routeQuery>>;
   try {
-    routed = await routeQuery(routerInput);
+    routed = await routeQuery(routerInput, {
+      history,
+      livestock: livestockContextFromState(stateBefore),
+    });
   } catch (err) {
     console.error("[router] falhou:", err instanceof Error ? err.message : err);
     routed = { kind: "passthrough" as const };
+  }
+
+  if (routed.kind === "passthrough" && routed.livestockContext) {
+    const marketFields: Array<[key: string, value: string | null | undefined]> = [
+      ["market_category", routed.livestockContext.categorySlug],
+      ["market_place", routed.livestockContext.placeSlug],
+      ["market_uf", routed.livestockContext.uf],
+      ["market_unit", routed.livestockContext.unit],
+    ];
+    for (const [key, value] of marketFields) {
+      if (value) state.confirmed_data[key] = value;
+      else delete state.confirmed_data[key];
+    }
+    state.current_topic = "cotações pecuárias";
+    if (!state.user_goal) state.user_goal = routerInput.slice(0, 300);
   }
 
   // Resposta estrutural direta (SQL) — só quando não há confirmação em aberto,
@@ -305,6 +338,9 @@ async function runTurn(
   let hasCatalogEvidence = false;
   let hasSiteEvidence = false;
   let hasMarketEvidence = false;
+  const requiresCurrentMarketSearch =
+    routed.kind === "passthrough" &&
+    (routed.marketFreshness === "stale" || routed.marketFreshness === "missing");
   const knowledgeScores: number[] = [];
 
   if (routed.kind === "structural") {
@@ -393,6 +429,7 @@ async function runTurn(
     site: hasSiteEvidence,
     market: hasMarketEvidence,
     knowledgeScores,
+    requiresCurrentMarketSearch,
   });
   const conversation: ChatMessage[] = [...history, { role: "user", content: text }];
 

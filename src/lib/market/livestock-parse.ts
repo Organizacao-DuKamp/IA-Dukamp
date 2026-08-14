@@ -137,6 +137,24 @@ export interface LivestockQuery {
   unit: string;
 }
 
+/** Contexto mínimo persistido entre turnos de uma conversa de mercado. */
+export interface LivestockConversationContext {
+  categorySlug?: string | null;
+  placeSlug?: string | null;
+  uf?: string | null;
+  unit?: string | null;
+}
+
+interface LivestockContextOptions {
+  previous?: LivestockConversationContext | null;
+  history?: Array<{ role?: string; content: string }>;
+}
+
+const LIVESTOCK_FOLLOW_UP_RE =
+  /^(?:e\s+)?(?:a|o|da|do|de|em|no|na|para|hoje|ontem|agora|antes\s+de\s+ontem)\b/i;
+const NON_LIVESTOCK_MARKET_RE =
+  /\b(milho|soja|farelo\s+de\s+soja|leite|frango|su[ií]no|porco|ovos?|til[aá]pia|d[oó]lar|ptax|diesel)\b/i;
+
 export function parseLivestockQuery(
   text: string,
   categories: LivestockCategoryRow[],
@@ -148,6 +166,81 @@ export function parseLivestockQuery(
   const place = detectPlace(text, places);
   const uf = detectUf(text, places) ?? place?.uf ?? null;
   const unit = detectUnit(text) ?? category.unidade_padrao;
+  return { category, place, uf, unit };
+}
+
+export function livestockConversationContext(query: LivestockQuery): LivestockConversationContext {
+  return {
+    categorySlug: query.category.slug,
+    placeSlug: query.place?.slug ?? null,
+    uf: query.uf,
+    unit: query.unit,
+  };
+}
+
+function contextFromHistory(
+  history: Array<{ role?: string; content: string }>,
+  categories: LivestockCategoryRow[],
+  places: LivestockPlaceRow[],
+): LivestockConversationContext | null {
+  for (let index = history.length - 1; index >= 0; index -= 1) {
+    const message = history[index];
+    if (message.role && message.role !== "user") continue;
+    const parsed = parseLivestockQuery(message.content, categories, places);
+    if (parsed) return livestockConversationContext(parsed);
+  }
+  return null;
+}
+
+/**
+ * Resolve continuações como "e a vaca gorda?" ou "e em Minas Gerais?" sem
+ * perder categoria, praça, UF e unidade já confirmadas. Dados explícitos do
+ * turno atual sempre substituem o contexto anterior.
+ */
+export function parseLivestockQueryWithContext(
+  text: string,
+  categories: LivestockCategoryRow[],
+  places: LivestockPlaceRow[],
+  options: LivestockContextOptions = {},
+): LivestockQuery | null {
+  const currentCategory = detectCategory(text, categories);
+  const currentPlace = detectPlace(text, places);
+  const currentUf = detectUf(text, places);
+  const currentUnit = detectUnit(text);
+  const priceIntent = hasPriceIntent(text);
+
+  // "E o milho?" depois de uma cotação bovina pertence ao roteador geral de
+  // mercado e não pode herdar silenciosamente a categoria anterior.
+  if (!currentCategory && NON_LIVESTOCK_MARKET_RE.test(text)) return null;
+
+  const previous =
+    options.previous ?? contextFromHistory(options.history ?? [], categories, places);
+  const previousCategory = categories.find((row) => row.slug === previous?.categorySlug) ?? null;
+  const previousPlace = places.find((row) => row.slug === previous?.placeSlug) ?? null;
+  const hasCurrentMarketEntity = Boolean(
+    currentCategory || currentPlace || currentUf || currentUnit,
+  );
+  const isFollowUp =
+    Boolean(previousCategory) &&
+    (priceIntent || hasCurrentMarketEntity || LIVESTOCK_FOLLOW_UP_RE.test(text.trim()));
+
+  if (!priceIntent && !isFollowUp) return null;
+
+  const category = currentCategory ?? previousCategory;
+  if (!category) return null;
+
+  // Uma UF explicitamente informada representa mudança de localidade e limpa
+  // a cidade anterior. Uma nova cidade, por sua vez, define também a UF.
+  const place = currentPlace ? currentPlace : currentUf ? null : previousPlace;
+  const uf = currentPlace?.uf ?? currentUf ?? place?.uf ?? previous?.uf ?? null;
+  const categoryChanged = Boolean(
+    currentCategory && previousCategory && currentCategory.slug !== previousCategory.slug,
+  );
+  const unit =
+    currentUnit ??
+    (categoryChanged ? category.unidade_padrao : previous?.unit) ??
+    category.unidade_padrao;
+
   return { category, place, uf, unit };
 }
 

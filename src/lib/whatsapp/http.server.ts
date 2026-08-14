@@ -166,7 +166,9 @@ async function sendWhatsAppText(
   if (!/^v\d+\.\d+$/.test(version)) throw new Error("invalid_whatsapp_graph_api_version");
 
   const chunks = splitOutboundText(body);
-  console.info(`[whatsapp] outbound start chunks=${chunks.length} reply_chars=${Array.from(body).length}`);
+  console.info(
+    `[whatsapp] outbound start chunks=${chunks.length} reply_chars=${Array.from(body).length}`,
+  );
 
   for (let index = 0; index < chunks.length; index += 1) {
     const response = await fetchImpl(
@@ -188,7 +190,9 @@ async function sendWhatsAppText(
       },
     );
 
-    console.info(`[whatsapp] graph response chunk=${index + 1}/${chunks.length} status=${response.status} ok=${response.ok}`);
+    console.info(
+      `[whatsapp] graph response chunk=${index + 1}/${chunks.length} status=${response.status} ok=${response.ok}`,
+    );
 
     if (!response.ok) {
       let graphError = "";
@@ -213,7 +217,9 @@ async function sendWhatsAppText(
       } catch {
         graphError = "unreadable_graph_error";
       }
-      console.error(`[whatsapp] graph send failed status=${response.status}${graphError ? ` ${graphError}` : ""}`);
+      console.error(
+        `[whatsapp] graph send failed status=${response.status}${graphError ? ` ${graphError}` : ""}`,
+      );
       throw new Error(`whatsapp_send_failed:${response.status}`);
     }
   }
@@ -235,13 +241,11 @@ export async function handleWhatsAppWebhookRequest(
     const expected = env.WHATSAPP_VERIFY_TOKEN?.trim() ?? "";
 
     const verified = Boolean(
-      mode === "subscribe" &&
-        expected &&
-        provided &&
-        safeEqual(expected, provided) &&
-        challenge,
+      mode === "subscribe" && expected && provided && safeEqual(expected, provided) && challenge,
     );
-    console.info(`[whatsapp] webhook verification verified=${verified} verify_token_configured=${Boolean(expected)}`);
+    console.info(
+      `[whatsapp] webhook verification verified=${verified} verify_token_configured=${Boolean(expected)}`,
+    );
 
     if (verified) return text(challenge, 200);
     return text("Forbidden", 403);
@@ -254,14 +258,18 @@ export async function handleWhatsAppWebhookRequest(
   let rawBody: string;
   try {
     rawBody = await readLimitedBody(request);
-    console.info(`[whatsapp] webhook body received bytes=${new TextEncoder().encode(rawBody).byteLength}`);
+    console.info(
+      `[whatsapp] webhook body received bytes=${new TextEncoder().encode(rawBody).byteLength}`,
+    );
   } catch (error) {
     console.error(`[whatsapp] webhook body rejected ${errorDetails(error)}`);
     return text("Payload Too Large", 413);
   }
 
   const appSecret = env.WHATSAPP_APP_SECRET?.trim() ?? "";
-  console.info(`[whatsapp] app_secret_configured=${Boolean(appSecret)} signature_header_present=${request.headers.has("x-hub-signature-256")}`);
+  console.info(
+    `[whatsapp] app_secret_configured=${Boolean(appSecret)} signature_header_present=${request.headers.has("x-hub-signature-256")}`,
+  );
   if (!appSecret) {
     console.error("[whatsapp] WHATSAPP_APP_SECRET is not configured");
     return text("Webhook not configured", 503);
@@ -296,7 +304,9 @@ export async function handleWhatsAppWebhookRequest(
   );
 
   if (extracted.length > 0 && incoming.length === 0) {
-    console.error("[whatsapp] message ignored: webhook phone_number_id does not match WHATSAPP_PHONE_NUMBER_ID");
+    console.error(
+      "[whatsapp] message ignored: webhook phone_number_id does not match WHATSAPP_PHONE_NUMBER_ID",
+    );
   }
   if (incoming.length === 0) {
     console.info("[whatsapp] no processable text message; acknowledging webhook");
@@ -341,7 +351,9 @@ export async function handleWhatsAppWebhookRequest(
         console.info("[whatsapp] sending reply to Graph API");
         await sendWhatsAppText(message.phone, result.reply, env, fetchImpl);
       } else {
-        console.info("[whatsapp] reply not sent because dispatch returned shouldSend=false or empty reply");
+        console.info(
+          "[whatsapp] reply not sent because dispatch returned shouldSend=false or empty reply",
+        );
       }
     }
     console.info("[whatsapp] webhook processing completed successfully");
@@ -377,7 +389,8 @@ export async function handleInternalWhatsAppChatRequest(
   const expected = env.TPEC_PROXY_SECRET?.trim() ?? "";
   const provided = request.headers.get("x-tpec-proxy-secret")?.trim() ?? "";
   const hop = request.headers.get("x-tpec-proxy-hop") ?? "";
-  const proxyAuthorized = expected.length >= 32 && Boolean(provided) && safeEqual(expected, provided);
+  const proxyAuthorized =
+    expected.length >= 32 && Boolean(provided) && safeEqual(expected, provided);
   console.info(
     `[whatsapp-internal] proxy_secret_configured=${expected.length >= 32} proxy_authorized=${proxyAuthorized} proxy_hop=${hop || "missing"}`,
   );
@@ -398,7 +411,9 @@ export async function handleInternalWhatsAppChatRequest(
   }
 
   try {
-    console.info(`[whatsapp-internal] processing text_chars=${Array.from(parsed.data.text).length}`);
+    console.info(
+      `[whatsapp-internal] processing text_chars=${Array.from(parsed.data.text).length}`,
+    );
     const started = Date.now();
     const processLocal =
       dependencies.processLocal ?? (await import("./conversation.server.ts")).processWhatsAppChat;
