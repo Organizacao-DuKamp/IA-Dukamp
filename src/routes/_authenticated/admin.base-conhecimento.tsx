@@ -41,6 +41,20 @@ type Stats = {
   chunks: number;
 };
 
+const DOCUMENT_DELAY_MS = 12_000;
+const RATE_LIMIT_DELAY_MS = 60_000;
+
+function isRateLimitMessage(message: string | null | undefined): boolean {
+  if (!message) return false;
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes("429") ||
+    normalized.includes("rate limit") ||
+    normalized.includes("tokens per min") ||
+    normalized.includes("tpm")
+  );
+}
+
 function AdminKnowledgeBase() {
   const navigate = useNavigate();
   const list = useServerFn(listKnowledgeDocs);
@@ -55,6 +69,7 @@ function AdminKnowledgeBase() {
   const [busy, setBusy] = useState<string | null>(null);
   const [log, setLog] = useState<string[]>([]);
   const [running, setRunning] = useState(false);
+  const [processingNote, setProcessingNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [replaceAll, setReplaceAll] = useState(false);
 
@@ -72,6 +87,16 @@ function AdminKnowledgeBase() {
   useEffect(() => {
     refresh();
   }, []);
+
+  async function waitWithCountdown(ms: number, message: string) {
+    const endsAt = Date.now() + ms;
+    while (Date.now() < endsAt) {
+      const remainingMs = endsAt - Date.now();
+      const seconds = Math.max(1, Math.ceil(remainingMs / 1000));
+      setProcessingNote(`${message} ${seconds}s…`);
+      await new Promise((resolve) => setTimeout(resolve, Math.min(1000, remainingMs)));
+    }
+  }
 
   async function handleSignOut() {
     await supabase.auth.signOut();
@@ -94,24 +119,86 @@ function AdminKnowledgeBase() {
   async function processAll() {
     setRunning(true);
     setError(null);
+    setProcessingNote(null);
+    let successfulThisRun = 0;
+    let consecutiveRateLimits = 0;
+
     try {
-      while (true) {
-        const r = (await processOne()) as
-          | { done: true }
-          | { done: false; id: string; title: string; chunks?: number; error?: string };
-        if (r.done) {
-          setLog((l) => ["✅ Todos os pendentes foram processados.", ...l]);
-          break;
+      const recoverable = docs.filter(
+        (doc) => doc.status === "erro" && isRateLimitMessage(doc.error_message),
+      );
+
+      if (recoverable.length > 0) {
+        setProcessingNote(`Recuperando ${recoverable.length} falha(s) temporária(s) da OpenAI…`);
+        for (const doc of recoverable) {
+          await reprocess({ data: { id: doc.id } });
         }
         setLog((l) => [
-          r.error ? `❌ ${r.title}: ${r.error}` : `✔ ${r.title} — ${r.chunks} trechos`,
+          `↻ ${recoverable.length} documento(s) com rate limit voltaram para a fila sem tocar nos concluídos.`,
           ...l,
         ]);
         await refresh();
       }
+
+      while (true) {
+        setProcessingNote(
+          successfulThisRun > 0
+            ? `Processando próximo documento · ${successfulThisRun} concluído(s) nesta execução…`
+            : "Processando próximo documento…",
+        );
+
+        const r = (await processOne()) as
+          | { done: true }
+          | { done: false; id: string; title: string; chunks?: number; error?: string };
+
+        if (r.done) {
+          setLog((l) => ["✅ Todos os pendentes foram processados.", ...l]);
+          break;
+        }
+
+        if (r.error && isRateLimitMessage(r.error)) {
+          consecutiveRateLimits += 1;
+
+          // O backend atual marca 429 como erro. Voltamos somente este documento
+          // para aguardando e retomamos depois da janela do limite, sem perder trabalho.
+          await reprocess({ data: { id: r.id } });
+          const waitMs = Math.min(
+            RATE_LIMIT_DELAY_MS + (consecutiveRateLimits - 1) * 15_000,
+            120_000,
+          );
+
+          setLog((l) => [
+            `⏳ ${r.title}: limite temporário da OpenAI; documento devolvido à fila.`,
+            ...l,
+          ]);
+          await refresh();
+          await waitWithCountdown(waitMs, "Limite da OpenAI atingido. Retomando em");
+          continue;
+        }
+
+        if (r.error) {
+          consecutiveRateLimits = 0;
+          setLog((l) => [`❌ ${r.title}: ${r.error}`, ...l]);
+          await refresh();
+          continue;
+        }
+
+        consecutiveRateLimits = 0;
+        successfulThisRun += 1;
+        setLog((l) => [`✔ ${r.title} — ${r.chunks} trechos`, ...l]);
+        await refresh();
+
+        // O limite atual da conta é 40k TPM. O intervalo entre documentos é
+        // proposital: a maioria deles cabe em um único batch de embeddings.
+        await waitWithCountdown(
+          DOCUMENT_DELAY_MS,
+          "Controlando o limite da OpenAI. Próximo documento em",
+        );
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Falha ao processar.");
     } finally {
+      setProcessingNote(null);
       setRunning(false);
       await refresh();
     }
@@ -152,6 +239,12 @@ function AdminKnowledgeBase() {
   }
 
   const s = statData?.docs;
+  const recoverableRateLimitErrors = docs.filter(
+    (doc) => doc.status === "erro" && isRateLimitMessage(doc.error_message),
+  ).length;
+  const hasProcessableWork = Boolean(
+    s && (s.aguardando > 0 || recoverableRateLimitErrors > 0),
+  );
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -243,7 +336,7 @@ function AdminKnowledgeBase() {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={handleRegister}
             disabled={busy !== null || running}
@@ -253,17 +346,27 @@ function AdminKnowledgeBase() {
           </button>
           <button
             onClick={processAll}
-            disabled={running || busy !== null || !s || s.aguardando === 0}
+            disabled={running || busy !== null || !hasProcessableWork}
             className="rounded-md border border-primary bg-background px-3 py-1.5 text-sm text-primary disabled:opacity-50"
           >
-            {running ? "Processando…" : `2. Processar pendentes${s ? ` (${s.aguardando})` : ""}`}
+            {running
+              ? "Processando…"
+              : s && s.aguardando > 0
+                ? `2. Processar pendentes (${s.aguardando})`
+                : recoverableRateLimitErrors > 0
+                  ? `2. Retomar falhas temporárias (${recoverableRateLimitErrors})`
+                  : "2. Processar pendentes (0)"}
           </button>
           <button
             onClick={refresh}
-            className="rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:bg-secondary"
+            disabled={running}
+            className="rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:bg-secondary disabled:opacity-50"
           >
             Atualizar
           </button>
+          {running && processingNote && (
+            <span className="text-xs text-muted-foreground">{processingNote}</span>
+          )}
         </div>
 
         {log.length > 0 && (
@@ -309,7 +412,8 @@ function AdminKnowledgeBase() {
                     {(d.status === "concluido" || d.status === "erro") && (
                       <button
                         onClick={() => handleReprocess(d.id)}
-                        className="text-xs text-primary hover:underline"
+                        disabled={running}
+                        className="text-xs text-primary hover:underline disabled:opacity-50"
                       >
                         reprocessar
                       </button>
