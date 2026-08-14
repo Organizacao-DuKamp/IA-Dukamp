@@ -1,5 +1,10 @@
 import type { ChatMessage } from "./types";
 import { TPEC_SYSTEM_PROMPT } from "./system-prompt.ts";
+import {
+  diagnosticResponseHeaders,
+  logDiagnostic,
+  safeErrorSnippet,
+} from "./diagnostics.server.ts";
 
 const ENDPOINT = "https://api.openai.com/v1/responses";
 
@@ -64,6 +69,8 @@ type ResponsesPayload = {
   output?: Array<{ content?: Array<{ type?: string; text?: string }> }>;
   status?: string;
   incomplete_details?: { reason?: string } | null;
+  usage?: unknown;
+  error?: unknown;
 };
 
 function extractResponseText(data: ResponsesPayload): string | undefined {
@@ -85,42 +92,71 @@ export async function askOpenAI(
   options: OpenAIOptions = {},
 ): Promise<string> {
   const key = process.env.OPENAI_API_KEY;
+  const model = openAIModel(options.model);
   if (!key) {
-    console.error(
-      "[tpec-ai] missing_ai_key: chave do provedor de IA ausente no ambiente deste servidor.",
-    );
+    logDiagnostic("error", "openai.configuration_error", {
+      provider: "openai",
+      model,
+      reason: "missing_api_key",
+    });
     throw new OpenAIError("Serviço de IA indisponível no momento.", 500);
   }
 
-  const model = openAIModel(options.model);
   const fetchImpl = options.fetchImpl ?? fetch;
   const input = history
     .filter((m) => m.role !== "system")
     .map((m) => ({ role: m.role, content: m.content }));
+  const inputChars = input.reduce((total, message) => total + message.content.length, 0);
 
   async function requestResponse(maxOutputTokens: number, reasoningEffort: "minimal" | "low") {
+    const timeoutMs = options.timeoutMs ?? 45_000;
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? 45_000);
-    try {
-      const body: Record<string, unknown> = {
-        model,
-        instructions: instructions(options),
-        input,
-        // Em modelos de raciocínio, este limite inclui raciocínio + texto visível.
-        // 1200 era baixo o bastante para ocasionalmente terminar sem output_text.
-        max_output_tokens: maxOutputTokens,
-        store: false,
-      };
-      if (supportsReasoningConfig(model)) body.reasoning = { effort: reasoningEffort };
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    const started = Date.now();
+    const body: Record<string, unknown> = {
+      model,
+      instructions: instructions(options),
+      input,
+      // Em modelos de raciocínio, este limite inclui raciocínio + texto visível.
+      max_output_tokens: maxOutputTokens,
+      store: false,
+    };
+    if (supportsReasoningConfig(model)) body.reasoning = { effort: reasoningEffort };
 
+    logDiagnostic("info", "openai.request.start", {
+      provider: "openai",
+      model,
+      reasoning_effort: supportsReasoningConfig(model) ? reasoningEffort : undefined,
+      max_output_tokens: maxOutputTokens,
+      timeout_ms: timeoutMs,
+      message_count: input.length,
+      input_chars: inputChars,
+      context_chars: options.context?.length ?? 0,
+    });
+
+    try {
       const response = await fetchImpl(ENDPOINT, {
         method: "POST",
         headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
         body: JSON.stringify(body),
         signal: controller.signal,
       });
+      const durationMs = Date.now() - started;
+      const headers = diagnosticResponseHeaders(response);
+      const raw = await response.text().catch(() => "");
+
       if (!response.ok) {
-        const raw = await response.text().catch(() => "");
+        logDiagnostic("error", "openai.response.error", {
+          provider: "openai",
+          model,
+          status: response.status,
+          status_text: response.statusText,
+          duration_ms: durationMs,
+          response_headers: headers,
+          error_body: safeErrorSnippet(raw),
+          reasoning_effort: supportsReasoningConfig(model) ? reasoningEffort : undefined,
+          max_output_tokens: maxOutputTokens,
+        });
         if (response.status === 429 && /quota|billing|credit/i.test(raw)) {
           throw new OpenAIError("Os créditos da API da OpenAI estão esgotados.", 402);
         }
@@ -129,11 +165,54 @@ export async function askOpenAI(
         }
         throw new OpenAIError("Falha ao consultar a IA.", response.status);
       }
-      return (await response.json()) as ResponsesPayload;
+
+      let data: ResponsesPayload;
+      try {
+        data = JSON.parse(raw) as ResponsesPayload;
+      } catch (error) {
+        logDiagnostic("error", "openai.response.invalid_json", {
+          provider: "openai",
+          model,
+          status: response.status,
+          duration_ms: durationMs,
+          response_headers: headers,
+          body_preview: safeErrorSnippet(raw, 500),
+          error_message: error instanceof Error ? error.message : String(error),
+        });
+        throw new OpenAIError("A IA retornou uma resposta inválida.", 502);
+      }
+
+      logDiagnostic("info", "openai.response.received", {
+        provider: "openai",
+        model,
+        status: response.status,
+        duration_ms: durationMs,
+        response_headers: headers,
+        response_status: data.status ?? null,
+        incomplete_reason: data.incomplete_details?.reason ?? null,
+        has_output_text: Boolean(extractResponseText(data)),
+        usage: data.usage,
+      });
+      return data;
     } catch (error) {
       if (error instanceof OpenAIError) throw error;
-      if ((error as Error).name === "AbortError")
+      const durationMs = Date.now() - started;
+      if ((error as Error).name === "AbortError") {
+        logDiagnostic("error", "openai.request.timeout", {
+          provider: "openai",
+          model,
+          timeout_ms: timeoutMs,
+          duration_ms: durationMs,
+        });
         throw new OpenAIError("A IA demorou demais para responder.", 504);
+      }
+      logDiagnostic("error", "openai.request.network_error", {
+        provider: "openai",
+        model,
+        duration_ms: durationMs,
+        error_name: error instanceof Error ? error.name : "unknown",
+        error_message: error instanceof Error ? error.message : String(error),
+      });
       throw new OpenAIError("Não foi possível contatar o serviço de IA.", 502);
     } finally {
       clearTimeout(timeout);
@@ -146,18 +225,33 @@ export async function askOpenAI(
   // Se o orçamento foi consumido pelo raciocínio antes de sair texto visível,
   // faça uma única tentativa mais econômica em raciocínio e com orçamento maior.
   if (!text && data.status === "incomplete" && data.incomplete_details?.reason === "max_output_tokens") {
-    console.warn("[tpec-ai] resposta incompleta por limite de saída; repetindo com orçamento maior.");
+    logDiagnostic("warn", "openai.response.retry_after_incomplete", {
+      provider: "openai",
+      model,
+      reason: data.incomplete_details.reason,
+      first_usage: data.usage,
+    });
     data = await requestResponse(5_000, "minimal");
     text = extractResponseText(data);
   }
 
   if (!text) {
-    console.error("[tpec-ai] resposta sem texto", {
-      status: data.status ?? null,
-      incomplete_reason: data.incomplete_details?.reason ?? null,
+    logDiagnostic("error", "openai.response.empty", {
+      provider: "openai",
       model,
+      response_status: data.status ?? null,
+      incomplete_reason: data.incomplete_details?.reason ?? null,
+      usage: data.usage,
+      provider_error: data.error,
     });
     throw new OpenAIError("Resposta vazia da IA.", 502);
   }
+
+  logDiagnostic("info", "openai.response.success", {
+    provider: "openai",
+    model,
+    reply_chars: text.length,
+    usage: data.usage,
+  });
   return text;
 }

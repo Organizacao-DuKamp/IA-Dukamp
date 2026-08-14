@@ -5,6 +5,11 @@ import {
   type ChatCoreResult,
   type ChatInput,
 } from "./input.ts";
+import {
+  diagnosticResponseHeaders,
+  logDiagnostic,
+  withDiagnosticContext,
+} from "./diagnostics.server.ts";
 
 export type TpecBackendMode = "local" | "proxy";
 type EnvLike = Record<string, string | undefined>;
@@ -39,6 +44,22 @@ export class TpecBackendError extends Error {
 
 function runtimeEnv(deps: TpecBackendDependencies): EnvLike {
   return deps.env ?? process.env;
+}
+
+function traceContext(input: ChatInput) {
+  return {
+    traceId: (input.clientMessageId || input.conversationId || input.sessionId || "unknown").slice(0, 128),
+    conversationId: (input.conversationId || input.sessionId || "unknown").slice(0, 128),
+  };
+}
+
+function backendErrorSummary(body: unknown): Record<string, unknown> {
+  if (!body || typeof body !== "object") return {};
+  const record = body as Record<string, unknown>;
+  return {
+    backend_error: typeof record.error === "string" ? record.error : undefined,
+    backend_code: typeof record.code === "string" ? record.code : undefined,
+  };
 }
 
 export function resolveTpecBackendMode(env: EnvLike = process.env): TpecBackendMode {
@@ -155,8 +176,15 @@ export async function proxyChat(
   }
 
   const started = (deps.now ?? Date.now)();
+  const timeoutMs = parseTimeoutMs(env);
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), parseTimeoutMs(env));
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  logDiagnostic("info", "proxy.request.start", {
+    destination_origin: endpoint.origin,
+    timeout_ms: timeoutMs,
+    payload_bytes: new TextEncoder().encode(payload).byteLength,
+  });
+
   try {
     const response = await (deps.fetchImpl ?? fetch)(endpoint, {
       method: "POST",
@@ -175,6 +203,12 @@ export async function proxyChat(
     try {
       body = raw ? JSON.parse(raw) : {};
     } catch {
+      logDiagnostic("error", "proxy.response.invalid_json", {
+        status: response.status,
+        duration_ms: (deps.now ?? Date.now)() - started,
+        response_bytes: new TextEncoder().encode(raw).byteLength,
+        response_headers: diagnosticResponseHeaders(response),
+      });
       throw new TpecBackendError(
         "O backend da TPEC-IA retornou uma resposta inválida.",
         502,
@@ -185,6 +219,15 @@ export async function proxyChat(
     if (response.ok) {
       const parsed = ChatCoreResultSchema.safeParse(body);
       if (!parsed.success) {
+        logDiagnostic("error", "proxy.response.invalid_shape", {
+          status: response.status,
+          duration_ms: (deps.now ?? Date.now)() - started,
+          response_headers: diagnosticResponseHeaders(response),
+          schema_issues: parsed.error.issues.map((issue) => ({
+            path: issue.path.join("."),
+            code: issue.code,
+          })),
+        });
         throw new TpecBackendError(
           "O backend da TPEC-IA retornou um formato inesperado.",
           502,
@@ -196,19 +239,40 @@ export async function proxyChat(
       body = { error: "Falha no backend da TPEC-IA." };
     }
 
-    console.info(
-      `[tpec-proxy] request completed status=${response.status} duration_ms=${(deps.now ?? Date.now)() - started}`,
-    );
+    const level = response.ok ? "info" : "error";
+    logDiagnostic(level, "proxy.request.finish", {
+      status: response.status,
+      duration_ms: (deps.now ?? Date.now)() - started,
+      response_headers: diagnosticResponseHeaders(response),
+      ...backendErrorSummary(body),
+    });
     return { status: response.status, body };
   } catch (error) {
-    if (error instanceof TpecBackendError) throw error;
+    if (error instanceof TpecBackendError) {
+      logDiagnostic("error", "proxy.request.error", {
+        status: error.status,
+        code: error.code,
+        message: error.message,
+        duration_ms: (deps.now ?? Date.now)() - started,
+      });
+      throw error;
+    }
     if (controller.signal.aborted || (error instanceof Error && error.name === "AbortError")) {
+      logDiagnostic("error", "proxy.request.timeout", {
+        timeout_ms: timeoutMs,
+        duration_ms: (deps.now ?? Date.now)() - started,
+      });
       throw new TpecBackendError(
         "O backend da TPEC-IA demorou para responder.",
         504,
         "proxy_timeout",
       );
     }
+    logDiagnostic("error", "proxy.request.network_error", {
+      error_name: error instanceof Error ? error.name : "unknown",
+      error_message: error instanceof Error ? error.message : String(error),
+      duration_ms: (deps.now ?? Date.now)() - started,
+    });
     throw new TpecBackendError(
       "Não foi possível acessar o backend da TPEC-IA.",
       502,
@@ -223,19 +287,37 @@ export async function executeLocalChat(
   input: ChatInput,
   deps: TpecBackendDependencies = {},
 ): Promise<BackendDispatchResult> {
-  const load =
-    deps.loadLocalBackend ?? (() => import("./core.server.ts") as Promise<LocalBackendModule>);
-  const local = await load();
-  try {
-    const result = ChatCoreResultSchema.parse(await local.handleIncoming(input));
-    return { status: 200, body: result };
-  } catch (error) {
-    const status = (error as { status?: unknown } | null)?.status;
-    if (error instanceof Error && typeof status === "number") {
-      return { status, body: { error: error.message } };
+  return withDiagnosticContext(traceContext(input), async () => {
+    const started = (deps.now ?? Date.now)();
+    const load =
+      deps.loadLocalBackend ?? (() => import("./core.server.ts") as Promise<LocalBackendModule>);
+    logDiagnostic("info", "backend.local.start", {
+      history_messages: input.history.length,
+      text_chars: input.text.length,
+    });
+    const local = await load();
+    try {
+      const result = ChatCoreResultSchema.parse(await local.handleIncoming(input));
+      logDiagnostic("info", "backend.local.finish", {
+        status: 200,
+        duration_ms: (deps.now ?? Date.now)() - started,
+        reply_chars: result.reply.length,
+      });
+      return { status: 200, body: result };
+    } catch (error) {
+      const status = (error as { status?: unknown } | null)?.status;
+      logDiagnostic("error", "backend.local.error", {
+        status: typeof status === "number" ? status : 500,
+        error_name: error instanceof Error ? error.name : "unknown",
+        error_message: error instanceof Error ? error.message : String(error),
+        duration_ms: (deps.now ?? Date.now)() - started,
+      });
+      if (error instanceof Error && typeof status === "number") {
+        return { status, body: { error: error.message } };
+      }
+      throw error;
     }
-    throw error;
-  }
+  });
 }
 
 export async function dispatchChat(
@@ -243,7 +325,10 @@ export async function dispatchChat(
   deps: TpecBackendDependencies = {},
 ): Promise<BackendDispatchResult> {
   const mode = resolveTpecBackendMode(runtimeEnv(deps));
-  console.info(`[tpec-backend] mode=${mode}`);
-  if (mode === "proxy") return proxyChat(input, deps);
-  return executeLocalChat(input, deps);
+  if (mode === "local") return executeLocalChat(input, deps);
+
+  return withDiagnosticContext(traceContext(input), async () => {
+    logDiagnostic("info", "backend.dispatch", { mode });
+    return proxyChat(input, deps);
+  });
 }

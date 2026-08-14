@@ -2,6 +2,12 @@
 // It retrieves current external evidence; it never writes the final answer shown
 // to the user. PERPLEXITY_API_KEY stays server-side and is never logged.
 
+import {
+  diagnosticResponseHeaders,
+  logDiagnostic,
+  safeErrorSnippet,
+} from "./diagnostics.server.ts";
+
 const PERPLEXITY_URL = "https://api.perplexity.ai/chat/completions";
 const TIMEOUT_MS = 30_000;
 
@@ -45,15 +51,27 @@ export async function researchPerplexity(
   options: ResearchOptions = {},
 ): Promise<string> {
   const apiKey = process.env.PERPLEXITY_API_KEY;
+  const model = perplexityModel();
+  const timeoutMs = options.timeoutMs ?? TIMEOUT_MS;
   if (!apiKey) {
-    console.error(
-      `[tpec-ai] missing_research_key: chave do provedor de pesquisa ausente no ambiente deste servidor (${perplexityModel()}).`,
-    );
+    logDiagnostic("error", "perplexity.configuration_error", {
+      provider: "perplexity",
+      model,
+      reason: "missing_api_key",
+    });
     throw new PerplexityError("Pesquisa atual indisponível no momento.", 500);
   }
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  const started = Date.now();
+  logDiagnostic("info", "perplexity.request.start", {
+    provider: "perplexity",
+    model,
+    query_chars: query.length,
+    current_market_search: Boolean(options.currentMarketSearch),
+    timeout_ms: timeoutMs,
+  });
 
   let response: Response;
   try {
@@ -64,7 +82,7 @@ export async function researchPerplexity(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: perplexityModel(),
+        model,
         messages: [
           {
             role: "system",
@@ -83,17 +101,43 @@ export async function researchPerplexity(
       signal: controller.signal,
     });
   } catch (error) {
+    const durationMs = Date.now() - started;
     if ((error as Error).name === "AbortError") {
+      logDiagnostic("error", "perplexity.request.timeout", {
+        provider: "perplexity",
+        model,
+        timeout_ms: timeoutMs,
+        duration_ms: durationMs,
+      });
       throw new PerplexityError("A pesquisa atual demorou demais. Tente novamente.", 504);
     }
+    logDiagnostic("error", "perplexity.request.network_error", {
+      provider: "perplexity",
+      model,
+      duration_ms: durationMs,
+      error_name: error instanceof Error ? error.name : "unknown",
+      error_message: error instanceof Error ? error.message : String(error),
+    });
     throw new PerplexityError("Não foi possível consultar a pesquisa atual.", 502);
   } finally {
     clearTimeout(timeout);
   }
 
+  const durationMs = Date.now() - started;
+  const headers = diagnosticResponseHeaders(response);
+  const raw = await response.text().catch(() => "");
+
   if (!response.ok) {
-    const body = await response.text().catch(() => "");
-    if (response.status === 401 && /insufficient_quota|credit|billing/i.test(body)) {
+    logDiagnostic("error", "perplexity.response.error", {
+      provider: "perplexity",
+      model,
+      status: response.status,
+      status_text: response.statusText,
+      duration_ms: durationMs,
+      response_headers: headers,
+      error_body: safeErrorSnippet(raw),
+    });
+    if (response.status === 401 && /insufficient_quota|credit|billing/i.test(raw)) {
       throw new PerplexityError("Os créditos da API da Perplexity estão esgotados.", 402);
     }
     if (response.status === 429) {
@@ -102,13 +146,54 @@ export async function researchPerplexity(
     throw new PerplexityError("Falha ao consultar a pesquisa atual.", response.status);
   }
 
-  const data = (await response.json()) as {
+  let data: {
     choices?: Array<{ message?: { content?: string } }>;
     citations?: string[];
     search_results?: Array<{ title?: string; url?: string; date?: string }>;
+    usage?: unknown;
   };
+  try {
+    data = JSON.parse(raw) as typeof data;
+  } catch (error) {
+    logDiagnostic("error", "perplexity.response.invalid_json", {
+      provider: "perplexity",
+      model,
+      status: response.status,
+      duration_ms: durationMs,
+      response_headers: headers,
+      body_preview: safeErrorSnippet(raw, 500),
+      error_message: error instanceof Error ? error.message : String(error),
+    });
+    throw new PerplexityError("Pesquisa atual retornou uma resposta inválida.", 502);
+  }
+
   const result = data.choices?.[0]?.message?.content?.trim();
-  if (!result) throw new PerplexityError("Pesquisa atual sem resultado.", 502);
+  if (!result) {
+    logDiagnostic("error", "perplexity.response.empty", {
+      provider: "perplexity",
+      model,
+      status: response.status,
+      duration_ms: durationMs,
+      response_headers: headers,
+      choices_count: data.choices?.length ?? 0,
+      citations_count: data.citations?.length ?? 0,
+      search_results_count: data.search_results?.length ?? 0,
+      usage: data.usage,
+    });
+    throw new PerplexityError("Pesquisa atual sem resultado.", 502);
+  }
+
+  logDiagnostic("info", "perplexity.response.success", {
+    provider: "perplexity",
+    model,
+    status: response.status,
+    duration_ms: durationMs,
+    response_headers: headers,
+    result_chars: result.length,
+    citations_count: data.citations?.length ?? 0,
+    search_results_count: data.search_results?.length ?? 0,
+    usage: data.usage,
+  });
 
   const sources = new Map<string, string>();
   for (const url of data.citations ?? []) {
