@@ -1,7 +1,16 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 
-const candidateRoots = ["dist/client", ".output/public", "build/client"];
+// TanStack Start + Nitro pode emitir o bundle público em caminhos diferentes
+// conforme o preset/runtime. No deploy atual da Netlify, `dist` é o publish dir
+// configurado em netlify.toml; `.netlify/static` cobre a saída nativa do adapter.
+const candidateRoots = [
+  "dist/client",
+  "dist",
+  ".output/public",
+  ".netlify/static",
+  "build/client",
+];
 const forbidden = [
   "TPEC_PROXY_SECRET",
   "SUPABASE_SERVICE_ROLE_KEY",
@@ -37,16 +46,20 @@ async function filesUnder(root) {
 
 const roots = [];
 for (const root of candidateRoots) {
-  if (await exists(root)) {
-    // Only scan client bundles. Do NOT scan dist/server as it correctly contains
-    // these identifiers for the Worker runtime.
-    if (root === "dist/server") continue;
-    roots.push(root);
-  }
+  if (await exists(root)) roots.push(root);
+}
+
+// Se `dist/client` existir, `dist` seria redundante e faria o mesmo bundle ser
+// varrido duas vezes. Preferimos sempre a raiz mais específica nesse caso.
+if (roots.includes("dist/client")) {
+  const distIndex = roots.indexOf("dist");
+  if (distIndex >= 0) roots.splice(distIndex, 1);
 }
 
 if (roots.length === 0) {
-  throw new Error("Client build output not found for secret scan.");
+  throw new Error(
+    `Client build output not found for secret scan. Checked: ${candidateRoots.join(", ")}`,
+  );
 }
 
 const leaks = [];
