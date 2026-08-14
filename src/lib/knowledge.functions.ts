@@ -143,9 +143,13 @@ export const processNextPending = createServerFn({ method: "POST" })
       return { done: false as const, id: doc.id, title: doc.title, chunks: count };
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Erro desconhecido";
+      const isRateLimit = msg.toLowerCase().includes("429") || msg.toLowerCase().includes("rate limit") || msg.toLowerCase().includes("tokens per min");
       await supabaseAdmin
         .from("knowledge_documents")
-        .update({ status: "erro", error_message: msg })
+        .update({ 
+          status: "erro", 
+          error_message: isRateLimit ? `[Rate Limit] ${msg}` : msg 
+        })
         .eq("id", doc.id);
       return { done: false as const, id: doc.id, title: doc.title, error: msg };
     }
