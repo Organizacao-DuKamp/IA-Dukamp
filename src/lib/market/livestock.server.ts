@@ -8,11 +8,17 @@ import {
   distanceKm,
   fmtDate,
   fmtMoney,
-  parseLivestockQuery,
+  livestockConversationContext,
+  parseLivestockQueryWithContext,
+  type LivestockConversationContext,
   type LivestockCategoryRow,
   type LivestockPlaceRow,
   type LivestockQuery,
 } from "./livestock-parse";
+import type { ChatMessage } from "../chat/types";
+import { MAX_CURRENT_QUOTE_AGE_DAYS, selectLivestockCandidate } from "./livestock-ranking";
+
+export { MAX_CURRENT_QUOTE_AGE_DAYS };
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -107,18 +113,60 @@ async function latest(
   filters: Record<string, string>,
   categoria: string,
   unidade: string,
+  asOfDate: string,
 ): Promise<CotacaoPecuaria | null> {
   let q = marketDb()
     .from("cotacoes_pecuarias")
     .select("*")
     .eq("categoria", categoria)
     .eq("unidade", unidade)
+    .lte("data_cotacao", asOfDate)
     .order("data_cotacao", { ascending: false })
     .limit(1);
   for (const [k, v] of Object.entries(filters)) q = q.eq(k, v);
   const { data, error } = await q;
   if (error) return null;
   return (data?.[0] as CotacaoPecuaria) ?? null;
+}
+
+export interface LivestockResolverDependencies {
+  now?: Date;
+  loadPlaces?: () => Promise<LivestockPlaceRow[]>;
+  loadLinks?: (originSlug: string) => Promise<
+    Array<{
+      origem_slug: string;
+      praca_slug: string;
+      ordem: number;
+      distancia_km: number | null;
+    }>
+  >;
+  latestQuote?: typeof latest;
+}
+
+interface CandidateSpec {
+  filters: Record<string, string>;
+  rank: number;
+  seal: Exclude<SealLevel, "indisponivel">;
+  usedPlace: string | null;
+  distanceKm: number | null;
+  note: string | null;
+}
+
+interface ResolvedCandidate extends CandidateSpec {
+  quote: CotacaoPecuaria;
+  ageDays: number;
+}
+
+function dateInSaoPaulo(value: Date): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(value);
+  const pick = (type: "year" | "month" | "day") =>
+    parts.find((part) => part.type === type)?.value ?? "";
+  return `${pick("year")}-${pick("month")}-${pick("day")}`;
 }
 
 const SEAL_LABELS: Record<SealLevel, string> = {
@@ -132,10 +180,16 @@ const SEAL_LABELS: Record<SealLevel, string> = {
  * Percorre a cascata de localidades e devolve a melhor cotação disponível,
  * sempre acompanhada do selo de abrangência e do controle de frescor.
  */
-export async function resolveLivestockQuote(query: LivestockQuery): Promise<LivestockResolution> {
+export async function resolveLivestockQuote(
+  query: LivestockQuery,
+  dependencies: LivestockResolverDependencies = {},
+): Promise<LivestockResolution> {
   const { category, place, uf, unit } = query;
-  const maxAge = category.max_idade_dias ?? 10;
-  const places = await loadPlaces();
+  const now = dependencies.now ?? new Date();
+  const asOfDate = dateInSaoPaulo(now);
+  const places = await (dependencies.loadPlaces ?? loadPlaces)();
+  const getLinks = dependencies.loadLinks ?? loadLinks;
+  const getLatest = dependencies.latestQuote ?? latest;
 
   const build = (
     quote: CotacaoPecuaria | null,
@@ -144,9 +198,9 @@ export async function resolveLivestockQuote(query: LivestockQuery): Promise<Live
     dist: number | null,
     note: string | null,
   ): LivestockResolution => {
-    const age = quote ? daysBetween(quote.data_cotacao) : null;
-    const stale = age != null && age > maxAge;
-    const finalSeal: SealLevel = !quote ? "indisponivel" : seal;
+    const age = quote ? daysBetween(quote.data_cotacao, now) : null;
+    const stale = age != null && age > MAX_CURRENT_QUOTE_AGE_DAYS;
+    const finalSeal: SealLevel = !quote || stale ? "indisponivel" : seal;
     return {
       query,
       quote,
@@ -160,33 +214,47 @@ export async function resolveLivestockQuote(query: LivestockQuery): Promise<Live
     };
   };
 
-  // 1) cidade exata
-  if (place) {
-    const local = await latest({ cidade_slug: place.slug }, category.slug, unit);
-    if (local) return build(local, "local", place.municipio, 0, null);
+  const specs = new Map<string, CandidateSpec>();
+  const add = (spec: CandidateSpec) => {
+    const key = Object.entries(spec.filters)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([field, value]) => `${field}=${value}`)
+      .join("&");
+    const previous = specs.get(key);
+    if (!previous || spec.rank < previous.rank) specs.set(key, spec);
+  };
 
-    // 2) praças vinculadas, na ordem definida
-    const links = await loadLinks(place.slug);
+  // Monta toda a cascata antes de escolher. Assim, uma referência estadual de
+  // hoje vence uma cotação municipal de um mês atrás; em datas iguais, a praça
+  // geograficamente mais específica continua tendo prioridade.
+  if (place) {
+    add({
+      filters: { cidade_slug: place.slug },
+      rank: 0,
+      seal: "local",
+      usedPlace: place.municipio,
+      distanceKm: 0,
+      note: null,
+    });
+
+    const links = await getLinks(place.slug);
     for (const link of links) {
       const target = places.find((p) => p.slug === link.praca_slug);
-      const q = await latest({ cidade_slug: link.praca_slug }, category.slug, unit);
-      if (q) {
-        const dist =
-          link.distancia_km ??
-          (place.lat && place.lon && target?.lat && target?.lon
-            ? distanceKm({ lat: place.lat, lon: place.lon }, { lat: target.lat, lon: target.lon })
-            : null);
-        return build(
-          q,
-          "regional",
-          target?.municipio ?? link.praca_slug,
-          dist,
-          `Não há cotação registrada para ${place.municipio}/${place.uf}. Usada a praça pecuária de referência mais próxima.`,
-        );
-      }
+      const dist =
+        link.distancia_km ??
+        (place.lat != null && place.lon != null && target?.lat != null && target.lon != null
+          ? distanceKm({ lat: place.lat, lon: place.lon }, { lat: target.lat, lon: target.lon })
+          : null);
+      add({
+        filters: { cidade_slug: link.praca_slug },
+        rank: 10 + link.ordem,
+        seal: "regional",
+        usedPlace: target?.municipio ?? link.praca_slug,
+        distanceKm: dist,
+        note: `Não há cotação recente para ${place.municipio}/${place.uf}. Usada a praça pecuária de referência mais próxima.`,
+      });
     }
 
-    // 2b) fallback geográfico: praça pecuária mais próxima por distância
     if (place.lat != null && place.lon != null) {
       const ranked = places
         .filter(
@@ -199,64 +267,90 @@ export async function resolveLivestockQuote(query: LivestockQuery): Promise<Live
         .sort((a, b) => a.d - b.d)
         .slice(0, 6);
       for (const { p, d } of ranked) {
-        const q = await latest({ cidade_slug: p.slug }, category.slug, unit);
-        if (q)
-          return build(
-            q,
-            "regional",
-            p.municipio,
-            d,
-            `Não há cotação registrada para ${place.municipio}/${place.uf}. Usada a praça pecuária mais próxima com dado publicado.`,
-          );
+        add({
+          filters: { cidade_slug: p.slug },
+          rank: 100 + d,
+          seal: "regional",
+          usedPlace: p.municipio,
+          distanceKm: d,
+          note: `Não há cotação recente para ${place.municipio}/${place.uf}. Usada a praça pecuária mais próxima com dado publicado.`,
+        });
       }
     }
 
-    // 3) mesma região
     if (place.regiao) {
-      const q = await latest({ regiao: place.regiao }, category.slug, unit);
-      if (q)
-        return build(
-          q,
-          "regional",
-          place.regiao,
-          null,
-          `Sem cotação municipal para ${place.municipio}/${place.uf}. Usada a referência da região ${place.regiao}.`,
-        );
+      add({
+        filters: { regiao: place.regiao },
+        rank: 1_000,
+        seal: "regional",
+        usedPlace: place.regiao,
+        distanceKm: null,
+        note: `Sem cotação municipal recente para ${place.municipio}/${place.uf}. Usada a referência da região ${place.regiao}.`,
+      });
     }
   }
 
-  // 4) indicador estadual
   const state = uf ?? place?.uf ?? null;
   if (state) {
-    const q = await latest({ estado: state, abrangencia: "estadual" }, category.slug, unit);
-    if (q)
-      return build(
-        q,
-        "estadual",
-        state,
-        null,
-        place
-          ? `Sem cotação municipal ou regional para ${place.municipio}/${place.uf}. Usado o indicador estadual de ${state}.`
-          : `Usado o indicador estadual de ${state}.`,
-      );
-    const anyState = await latest({ estado: state }, category.slug, unit);
-    if (anyState)
-      return build(
-        anyState,
-        "estadual",
-        anyState.cidade ?? state,
-        null,
-        `Sem cotação para a praça pedida. Usada a cotação disponível em ${state}.`,
-      );
+    add({
+      filters: { estado: state, abrangencia: "estadual" },
+      rank: 2_000,
+      seal: "estadual",
+      usedPlace: state,
+      distanceKm: null,
+      note: place
+        ? `Sem cotação municipal ou regional recente para ${place.municipio}/${place.uf}. Usado o indicador estadual de ${state}.`
+        : `Usado o indicador estadual de ${state}.`,
+    });
+    add({
+      filters: { estado: state },
+      rank: 3_000,
+      seal: "estadual",
+      usedPlace: state,
+      distanceKm: null,
+      note: `Sem cotação recente para a praça pedida. Usada a publicação mais nova disponível em ${state}.`,
+    });
   }
 
-  // 5) indicador nacional (só quando o usuário não pediu praça específica)
   if (!place) {
-    const nac = await latest({ abrangencia: "nacional" }, category.slug, unit);
-    if (nac) return build(nac, "estadual", "Brasil", null, "Indicador nacional.");
+    add({
+      filters: { abrangencia: "nacional" },
+      rank: 4_000,
+      seal: "estadual",
+      usedPlace: "Brasil",
+      distanceKm: null,
+      note: "Indicador nacional.",
+    });
   }
 
-  return build(null, "indisponivel", null, null, null);
+  const candidates = (
+    await Promise.all(
+      [...specs.values()].map(async (spec): Promise<ResolvedCandidate | null> => {
+        const quote = await getLatest(spec.filters, category.slug, unit, asOfDate);
+        if (!quote) return null;
+        const ageDays = daysBetween(quote.data_cotacao, now);
+        if (ageDays < 0) return null;
+        return { ...spec, quote, ageDays };
+      }),
+    )
+  ).filter((candidate): candidate is ResolvedCandidate => candidate !== null);
+
+  const selected = selectLivestockCandidate(
+    candidates.map((candidate) => ({
+      value: candidate,
+      date: candidate.quote.data_cotacao,
+      ageDays: candidate.ageDays,
+      localityRank: candidate.rank,
+    })),
+  )?.value;
+  if (!selected) return build(null, "indisponivel", null, null, null);
+  return build(
+    selected.quote,
+    selected.seal,
+    selected.usedPlace,
+    selected.distanceKm,
+    selected.note,
+  );
 }
 
 /* ------------------------------------------------------------------ */
@@ -267,14 +361,21 @@ export function buildLivestockContext(r: LivestockResolution): string {
   const { category, place, uf, unit } = r.query;
   const askedLabel = place ? `${place.municipio}/${place.uf}` : uf ? uf : "praça não informada";
 
-  if (!r.quote) {
+  if (!r.quote || r.stale) {
+    const discardedHistorical = r.quote
+      ? `A base possui apenas um registro de ${fmtDate(r.quote.data_cotacao)} (${r.ageDays} dia(s)), descartado por estar fora da janela corrente. O preço antigo foi omitido deste contexto e não pode ser usado na resposta.`
+      : null;
     return [
       "COTAÇÃO PECUÁRIA — RESULTADO DA BASE OFICIAL",
+      "STATUS: SEM COTAÇÃO RECENTE",
       `SELO: ${r.sealLabel}`,
       `Categoria: ${category.nome} · Unidade pedida: ${unit} · Local pedido: ${askedLabel}`,
-      "SEM COTAÇÃO REGISTRADA na base para essa categoria/praça.",
-      'INSTRUÇÃO OBRIGATÓRIA (ordem exata): 1) BUSQUE AGORA na web, em fontes oficiais de mercado (CEPEA/ESALQ, Scot Consultoria, B3, Notícias Agrícolas, Canal Rural, IEA, Conab, sindicatos e associações rurais), a cotação mais recente dessa categoria para a cidade/praça pedida ou para a praça publicada mais próxima. 2) Se encontrar, apresente o valor com selo 🟡 (referência de mercado externa) trazendo obrigatoriamente preço + unidade, praça, data de referência e fonte, e diga com naturalidade que o número veio de publicação de mercado e não da base própria — se for de outra praça, avise qual é e lembre que frete, escala e negociação mudam o preço local. 2b) BUSCA APROFUNDADA OBRIGATÓRIA: antes de declarar que não encontrou, tente em sequência (a) a cidade pedida, (b) praças pecuárias vizinhas, (c) o indicador estadual, (d) o indicador nacional (CEPEA/B3). 2c) ENQUADRAMENTO: se encontrar QUALQUER referência confiável, NUNCA comece com "não encontrei"; comece pelo valor com selo 🟡 e só depois explique a origem e as ressalvas. 3) Só se NENHUMA das quatro tentativas retornar algo confiável, diga com franqueza que não há cotação disponível agora e ofereça acompanhar a fonte oficial ou o time comercial DuKamp. NUNCA invente, estime ou arredonde um valor de memória.',
-    ].join("\n");
+      `A base própria não possui publicação de hoje, ontem ou anteontem para essa combinação.`,
+      discardedHistorical,
+      "INSTRUÇÃO OBRIGATÓRIA (ordem exata): 1) NÃO responda com registro histórico da base como se fosse atual. 2) BUSQUE AGORA na web, priorizando nesta ordem: publicação de hoje, de ontem e de anteontem, em fontes oficiais de mercado (CEPEA/ESALQ, Scot Consultoria, B3, Notícias Agrícolas, Canal Rural, IEA, Conab, sindicatos e associações rurais). 3) Procure primeiro a cidade/praça pedida, depois praças pecuárias vizinhas, o indicador estadual e por fim o indicador nacional. 4) Se encontrar, apresente o valor com selo 🟡 trazendo obrigatoriamente preço + unidade, praça, data de referência e fonte; se for de outra praça, avise e lembre que frete, escala e negociação mudam o preço local. 5) Se não houver publicação nesses três dias, use a publicação confiável mais recente que localizar, informe claramente a data e nunca a chame de preço de hoje. 6) Só se nenhuma busca retornar algo confiável, declare indisponibilidade. NUNCA invente, estime ou use preço de memória.",
+    ]
+      .filter(Boolean)
+      .join("\n");
   }
 
   const q = r.quote;
@@ -285,6 +386,7 @@ export function buildLivestockContext(r: LivestockResolution): string {
 
   const lines = [
     "COTAÇÃO PECUÁRIA — RESULTADO DA BASE OFICIAL",
+    "STATUS: COTAÇÃO RECENTE",
     `SELO: ${r.sealLabel}`,
     `Categoria: ${q.categoria === category.slug ? category.nome : q.categoria}`,
     `Local pedido: ${askedLabel}`,
@@ -301,9 +403,6 @@ export function buildLivestockContext(r: LivestockResolution): string {
     `Confiabilidade da fonte: ${q.nivel_confiabilidade}`,
     q.observacao ? `Observação: ${q.observacao}` : null,
     r.note ? `SUBSTITUIÇÃO DE PRAÇA: ${r.note}` : null,
-    r.stale
-      ? `ATENÇÃO — DADO DESATUALIZADO: essa cotação tem ${r.ageDays} dias e ultrapassa a validade de ${category.max_idade_dias} dias da categoria. Apresente-a explicitamente como REFERÊNCIA ANTIGA, nunca como preço de hoje.`
-      : null,
     "",
     "INSTRUÇÕES OBRIGATÓRIAS DE RESPOSTA:",
     `1. Comece a resposta com o selo "${r.sealLabel}".`,
@@ -321,10 +420,26 @@ export function buildLivestockContext(r: LivestockResolution): string {
 /* Entrada única usada pelo roteador                                    */
 /* ------------------------------------------------------------------ */
 
-export async function livestockMarketAnswer(userText: string): Promise<string | null> {
+export interface LivestockMarketResult {
+  context: string;
+  query: LivestockQuery;
+  conversationContext: LivestockConversationContext;
+  freshness: "fresh" | "stale" | "missing";
+}
+
+export async function livestockMarketAnswer(
+  userText: string,
+  history: ChatMessage[] = [],
+  previous: LivestockConversationContext | null = null,
+): Promise<LivestockMarketResult | null> {
   const [cats, places] = await Promise.all([loadCategories(), loadPlaces()]);
-  const parsed = parseLivestockQuery(userText, cats, places);
+  const parsed = parseLivestockQueryWithContext(userText, cats, places, { previous, history });
   if (!parsed) return null;
   const resolution = await resolveLivestockQuote(parsed);
-  return buildLivestockContext(resolution);
+  return {
+    context: buildLivestockContext(resolution),
+    query: parsed,
+    conversationContext: livestockConversationContext(parsed),
+    freshness: !resolution.quote ? "missing" : resolution.stale ? "stale" : "fresh",
+  };
 }

@@ -650,6 +650,11 @@ export function applyUserTurn(
     next.pending_action = "calcular_quantidade_suplemento";
   } else if (analysis.intent === "pedido_de_comparacao") {
     next.user_goal = text.slice(0, 300);
+  } else if (
+    (analysis.intent === "nova_pergunta" || analysis.intent === "mudanca_de_assunto") &&
+    text.length > 25
+  ) {
+    next.user_goal = text.slice(0, 300);
   } else if (!next.user_goal && text.length > 25) {
     next.user_goal = text.slice(0, 300);
   }

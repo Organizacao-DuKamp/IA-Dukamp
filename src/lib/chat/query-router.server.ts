@@ -13,6 +13,8 @@ import {
   sellerContactLine,
   type PublicSeller,
 } from "@/lib/site/seller-domain";
+import type { ChatMessage } from "./types";
+import type { LivestockConversationContext } from "@/lib/market/livestock-parse";
 
 export type SpeciesKey = "bovinos" | "equinos" | "ovinos_caprinos" | "outros";
 const SPECIES_LABELS: Record<SpeciesKey, string[]> = {
@@ -90,9 +92,18 @@ export interface Passthrough {
   productHint?: ProductMention;
   /** Bloco de cotações estruturadas injetado no contexto do modelo. */
   marketContext?: string;
+  /** Entidades de mercado confirmadas para continuar a conversa sem ambiguidade. */
+  livestockContext?: LivestockConversationContext;
+  /** Controla se a resposta pode usar a base ou deve pesquisar preço corrente. */
+  marketFreshness?: "fresh" | "stale" | "missing";
 }
 
 export type RouterResult = StructuralAnswer | Passthrough;
+
+export interface RouterConversationContext {
+  history?: ChatMessage[];
+  livestock?: LivestockConversationContext | null;
+}
 
 /** Find product(s) whose official_name or alias appears in the user text. */
 async function findProductByName(
@@ -735,7 +746,10 @@ function filterCatalogByPurpose(
 const PERSONAL_DATA_RE =
   /\b(cpf|rg|carteira\s+de\s+identidade|sal[aá]rio|comiss[aã]o\s+d[eo]|conta\s+banc[aá]ria|pix\s+pessoal|endere[cç]o\s+residencial|onde\s+mora|data\s+de\s+nascimento|documento\s+pessoal)\b/i;
 
-export async function routeQuery(userText: string): Promise<RouterResult> {
+export async function routeQuery(
+  userText: string,
+  conversation: RouterConversationContext = {},
+): Promise<RouterResult> {
   if (PERSONAL_DATA_RE.test(userText)) {
     return {
       kind: "structural",
@@ -761,10 +775,19 @@ export async function routeQuery(userText: string): Promise<RouterResult> {
     );
 
   // ---- Cotações pecuárias (base própria, cascata cidade→praça→região→UF) ----
-  const livestockBlock = await import("@/lib/market/livestock.server")
-    .then((m) => m.livestockMarketAnswer(userText))
+  const livestockResult = await import("@/lib/market/livestock.server")
+    .then((m) =>
+      m.livestockMarketAnswer(userText, conversation.history ?? [], conversation.livestock ?? null),
+    )
     .catch(() => null);
-  if (livestockBlock) return { kind: "passthrough", marketContext: livestockBlock };
+  if (livestockResult) {
+    return {
+      kind: "passthrough",
+      marketContext: livestockResult.context,
+      livestockContext: livestockResult.conversationContext,
+      marketFreshness: livestockResult.freshness,
+    };
+  }
 
   // ---- Cotações e indicadores de mercado (dados dinâmicos estruturados) ----
   const marketBlock = await marketAnswer(userText).catch(() => null);
