@@ -10,6 +10,7 @@ import {
   selectLivestockCandidate,
 } from "../src/lib/market/livestock-ranking.ts";
 import { assessEvidence, sourceDirective } from "../src/lib/chat/source-policy.ts";
+import { isCurrentMarketQuote, marketQuoteAgeDays } from "../src/lib/market/market.server.ts";
 
 const categories: LivestockCategoryRow[] = [
   "boi-gordo",
@@ -139,4 +140,15 @@ test("stale livestock evidence forces a current market search", () => {
   assert.match(directive, /hoje, ontem e anteontem/i);
   assert.match(directive, /não trate registro histórico interno como preço atual/i);
   assert.match(directive, /preço, unidade, praça, data e fonte/i);
+  assert.match(directive, /primeira resposta/i);
+});
+
+test("generic market quotes also expire after today, yesterday and the day before", () => {
+  const now = new Date("2026-08-14T16:00:00Z");
+
+  assert.equal(marketQuoteAgeDays("2026-08-12", now), 2);
+  assert.equal(isCurrentMarketQuote("2026-08-12", now), true);
+  assert.equal(marketQuoteAgeDays("2026-08-11", now), 3);
+  assert.equal(isCurrentMarketQuote("2026-08-11", now), false);
+  assert.equal(isCurrentMarketQuote("2026-08-15", now), false);
 });

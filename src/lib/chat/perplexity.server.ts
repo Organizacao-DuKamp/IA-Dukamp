@@ -31,6 +31,8 @@ export interface AskOptions {
   sourcePolicy?: string | null;
   /** Trechos recuperados (RAG, site, mercado) — camada de menor prioridade. */
   context?: string | null;
+  /** Força resultados recentes do Sonar quando a base não tem cotação corrente. */
+  currentMarketSearch?: boolean;
 }
 
 export async function askPerplexity(
@@ -105,6 +107,9 @@ export async function askPerplexity(
         messages,
         temperature: 0.3,
         max_tokens: 900,
+        ...(options.currentMarketSearch
+          ? { search_mode: "web", search_recency_filter: "week" }
+          : {}),
       }),
       signal: controller.signal,
     });

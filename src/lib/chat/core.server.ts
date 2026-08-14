@@ -341,6 +341,9 @@ async function runTurn(
   const requiresCurrentMarketSearch =
     routed.kind === "passthrough" &&
     (routed.marketFreshness === "stale" || routed.marketFreshness === "missing");
+  const isCurrentMarketTurn =
+    domainIntent.intent === "market_quote" ||
+    (routed.kind === "passthrough" && Boolean(routed.marketContext));
   const knowledgeScores: number[] = [];
 
   if (routed.kind === "structural") {
@@ -447,17 +450,56 @@ async function runTurn(
   });
 
   try {
+    const sourcePolicy = sourceDirective(evidence);
+    const modelContext = contextParts.length > 0 ? contextParts.join("\n\n") : null;
     let reply = await askPerplexity(conversation, {
       summary: renderSummaryForModel(state.conversation_summary),
       state: renderStateForModel(state),
       directive,
-      sourcePolicy: sourceDirective(evidence),
-      context: contextParts.length > 0 ? contextParts.join("\n\n") : null,
+      sourcePolicy,
+      context: modelContext,
+      currentMarketSearch: requiresCurrentMarketSearch,
     });
-    const grounding = validateGrounding(reply, {
+    let grounding = validateGrounding(reply, {
       commercial: hasCatalogEvidence || hasSiteEvidence || hasMarketEvidence,
       citations: 0,
+      currentMarket: isCurrentMarketTurn,
     });
+
+    const marketIssues = grounding.issues.filter(
+      (issue) => issue.startsWith("market_price_") || issue === "deferred_current_market_lookup",
+    );
+    if (marketIssues.length > 0) {
+      reply = await askPerplexity(conversation, {
+        summary: renderSummaryForModel(state.conversation_summary),
+        state: renderStateForModel(state),
+        directive,
+        sourcePolicy:
+          `${sourcePolicy}\nCORREÇÃO OBRIGATÓRIA ANTES DE RESPONDER: a tentativa anterior não pode ser enviada porque falhou em: ${marketIssues.join(", ")}. ` +
+          "Faça agora a busca necessária e entregue nesta própria resposta a publicação confiável mais recente. Todo preço precisa trazer unidade, praça, data explícita com ano e fonte identificada. Não ofereça pesquisar, consultar ou comparar depois.",
+        context: modelContext,
+        currentMarketSearch: requiresCurrentMarketSearch,
+      });
+      grounding = validateGrounding(reply, {
+        commercial: hasCatalogEvidence || hasSiteEvidence || hasMarketEvidence,
+        citations: 0,
+        currentMarket: true,
+      });
+      if (
+        grounding.issues.some(
+          (issue) =>
+            issue.startsWith("market_price_") || issue === "deferred_current_market_lookup",
+        )
+      ) {
+        reply =
+          "🔴 Não consegui confirmar agora uma cotação com preço, unidade, praça, data e fonte verificáveis. Para não repetir uma referência antiga ou sem data, não vou apresentar um valor sem confirmação.";
+        grounding = validateGrounding(reply, {
+          commercial: hasCatalogEvidence || hasSiteEvidence || hasMarketEvidence,
+          citations: 0,
+          currentMarket: true,
+        });
+      }
+    }
     if (grounding.issues.includes("unmapped_citation")) reply = stripUnmappedCitations(reply, 0);
     if (grounding.issues.includes("unsupported_commercial_fact"))
       reply =
