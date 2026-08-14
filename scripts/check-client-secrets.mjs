@@ -36,7 +36,15 @@ async function filesUnder(root) {
 }
 
 const roots = [];
-for (const root of candidateRoots) if (await exists(root)) roots.push(root);
+for (const root of candidateRoots) {
+  if (await exists(root)) {
+    // Only scan client bundles. Do NOT scan dist/server as it correctly contains
+    // these identifiers for the Worker runtime.
+    if (root === "dist/server") continue;
+    roots.push(root);
+  }
+}
+
 if (roots.length === 0) {
   throw new Error("Client build output not found for secret scan.");
 }
