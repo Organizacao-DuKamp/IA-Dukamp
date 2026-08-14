@@ -460,6 +460,34 @@ export function fmtDate(d: string): string {
   return `${dd}/${m}/${y}`;
 }
 
+/** Janela comum para considerar uma cotação como corrente: hoje, ontem ou anteontem. */
+export const MAX_CURRENT_MARKET_AGE_DAYS = 2;
+
+function dateInSaoPaulo(value: Date): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(value);
+  const pick = (type: "year" | "month" | "day") =>
+    parts.find((part) => part.type === type)?.value ?? "";
+  return `${pick("year")}-${pick("month")}-${pick("day")}`;
+}
+
+/** Idade em dias civis na data de São Paulo; valores negativos são publicações futuras. */
+export function marketQuoteAgeDays(referenceDate: string, now = new Date()): number {
+  const quoted = Date.parse(`${referenceDate.slice(0, 10)}T00:00:00Z`);
+  const today = Date.parse(`${dateInSaoPaulo(now)}T00:00:00Z`);
+  if (!Number.isFinite(quoted) || !Number.isFinite(today)) return Number.POSITIVE_INFINITY;
+  return Math.round((today - quoted) / 86_400_000);
+}
+
+export function isCurrentMarketQuote(referenceDate: string, now = new Date()): boolean {
+  const age = marketQuoteAgeDays(referenceDate, now);
+  return age >= 0 && age <= MAX_CURRENT_MARKET_AGE_DAYS;
+}
+
 function fmtVar(v: number | null): string {
   if (v == null) return "—";
   const s = v > 0 ? "+" : "";

@@ -38,6 +38,24 @@ test("preço sem evidência é bloqueado", () =>
   assert.deepEqual(validateGrounding("Custa R$ 99", { commercial: false }).issues, [
     "unsupported_commercial_fact",
   ]));
+test("cotação atual sem data e deixada para uma segunda mensagem é bloqueada", () => {
+  const result = validateGrounding(
+    "Boi gordo em São Paulo: R$ 330,00/@. Se você quiser, posso te passar a referência CEPEA/Esalq mais recente.",
+    { commercial: true, currentMarket: true },
+  );
+
+  assert.equal(result.valid, false);
+  assert.ok(result.issues.includes("market_price_without_explicit_date"));
+  assert.ok(result.issues.includes("deferred_current_market_lookup"));
+});
+test("cotação atual completa pode ser enviada na primeira resposta", () => {
+  const result = validateGrounding(
+    "Boi gordo: R$ 346,75/@, indicador CEPEA/ESALQ, São Paulo/SP, referência de 13/08/2026.",
+    { commercial: true, currentMarket: true },
+  );
+
+  assert.equal(result.valid, true);
+});
 test("janela preserva mensagens recentes", () => {
   const history = Array.from({ length: 30 }, (_, i) => ({
     role: i % 2 ? ("assistant" as const) : ("user" as const),

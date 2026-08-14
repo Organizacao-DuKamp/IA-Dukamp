@@ -611,7 +611,12 @@ function stripHtml(html: string | null): string {
  * Retorna null quando a pergunta não é de mercado — aí o fluxo normal segue.
  * Nunca devolve preço sem data, unidade, praça e fonte.
  */
-async function marketAnswer(userText: string): Promise<string | null> {
+interface MarketAnswerResult {
+  context: string;
+  freshness: "fresh" | "stale" | "missing";
+}
+
+async function marketAnswer(userText: string): Promise<MarketAnswerResult | null> {
   const mk = await import("@/lib/market/market.server");
   if (!mk.MARKET_INTENT_RE.test(userText)) return null;
   const targets = mk.detectMarketTargets(userText);
@@ -620,7 +625,10 @@ async function marketAnswer(userText: string): Promise<string | null> {
   const state = mk.detectState(userText);
   const city = mk.detectCity(userText);
   const blocks: string[] = [];
-  const missing: typeof targets = [];
+  const unavailable: Array<{
+    target: (typeof targets)[number];
+    discardedDate: string | null;
+  }> = [];
 
   for (const t of targets.slice(0, 3)) {
     const { series, note } = await mk
@@ -628,7 +636,11 @@ async function marketAnswer(userText: string): Promise<string | null> {
       .catch(() => ({ series: [], note: null }));
     const a = mk.analyze(series);
     if (!a) {
-      missing.push(t);
+      unavailable.push({ target: t, discardedDate: null });
+      continue;
+    }
+    if (!mk.isCurrentMarketQuote(a.last.reference_date)) {
+      unavailable.push({ target: t, discardedDate: a.last.reference_date });
       continue;
     }
     if (note) blocks.push(note);
@@ -648,26 +660,38 @@ async function marketAnswer(userText: string): Promise<string | null> {
       ? ` para ${state}`
       : "";
 
-  for (const t of missing) {
+  for (const { target: t, discardedDate } of unavailable) {
     const srcs = await mk.suggestedSources(t.category).catch(() => []);
     const ref = srcs.map((s) => `${s.name} (${s.org}): ${s.url}`).join(" · ");
     blocks.push(
-      `SEM DADO REGISTRADO NA BASE PRÓPRIA — não há cotação de ${t.label}${placeLabel} na base interna. ` +
+      `STATUS: SEM COTAÇÃO RECENTE — a base própria não tem publicação de hoje, ontem ou anteontem para ${t.label}${placeLabel}. ` +
+        (discardedDate
+          ? `O registro interno de ${mk.fmtDate(discardedDate)} foi descartado e o preço dele foi omitido por não ser corrente. `
+          : "Não há registro interno utilizável para essa combinação. ") +
         `INSTRUÇÃO OBRIGATÓRIA (ordem exata): 1) BUSQUE AGORA na web, em fontes oficiais de mercado (CEPEA/ESALQ, Scot Consultoria, B3, Notícias Agrícolas, Canal Rural, Conab, IEA, cooperativas e bolsas regionais), a cotação mais recente de ${t.label}${placeLabel} — ou, se a cidade pedida não tiver publicação, a da praça publicada mais próxima. ` +
         `2) Se encontrar, apresente o valor trazendo obrigatoriamente preço + unidade, praça, data de referência e fonte, deixando claro (de forma natural) que é referência de publicação de mercado e não da base própria; se for de outra praça, diga qual e lembre que frete, prazo e negociação alteram o preço local. ` +
         `2b) BUSCA APROFUNDADA OBRIGATÓRIA: antes de dizer que não achou, tente em sequência (a) a cidade pedida, (b) praças vizinhas da mesma região, (c) o indicador estadual, (d) o indicador nacional/CEPEA. ` +
         `2c) ENQUADRAMENTO: se encontrar QUALQUER referência confiável, NUNCA comece a resposta com "não encontrei"/"não há cotação". Comece pelo valor com selo 🟡 e só depois explique que é de outra praça/indicador e o que pode mudar o preço local. ` +
-        `3) Só se NENHUMA das quatro tentativas retornar algo confiável, diga com franqueza que não tem a cotação atualizada de ${t.label} agora e NÃO apresente valor algum. ` +
+        `3) Entregue o resultado nesta primeira resposta: nunca ofereça buscar, consultar ou comparar a referência mais recente em uma mensagem futura. ` +
+        `4) Só se NENHUMA das quatro tentativas retornar algo confiável, diga com franqueza que não tem a cotação atualizada de ${t.label} agora e NÃO apresente valor algum. ` +
         `NUNCA invente, estime, arredonde ou use preço de memória/material técnico. ` +
         (ref ? `Fontes oficiais para oferecer ao usuário: ${ref}.` : ""),
     );
   }
 
   if (blocks.length === 0) return null;
-  return [
-    "DADOS DE MERCADO (use exatamente estes números; nunca invente ou arredonde para outro valor):",
-    ...blocks,
-  ].join("\n");
+  return {
+    context: [
+      "DADOS DE MERCADO (use exatamente estes números; nunca invente ou arredonde para outro valor):",
+      ...blocks,
+    ].join("\n"),
+    freshness:
+      unavailable.length === 0
+        ? "fresh"
+        : unavailable.some((item) => item.discardedDate)
+          ? "stale"
+          : "missing",
+  };
 }
 
 // ---- Main router ---------------------------------------------------------
@@ -790,8 +814,13 @@ export async function routeQuery(
   }
 
   // ---- Cotações e indicadores de mercado (dados dinâmicos estruturados) ----
-  const marketBlock = await marketAnswer(userText).catch(() => null);
-  if (marketBlock) return { kind: "passthrough", marketContext: marketBlock };
+  const marketResult = await marketAnswer(userText).catch(() => null);
+  if (marketResult)
+    return {
+      kind: "passthrough",
+      marketContext: marketResult.context,
+      marketFreshness: marketResult.freshness,
+    };
 
   // Unidades: só responda com dados atuais recuperados do site.
   if (hasUnitWord && !hasSellerWord) {
