@@ -1,7 +1,7 @@
 // Semantic search over knowledge_chunks. Returns top matches with source metadata.
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { embedQuery, toPgVector } from "./embeddings.server";
+import { embeddingProvider, embedQuery, toPgVector } from "./embeddings.server";
 
 export interface Match {
   content: string;
@@ -22,6 +22,7 @@ export async function searchKnowledge(query: string, matchCount = 6): Promise<Ma
     const { data, error } = await supabaseAdmin.rpc("match_knowledge_chunks", {
       query_embedding: toPgVector(vec),
       match_count: matchCount * 2,
+      embedding_provider: embeddingProvider(),
     } as never);
     if (error) throw error;
     for (const match of (data ?? []) as Match[]) {

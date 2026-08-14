@@ -1,27 +1,41 @@
-// Embeddings via Lovable AI Gateway (Gemini embedding-001, 3072 dims).
-// LOVABLE_API_KEY is server-only; never sent to the client.
+// Embeddings via OpenAI (3072 dims, compatible with the existing pgvector
+// schema). OPENAI_API_KEY is server-only; never sent to the client.
 
-const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/embeddings";
-const MODEL = "google/gemini-embedding-001";
-const BATCH = 50; // Gemini caps at 100 inputs per request; stay well below.
+const OPENAI_EMBEDDINGS_URL = "https://api.openai.com/v1/embeddings";
+const DEFAULT_MODEL = "text-embedding-3-large";
+const DIMENSIONS = 3072;
+const BATCH = 50;
+
+export function embeddingModel(): string {
+  return process.env.OPENAI_EMBEDDING_MODEL || DEFAULT_MODEL;
+}
+
+export function embeddingProvider(): string {
+  return `openai:${embeddingModel()}:${DIMENSIONS}`;
+}
 
 export class EmbeddingError extends Error {
-  constructor(
-    message: string,
-    readonly status: number,
-  ) {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
     super(message);
+    this.status = status;
   }
 }
 
 async function embedBatch(inputs: string[], apiKey: string): Promise<number[][]> {
-  const res = await fetch(GATEWAY_URL, {
+  const res = await fetch(OPENAI_EMBEDDINGS_URL, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ model: MODEL, input: inputs }),
+    body: JSON.stringify({
+      model: embeddingModel(),
+      input: inputs,
+      dimensions: DIMENSIONS,
+      encoding_format: "float",
+    }),
   });
   if (!res.ok) {
     const body = await res.text().catch(() => "");
@@ -43,8 +57,8 @@ async function embedBatch(inputs: string[], apiKey: string): Promise<number[][]>
 }
 
 export async function embedTexts(texts: string[]): Promise<number[][]> {
-  const apiKey = process.env.LOVABLE_API_KEY;
-  if (!apiKey) throw new EmbeddingError("LOVABLE_API_KEY ausente no servidor.", 500);
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) throw new EmbeddingError("Serviço de embeddings indisponível.", 500);
   if (texts.length === 0) return [];
   const all: number[][] = [];
   for (let i = 0; i < texts.length; i += BATCH) {

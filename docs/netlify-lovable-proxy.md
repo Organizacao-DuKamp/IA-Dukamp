@@ -9,7 +9,9 @@ Navegador
   -> POST HTTPS /api/internal/chat no Lovable
   -> valida x-tpec-proxy-secret
   -> handleIncoming (TPEC_BACKEND_MODE=local)
-  -> Supabase principal + RAG + Lovable AI Gateway + Perplexity
+  -> Supabase principal + RAG/embeddings OpenAI
+  -> pesquisa externa Perplexity quando necessária
+  -> raciocínio e resposta final OpenAI
 ```
 
 O navegador nunca recebe `TPEC_PROXY_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`,
@@ -64,7 +66,7 @@ Os principais pontos são:
 - `src/lib/rag/ingest.server.ts`
   - importa `supabaseAdmin` e `embedTexts`
 - `src/lib/rag/embeddings.server.ts`
-  - lê `LOVABLE_API_KEY`
+  - lê `OPENAI_API_KEY`
   - implementa `embedQuery` e `embedTexts`
 - `src/lib/knowledge.functions.ts`
   - importa dinamicamente `supabaseAdmin` e o pipeline de ingestão
@@ -87,15 +89,22 @@ TPEC_BACKEND_MODE=local
 TPEC_PROXY_SECRET=<mesmo-segredo-grande-e-aleatorio>
 ```
 
-O Lovable continua fornecendo internamente:
+O backend local do Lovable deve receber:
 
 ```env
 SUPABASE_SERVICE_ROLE_KEY=...
-LOVABLE_API_KEY=...
+OPENAI_API_KEY=...
+PERPLEXITY_API_KEY=...
 ```
 
-As demais chaves server-side usadas pelo backend local, como Perplexity, continuam
-no Lovable.
+Configuração opcional dos modelos:
+
+```env
+OPENAI_CAPABLE_MODEL=gpt-5
+OPENAI_FAST_MODEL=gpt-5-mini
+OPENAI_EMBEDDING_MODEL=text-embedding-3-large
+PERPLEXITY_MODEL=sonar
+```
 
 ## Configuração na Netlify
 
@@ -109,7 +118,8 @@ A Netlify não precisa de:
 
 ```env
 SUPABASE_SERVICE_ROLE_KEY
-LOVABLE_API_KEY
+OPENAI_API_KEY
+PERPLEXITY_API_KEY
 ```
 
 O Supabase comercial secundário permanece independente:

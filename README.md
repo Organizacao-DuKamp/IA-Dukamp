@@ -10,7 +10,8 @@ Assistente de IA especialista em pecuária brasileira, com chat web, memória cu
 - Lovable Cloud como backend privilegiado
 - Supabase principal para RAG e dados internos
 - Supabase secundário DuKamp para produtos e vendedores públicos
-- Perplexity como provedor principal de respostas
+- OpenAI para raciocínio, resposta final e embeddings do RAG
+- Perplexity exclusivamente para pesquisa externa atual
 
 ## Desenvolvimento local
 
@@ -29,7 +30,7 @@ Navegador
   -> função server da Netlify
   -> POST /api/internal/chat no Lovable, autenticado por segredo
   -> handleIncoming
-  -> Supabase principal + RAG + Lovable AI Gateway + Perplexity
+  -> Supabase principal + RAG OpenAI + pesquisa Perplexity + resposta OpenAI
 ```
 
 A decisão ocorre no servidor:
@@ -44,12 +45,32 @@ TPEC_BACKEND_MODE=local
 TPEC_PROXY_SECRET=<segredo-grande-e-aleatorio>
 ```
 
-O Lovable continua gerenciando internamente:
+O backend local no Lovable deve receber como segredos:
 
 ```env
 SUPABASE_SERVICE_ROLE_KEY=...
-LOVABLE_API_KEY=...
+OPENAI_API_KEY=...
+PERPLEXITY_API_KEY=...
 ```
+
+Modelos podem ser definidos sem alterar código:
+
+```env
+OPENAI_CAPABLE_MODEL=gpt-5
+OPENAI_FAST_MODEL=gpt-5-mini
+OPENAI_EMBEDDING_MODEL=text-embedding-3-large
+PERPLEXITY_MODEL=sonar
+```
+
+O fluxo por mensagem é: bancos internos e RAG recuperam evidências; quando a
+pergunta exige informação atual, a Perplexity pesquisa a web; por fim, a OpenAI
+recebe histórico, estado, RAG e pesquisa para raciocinar e produzir a única
+resposta enviada ao usuário.
+
+Depois da migração para embeddings OpenAI, documentos legados aparecem como
+`aguardando` no painel da base de conhecimento. A busca lexical continua
+funcionando durante a transição. Use **Processar pendentes** para reindexá-los
+gradualmente no novo espaço vetorial.
 
 ### Netlify
 
@@ -59,7 +80,8 @@ LOVABLE_BACKEND_URL=https://URL-REAL-DA-APLICACAO-LOVABLE
 TPEC_PROXY_SECRET=<mesmo-segredo-do-Lovable>
 ```
 
-A Netlify não precisa receber `SUPABASE_SERVICE_ROLE_KEY` nem `LOVABLE_API_KEY`.
+A Netlify não precisa receber `SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY`
+nem `PERPLEXITY_API_KEY`.
 
 Depois de cadastrar as variáveis:
 

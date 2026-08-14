@@ -1,7 +1,7 @@
 import type { supabaseAdmin as SupabaseAdmin } from "@/integrations/supabase/client.server";
 import { getRequestPrivilegedClient } from "@/lib/privileged.server";
 import { chunkText } from "./chunking.server";
-import { embedTexts, toPgVector } from "./embeddings.server";
+import { embeddingProvider, embedTexts, toPgVector } from "./embeddings.server";
 
 interface DocMeta {
   id: string;
@@ -43,6 +43,7 @@ export async function ingestDocument(
     chunk_index: i,
     content,
     embedding: toPgVector(vectors[i]),
+    metadata: { embedding_provider: embeddingProvider() },
     category: doc.category,
     subcategory: doc.subcategory,
     filename: doc.filename,

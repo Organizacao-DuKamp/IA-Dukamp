@@ -743,7 +743,11 @@ export type Database = {
         Returns: boolean
       }
       match_knowledge_chunks: {
-        Args: { match_count?: number; query_embedding: string }
+        Args: {
+          embedding_provider?: string
+          match_count?: number
+          query_embedding: string
+        }
         Returns: {
           category: string
           content: string

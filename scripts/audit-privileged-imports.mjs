@@ -5,7 +5,8 @@ const root = "src";
 const patterns = [
   "supabaseAdmin",
   "SUPABASE_SERVICE_ROLE_KEY",
-  "LOVABLE_API_KEY",
+  "OPENAI_API_KEY",
+  "PERPLEXITY_API_KEY",
   "embedQuery",
   "embedTexts",
   "handleIncoming",

@@ -203,7 +203,8 @@ function AdminKnowledgeBase() {
         )}
         {statData && (
           <p className="text-xs text-muted-foreground">
-            {statData.chunks} trechos indexados com embeddings (Gemini · 3072d).
+            {statData.chunks} trechos indexados. Novos documentos e reprocessamentos usam embeddings
+            OpenAI · 3072d; a busca lexical permanece como fallback durante a migração.
           </p>
         )}
 

@@ -229,8 +229,8 @@ export async function processWhatsAppChat(
     const core = ChatCoreResultSchema.parse(result.body);
     const nextHistory: ChatMessage[] = [
       ...(previous?.history ?? []),
-      { role: "user", content: input.text },
-      { role: "assistant", content: core.reply },
+      { role: "user" as const, content: input.text },
+      { role: "assistant" as const, content: core.reply },
     ].slice(-MAX_HISTORY_MESSAGES);
 
     await deps.saveConversation(input.phone, {
