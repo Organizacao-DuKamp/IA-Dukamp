@@ -10,7 +10,7 @@ const STORAGE_KEY = "tpec-ia:conversation:v1";
 export interface PersistedConversation {
   conversationId: string;
   sessionId: string;
-  messages: Array<ChatMessage & { id: string }>;
+  messages: Array<ChatMessage & { id: string; providerLabel?: string }>;
   state: string | null;
   updatedAt: string;
 }
@@ -79,6 +79,7 @@ type PublicChatResponse = {
   code?: string;
   state?: string;
   conversationId?: string;
+  providerLabel?: string;
 };
 
 export class WebChatAdapter implements ChannelAdapter {
@@ -117,7 +118,7 @@ export class WebChatAdapter implements ChannelAdapter {
     text: string,
     history: ChatMessage[],
     clientMessageId: string,
-  ): Promise<{ reply: string; state: string | null }> {
+  ): Promise<{ reply: string; state: string | null; providerLabel?: string }> {
     const response = await fetch("/api/public/chat", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -145,7 +146,7 @@ export class WebChatAdapter implements ChannelAdapter {
     if (result.state) this.state = result.state;
     if (result.conversationId) this.conversationId = result.conversationId;
     this.send({ sessionId: this.sessionId, text: reply });
-    return { reply, state: this.state };
+    return { reply, state: this.state, providerLabel: result.providerLabel };
   }
 
   send(message: OutgoingMessage) {

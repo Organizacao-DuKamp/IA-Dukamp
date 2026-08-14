@@ -27,7 +27,7 @@ export const Route = createFileRoute("/")({
   component: ChatPage,
 });
 
-type UIMessage = ChatMessage & { id: string };
+type UIMessage = ChatMessage & { id: string; providerLabel?: string };
 
 function ChatPage() {
   const [conv] = useState(() => loadConversation());
@@ -75,10 +75,10 @@ function ChatPage() {
     setInput("");
     setLoading(true);
     try {
-      const { reply } = await adapter.ask(text, history, clientMessageId);
+      const { reply, providerLabel } = await adapter.ask(text, history, clientMessageId);
       const next: UIMessage[] = [
         ...withUser,
-        { id: crypto.randomUUID(), role: "assistant", content: reply },
+        { id: crypto.randomUUID(), role: "assistant", content: reply, providerLabel },
       ];
       setMessages(next);
       persist(next);
@@ -202,9 +202,16 @@ function MessageBubble({ message }: { message: UIMessage }) {
         {isUser ? (
           <p className="whitespace-pre-wrap">{message.content}</p>
         ) : (
-          <div className="prose prose-sm max-w-none prose-headings:mt-3 prose-headings:mb-2 prose-p:my-2 prose-ul:my-2 prose-li:my-0.5 prose-strong:text-foreground">
-            <ReactMarkdown>{message.content}</ReactMarkdown>
-          </div>
+          <>
+            {message.providerLabel && (
+              <div className="mb-1.5 inline-flex rounded-full border border-border bg-secondary/60 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                {message.providerLabel}
+              </div>
+            )}
+            <div className="prose prose-sm max-w-none prose-headings:mt-3 prose-headings:mb-2 prose-p:my-2 prose-ul:my-2 prose-li:my-0.5 prose-strong:text-foreground">
+              <ReactMarkdown>{message.content}</ReactMarkdown>
+            </div>
+          </>
         )}
       </div>
     </div>

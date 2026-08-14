@@ -28,6 +28,25 @@ function safeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
+function providerLabelFromDiagnostics(diagnostics: unknown): string | undefined {
+  if (!diagnostics || typeof diagnostics !== "object") return undefined;
+
+  const record = diagnostics as Record<string, unknown>;
+  const model = typeof record.model === "string" ? record.model : "";
+  const retrieved = Array.isArray(record.retrieved_blocks)
+    ? record.retrieved_blocks.filter((value): value is string => typeof value === "string")
+    : [];
+
+  const directWithoutModel = new Set(["acknowledgement-stop", "small-talk", "sql-direto"]);
+  const providers: string[] = [];
+
+  if (model && !directWithoutModel.has(model)) providers.push("ChatGPT");
+  if (retrieved.some((block) => block.startsWith("perplexity:"))) providers.push("Perplexity");
+  if (retrieved.some((block) => block.startsWith("rag:"))) providers.push("RAG");
+
+  return providers.length > 0 ? providers.join(" + ") : undefined;
+}
+
 async function parseInput(request: Request): Promise<ChatInput> {
   const declared = Number(request.headers.get("content-length") ?? 0);
   if (declared > MAX_CHAT_PROXY_BODY_BYTES) {
@@ -81,6 +100,7 @@ export async function handlePublicChatRequest(
           reply: body.reply,
           state: JSON.stringify(body.state),
           conversationId: body.conversationId,
+          providerLabel: providerLabelFromDiagnostics(body.diagnostics),
         },
         result.status,
       );
