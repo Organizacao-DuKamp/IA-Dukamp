@@ -147,6 +147,7 @@ export const processNextPending = createServerFn({ method: "POST" })
         .from("knowledge_documents")
         .update({ status: "erro", error_message: msg })
         .eq("id", doc.id);
+      console.error(`[knowledge] erro ao processar ${doc.title}:`, err);
       return { done: false as const, id: doc.id, title: doc.title, error: msg };
     }
   });
