@@ -366,7 +366,7 @@ function StatusBadge({ status }: { status: Doc["status"] }) {
     <span
       className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-medium ${map[status]}`}
     >
-      {status}
+      {status === "processando" ? "processando..." : status}
     </span>
   );
 }
