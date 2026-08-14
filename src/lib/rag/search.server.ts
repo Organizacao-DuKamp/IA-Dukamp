@@ -1,6 +1,5 @@
 // Semantic search over knowledge_chunks. Returns top matches with source metadata.
 
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { embeddingProvider, embedQuery, toPgVector } from "./embeddings.server";
 
 export interface Match {
@@ -13,6 +12,16 @@ export interface Match {
 }
 
 export async function searchKnowledge(query: string, matchCount = 6): Promise<Match[]> {
+  // A base RAG é privada e suas RPCs aceitam apenas service_role. Em runtimes
+  // públicos como a Netlify, onde essa chave deliberadamente não existe, não
+  // tente inicializar o cliente privilegiado. O orquestrador continuará com
+  // as demais fontes disponíveis (catálogo/site/Perplexity/OpenAI).
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()) {
+    console.warn("[RAG] busca interna ignorada neste runtime: service role indisponível.");
+    return [];
+  }
+
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const byKey = new Map<string, Match>();
   const errors: string[] = [];
 

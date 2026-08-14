@@ -59,6 +59,27 @@ function instructions(options: OpenAIOptions): string {
   return layers.join("\n\n");
 }
 
+type ResponsesPayload = {
+  output_text?: string;
+  output?: Array<{ content?: Array<{ type?: string; text?: string }> }>;
+  status?: string;
+  incomplete_details?: { reason?: string } | null;
+};
+
+function extractResponseText(data: ResponsesPayload): string | undefined {
+  return (
+    data.output_text?.trim() ||
+    data.output
+      ?.flatMap((o) => o.content ?? [])
+      .find((c) => c.type === "output_text")
+      ?.text?.trim()
+  );
+}
+
+function supportsReasoningConfig(model: string): boolean {
+  return /^(gpt-5|o\d|o[134](?:-|$))/i.test(model);
+}
+
 export async function askOpenAI(
   history: ChatMessage[],
   options: OpenAIOptions = {},
@@ -71,51 +92,72 @@ export async function askOpenAI(
     throw new OpenAIError("Serviço de IA indisponível no momento.", 500);
   }
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? 30_000);
-  try {
-    const response = await (options.fetchImpl ?? fetch)(ENDPOINT, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: openAIModel(options.model),
+  const model = openAIModel(options.model);
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const input = history
+    .filter((m) => m.role !== "system")
+    .map((m) => ({ role: m.role, content: m.content }));
+
+  async function requestResponse(maxOutputTokens: number, reasoningEffort: "minimal" | "low") {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? 45_000);
+    try {
+      const body: Record<string, unknown> = {
+        model,
         instructions: instructions(options),
-        input: history
-          .filter((m) => m.role !== "system")
-          .map((m) => ({ role: m.role, content: m.content })),
-        max_output_tokens: 1200,
+        input,
+        // Em modelos de raciocínio, este limite inclui raciocínio + texto visível.
+        // 1200 era baixo o bastante para ocasionalmente terminar sem output_text.
+        max_output_tokens: maxOutputTokens,
         store: false,
-      }),
-      signal: controller.signal,
-    });
-    if (!response.ok) {
-      const body = await response.text().catch(() => "");
-      if (response.status === 429 && /quota|billing|credit/i.test(body)) {
-        throw new OpenAIError("Os créditos da API da OpenAI estão esgotados.", 402);
+      };
+      if (supportsReasoningConfig(model)) body.reasoning = { effort: reasoningEffort };
+
+      const response = await fetchImpl(ENDPOINT, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+      if (!response.ok) {
+        const raw = await response.text().catch(() => "");
+        if (response.status === 429 && /quota|billing|credit/i.test(raw)) {
+          throw new OpenAIError("Os créditos da API da OpenAI estão esgotados.", 402);
+        }
+        if (response.status === 429) {
+          throw new OpenAIError("Muitas requisições à IA. Aguarde alguns segundos.", 429);
+        }
+        throw new OpenAIError("Falha ao consultar a IA.", response.status);
       }
-      if (response.status === 429) {
-        throw new OpenAIError("Muitas requisições à IA. Aguarde alguns segundos.", 429);
-      }
-      throw new OpenAIError("Falha ao consultar a IA.", response.status);
+      return (await response.json()) as ResponsesPayload;
+    } catch (error) {
+      if (error instanceof OpenAIError) throw error;
+      if ((error as Error).name === "AbortError")
+        throw new OpenAIError("A IA demorou demais para responder.", 504);
+      throw new OpenAIError("Não foi possível contatar o serviço de IA.", 502);
+    } finally {
+      clearTimeout(timeout);
     }
-    const data = (await response.json()) as {
-      output_text?: string;
-      output?: Array<{ content?: Array<{ type?: string; text?: string }> }>;
-    };
-    const text =
-      data.output_text?.trim() ||
-      data.output
-        ?.flatMap((o) => o.content ?? [])
-        .find((c) => c.type === "output_text")
-        ?.text?.trim();
-    if (!text) throw new OpenAIError("Resposta vazia da IA.", 502);
-    return text;
-  } catch (error) {
-    if (error instanceof OpenAIError) throw error;
-    if ((error as Error).name === "AbortError")
-      throw new OpenAIError("A IA demorou demais para responder.", 504);
-    throw new OpenAIError("Não foi possível contatar o serviço de IA.", 502);
-  } finally {
-    clearTimeout(timeout);
   }
+
+  let data = await requestResponse(3_000, "low");
+  let text = extractResponseText(data);
+
+  // Se o orçamento foi consumido pelo raciocínio antes de sair texto visível,
+  // faça uma única tentativa mais econômica em raciocínio e com orçamento maior.
+  if (!text && data.status === "incomplete" && data.incomplete_details?.reason === "max_output_tokens") {
+    console.warn("[tpec-ai] resposta incompleta por limite de saída; repetindo com orçamento maior.");
+    data = await requestResponse(5_000, "minimal");
+    text = extractResponseText(data);
+  }
+
+  if (!text) {
+    console.error("[tpec-ai] resposta sem texto", {
+      status: data.status ?? null,
+      incomplete_reason: data.incomplete_details?.reason ?? null,
+      model,
+    });
+    throw new OpenAIError("Resposta vazia da IA.", 502);
+  }
+  return text;
 }
