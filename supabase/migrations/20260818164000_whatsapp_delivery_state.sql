@@ -1,5 +1,9 @@
 -- Separa "resposta calculada" de "resposta já entregue" no WhatsApp.
 --
+-- ORDEM DE DEPLOY: aplicar esta migração ANTES de publicar a versão do app que
+-- usa o lifecycle novo, pois o store server-side passa a ler/escrever
+-- delivered_at assim que o código atualizado estiver ativo.
+--
 -- Antes desta migração, status='completed' + reply significava apenas que a IA
 -- terminou. O webhook não persistia se a Graph API realmente entregou a
 -- resposta. A coluna explícita evita reenvios duplicados em retries da Meta e
