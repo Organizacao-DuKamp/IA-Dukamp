@@ -20,6 +20,7 @@ import { Route as ApiPublicMarketIngestRouteImport } from './routes/api/public/m
 import { Route as ApiPublicDiagRouteImport } from './routes/api/public/diag'
 import { Route as ApiPublicChatTestRouteImport } from './routes/api/public/chat-test'
 import { Route as ApiPublicChatRouteImport } from './routes/api/public/chat'
+import { Route as ApiInternalWhatsappControlRouteImport } from './routes/api/internal/whatsapp-control'
 import { Route as ApiInternalWhatsappChatRouteImport } from './routes/api/internal/whatsapp-chat'
 import { Route as ApiInternalChatRouteImport } from './routes/api/internal/chat'
 import { Route as AuthenticatedAdminProdutosRouteImport } from './routes/_authenticated/admin.produtos'
@@ -80,6 +81,12 @@ const ApiPublicChatRoute = ApiPublicChatRouteImport.update({
   path: '/api/public/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiInternalWhatsappControlRoute =
+  ApiInternalWhatsappControlRouteImport.update({
+    id: '/api/internal/whatsapp-control',
+    path: '/api/internal/whatsapp-control',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiInternalWhatsappChatRoute = ApiInternalWhatsappChatRouteImport.update({
   id: '/api/internal/whatsapp-chat',
   path: '/api/internal/whatsapp-chat',
@@ -120,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/admin/produtos': typeof AuthenticatedAdminProdutosRoute
   '/api/internal/chat': typeof ApiInternalChatRoute
   '/api/internal/whatsapp-chat': typeof ApiInternalWhatsappChatRoute
+  '/api/internal/whatsapp-control': typeof ApiInternalWhatsappControlRoute
   '/api/public/chat': typeof ApiPublicChatRoute
   '/api/public/chat-test': typeof ApiPublicChatTestRoute
   '/api/public/diag': typeof ApiPublicDiagRoute
@@ -137,6 +145,7 @@ export interface FileRoutesByTo {
   '/admin/produtos': typeof AuthenticatedAdminProdutosRoute
   '/api/internal/chat': typeof ApiInternalChatRoute
   '/api/internal/whatsapp-chat': typeof ApiInternalWhatsappChatRoute
+  '/api/internal/whatsapp-control': typeof ApiInternalWhatsappControlRoute
   '/api/public/chat': typeof ApiPublicChatRoute
   '/api/public/chat-test': typeof ApiPublicChatTestRoute
   '/api/public/diag': typeof ApiPublicDiagRoute
@@ -156,6 +165,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/produtos': typeof AuthenticatedAdminProdutosRoute
   '/api/internal/chat': typeof ApiInternalChatRoute
   '/api/internal/whatsapp-chat': typeof ApiInternalWhatsappChatRoute
+  '/api/internal/whatsapp-control': typeof ApiInternalWhatsappControlRoute
   '/api/public/chat': typeof ApiPublicChatRoute
   '/api/public/chat-test': typeof ApiPublicChatTestRoute
   '/api/public/diag': typeof ApiPublicDiagRoute
@@ -175,6 +185,7 @@ export interface FileRouteTypes {
     | '/admin/produtos'
     | '/api/internal/chat'
     | '/api/internal/whatsapp-chat'
+    | '/api/internal/whatsapp-control'
     | '/api/public/chat'
     | '/api/public/chat-test'
     | '/api/public/diag'
@@ -192,6 +203,7 @@ export interface FileRouteTypes {
     | '/admin/produtos'
     | '/api/internal/chat'
     | '/api/internal/whatsapp-chat'
+    | '/api/internal/whatsapp-control'
     | '/api/public/chat'
     | '/api/public/chat-test'
     | '/api/public/diag'
@@ -210,6 +222,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/produtos'
     | '/api/internal/chat'
     | '/api/internal/whatsapp-chat'
+    | '/api/internal/whatsapp-control'
     | '/api/public/chat'
     | '/api/public/chat-test'
     | '/api/public/diag'
@@ -226,6 +239,7 @@ export interface RootRouteChildren {
   TermosDeUsoRoute: typeof TermosDeUsoRoute
   ApiInternalChatRoute: typeof ApiInternalChatRoute
   ApiInternalWhatsappChatRoute: typeof ApiInternalWhatsappChatRoute
+  ApiInternalWhatsappControlRoute: typeof ApiInternalWhatsappControlRoute
   ApiPublicChatRoute: typeof ApiPublicChatRoute
   ApiPublicChatTestRoute: typeof ApiPublicChatTestRoute
   ApiPublicDiagRoute: typeof ApiPublicDiagRoute
@@ -312,6 +326,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicChatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/internal/whatsapp-control': {
+      id: '/api/internal/whatsapp-control'
+      path: '/api/internal/whatsapp-control'
+      fullPath: '/api/internal/whatsapp-control'
+      preLoaderRoute: typeof ApiInternalWhatsappControlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/internal/whatsapp-chat': {
       id: '/api/internal/whatsapp-chat'
       path: '/api/internal/whatsapp-chat'
@@ -375,6 +396,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermosDeUsoRoute: TermosDeUsoRoute,
   ApiInternalChatRoute: ApiInternalChatRoute,
   ApiInternalWhatsappChatRoute: ApiInternalWhatsappChatRoute,
+  ApiInternalWhatsappControlRoute: ApiInternalWhatsappControlRoute,
   ApiPublicChatRoute: ApiPublicChatRoute,
   ApiPublicChatTestRoute: ApiPublicChatTestRoute,
   ApiPublicDiagRoute: ApiPublicDiagRoute,

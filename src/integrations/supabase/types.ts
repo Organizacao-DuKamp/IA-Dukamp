@@ -760,6 +760,7 @@ export type Database = {
       whatsapp_processed_messages: {
         Row: {
           created_at: string
+          delivered_at: string | null
           message_id: string
           phone_number: string
           reply: string | null
@@ -768,6 +769,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          delivered_at?: string | null
           message_id: string
           phone_number: string
           reply?: string | null
@@ -776,6 +778,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          delivered_at?: string | null
           message_id?: string
           phone_number?: string
           reply?: string | null
