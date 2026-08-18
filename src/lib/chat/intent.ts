@@ -42,7 +42,13 @@ const rules: Array<[IntentClassification["intent"], RegExp, boolean, boolean]> =
   ],
   [
     "market_quote",
-    /\b(boi gordo|arroba|cota[cç][aã]o|mercado|pre[cç]o do leite|soja|milho)\b/i,
+    /\b(boi gordo|arroba|cota[cç][aã]o|pre[cç]o do leite|pre[cç]o da arroba|soja|milho)\b|\b(pre[cç]o|valor|cota[cç][aã]o)\b.{0,100}\b(carnes?|carne bovina|bovinos?|su[ií]nos?|frango|aves?|leite|boi|novilha|vaca|soja|milho)\b|\b(carnes?|carne bovina|bovinos?|su[ií]nos?|frango|aves?|leite|boi|novilha|vaca|soja|milho)\b.{0,100}\b(pre[cç]o|valor|cota[cç][aã]o)\b/i,
+    false,
+    true,
+  ],
+  [
+    "current_research",
+    /\b(mercado|cen[aá]rio|setor|panorama)\b.{0,100}\b(carnes?|carne bovina|prote[ií]na animal|pecu[aá]ria|bovinos?|su[ií]nos?|frango|aves?|leite)\b|\b(carnes?|carne bovina|prote[ií]na animal|pecu[aá]ria|bovinos?|su[ií]nos?|frango|aves?|leite)\b.{0,100}\b(mercado|cen[aá]rio|setor|panorama)\b/i,
     false,
     true,
   ],
@@ -91,7 +97,7 @@ const rules: Array<[IntentClassification["intent"], RegExp, boolean, boolean]> =
   ["document_or_image", /\b(pdf|documento|arquivo|imagem|foto|anexo|[aá]udio)\b/i, true, false],
   ["store", /\b(loja|unidade|matriz|endere[cç]o|hor[aá]rio)\b/i, true, false],
   ["human_support", /\b(atendente|humano|pessoa|sac|suporte)\b/i, true, false],
-  ["current_research", /\b(hoje|agora|atual|not[ií]cia|clima|previs[aã]o)\b/i, false, true],
+  ["current_research", /\b(hoje|agora|atual|not[ií]cia|clima|previs[aã]o|mercado)\b/i, false, true],
 ];
 
 export function classifyDomainIntent(text: string, hasHistory = false): IntentClassification {
