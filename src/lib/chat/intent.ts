@@ -43,20 +43,23 @@ const rules: Array<[IntentClassification["intent"], RegExp, boolean, boolean]> =
     true,
     false,
   ],
-  // Cotação exige um sinal explícito de preço/cotação, ou commodity + "hoje/agora"
-  // em formulação curta. Nomes como "milho" e "soja" sozinhos não podem mandar
-  // uma dúvida de nutrição/manejo para o fluxo rígido de preços.
+  [
+    "market_quote",
+    /^(?:e\s+)?(?:qual\s+(?:o|a)\s+)?(?:o\s+|a\s+)?(boi gordo|boi china|soja|milho|leite)\s+(?:de\s+)?(hoje|agora)\s*[?.!]*$/i,
+    false,
+    true,
+  ],
+  // Cotação exige um sinal explícito de preço/cotação. Nomes como "milho" e
+  // "soja" sozinhos não podem mandar uma dúvida de nutrição para o fluxo rígido.
   [
     "market_quote",
     new RegExp(
-      `\\b(pre[cç]o|valor|cota[cç][aã]o|quanto (?:est[aá]|t[aá])|quanto custa|arroba)\\b.{0,100}\\b(${QUOTE_COMMODITIES})\\b|\\b(${QUOTE_COMMODITIES})\\b.{0,100}\\b(pre[cç]o|valor|cota[cç][aã]o|quanto (?:est[aá]|t[aá])|quanto custa|arroba)\\b|\\b(boi gordo|boi china|soja|milho|leite)\\b.{0,40}\\b(hoje|agora)\\b`,
+      `\\b(pre[cç]o|valor|cota[cç][aã]o|quanto (?:est[aá]|t[aá])|quanto custa|arroba)\\b.{0,100}\\b(${QUOTE_COMMODITIES})\\b|\\b(${QUOTE_COMMODITIES})\\b.{0,100}\\b(pre[cç]o|valor|cota[cç][aã]o|quanto (?:est[aá]|t[aá])|quanto custa|arroba)\\b`,
       "i",
     ),
     false,
     true,
   ],
-  // Panorama/tendência de mercado é pesquisa atual, não cotação. Isso evita
-  // exigir artificialmente preço + praça de uma pergunta sobre cenário do setor.
   [
     "current_research",
     /\b(mercado|cen[aá]rio|setor|panorama|tend[eê]ncia)\b.{0,100}\b(carnes?|carne bovina|prote[ií]na animal|pecu[aá]ria|bovinos?|su[ií]nos?|frango|aves?|leite|soja|milho|gr[aã]os?)\b|\b(carnes?|carne bovina|prote[ií]na animal|pecu[aá]ria|bovinos?|su[ií]nos?|frango|aves?|leite|soja|milho|gr[aã]os?)\b.{0,100}\b(mercado|cen[aá]rio|setor|panorama|tend[eê]ncia)\b/i,
@@ -89,8 +92,6 @@ const rules: Array<[IntentClassification["intent"], RegExp, boolean, boolean]> =
     true,
     false,
   ],
-  // Grãos em contexto alimentar são nutrição; "milho"/"soja" não significam
-  // automaticamente cotação.
   [
     "nutrition",
     /\b(dar|fornecer|oferecer|misturar|incluir|dieta|ra[cç][aã]o|alimentar|consumo)\b.{0,80}\b(milho|soja|farelo)\b|\b(milho|soja|farelo)\b.{0,80}\b(dar|fornecer|oferecer|misturar|incluir|dieta|ra[cç][aã]o|alimentar|consumo)\b/i,
