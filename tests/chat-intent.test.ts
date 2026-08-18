@@ -71,6 +71,14 @@ test("short implicit quote still understands corn today", () => {
   assert.equal(result.needs_web_search, true);
 });
 
+test("product price mentioning corn stays internal instead of becoming a corn quote", () => {
+  const result = classifyDomainIntent("qual o preço do suplemento com milho?");
+
+  assert.equal(result.intent, "internal_price");
+  assert.equal(result.needs_internal_search, true);
+  assert.equal(result.needs_web_search, false);
+});
+
 test("soy market panorama is current research rather than a price quote", () => {
   const result = classifyDomainIntent("qual o panorama do mercado de soja hoje?");
 
