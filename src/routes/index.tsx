@@ -18,7 +18,7 @@ export const Route = createFileRoute("/")({
       {
         property: "og:description",
         content:
-          "TPEC-IA é uma assistente de IA em português voltada à pecuária brasileira: manejo, nutrição, pastagens, reprodução, sanidade e gestão da propriedade.",
+          "TPEC-IA é uma assistente de IA em pecuária brasileira: manejo, nutrição, pastagens, reprodução, sanidade e gestão da propriedade.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -27,7 +27,33 @@ export const Route = createFileRoute("/")({
   component: ChatPage,
 });
 
-type UIMessage = ChatMessage & { id: string; providerLabel?: string };
+type UIMessage = ChatMessage & {
+  id: string;
+  providerLabel?: string;
+  transient?: boolean;
+  presentation?: "status" | "error";
+};
+
+function initialProgressMessage(text: string): string {
+  if (/\b(hoje|agora|atual|mercado|cota[cç][aã]o|pre[cç]o|not[ií]cia|clima)\b/i.test(text)) {
+    return "Humm, vou conferir as informações mais recentes sobre isso. Só um instante.";
+  }
+  return "Entendi. Vou verificar isso com cuidado para te responder direito.";
+}
+
+function friendlyChatError(error: unknown): string {
+  const message = error instanceof Error ? error.message : "";
+  if (/demorou|timeout|tempo limite/i.test(message)) {
+    return "Poxa, essa consulta demorou mais do que deveria e eu não consegui concluir agora. Pode mandar a pergunta novamente que eu tento uma nova consulta.";
+  }
+  if (/pesquisa atual|consultar a pesquisa|perplexity/i.test(message)) {
+    return "Tive um problema ao consultar as informações mais recentes e não consegui confirmar a resposta agora. Prefiro te avisar do que inventar um resultado. Tente novamente em instantes.";
+  }
+  if (/muitas (mensagens|requisi[cç][oõ]es|pesquisas)/i.test(message)) {
+    return "Recebi muitas consultas em sequência e não consegui processar esta agora. Tente novamente em alguns instantes.";
+  }
+  return "Ops, ocorreu um problema enquanto eu verificava isso e eu não consegui concluir a resposta. Pode tentar novamente em instantes.";
+}
 
 function ChatPage() {
   const [conv] = useState(() => loadConversation());
@@ -48,10 +74,13 @@ function ChatPage() {
   }, [loading]);
 
   function persist(next: UIMessage[]) {
+    const durable = next
+      .filter((message) => !message.transient)
+      .map(({ id, role, content, providerLabel }) => ({ id, role, content, providerLabel }));
     saveConversation({
       conversationId: adapter.getConversationId(),
       sessionId: adapter.getSessionId(),
-      messages: next,
+      messages: durable,
       state: adapter.getState(),
       updatedAt: new Date().toISOString(),
     });
@@ -68,23 +97,73 @@ function ChatPage() {
     setError(null);
     const clientMessageId = crypto.randomUUID();
     const userMsg: UIMessage = { id: clientMessageId, role: "user", content: text };
-    const history = messages.map(({ role, content }) => ({ role, content }));
+    const history = messages
+      .filter((message) => !message.transient)
+      .map(({ role, content }) => ({ role, content }));
     const withUser = [...messages, userMsg];
-    setMessages(withUser);
+    const firstStatus: UIMessage = {
+      id: crypto.randomUUID(),
+      role: "assistant",
+      content: initialProgressMessage(text),
+      transient: true,
+      presentation: "status",
+    };
+    setMessages([...withUser, firstStatus]);
     persist(withUser);
     setInput("");
     setLoading(true);
+
+    const timers = [
+      window.setTimeout(() => {
+        setMessages((current) => [
+          ...current,
+          {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content: "Ainda estou cruzando as informações para não te passar algo desatualizado ou incompleto.",
+            transient: true,
+            presentation: "status",
+          },
+        ]);
+      }, 7_000),
+      window.setTimeout(() => {
+        setMessages((current) => [
+          ...current,
+          {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content:
+              "Está levando um pouco mais que o normal para achar resultados confiáveis. Continuo verificando por aqui.",
+            transient: true,
+            presentation: "status",
+          },
+        ]);
+      }, 16_000),
+    ];
+
     try {
       const { reply, providerLabel } = await adapter.ask(text, history, clientMessageId);
-      const next: UIMessage[] = [
-        ...withUser,
-        { id: crypto.randomUUID(), role: "assistant", content: reply, providerLabel },
-      ];
-      setMessages(next);
-      persist(next);
+      const finalMessage: UIMessage = {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: reply,
+        providerLabel,
+      };
+      setMessages((current) => [...current, finalMessage]);
+      persist([...withUser, finalMessage]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao consultar a IA.");
+      setMessages((current) => [
+        ...current,
+        {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: friendlyChatError(err),
+          transient: true,
+          presentation: "error",
+        },
+      ]);
     } finally {
+      timers.forEach((timer) => window.clearTimeout(timer));
       setLoading(false);
     }
   }
@@ -124,19 +203,9 @@ function ChatPage() {
       <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4">
         <div ref={listRef} className="flex-1 space-y-4 overflow-y-auto py-6">
           {messages.length === 0 && !loading && <EmptyState onPick={setInput} />}
-          {messages.map((m) => (
-            <MessageBubble key={m.id} message={m} />
+          {messages.map((message) => (
+            <MessageBubble key={message.id} message={message} />
           ))}
-          {loading && (
-            <div className="flex items-center gap-2 pl-1 text-sm text-muted-foreground">
-              <span className="flex gap-1">
-                <span className="h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:-0.3s]" />
-                <span className="h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:-0.15s]" />
-                <span className="h-2 w-2 animate-bounce rounded-full bg-primary" />
-              </span>
-              TPEC-IA está pensando…
-            </div>
-          )}
         </div>
 
         {error && (
@@ -154,7 +223,6 @@ function ChatPage() {
               ref={inputRef}
               autoFocus
               value={input}
-
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
@@ -190,16 +258,23 @@ function ChatPage() {
 
 function MessageBubble({ message }: { message: UIMessage }) {
   const isUser = message.role === "user";
+  const isStatus = message.presentation === "status";
+  const isError = message.presentation === "error";
+
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
         className={
           isUser
             ? "max-w-[85%] rounded-2xl rounded-br-sm bg-primary px-4 py-2.5 text-sm text-primary-foreground shadow-sm"
-            : "max-w-[92%] text-sm text-foreground"
+            : isError
+              ? "max-w-[92%] rounded-2xl rounded-bl-sm border border-destructive/30 bg-destructive/10 px-4 py-2.5 text-sm text-foreground"
+              : isStatus
+                ? "max-w-[88%] rounded-2xl rounded-bl-sm bg-secondary/70 px-4 py-2.5 text-sm text-muted-foreground"
+                : "max-w-[92%] text-sm text-foreground"
         }
       >
-        {isUser ? (
+        {isUser || isStatus || isError ? (
           <p className="whitespace-pre-wrap">{message.content}</p>
         ) : (
           <>
