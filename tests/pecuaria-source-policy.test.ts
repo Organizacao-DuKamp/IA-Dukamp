@@ -23,6 +23,14 @@ test("source policy requires authoritative livestock sources", () => {
   assert.match(directive, /CQBAL/i);
 });
 
+test("final synthesis uses already-retrieved web evidence instead of pretending to browse", () => {
+  const directive = sourceDirective(assessEvidence({}));
+
+  assert.match(directive, /NÃO finja que você consegue navegar por conta própria/i);
+  assert.match(directive, /PESQUISA EXTERNA ATUAL/i);
+  assert.match(directive, /a pesquisa já foi realizada pelo módulo de recuperação/i);
+});
+
 test("source policy blocks unsafe veterinary prescribing", () => {
   const directive = sourceDirective(assessEvidence({ knowledgeScores: [0.9] }));
 
