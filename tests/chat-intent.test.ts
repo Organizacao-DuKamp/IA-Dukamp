@@ -8,6 +8,7 @@ test("broad meat-market questions use current research instead of strict quote f
 
   assert.equal(result.intent, "current_research");
   assert.equal(result.needs_web_search, true);
+  assert.equal(result.needs_internal_search, false);
 });
 
 test("explicit livestock price questions still use the market quote flow", () => {
@@ -15,6 +16,7 @@ test("explicit livestock price questions still use the market quote flow", () =>
 
   assert.equal(result.intent, "market_quote");
   assert.equal(result.needs_web_search, true);
+  assert.equal(result.needs_internal_search, false);
 });
 
 test("generic current market questions still request current web research", () => {
@@ -22,4 +24,5 @@ test("generic current market questions still request current web research", () =
 
   assert.equal(result.intent, "current_research");
   assert.equal(result.needs_web_search, true);
+  assert.equal(result.needs_internal_search, false);
 });
