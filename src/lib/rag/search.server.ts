@@ -58,7 +58,7 @@ export async function searchKnowledge(query: string, matchCount = 6): Promise<Ma
       query_embedding: toPgVector(vec),
       match_count: matchCount * 2,
       embedding_provider: embeddingProvider(),
-    } as never);
+    });
     if (error) throw error;
     for (const match of (data ?? []) as Match[]) {
       byKey.set(`${match.filename}:${match.content}`, match);
@@ -85,11 +85,11 @@ export async function searchKnowledge(query: string, matchCount = 6): Promise<Ma
   const lexicalStarted = Date.now();
   try {
     const { data, error } = await supabaseAdmin.rpc(
-      "search_knowledge_lexical" as never,
+      "search_knowledge_lexical",
       {
         search_query: query,
         match_count: matchCount * 2,
-      } as never,
+      }
     );
 
     if (error) throw error;
