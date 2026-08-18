@@ -1,4 +1,4 @@
-import type { ChatMessage } from "./types";
+import type { ChatChannel, ChatMessage } from "./types";
 import { TPEC_SYSTEM_PROMPT } from "./system-prompt.ts";
 import {
   diagnosticResponseHeaders,
@@ -8,6 +8,17 @@ import {
 
 const ENDPOINT = "https://api.openai.com/v1/responses";
 
+const WHATSAPP_STYLE_INSTRUCTION = `ESTILO DO CANAL — WHATSAPP (obrigatório):
+- Escreva como uma conversa real em português brasileiro, natural e profissional; nunca como relatório automático.
+- Comece respondendo diretamente ao que a pessoa perguntou. Não reapresente a TPEC-IA no meio de uma conversa.
+- Prefira 2 a 5 parágrafos curtos. Use lista somente quando vários itens realmente precisarem ser comparados.
+- Evite cabeçalhos burocráticos como "Referência de mercado externa", "Observação", "Resumo" ou "Conclusão" quando uma frase natural resolver.
+- Em cotações e dados atuais, mantenha todos os campos necessários para confiabilidade (valor, unidade, praça quando aplicável, data e fonte), mas encaixe-os em frases humanas.
+- Não termine toda resposta com uma pergunta ou oferta genérica de ajuda. Se o pedido já foi resolvido, encerre naturalmente.
+- Use emoji com muita moderação, no máximo um quando combinar com o contexto.
+- Não escreva frases de espera como "estou pesquisando" na resposta final; o transporte do WhatsApp já cuida dos avisos de andamento.
+- Se não houver evidência suficiente, diga isso de forma clara e curta, sem inventar fatos nem transformar a falha em uma resposta longa e robótica.`;
+
 export class OpenAIError extends Error {
   readonly status: number;
 
@@ -16,8 +27,10 @@ export class OpenAIError extends Error {
     this.status = status;
   }
 }
+
 export interface OpenAIOptions {
   model?: "fast" | "capable";
+  channel?: ChatChannel;
   /** Resumo estruturado acumulado (JSON) — uso interno. */
   summary?: string | null;
   /** Estado atual da conversa (JSON) — uso interno. */
@@ -40,6 +53,7 @@ export function openAIModel(kind: "fast" | "capable" = "capable"): string {
 
 function instructions(options: OpenAIOptions): string {
   const layers = [TPEC_SYSTEM_PROMPT];
+  if (options.channel === "whatsapp") layers.push(WHATSAPP_STYLE_INSTRUCTION);
   if (options.summary) {
     layers.push(
       `RESUMO ESTRUTURADO DA CONVERSA (uso interno; nunca cite nem exiba este JSON):\n${options.summary}`,
@@ -126,6 +140,7 @@ export async function askOpenAI(
     logDiagnostic("info", "openai.request.start", {
       provider: "openai",
       model,
+      channel: options.channel ?? "web",
       reasoning_effort: supportsReasoningConfig(model) ? reasoningEffort : undefined,
       max_output_tokens: maxOutputTokens,
       timeout_ms: timeoutMs,
@@ -224,7 +239,11 @@ export async function askOpenAI(
 
   // Se o orçamento foi consumido pelo raciocínio antes de sair texto visível,
   // faça uma única tentativa mais econômica em raciocínio e com orçamento maior.
-  if (!text && data.status === "incomplete" && data.incomplete_details?.reason === "max_output_tokens") {
+  if (
+    !text &&
+    data.status === "incomplete" &&
+    data.incomplete_details?.reason === "max_output_tokens"
+  ) {
     logDiagnostic("warn", "openai.response.retry_after_incomplete", {
       provider: "openai",
       model,
