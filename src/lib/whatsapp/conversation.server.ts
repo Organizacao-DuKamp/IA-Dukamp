@@ -10,16 +10,6 @@ const MEMORY_PROCESSING_STALE_MS = 2 * 60_000;
 const MAX_MEMORY_CONVERSATIONS = 500;
 const MAX_MEMORY_MESSAGES = 2_000;
 
-export const WHATSAPP_CHANNEL_INSTRUCTION = `CANAL ATUAL: WhatsApp.
-Escreva como uma conversa real de WhatsApp em português brasileiro: natural, humana, direta e sem aparência de relatório.
-- Comece respondendo ao que a pessoa perguntou; não abra com títulos burocráticos nem reapresente a TPEC-IA.
-- Prefira 2 a 5 parágrafos curtos. Use lista apenas quando houver vários itens que realmente precisam ser comparados.
-- Evite cabeçalhos como "Referência de mercado externa", "Observação", "Resumo" ou "Conclusão" quando uma frase natural resolver.
-- Em cotações, preserve obrigatoriamente preço + unidade + praça + data + fonte, mas integre esses dados em frases naturais. Exemplo de tom: "A referência mais recente que encontrei para São Paulo é...".
-- Não termine toda resposta perguntando se a pessoa quer mais alguma coisa. Se o pedido já foi resolvido, encerre naturalmente.
-- Use emoji com moderação, no máximo um quando realmente combinar com a conversa.
-- Não finja que está pesquisando dentro da resposta final; o próprio canal já cuida das mensagens de andamento.`;
-
 export interface WhatsAppConversationSnapshot {
   conversationId: string;
   history: ChatMessage[];
@@ -261,16 +251,12 @@ export async function processWhatsAppChat(
       return { reply: casualGreeting, duplicate: false, shouldSend: true };
     }
 
-    const channelInstruction: ChatMessage = {
-      role: "system",
-      content: WHATSAPP_CHANNEL_INSTRUCTION,
-    };
     const chatInput: ChatInput = {
       sessionId: `wa:${input.phone}`,
       conversationId,
       clientMessageId: input.messageId,
       text: input.text,
-      history: [...(previous?.history ?? []), channelInstruction],
+      history: previous?.history ?? [],
       state: previous?.state,
     };
 
