@@ -3,6 +3,7 @@
 // server (Perplexity service, future WhatsAppAdapter) can import them.
 
 export type ChatRole = "user" | "assistant" | "system";
+export type ChatChannel = "web" | "whatsapp";
 
 export interface ChatMessage {
   role: ChatRole;
@@ -16,6 +17,8 @@ export interface IncomingMessage {
   conversationId?: string;
   /** Chave de idempotência da mensagem (evita duplicar em reenvio). */
   clientMessageId?: string;
+  /** Canal confiável definido pelo adaptador server-side. */
+  channel?: ChatChannel;
   /** Raw user text. Chat Core will validate/sanitize. */
   text: string;
   /** Prior turns for this session (channel keeps ephemeral context only). */
