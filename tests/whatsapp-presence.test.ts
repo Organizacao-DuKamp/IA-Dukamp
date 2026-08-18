@@ -3,14 +3,8 @@ import { createHmac } from "node:crypto";
 import test from "node:test";
 
 import { handleEnhancedWhatsAppWebhookRequest } from "../src/lib/whatsapp/enhanced-http.server.ts";
-import {
-  buildWhatsAppProgressPlan,
-  friendlyWhatsAppError,
-} from "../src/lib/whatsapp/presence.ts";
-import type {
-  WhatsAppControlRequest,
-  WhatsAppControlResult,
-} from "../src/lib/whatsapp/types.ts";
+import { buildWhatsAppProgressPlan, friendlyWhatsAppError } from "../src/lib/whatsapp/presence.ts";
+import type { WhatsAppControlRequest, WhatsAppControlResult } from "../src/lib/whatsapp/types.ts";
 
 const appSecret = "meta-app-secret-for-presence-tests";
 const env = {
