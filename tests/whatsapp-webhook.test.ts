@@ -179,7 +179,7 @@ test("mensagem de texto entra na TPEC-IA e resposta volta pela Graph API", async
   });
 });
 
-test("ponte local preserva histórico, estado e idempotência", async () => {
+test("ponte local preserva histórico, estado, canal e idempotência", async () => {
   const previous = {
     conversationId: "wa:5517999999999",
     history: [
@@ -222,6 +222,7 @@ test("ponte local preserva histórico, estado e idempotência", async () => {
     sessionId: "wa:5517999999999",
     conversationId: "wa:5517999999999",
     clientMessageId: "wamid.local-1",
+    channel: "whatsapp",
     text: "Quero saber o preço",
     history: previous.history,
     state: previous.state,

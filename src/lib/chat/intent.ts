@@ -27,6 +27,11 @@ export const IntentSchema = z.object({
 });
 export type IntentClassification = z.infer<typeof IntentSchema>;
 
+const QUOTE_COMMODITIES =
+  "boi gordo|boi china|arroba|carne bovina|carnes?|bovinos?|su[ií]nos?|frango|aves?|leite|novilha|vaca|soja|milho|ovos?|pescado|d[oó]lar|c[aâ]mbio";
+const QUOTE_SIGNAL =
+  "pre[cç]o|valor|cota[cç][aã]o|quanto\\s+(?:est[aá]|t[aá])|quanto\\s+custa|arroba";
+
 const rules: Array<[IntentClassification["intent"], RegExp, boolean, boolean]> = [
   [
     "current_research",
@@ -40,15 +45,32 @@ const rules: Array<[IntentClassification["intent"], RegExp, boolean, boolean]> =
     true,
     false,
   ],
+  // Preço de produto comercial tem prioridade sobre uma commodity citada na
+  // composição/contexto (ex.: "preço do suplemento com milho").
+  [
+    "internal_price",
+    /\b(pre[cç]o|valor|quanto custa|estoque)\b.{0,45}\b(produto|dukamp|suplemento|ra[cç][aã]o|mineral|proteinado)\b|\b(produto|dukamp|suplemento|ra[cç][aã]o|mineral|proteinado)\b.{0,45}\b(pre[cç]o|valor|quanto custa|estoque)\b/i,
+    true,
+    false,
+  ],
   [
     "market_quote",
-    /\b(boi gordo|arroba|cota[cç][aã]o|pre[cç]o do leite|pre[cç]o da arroba|mercado do leite|mercado de leite|soja|milho)\b|\b(pre[cç]o|valor|cota[cç][aã]o)\b.{0,100}\b(carnes?|carne bovina|bovinos?|su[ií]nos?|frango|aves?|leite|boi|novilha|vaca|soja|milho)\b|\b(carnes?|carne bovina|bovinos?|su[ií]nos?|frango|aves?|leite|boi|novilha|vaca|soja|milho)\b.{0,100}\b(pre[cç]o|valor|cota[cç][aã]o)\b/i,
+    /^(?:e\s+)?(?:qual\s+(?:o|a)\s+)?(?:o\s+|a\s+)?(boi gordo|boi china|soja|milho|leite)\s+(?:de\s+)?(hoje|agora)\s*[?.!]*$/i,
+    false,
+    true,
+  ],
+  [
+    "market_quote",
+    new RegExp(
+      `(?:${QUOTE_SIGNAL}).{0,40}(?:${QUOTE_COMMODITIES})|(?:${QUOTE_COMMODITIES}).{0,40}(?:${QUOTE_SIGNAL})`,
+      "i",
+    ),
     false,
     true,
   ],
   [
     "current_research",
-    /\b(mercado|cen[aá]rio|setor|panorama)\b.{0,100}\b(carnes?|carne bovina|prote[ií]na animal|pecu[aá]ria|bovinos?|su[ií]nos?|frango|aves?|leite)\b|\b(carnes?|carne bovina|prote[ií]na animal|pecu[aá]ria|bovinos?|su[ií]nos?|frango|aves?|leite)\b.{0,100}\b(mercado|cen[aá]rio|setor|panorama)\b/i,
+    /\b(mercado|cen[aá]rio|setor|panorama|tend[eê]ncia)\b.{0,100}\b(carnes?|carne bovina|prote[ií]na animal|pecu[aá]ria|bovinos?|su[ií]nos?|frango|aves?|leite|soja|milho|gr[aã]os?)\b|\b(carnes?|carne bovina|prote[ií]na animal|pecu[aá]ria|bovinos?|su[ií]nos?|frango|aves?|leite|soja|milho|gr[aã]os?)\b.{0,100}\b(mercado|cen[aá]rio|setor|panorama|tend[eê]ncia)\b/i,
     false,
     true,
   ],
@@ -72,20 +94,18 @@ const rules: Array<[IntentClassification["intent"], RegExp, boolean, boolean]> =
     true,
     false,
   ],
-  // Perguntas de compatibilidade entre espécies são dúvidas técnicas de
-  // segurança, não pedidos para despejar o catálogo comercial. Um produto
-  // nomeado ainda pode ser localizado pelo roteador de aliases e entrar como
-  // evidência oficial, mas termos genéricos como "mineral" não devem retornar
-  // itens irrelevantes do site (ex.: óleo mineral agrícola para uma ovelha).
   [
     "nutrition",
     /\b(posso|pode|podem|serve|servem|usar|fornecer|dar)\b.{0,100}\b(suplemento|mineral|ra[cç][aã]o|produto|ureia)\b.{0,100}\b(ovino|ovinos|ovelha|ovelhas|caprino|caprinos|cabra|cabras|equino|equinos|cavalo|cavalos)\b|\b(ovino|ovinos|ovelha|ovelhas|caprino|caprinos|cabra|cabras|equino|equinos|cavalo|cavalos)\b.{0,100}\b(posso|pode|podem|serve|servem|usar|fornecer|dar)\b.{0,100}\b(suplemento|mineral|ra[cç][aã]o|produto|ureia)\b/i,
     true,
     false,
   ],
-  // Perguntas de catálogo precisam vir antes de "nutrition"; caso contrário
-  // frases como "quais suplementos vocês têm?" viram dúvida técnica e não
-  // executam a consulta comercial no Supabase da DuKamp.
+  [
+    "nutrition",
+    /\b(dar|fornecer|oferecer|misturar|incluir|dieta|ra[cç][aã]o|alimentar|consumo)\b.{0,80}\b(milho|soja|farelo)\b|\b(milho|soja|farelo)\b.{0,80}\b(dar|fornecer|oferecer|misturar|incluir|dieta|ra[cç][aã]o|alimentar|consumo)\b/i,
+    true,
+    false,
+  ],
   [
     "product",
     /\b(produtos?|cat[aá]logo|dukamp|ficha(?:\s+t[eé]cnica)?|composi[cç][aã]o|garantia)\b|\b(?:quais|liste|lista|mostre|voc[eê]s\s+t[eê]m|vendem?)\b.{0,50}\b(suplementos?|ra[cç][oõ]es?|minerais?|proteinados?)\b/i,

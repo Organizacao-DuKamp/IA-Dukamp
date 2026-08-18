@@ -1,12 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/api/internal/whatsapp-chat")({
+export const Route = createFileRoute("/api/internal/whatsapp-control")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const { handleInternalWhatsAppChatRequest } =
+        const { handleInternalWhatsAppControlRequest } =
           await import("@/lib/whatsapp/internal-http.server");
-        return handleInternalWhatsAppChatRequest(request);
+        return handleInternalWhatsAppControlRequest(request);
       },
     },
   },

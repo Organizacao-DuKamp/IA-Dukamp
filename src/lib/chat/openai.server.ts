@@ -1,4 +1,4 @@
-import type { ChatMessage } from "./types";
+import type { ChatChannel, ChatMessage } from "./types";
 import { TPEC_SYSTEM_PROMPT } from "./system-prompt.ts";
 import {
   diagnosticResponseHeaders,
@@ -7,6 +7,21 @@ import {
 } from "./diagnostics.server.ts";
 
 const ENDPOINT = "https://api.openai.com/v1/responses";
+const WHATSAPP_OPENAI_TIMEOUT_MS = 25_000;
+const WHATSAPP_CORRECTION_TIMEOUT_MS = 7_000;
+const WHATSAPP_INCOMPLETE_RETRY_TIMEOUT_MS = 6_000;
+
+const WHATSAPP_STYLE_INSTRUCTION = `ESTILO DO CANAL — WHATSAPP (obrigatório):
+- Escreva como uma conversa real em português brasileiro, natural e profissional; nunca como relatório automático.
+- Comece respondendo diretamente ao que a pessoa perguntou. Não reapresente a TPEC-IA no meio de uma conversa.
+- Prefira 2 a 5 parágrafos curtos. Use lista somente quando vários itens realmente precisarem ser comparados.
+- Evite cabeçalhos burocráticos como "Referência de mercado externa", "Observação", "Resumo" ou "Conclusão" quando uma frase natural resolver.
+- As regras globais de transparência de cotações continuam obrigatórias no CONTEÚDO. Porém, no WhatsApp, o "selo" é uma classificação semântica: integre "cotação local", "referência regional/estadual" ou "referência de mercado externa" em uma frase natural, em vez de abrir a resposta como ficha ou relatório. Nunca omita preço/unidade, praça, data e fonte quando houver cotação.
+- Em cotações e dados atuais, encaixe valor, unidade, praça, data e fonte em frases humanas. Se a fonte não confirmou um desses campos, não invente o campo nem o valor.
+- Não termine toda resposta com uma pergunta ou oferta genérica de ajuda. Se o pedido já foi resolvido, encerre naturalmente.
+- Use emoji com muita moderação, no máximo um quando combinar com o contexto.
+- Não escreva frases de espera como "estou pesquisando" na resposta final; o transporte do WhatsApp já cuida dos avisos de andamento.
+- Se não houver evidência suficiente, diga isso de forma clara e curta, sem inventar fatos nem transformar a falha em uma resposta longa e robótica.`;
 
 export class OpenAIError extends Error {
   readonly status: number;
@@ -16,17 +31,14 @@ export class OpenAIError extends Error {
     this.status = status;
   }
 }
+
 export interface OpenAIOptions {
   model?: "fast" | "capable";
-  /** Resumo estruturado acumulado (JSON) — uso interno. */
+  channel?: ChatChannel;
   summary?: string | null;
-  /** Estado atual da conversa (JSON) — uso interno. */
   state?: string | null;
-  /** Interpretação obrigatória da mensagem atual. */
   directive?: string | null;
-  /** Política de fontes determinada pelo orquestrador. */
   sourcePolicy?: string | null;
-  /** Evidências recuperadas do RAG, bancos internos e pesquisa Perplexity. */
   context?: string | null;
   timeoutMs?: number;
   fetchImpl?: typeof fetch;
@@ -38,8 +50,21 @@ export function openAIModel(kind: "fast" | "capable" = "capable"): string {
     : process.env.OPENAI_CAPABLE_MODEL || "gpt-5";
 }
 
+function stateIsWhatsApp(state: string | null | undefined): boolean {
+  if (!state) return false;
+  try {
+    const parsed = JSON.parse(state) as { conversation_id?: unknown };
+    return typeof parsed.conversation_id === "string" && parsed.conversation_id.startsWith("wa:");
+  } catch {
+    return false;
+  }
+}
+
 function instructions(options: OpenAIOptions): string {
   const layers = [TPEC_SYSTEM_PROMPT];
+  if (options.channel === "whatsapp" || stateIsWhatsApp(options.state)) {
+    layers.push(WHATSAPP_STYLE_INSTRUCTION);
+  }
   if (options.summary) {
     layers.push(
       `RESUMO ESTRUTURADO DA CONVERSA (uso interno; nunca cite nem exiba este JSON):\n${options.summary}`,
@@ -103,21 +128,34 @@ export async function askOpenAI(
   }
 
   const fetchImpl = options.fetchImpl ?? fetch;
+  const whatsappStyle = options.channel === "whatsapp" || stateIsWhatsApp(options.state);
+  const correction = Boolean(
+    options.sourcePolicy?.includes("CORREÇÃO OBRIGATÓRIA ANTES DE RESPONDER"),
+  );
+  const defaultTimeoutMs =
+    options.timeoutMs ??
+    (whatsappStyle
+      ? correction
+        ? WHATSAPP_CORRECTION_TIMEOUT_MS
+        : WHATSAPP_OPENAI_TIMEOUT_MS
+      : 45_000);
   const input = history
     .filter((m) => m.role !== "system")
     .map((m) => ({ role: m.role, content: m.content }));
   const inputChars = input.reduce((total, message) => total + message.content.length, 0);
 
-  async function requestResponse(maxOutputTokens: number, reasoningEffort: "minimal" | "low") {
-    const timeoutMs = options.timeoutMs ?? 45_000;
+  async function requestResponse(
+    maxOutputTokens: number,
+    reasoningEffort: "minimal" | "low",
+    requestTimeoutMs = defaultTimeoutMs,
+  ) {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    const timeout = setTimeout(() => controller.abort(), requestTimeoutMs);
     const started = Date.now();
     const body: Record<string, unknown> = {
       model,
       instructions: instructions(options),
       input,
-      // Em modelos de raciocínio, este limite inclui raciocínio + texto visível.
       max_output_tokens: maxOutputTokens,
       store: false,
     };
@@ -126,9 +164,11 @@ export async function askOpenAI(
     logDiagnostic("info", "openai.request.start", {
       provider: "openai",
       model,
+      channel: whatsappStyle ? "whatsapp" : (options.channel ?? "web"),
+      correction,
       reasoning_effort: supportsReasoningConfig(model) ? reasoningEffort : undefined,
       max_output_tokens: maxOutputTokens,
-      timeout_ms: timeoutMs,
+      timeout_ms: requestTimeoutMs,
       message_count: input.length,
       input_chars: inputChars,
       context_chars: options.context?.length ?? 0,
@@ -201,7 +241,7 @@ export async function askOpenAI(
         logDiagnostic("error", "openai.request.timeout", {
           provider: "openai",
           model,
-          timeout_ms: timeoutMs,
+          timeout_ms: requestTimeoutMs,
           duration_ms: durationMs,
         });
         throw new OpenAIError("A IA demorou demais para responder.", 504);
@@ -219,19 +259,29 @@ export async function askOpenAI(
     }
   }
 
-  let data = await requestResponse(3_000, "low");
+  let data = await requestResponse(
+    whatsappStyle ? 4_000 : 3_000,
+    correction ? "minimal" : "low",
+  );
   let text = extractResponseText(data);
 
-  // Se o orçamento foi consumido pelo raciocínio antes de sair texto visível,
-  // faça uma única tentativa mais econômica em raciocínio e com orçamento maior.
-  if (!text && data.status === "incomplete" && data.incomplete_details?.reason === "max_output_tokens") {
+  if (
+    !correction &&
+    !text &&
+    data.status === "incomplete" &&
+    data.incomplete_details?.reason === "max_output_tokens"
+  ) {
     logDiagnostic("warn", "openai.response.retry_after_incomplete", {
       provider: "openai",
       model,
       reason: data.incomplete_details.reason,
       first_usage: data.usage,
     });
-    data = await requestResponse(5_000, "minimal");
+    data = await requestResponse(
+      5_000,
+      "minimal",
+      whatsappStyle ? WHATSAPP_INCOMPLETE_RETRY_TIMEOUT_MS : defaultTimeoutMs,
+    );
     text = extractResponseText(data);
   }
 

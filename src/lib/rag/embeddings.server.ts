@@ -12,6 +12,32 @@ const DEFAULT_MODEL = "text-embedding-3-large";
 const DIMENSIONS = 3072;
 const BATCH = 50;
 
+interface EmbeddingRequestOptions {
+  maxRetries: number;
+  backoffMs: readonly number[];
+  requestTimeoutMs: number;
+  maxRateLimitWaitMs: number;
+  purpose: "ingestion" | "query";
+}
+
+const INGESTION_OPTIONS: EmbeddingRequestOptions = {
+  maxRetries: 7,
+  backoffMs: [2_000, 4_000, 8_000, 16_000, 30_000, 60_000],
+  requestTimeoutMs: 20_000,
+  maxRateLimitWaitMs: 60_000,
+  purpose: "ingestion",
+};
+
+// Busca conversacional nunca pode herdar minutos de backoff da ingestão.
+// Se a semântica falhar, searchKnowledge ainda executa a busca lexical.
+const QUERY_OPTIONS: EmbeddingRequestOptions = {
+  maxRetries: 1,
+  backoffMs: [500],
+  requestTimeoutMs: 5_000,
+  maxRateLimitWaitMs: 1_000,
+  purpose: "query",
+};
+
 export function embeddingModel(): string {
   return process.env.OPENAI_EMBEDDING_MODEL || DEFAULT_MODEL;
 }
@@ -29,19 +55,78 @@ export class EmbeddingError extends Error {
   }
 }
 
-async function embedBatch(inputs: string[], apiKey: string): Promise<number[][]> {
-  const MAX_RETRIES = 7;
-  const BACKOFF = [2000, 4000, 8000, 16000, 30000, 60000];
+function embeddingApiKey(): string {
+  const apiKey = process.env.OPENAI_API_KEY || process.env.LOVABLE_API_KEY;
+  if (!apiKey || apiKey.startsWith("sb_publishable_")) {
+    logDiagnostic("error", "embeddings.configuration_error", {
+      provider: "openai",
+      model: embeddingModel(),
+      reason: !apiKey ? "missing_api_key" : "invalid_api_key_type",
+    });
+    throw new EmbeddingError(
+      "Serviço de embeddings indisponível (chave ausente ou inválida no backend).",
+      500,
+    );
+  }
+  return apiKey;
+}
 
+function retryableStatus(status: number): boolean {
+  return status === 408 || status === 429 || status >= 500;
+}
+
+function backoffForAttempt(options: EmbeddingRequestOptions, attempt: number): number {
+  return options.backoffMs[Math.min(attempt, options.backoffMs.length - 1)] ?? 500;
+}
+
+function retryAfterMs(response: Response, options: EmbeddingRequestOptions): number {
+  const retryAfter = response.headers.get("Retry-After");
+  const resetTokens = response.headers.get("x-ratelimit-reset-tokens");
+  let waitMs = 0;
+
+  if (retryAfter) {
+    waitMs = Number.parseFloat(retryAfter) * 1_000;
+  } else if (resetTokens?.endsWith("ms")) {
+    waitMs = Number.parseFloat(resetTokens);
+  } else if (resetTokens?.endsWith("s")) {
+    waitMs = Number.parseFloat(resetTokens) * 1_000;
+  }
+
+  if (!Number.isFinite(waitMs) || waitMs <= 0) return 0;
+  return Math.min(waitMs, options.maxRateLimitWaitMs);
+}
+
+async function waitBeforeRetry(
+  options: EmbeddingRequestOptions,
+  attempt: number,
+  requestedWaitMs = 0,
+): Promise<void> {
+  const base = requestedWaitMs || backoffForAttempt(options, attempt);
+  // Jitter pequeno somente na ingestão. A consulta interativa deve ser previsível.
+  const jitter = options.purpose === "ingestion" ? Math.random() * 500 : 0;
+  await new Promise((resolve) => setTimeout(resolve, base + jitter));
+}
+
+async function embedBatch(
+  inputs: string[],
+  apiKey: string,
+  options: EmbeddingRequestOptions,
+): Promise<number[][]> {
   let lastError: Error | null = null;
 
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+  for (let attempt = 0; attempt <= options.maxRetries; attempt += 1) {
     const started = Date.now();
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), options.requestTimeoutMs);
+
     try {
       logDiagnostic("info", "embeddings.request.start", {
         provider: "openai",
         model: embeddingModel(),
+        purpose: options.purpose,
         attempt: attempt + 1,
+        max_retries: options.maxRetries,
+        timeout_ms: options.requestTimeoutMs,
         batch_size: inputs.length,
         input_chars: inputs.reduce((sum, item) => sum + item.length, 0),
         dimensions: DIMENSIONS,
@@ -59,60 +144,41 @@ async function embedBatch(inputs: string[], apiKey: string): Promise<number[][]>
           dimensions: DIMENSIONS,
           encoding_format: "float",
         }),
+        signal: controller.signal,
       });
-
-      if (res.status === 429) {
-        const retryAfter = res.headers.get("Retry-After");
-        const resetTokens = res.headers.get("x-ratelimit-reset-tokens");
-
-        let waitMs = 0;
-        if (retryAfter) {
-          waitMs = parseInt(retryAfter, 10) * 1000;
-        } else if (resetTokens) {
-          // OpenAI tokens reset header format is often like "6ms" or "1.5s"
-          if (resetTokens.endsWith("ms")) waitMs = parseInt(resetTokens);
-          else if (resetTokens.endsWith("s")) waitMs = parseFloat(resetTokens) * 1000;
-        }
-
-        if (waitMs <= 0) {
-          // Fallback to exponential backoff with jitter
-          const base = BACKOFF[Math.min(attempt, BACKOFF.length - 1)];
-          waitMs = base + Math.random() * 1000;
-        }
-
-        logDiagnostic(attempt < MAX_RETRIES ? "warn" : "error", "embeddings.response.rate_limit", {
-          provider: "openai",
-          model: embeddingModel(),
-          status: res.status,
-          attempt: attempt + 1,
-          max_retries: MAX_RETRIES,
-          duration_ms: Date.now() - started,
-          wait_ms: Math.round(waitMs),
-          response_headers: diagnosticResponseHeaders(res),
-        });
-
-        if (attempt < MAX_RETRIES) {
-          await new Promise((resolve) => setTimeout(resolve, waitMs));
-          continue;
-        }
-      }
 
       if (!res.ok) {
         const body = await res.text().catch(() => "");
-        logDiagnostic("error", "embeddings.response.error", {
-          provider: "openai",
-          model: embeddingModel(),
-          status: res.status,
-          status_text: res.statusText,
-          attempt: attempt + 1,
-          duration_ms: Date.now() - started,
-          response_headers: diagnosticResponseHeaders(res),
-          error_body: safeErrorSnippet(body),
-        });
-        throw new EmbeddingError(
+        const waitMs = res.status === 429 ? retryAfterMs(res, options) : 0;
+        logDiagnostic(
+          retryableStatus(res.status) && attempt < options.maxRetries ? "warn" : "error",
+          "embeddings.response.error",
+          {
+            provider: "openai",
+            model: embeddingModel(),
+            purpose: options.purpose,
+            status: res.status,
+            status_text: res.statusText,
+            attempt: attempt + 1,
+            max_retries: options.maxRetries,
+            duration_ms: Date.now() - started,
+            wait_ms: waitMs || undefined,
+            response_headers: diagnosticResponseHeaders(res),
+            error_body: safeErrorSnippet(body),
+          },
+        );
+
+        const error = new EmbeddingError(
           `Falha ao gerar embeddings (${res.status}): ${safeErrorSnippet(body, 200)}`,
           res.status,
         );
+        lastError = error;
+        if (retryableStatus(res.status) && attempt < options.maxRetries) {
+          clearTimeout(timer);
+          await waitBeforeRetry(options, attempt, waitMs);
+          continue;
+        }
+        throw error;
       }
 
       const raw = await res.text().catch(() => "");
@@ -126,6 +192,7 @@ async function embedBatch(inputs: string[], apiKey: string): Promise<number[][]>
         logDiagnostic("error", "embeddings.response.invalid_json", {
           provider: "openai",
           model: embeddingModel(),
+          purpose: options.purpose,
           status: res.status,
           duration_ms: Date.now() - started,
           response_headers: diagnosticResponseHeaders(res),
@@ -139,6 +206,7 @@ async function embedBatch(inputs: string[], apiKey: string): Promise<number[][]>
         logDiagnostic("error", "embeddings.response.invalid_shape", {
           provider: "openai",
           model: embeddingModel(),
+          purpose: options.purpose,
           status: res.status,
           duration_ms: Date.now() - started,
           expected_count: inputs.length,
@@ -148,12 +216,12 @@ async function embedBatch(inputs: string[], apiKey: string): Promise<number[][]>
         throw new EmbeddingError("Resposta de embeddings inválida.", 502);
       }
 
-      // Ensure order by index
       const out: number[][] = new Array(inputs.length);
       for (const d of data.data) out[d.index] = d.embedding;
       logDiagnostic("info", "embeddings.response.success", {
         provider: "openai",
         model: embeddingModel(),
+        purpose: options.purpose,
         status: res.status,
         duration_ms: Date.now() - started,
         batch_size: inputs.length,
@@ -162,32 +230,41 @@ async function embedBatch(inputs: string[], apiKey: string): Promise<number[][]>
         response_headers: diagnosticResponseHeaders(res),
       });
       return out;
-    } catch (err) {
-      lastError = err instanceof Error ? err : new Error(String(err));
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      const status = error instanceof EmbeddingError ? error.status : null;
+      const aborted = controller.signal.aborted || lastError.name === "AbortError";
+      const transient = aborted || status === null || retryableStatus(status);
 
-      // If it's a network error (not 429 which is handled above), we might still want to retry
-      if (attempt < MAX_RETRIES) {
-        const waitMs = BACKOFF[Math.min(attempt, BACKOFF.length - 1)] + Math.random() * 1000;
+      if (transient && attempt < options.maxRetries) {
         logDiagnostic("warn", "embeddings.request.retry", {
           provider: "openai",
           model: embeddingModel(),
+          purpose: options.purpose,
           attempt: attempt + 1,
-          max_retries: MAX_RETRIES,
-          wait_ms: Math.round(waitMs),
+          max_retries: options.maxRetries,
           error_name: lastError.name,
           error_message: lastError.message,
         });
-        await new Promise((resolve) => setTimeout(resolve, waitMs));
+        clearTimeout(timer);
+        await waitBeforeRetry(options, attempt);
         continue;
       }
+
       logDiagnostic("error", "embeddings.request.failed", {
         provider: "openai",
         model: embeddingModel(),
+        purpose: options.purpose,
         attempts: attempt + 1,
         error_name: lastError.name,
         error_message: lastError.message,
       });
+      if (aborted) {
+        throw new EmbeddingError("A busca semântica demorou demais para responder.", 504);
+      }
       throw lastError;
+    } finally {
+      clearTimeout(timer);
     }
   }
 
@@ -195,26 +272,14 @@ async function embedBatch(inputs: string[], apiKey: string): Promise<number[][]>
 }
 
 export async function embedTexts(texts: string[]): Promise<number[][]> {
-  const apiKey = process.env.OPENAI_API_KEY || process.env.LOVABLE_API_KEY;
-  if (!apiKey || apiKey.startsWith("sb_publishable_")) {
-    logDiagnostic("error", "embeddings.configuration_error", {
-      provider: "openai",
-      model: embeddingModel(),
-      reason: !apiKey ? "missing_api_key" : "invalid_api_key_type",
-    });
-    throw new EmbeddingError(
-      "Serviço de embeddings indisponível (chave ausente ou inválida no backend).",
-      500,
-    );
-  }
   if (texts.length === 0) return [];
+  const apiKey = embeddingApiKey();
   const all: number[][] = [];
   for (let i = 0; i < texts.length; i += BATCH) {
     const slice = texts.slice(i, i + BATCH);
-    const vecs = await embedBatch(slice, apiKey);
+    const vecs = await embedBatch(slice, apiKey, INGESTION_OPTIONS);
     all.push(...vecs);
 
-    // Pequeno throttling entre lotes para suavizar TPM, exceto se for o último
     if (i + BATCH < texts.length) {
       await new Promise((resolve) => setTimeout(resolve, 500));
     }
@@ -223,11 +288,12 @@ export async function embedTexts(texts: string[]): Promise<number[][]> {
 }
 
 export async function embedQuery(text: string): Promise<number[]> {
-  const [v] = await embedTexts([text]);
-  return v;
+  const apiKey = embeddingApiKey();
+  const [vector] = await embedBatch([text], apiKey, QUERY_OPTIONS);
+  return vector;
 }
 
 /** pgvector accepts either an array or a bracketed string; string is safest across drivers. */
 export function toPgVector(vec: number[]): string {
-  return "[" + vec.join(",") + "]";
+  return `[${vec.join(",")}]`;
 }

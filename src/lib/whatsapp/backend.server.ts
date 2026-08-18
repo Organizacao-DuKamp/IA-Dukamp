@@ -1,8 +1,11 @@
 import { resolveTpecBackendMode, TpecBackendError } from "../chat/backend.server.ts";
 import {
   WhatsAppChatResultSchema,
+  WhatsAppControlResultSchema,
   type WhatsAppChatInput,
   type WhatsAppChatResult,
+  type WhatsAppControlRequest,
+  type WhatsAppControlResult,
 } from "./types.ts";
 
 type EnvLike = Record<string, string | undefined>;
@@ -11,6 +14,7 @@ export interface WhatsAppBackendDependencies {
   env?: EnvLike;
   fetchImpl?: typeof fetch;
   processLocal?: (input: WhatsAppChatInput) => Promise<WhatsAppChatResult>;
+  processClaimedLocal?: (input: WhatsAppChatInput) => Promise<WhatsAppChatResult>;
 }
 
 function envOf(deps: WhatsAppBackendDependencies): EnvLike {
@@ -38,7 +42,7 @@ function requireProxySecret(env: EnvLike): string {
   return secret;
 }
 
-function resolveInternalWhatsAppUrl(env: EnvLike): URL {
+function resolveInternalWhatsAppUrl(env: EnvLike, path: string): URL {
   const raw = env.LOVABLE_BACKEND_URL?.trim();
   if (!raw) {
     throw new TpecBackendError(
@@ -75,58 +79,37 @@ function resolveInternalWhatsAppUrl(env: EnvLike): URL {
   }
 
   const normalized = base.toString().replace(/\/+$/, "");
-  const endpoint = new URL(`${normalized}/api/internal/whatsapp-chat`);
+  const endpoint = new URL(`${normalized}${path}`);
   if (endpoint.origin !== base.origin) {
     throw new TpecBackendError("Destino interno inválido.", 500, "unexpected_proxy_origin");
   }
   return endpoint;
 }
 
-function timeoutMs(env: EnvLike): number {
-  const value = Number(env.TPEC_PROXY_TIMEOUT_MS ?? 45_000);
-  if (!Number.isFinite(value)) return 45_000;
-  return Math.min(Math.max(Math.trunc(value), 5_000), 60_000);
+function chatTimeoutMs(env: EnvLike): number {
+  const value = Number(env.TPEC_PROXY_TIMEOUT_MS ?? 55_000);
+  if (!Number.isFinite(value)) return 55_000;
+  return Math.min(Math.max(Math.trunc(value), 5_000), 58_000);
 }
 
-export async function dispatchWhatsAppChat(
-  input: WhatsAppChatInput,
-  dependencies: WhatsAppBackendDependencies = {},
-): Promise<WhatsAppChatResult> {
-  const env = envOf(dependencies);
-  const mode = resolveTpecBackendMode(env);
-  console.info(`[whatsapp-backend] mode=${mode}`);
+function controlTimeoutMs(env: EnvLike): number {
+  const value = Number(env.TPEC_WHATSAPP_CONTROL_TIMEOUT_MS ?? 8_000);
+  if (!Number.isFinite(value)) return 8_000;
+  return Math.min(Math.max(Math.trunc(value), 2_000), 15_000);
+}
 
-  if (mode === "local") {
-    console.info("[whatsapp-backend] executing local WhatsApp chat backend");
-    const started = Date.now();
-    try {
-      const processLocal =
-        dependencies.processLocal ?? (await import("./conversation.server.ts")).processWhatsAppChat;
-      const result = await processLocal(input);
-      console.info(
-        `[whatsapp-backend] local completed duration_ms=${Date.now() - started} should_send=${result.shouldSend} has_reply=${Boolean(result.reply)}`,
-      );
-      return result;
-    } catch (error) {
-      console.error(`[whatsapp-backend] local failed ${errorDetails(error)}`);
-      throw error;
-    }
-  }
-
-  console.info(
-    `[whatsapp-backend] proxy config url_configured=${Boolean(env.LOVABLE_BACKEND_URL?.trim())} secret_configured=${(env.TPEC_PROXY_SECRET?.trim().length ?? 0) >= 32}`,
-  );
-
-  const endpoint = resolveInternalWhatsAppUrl(env);
+async function proxyJson(
+  endpoint: URL,
+  payload: unknown,
+  env: EnvLike,
+  dependencies: WhatsAppBackendDependencies,
+  timeoutMs: number,
+  extraHeaders: Record<string, string> = {},
+): Promise<unknown> {
   const secret = requireProxySecret(env);
   const controller = new AbortController();
-  const configuredTimeout = timeoutMs(env);
-  const timer = setTimeout(() => controller.abort(), configuredTimeout);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   const started = Date.now();
-
-  console.info(
-    `[whatsapp-backend] proxy request start host=${endpoint.host} path=${endpoint.pathname} timeout_ms=${configuredTimeout}`,
-  );
 
   try {
     const response = await (dependencies.fetchImpl ?? fetch)(endpoint, {
@@ -135,22 +118,21 @@ export async function dispatchWhatsAppChat(
         "content-type": "application/json",
         "x-tpec-proxy-secret": secret,
         "x-tpec-proxy-hop": "1",
+        ...extraHeaders,
       },
-      body: JSON.stringify(input),
+      body: JSON.stringify(payload),
       redirect: "error",
       signal: controller.signal,
     });
-
-    console.info(
-      `[whatsapp-backend] proxy response status=${response.status} ok=${response.ok} duration_ms=${Date.now() - started}`,
-    );
 
     const raw = await response.text();
     let body: unknown;
     try {
       body = raw ? JSON.parse(raw) : {};
     } catch {
-      console.error(`[whatsapp-backend] proxy invalid JSON response chars=${raw.length}`);
+      console.error(
+        `[whatsapp-backend] invalid JSON path=${endpoint.pathname} chars=${raw.length}`,
+      );
       throw new TpecBackendError(
         "O backend do WhatsApp retornou JSON inválido.",
         502,
@@ -158,53 +140,128 @@ export async function dispatchWhatsAppChat(
       );
     }
 
+    console.info(
+      `[whatsapp-backend] proxy response path=${endpoint.pathname} status=${response.status} duration_ms=${Date.now() - started}`,
+    );
+
     if (!response.ok) {
       const message =
         body && typeof body === "object" && "error" in body
           ? String((body as { error?: unknown }).error ?? "whatsapp_proxy_failed")
           : "Falha no backend do WhatsApp.";
-      console.error(
-        `[whatsapp-backend] proxy backend rejected status=${response.status} error=${message}`,
-      );
       throw new TpecBackendError(message, response.status, "whatsapp_proxy_failed");
     }
-
-    const parsed = WhatsAppChatResultSchema.safeParse(body);
-    if (!parsed.success) {
-      console.error("[whatsapp-backend] proxy response schema invalid");
-      throw new TpecBackendError(
-        "O backend do WhatsApp retornou formato inesperado.",
-        502,
-        "invalid_whatsapp_proxy_response",
-      );
-    }
-
-    console.info(
-      `[whatsapp-backend] proxy completed should_send=${parsed.data.shouldSend} has_reply=${Boolean(parsed.data.reply)}`,
-    );
-    return parsed.data;
+    return body;
   } catch (error) {
-    if (error instanceof TpecBackendError) {
-      console.error(`[whatsapp-backend] proxy failed ${errorDetails(error)}`);
-      throw error;
-    }
+    if (error instanceof TpecBackendError) throw error;
     if (controller.signal.aborted || (error instanceof Error && error.name === "AbortError")) {
-      const timeoutError = new TpecBackendError(
+      throw new TpecBackendError(
         "O backend da TPEC-IA demorou para responder ao WhatsApp.",
         504,
         "whatsapp_proxy_timeout",
       );
-      console.error(`[whatsapp-backend] proxy timeout ${errorDetails(timeoutError)}`);
-      throw timeoutError;
     }
-    const unavailable = new TpecBackendError(
+    console.error(`[whatsapp-backend] proxy unavailable source=${errorDetails(error)}`);
+    throw new TpecBackendError(
       "Não foi possível acessar o backend da TPEC-IA pelo WhatsApp.",
       502,
       "whatsapp_proxy_unavailable",
     );
-    console.error(`[whatsapp-backend] proxy unavailable source=${errorDetails(error)}`);
-    throw unavailable;
   } finally {
     clearTimeout(timer);
   }
+}
+
+async function dispatchWhatsAppChatInternal(
+  input: WhatsAppChatInput,
+  dependencies: WhatsAppBackendDependencies,
+  alreadyClaimed: boolean,
+): Promise<WhatsAppChatResult> {
+  const env = envOf(dependencies);
+  const mode = resolveTpecBackendMode(env);
+  console.info(`[whatsapp-backend] mode=${mode} already_claimed=${alreadyClaimed}`);
+
+  if (mode === "local") {
+    const conversation = await import("./conversation.server.ts");
+    const processLocal = alreadyClaimed
+      ? (dependencies.processClaimedLocal ?? conversation.processClaimedWhatsAppChat)
+      : (dependencies.processLocal ?? conversation.processWhatsAppChat);
+    return processLocal(input);
+  }
+
+  const endpoint = resolveInternalWhatsAppUrl(env, "/api/internal/whatsapp-chat");
+  const body = await proxyJson(
+    endpoint,
+    input,
+    env,
+    dependencies,
+    chatTimeoutMs(env),
+    alreadyClaimed ? { "x-tpec-whatsapp-claimed": "1" } : {},
+  );
+  const parsed = WhatsAppChatResultSchema.safeParse(body);
+  if (!parsed.success) {
+    throw new TpecBackendError(
+      "O backend do WhatsApp retornou formato inesperado.",
+      502,
+      "invalid_whatsapp_proxy_response",
+    );
+  }
+  return parsed.data;
+}
+
+export async function dispatchWhatsAppChat(
+  input: WhatsAppChatInput,
+  dependencies: WhatsAppBackendDependencies = {},
+): Promise<WhatsAppChatResult> {
+  return dispatchWhatsAppChatInternal(input, dependencies, false);
+}
+
+export async function dispatchClaimedWhatsAppChat(
+  input: WhatsAppChatInput,
+  dependencies: WhatsAppBackendDependencies = {},
+): Promise<WhatsAppChatResult> {
+  return dispatchWhatsAppChatInternal(input, dependencies, true);
+}
+
+async function controlLocal(request: WhatsAppControlRequest): Promise<WhatsAppControlResult> {
+  const conversation = await import("./conversation.server.ts");
+  switch (request.action) {
+    case "claim":
+      return conversation.claimWhatsAppInboundMessage(request.messageId, request.phone);
+    case "complete":
+      await conversation.completeWhatsAppInboundMessage(request.messageId, request.reply);
+      return { kind: "ok" };
+    case "release":
+      await conversation.releaseWhatsAppInboundMessage(request.messageId);
+      return { kind: "ok" };
+    case "claim_delivery":
+      return conversation.claimPendingWhatsAppDelivery(request.messageId);
+    case "delivered":
+      await conversation.markPendingWhatsAppDeliveryDone(request.messageId, request.reply);
+      return { kind: "ok" };
+    case "release_delivery":
+      await conversation.releasePendingWhatsAppDelivery(request.messageId, request.reply);
+      return { kind: "ok" };
+  }
+}
+
+export async function controlWhatsAppMessage(
+  request: WhatsAppControlRequest,
+  dependencies: WhatsAppBackendDependencies = {},
+): Promise<WhatsAppControlResult> {
+  const env = envOf(dependencies);
+  const mode = resolveTpecBackendMode(env);
+  if (mode === "local") return controlLocal(request);
+
+  const endpoint = resolveInternalWhatsAppUrl(env, "/api/internal/whatsapp-control");
+  const body = await proxyJson(endpoint, request, env, dependencies, controlTimeoutMs(env));
+  const parsed = WhatsAppControlResultSchema.safeParse(body);
+  if (!parsed.success) {
+    throw new TpecBackendError(
+      "O controle de idempotência do WhatsApp retornou formato inesperado.",
+      502,
+      "invalid_whatsapp_control_response",
+    );
+  }
+  return parsed.data;
 }

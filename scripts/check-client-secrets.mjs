@@ -4,13 +4,7 @@ import { join } from "node:path";
 // TanStack Start + Nitro pode emitir o bundle público em caminhos diferentes
 // conforme o preset/runtime. No deploy atual da Netlify, `dist` é o publish dir
 // configurado em netlify.toml; `.netlify/static` cobre a saída nativa do adapter.
-const candidateRoots = [
-  "dist/client",
-  "dist",
-  ".output/public",
-  ".netlify/static",
-  "build/client",
-];
+const candidateRoots = ["dist/client", "dist", ".output/public", ".netlify/static", "build/client"];
 const forbidden = [
   "TPEC_PROXY_SECRET",
   "SUPABASE_SERVICE_ROLE_KEY",

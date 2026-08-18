@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const ChatRoleSchema = z.enum(["user", "assistant", "system"]);
+export const ChatChannelSchema = z.enum(["web", "whatsapp"]);
 
 export const ChatMessageSchema = z.object({
   role: ChatRoleSchema,
@@ -12,6 +13,7 @@ export const ChatInputSchema = z.object({
   sessionId: z.string().min(1).max(128),
   conversationId: z.string().min(1).max(128).optional(),
   clientMessageId: z.string().min(1).max(128).optional(),
+  channel: ChatChannelSchema.optional(),
   text: z.string().min(1).max(2000),
   history: z.array(ChatMessageSchema).max(60).default([]),
   state: z.unknown().optional(),
