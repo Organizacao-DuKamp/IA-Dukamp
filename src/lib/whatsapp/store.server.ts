@@ -8,7 +8,16 @@ export interface WhatsAppConversationSnapshot {
 }
 
 export type WhatsAppMessageClaim =
-  { kind: "claimed" } | { kind: "completed"; reply: string } | { kind: "processing" };
+  | { kind: "claimed" }
+  | { kind: "completed"; reply: string }
+  | { kind: "processing" }
+  | { kind: "delivered" };
+
+export type WhatsAppDeliveryClaim =
+  | { kind: "claimed"; reply: string }
+  | { kind: "processing" }
+  | { kind: "delivered" }
+  | { kind: "missing" };
 
 const MAX_STORED_HISTORY = 40;
 const PROCESSING_STALE_MS = 2 * 60_000;
@@ -98,18 +107,40 @@ export async function claimWhatsAppMessage(
     .maybeSingle();
 
   if (error) throw new Error(`whatsapp_message_claim_lookup_failed:${error.code ?? "unknown"}`);
-  if (data?.status === "completed" && typeof data.reply === "string" && data.reply.length > 0) {
-    return { kind: "completed", reply: data.reply };
+  if (!data) return { kind: "processing" };
+
+  if (data.status === "completed") {
+    if (typeof data.reply === "string" && data.reply.length > 0) {
+      return { kind: "completed", reply: data.reply };
+    }
+    return { kind: "delivered" };
   }
 
-  const updatedAt = Date.parse(String(data?.updated_at ?? ""));
+  const updatedAt = Date.parse(String(data.updated_at ?? ""));
   const stale = Number.isFinite(updatedAt) && Date.now() - updatedAt > PROCESSING_STALE_MS;
   if (!stale) return { kind: "processing" };
+
+  // Um processamento com reply não nulo é um lease de entrega que ficou órfão.
+  // Volte-o para "completed" para permitir uma nova tentativa de envio sem
+  // reexecutar a IA. Um processamento sem reply é uma execução da IA que pode
+  // ser retomada depois do TTL.
+  if (typeof data.reply === "string" && data.reply.length > 0) {
+    const { error: restoreError } = await db()
+      .from("whatsapp_processed_messages")
+      .update({ status: "completed", updated_at: now })
+      .eq("message_id", messageId)
+      .eq("status", "processing");
+    if (restoreError) {
+      throw new Error(`whatsapp_delivery_restore_failed:${restoreError.code ?? "unknown"}`);
+    }
+    return { kind: "completed", reply: data.reply };
+  }
 
   const { error: reclaimError } = await db()
     .from("whatsapp_processed_messages")
     .update({ status: "processing", reply: null, updated_at: now })
-    .eq("message_id", messageId);
+    .eq("message_id", messageId)
+    .eq("status", "processing");
   if (reclaimError) {
     throw new Error(`whatsapp_message_reclaim_failed:${reclaimError.code ?? "unknown"}`);
   }
@@ -129,6 +160,59 @@ export async function releaseWhatsAppMessage(messageId: string): Promise<void> {
     .from("whatsapp_processed_messages")
     .delete()
     .eq("message_id", messageId)
-    .eq("status", "processing");
+    .eq("status", "processing")
+    .is("reply", null);
   if (error) throw new Error(`whatsapp_message_release_failed:${error.code ?? "unknown"}`);
+}
+
+export async function claimWhatsAppDelivery(messageId: string): Promise<WhatsAppDeliveryClaim> {
+  const now = new Date().toISOString();
+  const { data, error } = await db()
+    .from("whatsapp_processed_messages")
+    .update({ status: "processing", updated_at: now })
+    .eq("message_id", messageId)
+    .eq("status", "completed")
+    .not("reply", "is", null)
+    .select("reply")
+    .maybeSingle();
+
+  if (error) throw new Error(`whatsapp_delivery_claim_failed:${error.code ?? "unknown"}`);
+  if (typeof data?.reply === "string" && data.reply.length > 0) {
+    return { kind: "claimed", reply: data.reply };
+  }
+
+  const { data: current, error: lookupError } = await db()
+    .from("whatsapp_processed_messages")
+    .select("status,reply")
+    .eq("message_id", messageId)
+    .maybeSingle();
+  if (lookupError) {
+    throw new Error(`whatsapp_delivery_claim_lookup_failed:${lookupError.code ?? "unknown"}`);
+  }
+  if (!current) return { kind: "missing" };
+  if (current.status === "completed" && !current.reply) return { kind: "delivered" };
+  return { kind: "processing" };
+}
+
+export async function markWhatsAppMessageDelivered(
+  messageId: string,
+  reply: string,
+): Promise<void> {
+  const { error } = await db()
+    .from("whatsapp_processed_messages")
+    .update({ status: "completed", reply: null, updated_at: new Date().toISOString() })
+    .eq("message_id", messageId)
+    .eq("status", "processing")
+    .eq("reply", reply);
+  if (error) throw new Error(`whatsapp_delivery_complete_failed:${error.code ?? "unknown"}`);
+}
+
+export async function releaseWhatsAppDelivery(messageId: string, reply: string): Promise<void> {
+  const { error } = await db()
+    .from("whatsapp_processed_messages")
+    .update({ status: "completed", reply, updated_at: new Date().toISOString() })
+    .eq("message_id", messageId)
+    .eq("status", "processing")
+    .eq("reply", reply);
+  if (error) throw new Error(`whatsapp_delivery_release_failed:${error.code ?? "unknown"}`);
 }
