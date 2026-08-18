@@ -142,17 +142,11 @@ export async function handleInternalWhatsAppControlRequest(
         result = await conversation.claimPendingWhatsAppDelivery(parsed.data.messageId);
         break;
       case "delivered":
-        await conversation.markPendingWhatsAppDeliveryDone(
-          parsed.data.messageId,
-          parsed.data.reply,
-        );
+        await conversation.markPendingWhatsAppDeliveryDone(parsed.data.messageId, parsed.data.reply);
         result = { kind: "ok" };
         break;
       case "release_delivery":
-        await conversation.releasePendingWhatsAppDelivery(
-          parsed.data.messageId,
-          parsed.data.reply,
-        );
+        await conversation.releasePendingWhatsAppDelivery(parsed.data.messageId, parsed.data.reply);
         result = { kind: "ok" };
         break;
     }
