@@ -30,10 +30,7 @@ export function isWhatsAppSmallTalk(text: string): boolean {
  * No máximo duas mensagens de presença por pergunta. Os tempos são absolutos
  * desde o início do processamento e nunca são executados por timers soltos.
  */
-export function buildWhatsAppProgressPlan(
-  text: string,
-  seed = text,
-): WhatsAppProgressMessage[] {
+export function buildWhatsAppProgressPlan(text: string, seed = text): WhatsAppProgressMessage[] {
   const normalized = text.trim();
   if (!normalized || isWhatsAppSmallTalk(normalized)) return [];
 
@@ -91,7 +88,10 @@ export function friendlyWhatsAppError(error: unknown): string {
   if (status === 429 || /rate.?limit|muitas (mensagens|requisi[cç][oõ]es)/i.test(searchable)) {
     return "Chegaram muitas consultas ao mesmo tempo e eu não consegui processar a sua agora. Espera só um pouquinho e me manda novamente.";
   }
-  if (status === 409 || /processing|in.?progress|em processamento|mensagem anterior/i.test(searchable)) {
+  if (
+    status === 409 ||
+    /processing|in.?progress|em processamento|mensagem anterior/i.test(searchable)
+  ) {
     return "Ainda estou terminando sua mensagem anterior. Assim que ela fechar, pode mandar a próxima que eu continuo daqui.";
   }
   return "Opa, deu um problema aqui enquanto eu verificava isso e eu não consegui concluir a resposta. Não vou fingir que deu certo: tenta novamente em alguns instantes.";
