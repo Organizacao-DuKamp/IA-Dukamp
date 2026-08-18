@@ -89,9 +89,7 @@ export function emptyWhatsAppReply(): string {
   return "Eu consegui processar sua pergunta, mas a resposta voltou vazia por um erro daqui. Não quero te deixar sem retorno: manda a mesma pergunta de novo em alguns instantes que eu tento novamente.";
 }
 
-export type TrackedResult<T> =
-  | { ok: true; value: T }
-  | { ok: false; error: unknown };
+export type TrackedResult<T> = { ok: true; value: T } | { ok: false; error: unknown };
 
 export async function resolveWithWhatsAppProgress<T>(
   task: Promise<T>,
@@ -102,7 +100,8 @@ export async function resolveWithWhatsAppProgress<T>(
     delaysMs?: readonly [number, number, number];
   } = {},
 ): Promise<T> {
-  const sleep = options.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
+  const sleep =
+    options.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
   const delays = options.delaysMs ?? [450, 6_500, 9_000];
   const tracked: Promise<TrackedResult<T>> = task.then(
     (value) => ({ ok: true, value }),
@@ -110,10 +109,7 @@ export async function resolveWithWhatsAppProgress<T>(
   );
 
   for (let index = 0; index < plan.length; index += 1) {
-    const settled = await Promise.race([
-      tracked,
-      sleep(delays[index]).then(() => null),
-    ]);
+    const settled = await Promise.race([tracked, sleep(delays[index]).then(() => null)]);
     if (settled) {
       if (settled.ok) return settled.value;
       throw settled.error;
