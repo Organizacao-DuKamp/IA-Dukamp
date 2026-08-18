@@ -201,10 +201,7 @@ test("retry do mesmo webhook durante processamento não cria um segundo fluxo de
     sleepImpl: async () => undefined,
   });
   await dispatchStarted;
-  await Promise.resolve();
-  await Promise.resolve();
 
-  const beforeRetry = sent.length;
   const retry = await handleEnhancedWhatsAppWebhookRequest(requestFor(question, messageId), {
     env,
     fetchImpl: graphCapture(sent),
@@ -213,15 +210,17 @@ test("retry do mesmo webhook durante processamento não cria um segundo fluxo de
     sleepImpl: async () => undefined,
   });
   assert.equal(retry.status, 200);
-  assert.equal(sent.length, beforeRetry);
   assert.equal(dispatchCalls, 1);
 
   await finishDispatch();
   const firstResponse = await first;
   assert.equal(firstResponse.status, 200);
   assert.equal(dispatchCalls, 1);
+  // A primeira execução pode enviar no máximo os dois avisos previstos + a
+  // resposta final. Se o retry abrisse um novo fluxo, esse total seria maior.
   assert.equal(sent.length, 3);
   assert.equal(sent.at(-1), finalReply);
+  assert.equal(new Set(sent.slice(0, -1)).size, 2);
   assert.equal(lifecycle.states.get(messageId)?.stage, "delivered");
 });
 
