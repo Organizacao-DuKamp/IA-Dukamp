@@ -26,3 +26,40 @@ test("generic current market questions still request current web research", () =
   assert.equal(result.needs_web_search, true);
   assert.equal(result.needs_internal_search, false);
 });
+
+test("milk market panorama is research, not a forced quote", () => {
+  const result = classifyDomainIntent("como está o mercado do leite hoje?");
+
+  assert.equal(result.intent, "current_research");
+  assert.equal(result.needs_web_search, true);
+});
+
+test("explicit milk price remains a quote", () => {
+  const result = classifyDomainIntent("qual o preço do leite hoje?");
+
+  assert.equal(result.intent, "market_quote");
+  assert.equal(result.needs_web_search, true);
+});
+
+test("feeding corn to cattle is nutrition and must not trigger quote grounding", () => {
+  const result = classifyDomainIntent("posso dar milho para o gado na ração?");
+
+  assert.equal(result.intent, "nutrition");
+  assert.equal(result.needs_internal_search, true);
+  assert.equal(result.needs_web_search, false);
+});
+
+test("explicit corn price triggers market quote", () => {
+  const result = classifyDomainIntent("quanto está o milho hoje?");
+
+  assert.equal(result.intent, "market_quote");
+  assert.equal(result.needs_web_search, true);
+  assert.equal(result.needs_internal_search, false);
+});
+
+test("soy market panorama is current research rather than a price quote", () => {
+  const result = classifyDomainIntent("qual o panorama do mercado de soja hoje?");
+
+  assert.equal(result.intent, "current_research");
+  assert.equal(result.needs_web_search, true);
+});
