@@ -7,7 +7,6 @@ import {
 } from "./diagnostics.server.ts";
 
 const ENDPOINT = "https://api.openai.com/v1/responses";
-const WHATSAPP_CHANNEL_MARKER = "CANAL ATUAL: WhatsApp.";
 const WHATSAPP_STYLE_INSTRUCTION = `ESTILO DO CANAL — WHATSAPP (obrigatório):
 - A resposta final deve parecer uma conversa real no WhatsApp brasileiro, não um relatório, ficha ou comunicado.
 - Vá direto ao ponto e escreva em 2 a 5 parágrafos curtos sempre que possível.
@@ -46,6 +45,16 @@ export function openAIModel(kind: "fast" | "capable" = "capable"): string {
   return kind === "fast"
     ? process.env.OPENAI_FAST_MODEL || "gpt-5-mini"
     : process.env.OPENAI_CAPABLE_MODEL || "gpt-5";
+}
+
+function isWhatsAppConversationState(state: string | null | undefined): boolean {
+  if (!state) return false;
+  try {
+    const parsed = JSON.parse(state) as { conversation_id?: unknown };
+    return typeof parsed.conversation_id === "string" && parsed.conversation_id.startsWith("wa:");
+  } catch {
+    return false;
+  }
 }
 
 function instructions(options: OpenAIOptions, useWhatsAppStyle: boolean): string {
@@ -114,10 +123,7 @@ export async function askOpenAI(
   }
 
   const fetchImpl = options.fetchImpl ?? fetch;
-  const useWhatsAppStyle = history.some(
-    (message) =>
-      message.role === "system" && message.content.trim().startsWith(WHATSAPP_CHANNEL_MARKER),
-  );
+  const useWhatsAppStyle = isWhatsAppConversationState(options.state);
   const input = history
     .filter((m) => m.role !== "system")
     .map((m) => ({ role: m.role, content: m.content }));
