@@ -42,7 +42,7 @@ const rules: Array<[IntentClassification["intent"], RegExp, boolean, boolean]> =
   ],
   [
     "market_quote",
-    /\b(boi gordo|arroba|cota[cç][aã]o|pre[cç]o do leite|pre[cç]o da arroba|soja|milho)\b|\b(pre[cç]o|valor|cota[cç][aã]o)\b.{0,100}\b(carnes?|carne bovina|bovinos?|su[ií]nos?|frango|aves?|leite|boi|novilha|vaca|soja|milho)\b|\b(carnes?|carne bovina|bovinos?|su[ií]nos?|frango|aves?|leite|boi|novilha|vaca|soja|milho)\b.{0,100}\b(pre[cç]o|valor|cota[cç][aã]o)\b/i,
+    /\b(boi gordo|arroba|cota[cç][aã]o|pre[cç]o do leite|pre[cç]o da arroba|mercado do leite|mercado de leite|soja|milho)\b|\b(pre[cç]o|valor|cota[cç][aã]o)\b.{0,100}\b(carnes?|carne bovina|bovinos?|su[ií]nos?|frango|aves?|leite|boi|novilha|vaca|soja|milho)\b|\b(carnes?|carne bovina|bovinos?|su[ií]nos?|frango|aves?|leite|boi|novilha|vaca|soja|milho)\b.{0,100}\b(pre[cç]o|valor|cota[cç][aã]o)\b/i,
     false,
     true,
   ],
