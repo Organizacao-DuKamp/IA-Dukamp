@@ -3,6 +3,13 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { resolveTpecBackendMode } from "../chat/backend.server.ts";
 import { dispatchWhatsAppChat } from "./backend.server.ts";
 import {
+  buildWhatsAppProgressPlan,
+  emptyWhatsAppReply,
+  friendlyWhatsAppError,
+  resolveWithWhatsAppProgress,
+  shouldShowWhatsAppProgress,
+} from "./experience.ts";
+import {
   WhatsAppChatInputSchema,
   type WhatsAppChatInput,
   type WhatsAppChatResult,
@@ -18,6 +25,8 @@ export interface WhatsAppHttpDependencies {
   fetchImpl?: typeof fetch;
   dispatchChat?: (input: WhatsAppChatInput) => Promise<WhatsAppChatResult>;
   processLocal?: (input: WhatsAppChatInput) => Promise<WhatsAppChatResult>;
+  sleepImpl?: (ms: number) => Promise<void>;
+  progressDelaysMs?: readonly [number, number, number];
 }
 
 interface IncomingTextMessage {
@@ -227,6 +236,23 @@ async function sendWhatsAppText(
   console.info("[whatsapp] outbound completed");
 }
 
+async function notifyProcessingFailure(
+  message: IncomingTextMessage,
+  error: unknown,
+  env: EnvLike,
+  fetchImpl: typeof fetch,
+): Promise<boolean> {
+  try {
+    await sendWhatsAppText(message.phone, friendlyWhatsAppError(error), env, fetchImpl);
+    return true;
+  } catch (sendError) {
+    console.error(
+      `[whatsapp] failed to notify user about processing error original=${errorDetails(error)} notify=${errorDetails(sendError)}`,
+    );
+    return false;
+  }
+}
+
 export async function handleWhatsAppWebhookRequest(
   request: Request,
   dependencies: WhatsAppHttpDependencies = {},
@@ -313,55 +339,87 @@ export async function handleWhatsAppWebhookRequest(
     return json({ received: true });
   }
 
+  const fetchImpl = dependencies.fetchImpl ?? fetch;
   let backendMode = "invalid";
   try {
     backendMode = resolveTpecBackendMode(env);
     console.info(`[whatsapp] backend_mode=${backendMode}`);
   } catch (error) {
     console.error(`[whatsapp] backend mode error ${errorDetails(error)}`);
-    return json({ error: "whatsapp_processing_failed" }, 500);
+    const notifications = await Promise.all(
+      incoming.map((message) => notifyProcessingFailure(message, error, env, fetchImpl)),
+    );
+    return notifications.every(Boolean)
+      ? json({ received: true, notified_error: true })
+      : json({ error: "whatsapp_processing_failed" }, 500);
   }
 
   console.info(
     `[whatsapp] env access_token_configured=${Boolean(env.WHATSAPP_ACCESS_TOKEN?.trim())} proxy_url_configured=${Boolean(env.LOVABLE_BACKEND_URL?.trim())} proxy_secret_configured=${Boolean(env.TPEC_PROXY_SECRET?.trim())}`,
   );
 
-  const fetchImpl = dependencies.fetchImpl ?? fetch;
   const dispatch =
     dependencies.dispatchChat ??
     ((input: WhatsAppChatInput) =>
       dispatchWhatsAppChat(input, { env, fetchImpl: dependencies.fetchImpl }));
+  let deliveryFailed = false;
 
-  try {
-    for (let index = 0; index < incoming.length; index += 1) {
-      const message = incoming[index];
-      console.info(
-        `[whatsapp] dispatch start message=${index + 1}/${incoming.length} text_chars=${Array.from(message.text).length}`,
-      );
-      const started = Date.now();
-      const result = await dispatch({
-        phone: message.phone,
-        messageId: message.messageId,
-        text: message.text,
-      });
+  for (let index = 0; index < incoming.length; index += 1) {
+    const message = incoming[index];
+    console.info(
+      `[whatsapp] dispatch start message=${index + 1}/${incoming.length} text_chars=${Array.from(message.text).length}`,
+    );
+    const started = Date.now();
+    const task = dispatch({
+      phone: message.phone,
+      messageId: message.messageId,
+      text: message.text,
+    });
+
+    try {
+      const result = shouldShowWhatsAppProgress(message.text)
+        ? await resolveWithWhatsAppProgress(
+            task,
+            buildWhatsAppProgressPlan(message.text, message.messageId),
+            (progress) => sendWhatsAppText(message.phone, progress, env, fetchImpl),
+            {
+              sleep: dependencies.sleepImpl,
+              delaysMs: dependencies.progressDelaysMs,
+            },
+          )
+        : await task;
+
       console.info(
         `[whatsapp] dispatch completed duration_ms=${Date.now() - started} should_send=${result.shouldSend} has_reply=${Boolean(result.reply)} reply_chars=${result.reply ? Array.from(result.reply).length : 0}`,
       );
+
       if (result.shouldSend && result.reply) {
-        console.info("[whatsapp] sending reply to Graph API");
+        console.info("[whatsapp] sending final reply to Graph API");
         await sendWhatsAppText(message.phone, result.reply, env, fetchImpl);
+      } else if (result.shouldSend) {
+        console.error("[whatsapp] dispatch returned an empty reply; sending user-visible fallback");
+        await sendWhatsAppText(message.phone, emptyWhatsAppReply(), env, fetchImpl);
       } else {
         console.info(
-          "[whatsapp] reply not sent because dispatch returned shouldSend=false or empty reply",
+          "[whatsapp] reply not sent because dispatch returned shouldSend=false (usually duplicate processing)",
         );
       }
+    } catch (error) {
+      console.error(
+        `[whatsapp] message processing failed message=${index + 1}/${incoming.length} duration_ms=${Date.now() - started} ${errorDetails(error)}`,
+      );
+      const notified = await notifyProcessingFailure(message, error, env, fetchImpl);
+      if (!notified) deliveryFailed = true;
     }
-    console.info("[whatsapp] webhook processing completed successfully");
-    return json({ received: true });
-  } catch (error) {
-    console.error(`[whatsapp] webhook processing failed ${errorDetails(error)}`);
+  }
+
+  if (deliveryFailed) {
+    console.error("[whatsapp] webhook completed with an outbound delivery failure");
     return json({ error: "whatsapp_processing_failed" }, 500);
   }
+
+  console.info("[whatsapp] webhook processing completed successfully");
+  return json({ received: true });
 }
 
 export async function handleInternalWhatsAppChatRequest(
