@@ -49,12 +49,26 @@ test("feeding corn to cattle is nutrition and must not trigger quote grounding",
   assert.equal(result.needs_web_search, false);
 });
 
+test("feeding corn today remains nutrition instead of becoming an implicit quote", () => {
+  const result = classifyDomainIntent("posso dar milho para o gado hoje na ração?");
+
+  assert.equal(result.intent, "nutrition");
+  assert.equal(result.needs_web_search, false);
+});
+
 test("explicit corn price triggers market quote", () => {
   const result = classifyDomainIntent("quanto está o milho hoje?");
 
   assert.equal(result.intent, "market_quote");
   assert.equal(result.needs_web_search, true);
   assert.equal(result.needs_internal_search, false);
+});
+
+test("short implicit quote still understands corn today", () => {
+  const result = classifyDomainIntent("milho hoje?");
+
+  assert.equal(result.intent, "market_quote");
+  assert.equal(result.needs_web_search, true);
 });
 
 test("soy market panorama is current research rather than a price quote", () => {
