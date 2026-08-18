@@ -45,6 +45,14 @@ const rules: Array<[IntentClassification["intent"], RegExp, boolean, boolean]> =
     true,
     false,
   ],
+  // Preço de produto comercial tem prioridade sobre uma commodity citada na
+  // composição/contexto (ex.: "preço do suplemento com milho").
+  [
+    "internal_price",
+    /\b(pre[cç]o|valor|quanto custa|estoque)\b.{0,45}\b(produto|dukamp|suplemento|ra[cç][aã]o|mineral|proteinado)\b|\b(produto|dukamp|suplemento|ra[cç][aã]o|mineral|proteinado)\b.{0,45}\b(pre[cç]o|valor|quanto custa|estoque)\b/i,
+    true,
+    false,
+  ],
   [
     "market_quote",
     /^(?:e\s+)?(?:qual\s+(?:o|a)\s+)?(?:o\s+|a\s+)?(boi gordo|boi china|soja|milho|leite)\s+(?:de\s+)?(hoje|agora)\s*[?.!]*$/i,
