@@ -9,8 +9,8 @@ import {
 } from "./diagnostics.server.ts";
 
 const PERPLEXITY_URL = "https://api.perplexity.ai/chat/completions";
-const FIRST_ATTEMPT_TIMEOUT_MS = 15_000;
-const RETRY_TIMEOUT_MS = 9_000;
+const FIRST_ATTEMPT_TIMEOUT_MS = 12_000;
+const RETRY_TIMEOUT_MS = 6_000;
 
 type RecencyFilter = "hour" | "day" | "week" | "month" | "year";
 
@@ -110,7 +110,9 @@ export async function researchPerplexity(
   }
 
   const fetchImpl = options.fetchImpl ?? fetch;
-  const attempts = options.timeoutMs ? [options.timeoutMs] : [FIRST_ATTEMPT_TIMEOUT_MS, RETRY_TIMEOUT_MS];
+  const attempts = options.timeoutMs
+    ? [options.timeoutMs]
+    : [FIRST_ATTEMPT_TIMEOUT_MS, RETRY_TIMEOUT_MS];
   let lastError: PerplexityError | null = null;
 
   for (let attempt = 0; attempt < attempts.length; attempt += 1) {
