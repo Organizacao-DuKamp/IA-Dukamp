@@ -1,14 +1,22 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-import { resolveTpecBackendMode } from "../chat/backend.server.ts";
-import { dispatchWhatsAppChat } from "./backend.server.ts";
-import { handleWhatsAppWebhookRequest } from "./http.server.ts";
+import {
+  controlWhatsAppMessage,
+  dispatchClaimedWhatsAppChat,
+} from "./backend.server.ts";
 import {
   buildWhatsAppProgressPlan,
+  emptyWhatsAppReply,
   friendlyWhatsAppError,
-  humanizeWhatsAppReply,
+  resolveWithWhatsAppProgress,
 } from "./presence.ts";
-import { WhatsAppChatInputSchema, type WhatsAppChatInput, type WhatsAppChatResult } from "./types.ts";
+import {
+  WhatsAppChatInputSchema,
+  type WhatsAppChatInput,
+  type WhatsAppChatResult,
+  type WhatsAppControlRequest,
+  type WhatsAppControlResult,
+} from "./types.ts";
 
 type EnvLike = Record<string, string | undefined>;
 
@@ -19,8 +27,8 @@ export interface EnhancedWhatsAppHttpDependencies {
   env?: EnvLike;
   fetchImpl?: typeof fetch;
   dispatchChat?: (input: WhatsAppChatInput) => Promise<WhatsAppChatResult>;
-  setTimeoutImpl?: typeof setTimeout;
-  clearTimeoutImpl?: typeof clearTimeout;
+  controlMessage?: (request: WhatsAppControlRequest) => Promise<WhatsAppControlResult>;
+  sleepImpl?: (ms: number) => Promise<void>;
 }
 
 interface IncomingTextMessage {
@@ -32,6 +40,16 @@ interface IncomingTextMessage {
 
 function envOf(deps: EnhancedWhatsAppHttpDependencies): EnvLike {
   return deps.env ?? process.env;
+}
+
+function text(body: string, status = 200): Response {
+  return new Response(body, {
+    status,
+    headers: {
+      "content-type": "text/plain; charset=utf-8",
+      "cache-control": "no-store",
+    },
+  });
 }
 
 function json(body: unknown, status = 200): Response {
@@ -66,7 +84,11 @@ function errorDetails(error: unknown): string {
   return parts.join(" ");
 }
 
-function verifyWebhookSignature(rawBody: string, signature: string | null, appSecret: string): boolean {
+function verifyWebhookSignature(
+  rawBody: string,
+  signature: string | null,
+  appSecret: string,
+): boolean {
   if (!signature?.startsWith("sha256=")) return false;
   const expected = `sha256=${createHmac("sha256", appSecret).update(rawBody, "utf8").digest("hex")}`;
   return safeEqual(signature, expected);
@@ -172,7 +194,9 @@ async function sendWhatsAppText(
         redirect: "error",
       },
     );
-    if (!response.ok) throw new Error(`whatsapp_send_failed:${response.status}`);
+    if (!response.ok) {
+      throw new Error(`whatsapp_send_failed:${response.status}`);
+    }
   }
 }
 
@@ -193,116 +217,183 @@ async function trySendWhatsAppText(
   }
 }
 
+async function deliverPendingReply(
+  message: IncomingTextMessage,
+  fallbackReply: string | undefined,
+  control: (request: WhatsAppControlRequest) => Promise<WhatsAppControlResult>,
+  env: EnvLike,
+  fetchImpl: typeof fetch,
+): Promise<void> {
+  let delivery = await control({ action: "claim_delivery", messageId: message.messageId });
+
+  // Defesa extra: o processador normal persiste a resposta antes de retornar.
+  // Se um adaptador customizado não fez isso, persista uma vez e tente o lease.
+  if (delivery.kind === "missing" && fallbackReply?.trim()) {
+    await control({ action: "complete", messageId: message.messageId, reply: fallbackReply.trim() });
+    delivery = await control({ action: "claim_delivery", messageId: message.messageId });
+  }
+
+  if (delivery.kind === "processing" || delivery.kind === "delivered") return;
+  if (delivery.kind !== "claimed" || !delivery.reply) {
+    throw new Error("whatsapp_delivery_not_ready");
+  }
+
+  try {
+    await sendWhatsAppText(message.phone, delivery.reply, env, fetchImpl);
+    await control({
+      action: "delivered",
+      messageId: message.messageId,
+      reply: delivery.reply,
+    });
+  } catch (error) {
+    try {
+      await control({
+        action: "release_delivery",
+        messageId: message.messageId,
+        reply: delivery.reply,
+      });
+    } catch (releaseError) {
+      console.error(`[whatsapp] failed to release delivery lease ${errorDetails(releaseError)}`);
+    }
+    throw error;
+  }
+}
+
 export async function handleEnhancedWhatsAppWebhookRequest(
   request: Request,
   dependencies: EnhancedWhatsAppHttpDependencies = {},
 ): Promise<Response> {
-  if (request.method !== "POST") {
-    return handleWhatsAppWebhookRequest(request, {
-      env: dependencies.env,
-      fetchImpl: dependencies.fetchImpl,
-      dispatchChat: dependencies.dispatchChat,
-    });
+  const env = envOf(dependencies);
+
+  if (request.method === "GET") {
+    const url = new URL(request.url);
+    const mode = url.searchParams.get("hub.mode") ?? "";
+    const provided = url.searchParams.get("hub.verify_token") ?? "";
+    const challenge = url.searchParams.get("hub.challenge") ?? "";
+    const expected = env.WHATSAPP_VERIFY_TOKEN?.trim() ?? "";
+    if (
+      mode === "subscribe" &&
+      expected &&
+      provided &&
+      safeEqual(expected, provided) &&
+      challenge
+    ) {
+      return text(challenge, 200);
+    }
+    return text("Forbidden", 403);
   }
 
-  const env = envOf(dependencies);
+  if (request.method !== "POST") return text("Method Not Allowed", 405);
+
   let rawBody: string;
   try {
     rawBody = await readLimitedBody(request);
   } catch (error) {
-    console.error(`[whatsapp] enhanced body rejected ${errorDetails(error)}`);
-    return new Response("Payload Too Large", { status: 413 });
+    console.error(`[whatsapp] body rejected ${errorDetails(error)}`);
+    return text("Payload Too Large", 413);
   }
 
   const appSecret = env.WHATSAPP_APP_SECRET?.trim() ?? "";
   if (!appSecret) return json({ error: "whatsapp_not_configured" }, 503);
   if (!verifyWebhookSignature(rawBody, request.headers.get("x-hub-signature-256"), appSecret)) {
-    return new Response("Unauthorized", { status: 401 });
+    return text("Unauthorized", 401);
   }
 
   let payload: unknown;
   try {
     payload = JSON.parse(rawBody);
   } catch {
-    return new Response("Invalid JSON", { status: 400 });
+    return text("Invalid JSON", 400);
   }
 
   const configuredPhoneNumberId = env.WHATSAPP_PHONE_NUMBER_ID?.trim() ?? "";
-  const extracted = extractTextMessages(payload);
-  const incoming = extracted.filter(
+  const incoming = extractTextMessages(payload).filter(
     (message) => !configuredPhoneNumberId || message.phoneNumberId === configuredPhoneNumberId,
   );
   if (incoming.length === 0) return json({ received: true });
 
-  try {
-    resolveTpecBackendMode(env);
-  } catch (error) {
-    console.error(`[whatsapp] enhanced backend mode error ${errorDetails(error)}`);
-    return json({ error: "whatsapp_processing_failed" }, 500);
-  }
-
   const fetchImpl = dependencies.fetchImpl ?? fetch;
+  const control =
+    dependencies.controlMessage ??
+    ((controlRequest: WhatsAppControlRequest) =>
+      controlWhatsAppMessage(controlRequest, { env, fetchImpl: dependencies.fetchImpl }));
   const dispatch =
     dependencies.dispatchChat ??
     ((input: WhatsAppChatInput) =>
-      dispatchWhatsAppChat(input, { env, fetchImpl: dependencies.fetchImpl }));
-  const setTimer = dependencies.setTimeoutImpl ?? setTimeout;
-  const clearTimer = dependencies.clearTimeoutImpl ?? clearTimeout;
+      dispatchClaimedWhatsAppChat(input, { env, fetchImpl: dependencies.fetchImpl }));
 
   for (const message of incoming) {
-    const progressPlan = buildWhatsAppProgressPlan(message.text);
-    const timers: Array<ReturnType<typeof setTimeout>> = [];
-
-    if (progressPlan[0]?.delayMs === 0) {
-      await trySendWhatsAppText(
-        message.phone,
-        progressPlan[0].text,
-        env,
-        fetchImpl,
-        "progress.immediate",
-      );
-    }
-
-    for (const progress of progressPlan.slice(1)) {
-      const timer = setTimer(() => {
-        void trySendWhatsAppText(
-          message.phone,
-          progress.text,
-          env,
-          fetchImpl,
-          `progress.${progress.delayMs}`,
-        );
-      }, progress.delayMs);
-      timers.push(timer);
-    }
-
+    let claim: WhatsAppControlResult;
     try {
-      const started = Date.now();
-      const result = await dispatch({
+      claim = await control({
+        action: "claim",
         phone: message.phone,
         messageId: message.messageId,
-        text: message.text,
       });
-      console.info(
-        `[whatsapp] enhanced dispatch completed duration_ms=${Date.now() - started} should_send=${result.shouldSend} duplicate=${result.duplicate}`,
-      );
-
-      if (result.shouldSend && result.reply) {
-        const reply = humanizeWhatsAppReply(message.text, result.reply);
-        await sendWhatsAppText(message.phone, reply, env, fetchImpl);
-      }
     } catch (error) {
-      console.error(`[whatsapp] enhanced dispatch failed ${errorDetails(error)}`);
-      const failureSent = await trySendWhatsAppText(
+      console.error(`[whatsapp] durable claim failed ${errorDetails(error)}`);
+      await trySendWhatsAppText(
         message.phone,
         friendlyWhatsAppError(error),
         env,
         fetchImpl,
-        "failure.notice",
+        "claim.failure.notice",
       );
-      if (!failureSent) return json({ error: "whatsapp_processing_failed" }, 500);
-    } finally {
-      for (const timer of timers) clearTimer(timer);
+      continue;
+    }
+
+    // Retries da Meta chegam aqui. Nenhum status é enviado antes deste ponto.
+    // Se a primeira execução ainda estiver trabalhando, a cópia termina em 200
+    // silenciosamente; se a resposta já estiver pronta, apenas a entrega é retomada.
+    if (claim.kind === "processing" || claim.kind === "delivered") {
+      console.info(
+        `[whatsapp] duplicate ignored message_id=${message.messageId} state=${claim.kind}`,
+      );
+      continue;
+    }
+    if (claim.kind === "completed") {
+      try {
+        await deliverPendingReply(message, claim.reply, control, env, fetchImpl);
+      } catch (error) {
+        console.error(`[whatsapp] pending delivery failed ${errorDetails(error)}`);
+      }
+      continue;
+    }
+    if (claim.kind !== "claimed") continue;
+
+    const started = Date.now();
+    try {
+      const task = dispatch({
+        phone: message.phone,
+        messageId: message.messageId,
+        text: message.text,
+      });
+      const result = await resolveWithWhatsAppProgress(
+        task,
+        buildWhatsAppProgressPlan(message.text, message.messageId),
+        (progress) => sendWhatsAppText(message.phone, progress, env, fetchImpl),
+        dependencies.sleepImpl,
+      );
+      console.info(
+        `[whatsapp] claimed processing completed duration_ms=${Date.now() - started} has_reply=${Boolean(result.reply)}`,
+      );
+
+      const finalReply = result.reply?.trim() || emptyWhatsAppReply();
+      if (!result.reply?.trim()) {
+        await control({ action: "complete", messageId: message.messageId, reply: finalReply });
+      }
+      await deliverPendingReply(message, finalReply, control, env, fetchImpl);
+    } catch (error) {
+      console.error(
+        `[whatsapp] claimed processing failed duration_ms=${Date.now() - started} ${errorDetails(error)}`,
+      );
+      const failure = friendlyWhatsAppError(error);
+      try {
+        await control({ action: "complete", messageId: message.messageId, reply: failure });
+        await deliverPendingReply(message, failure, control, env, fetchImpl);
+      } catch (deliveryError) {
+        console.error(`[whatsapp] failure delivery failed ${errorDetails(deliveryError)}`);
+      }
     }
   }
 
