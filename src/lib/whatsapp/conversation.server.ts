@@ -37,6 +37,7 @@ interface MemoryMessageEntry {
   phone: string;
   status: "processing" | "completed";
   reply?: string;
+  deliveredAt?: number;
   updatedAt: number;
 }
 
@@ -87,7 +88,6 @@ function stateStoreMode(): "memory" | "supabase" {
   const configured = process.env.WHATSAPP_STATE_STORE?.trim().toLowerCase();
   if (configured === "memory") return "memory";
   if (configured === "supabase") return "supabase";
-
   return process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ? "supabase" : "memory";
 }
 
@@ -103,10 +103,9 @@ async function memoryClaimMessage(messageId: string, phone: string): Promise<Wha
   const now = Date.now();
   gcMemory(now);
   const existing = memoryMessages.get(messageId);
-  if (existing?.status === "completed") {
-    return existing.reply
-      ? { kind: "completed", reply: existing.reply }
-      : { kind: "delivered" };
+  if (existing?.deliveredAt) return { kind: "delivered" };
+  if (existing?.status === "completed" && existing.reply) {
+    return { kind: "completed", reply: existing.reply };
   }
   if (existing?.status === "processing") {
     if (now - existing.updatedAt <= MEMORY_PROCESSING_STALE_MS) return { kind: "processing" };
@@ -125,6 +124,7 @@ async function memoryClaimMessage(messageId: string, phone: string): Promise<Wha
 
 async function memoryCompleteMessage(messageId: string, reply: string): Promise<void> {
   const existing = memoryMessages.get(messageId);
+  if (existing?.deliveredAt) return;
   memoryMessages.delete(messageId);
   memoryMessages.set(messageId, {
     phone: existing?.phone ?? "unknown",
@@ -137,14 +137,17 @@ async function memoryCompleteMessage(messageId: string, reply: string): Promise<
 
 async function memoryReleaseMessage(messageId: string): Promise<void> {
   const existing = memoryMessages.get(messageId);
-  if (existing?.status === "processing" && !existing.reply) memoryMessages.delete(messageId);
+  if (existing?.status === "processing" && !existing.reply && !existing.deliveredAt) {
+    memoryMessages.delete(messageId);
+  }
 }
 
 async function memoryClaimDelivery(messageId: string): Promise<WhatsAppDeliveryClaim> {
   const existing = memoryMessages.get(messageId);
   if (!existing) return { kind: "missing" };
+  if (existing.deliveredAt) return { kind: "delivered" };
   if (existing.status === "processing") return { kind: "processing" };
-  if (!existing.reply) return { kind: "delivered" };
+  if (!existing.reply) return { kind: "processing" };
 
   existing.status = "processing";
   existing.updatedAt = Date.now();
@@ -153,17 +156,16 @@ async function memoryClaimDelivery(messageId: string): Promise<WhatsAppDeliveryC
 
 async function memoryMarkDelivered(messageId: string, reply: string): Promise<void> {
   const existing = memoryMessages.get(messageId);
-  if (existing?.status !== "processing" || existing.reply !== reply) return;
+  if (existing?.status !== "processing" || existing.reply !== reply || existing.deliveredAt) return;
   existing.status = "completed";
-  delete existing.reply;
-  existing.updatedAt = Date.now();
+  existing.deliveredAt = Date.now();
+  existing.updatedAt = existing.deliveredAt;
 }
 
 async function memoryReleaseDelivery(messageId: string, reply: string): Promise<void> {
   const existing = memoryMessages.get(messageId);
-  if (existing?.status !== "processing" || existing.reply !== reply) return;
+  if (existing?.status !== "processing" || existing.reply !== reply || existing.deliveredAt) return;
   existing.status = "completed";
-  existing.reply = reply;
   existing.updatedAt = Date.now();
 }
 
@@ -271,7 +273,6 @@ function greetingReply(text: string, hasHistory: boolean): string | null {
     if (normalized === "boa noite") return "Boa noite! Tô por aqui 😊 Pode mandar.";
     return "Opa! Tô por aqui 😊 Pode mandar.";
   }
-
   return "Oi! 👋 Sou a TPEC-IA, da DuKamp. Pode mandar sua dúvida.";
 }
 
