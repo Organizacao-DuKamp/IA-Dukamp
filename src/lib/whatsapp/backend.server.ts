@@ -130,7 +130,9 @@ async function proxyJson(
     try {
       body = raw ? JSON.parse(raw) : {};
     } catch {
-      console.error(`[whatsapp-backend] invalid JSON path=${endpoint.pathname} chars=${raw.length}`);
+      console.error(
+        `[whatsapp-backend] invalid JSON path=${endpoint.pathname} chars=${raw.length}`,
+      );
       throw new TpecBackendError(
         "O backend do WhatsApp retornou JSON inválido.",
         502,
