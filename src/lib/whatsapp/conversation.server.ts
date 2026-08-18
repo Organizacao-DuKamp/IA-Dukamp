@@ -16,10 +16,7 @@ export interface WhatsAppConversationSnapshot {
   state?: unknown;
 }
 
-export type WhatsAppMessageClaim =
-  | { kind: "claimed" }
-  | { kind: "completed"; reply: string }
-  | { kind: "processing" };
+export type WhatsAppMessageClaim = { kind: "claimed" } | { kind: "completed"; reply: string } | { kind: "processing" };
 
 interface MemoryConversationEntry {
   snapshot: WhatsAppConversationSnapshot;
