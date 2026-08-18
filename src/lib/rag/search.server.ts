@@ -122,7 +122,9 @@ export async function searchKnowledge(query: string, matchCount = 6): Promise<Ma
     throw new Error(`buscas da base indisponíveis (${errors.join("; ")})`);
   }
 
-  const matches = [...byKey.values()].sort((a, b) => b.similarity - a.similarity).slice(0, matchCount);
+  const matches = [...byKey.values()]
+    .sort((a, b) => b.similarity - a.similarity)
+    .slice(0, matchCount);
   logDiagnostic("info", "rag.search.finish", {
     duration_ms: Date.now() - totalStarted,
     query_chars: query.length,
