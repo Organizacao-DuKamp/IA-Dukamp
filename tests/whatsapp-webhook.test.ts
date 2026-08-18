@@ -2,7 +2,11 @@ import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
 import test from "node:test";
 
-import { processWhatsAppChat } from "../src/lib/whatsapp/conversation.server.ts";
+import {
+  processWhatsAppChat,
+  WHATSAPP_CHANNEL_INSTRUCTION,
+} from "../src/lib/whatsapp/conversation.server.ts";
+import { buildWhatsAppProgressPlan } from "../src/lib/whatsapp/experience.ts";
 import {
   handleInternalWhatsAppChatRequest,
   handleWhatsAppWebhookRequest,
@@ -51,6 +55,14 @@ function textWebhook(text = "Oi, TPEC", messageId = "wamid.test-1") {
       },
     ],
   };
+}
+
+function graphCapture(target: string[]) {
+  return (async (_input: RequestInfo | URL, init?: RequestInit) => {
+    const payload = JSON.parse(String(init?.body)) as { text?: { body?: string } };
+    target.push(payload.text?.body ?? "");
+    return new Response(JSON.stringify({ messages: [{ id: "wamid.reply" }] }), { status: 200 });
+  }) as typeof fetch;
 }
 
 test("verificação GET devolve hub.challenge com token correto", async () => {
@@ -179,6 +191,92 @@ test("mensagem de texto entra na TPEC-IA e resposta volta pela Graph API", async
   });
 });
 
+test("consulta lenta conversa com o usuário antes da resposta final", async () => {
+  const question = "Como está o mercado de carnes no Brasil hoje?";
+  const messageId = "wamid.slow-market";
+  const body = JSON.stringify(textWebhook(question, messageId));
+  const outbound: string[] = [];
+
+  const response = await handleWhatsAppWebhookRequest(
+    new Request("https://tpecia.netlify.app/api/public/whatsapp", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-hub-signature-256": signature(body) },
+      body,
+    }),
+    {
+      env,
+      fetchImpl: graphCapture(outbound),
+      sleepImpl: async () => undefined,
+      progressDelaysMs: [1, 1, 1],
+      dispatchChat: async () => {
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        return {
+          reply: "O mercado está firme, com exportações sustentando parte da demanda.",
+          shouldSend: true,
+          duplicate: false,
+        };
+      },
+    },
+  );
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(outbound.slice(0, 3), [...buildWhatsAppProgressPlan(question, messageId)]);
+  assert.equal(
+    outbound.at(-1),
+    "O mercado está firme, com exportações sustentando parte da demanda.",
+  );
+});
+
+test("timeout do backend vira mensagem para o usuário em vez de silêncio", async () => {
+  const body = JSON.stringify(textWebhook("Como está o mercado de carnes no Brasil hoje?"));
+  const outbound: string[] = [];
+  const timeout = Object.assign(new Error("O backend demorou para responder"), {
+    code: "whatsapp_proxy_timeout",
+    status: 504,
+  });
+
+  const response = await handleWhatsAppWebhookRequest(
+    new Request("https://tpecia.netlify.app/api/public/whatsapp", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-hub-signature-256": signature(body) },
+      body,
+    }),
+    {
+      env,
+      fetchImpl: graphCapture(outbound),
+      dispatchChat: async () => {
+        throw timeout;
+      },
+    },
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal(outbound.length, 1);
+  assert.match(outbound[0], /n[aã]o quero te deixar no v[aá]cuo/i);
+});
+
+test("resposta vazia recebe fallback visível no WhatsApp", async () => {
+  const body = JSON.stringify(textWebhook("Me explique a situação do mercado"));
+  const outbound: string[] = [];
+
+  const response = await handleWhatsAppWebhookRequest(
+    new Request("https://tpecia.netlify.app/api/public/whatsapp", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-hub-signature-256": signature(body) },
+      body,
+    }),
+    {
+      env,
+      fetchImpl: graphCapture(outbound),
+      dispatchChat: async () => ({ reply: "", shouldSend: true, duplicate: false }),
+    },
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal(outbound.length, 1);
+  assert.match(outbound[0], /resposta voltou vazia/i);
+});
+
 test("ponte local preserva histórico, estado e idempotência", async () => {
   const previous = {
     conversationId: "wa:5517999999999",
@@ -223,7 +321,10 @@ test("ponte local preserva histórico, estado e idempotência", async () => {
     conversationId: "wa:5517999999999",
     clientMessageId: "wamid.local-1",
     text: "Quero saber o preço",
-    history: previous.history,
+    history: [
+      ...previous.history,
+      { role: "system", content: WHATSAPP_CHANNEL_INSTRUCTION },
+    ],
     state: previous.state,
   });
   assert.deepEqual(saved, {
@@ -239,6 +340,41 @@ test("ponte local preserva histórico, estado e idempotência", async () => {
     messageId: "wamid.local-1",
     reply: "Claro, qual produto?",
   });
+});
+
+test("novo oi em conversa existente não reapresenta a TPEC-IA", async () => {
+  const previous = {
+    conversationId: "wa:5517999999999",
+    history: [
+      { role: "user" as const, content: "Qual o preço do boi China?" },
+      { role: "assistant" as const, content: "A referência mais recente é R$ 350/@." },
+    ],
+    state: { current_topic: "cotações" },
+  };
+  let executed = false;
+  let saved: unknown;
+
+  const result = await processWhatsAppChat(
+    { phone: "5517999999999", messageId: "wamid.returning-hi", text: "Oi" },
+    {
+      claimMessage: async () => ({ kind: "claimed" }),
+      loadConversation: async () => previous,
+      executeChat: async () => {
+        executed = true;
+        return { status: 500, body: {} };
+      },
+      saveConversation: async (_phone, snapshot) => {
+        saved = snapshot;
+      },
+      completeMessage: async () => undefined,
+      releaseMessage: async () => undefined,
+    },
+  );
+
+  assert.equal(executed, false);
+  assert.match(result.reply ?? "", /t[oô] por aqui/i);
+  assert.doesNotMatch(result.reply ?? "", /sou a TPEC-IA/i);
+  assert.deepEqual((saved as { state?: unknown }).state, previous.state);
 });
 
 test("mensagem já concluída reutiliza resposta sem chamar o modelo", async () => {
