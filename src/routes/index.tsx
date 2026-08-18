@@ -120,7 +120,8 @@ function ChatPage() {
           {
             id: crypto.randomUUID(),
             role: "assistant",
-            content: "Ainda estou cruzando as informações para não te passar algo desatualizado ou incompleto.",
+            content:
+              "Ainda estou cruzando as informações para não te passar algo desatualizado ou incompleto.",
             transient: true,
             presentation: "status",
           },
