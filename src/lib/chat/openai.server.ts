@@ -51,9 +51,21 @@ export function openAIModel(kind: "fast" | "capable" = "capable"): string {
     : process.env.OPENAI_CAPABLE_MODEL || "gpt-5";
 }
 
+function stateIsWhatsApp(state: string | null | undefined): boolean {
+  if (!state) return false;
+  try {
+    const parsed = JSON.parse(state) as { conversation_id?: unknown };
+    return typeof parsed.conversation_id === "string" && parsed.conversation_id.startsWith("wa:");
+  } catch {
+    return false;
+  }
+}
+
 function instructions(options: OpenAIOptions): string {
   const layers = [TPEC_SYSTEM_PROMPT];
-  if (options.channel === "whatsapp") layers.push(WHATSAPP_STYLE_INSTRUCTION);
+  if (options.channel === "whatsapp" || stateIsWhatsApp(options.state)) {
+    layers.push(WHATSAPP_STYLE_INSTRUCTION);
+  }
   if (options.summary) {
     layers.push(
       `RESUMO ESTRUTURADO DA CONVERSA (uso interno; nunca cite nem exiba este JSON):\n${options.summary}`,
@@ -117,6 +129,7 @@ export async function askOpenAI(
   }
 
   const fetchImpl = options.fetchImpl ?? fetch;
+  const whatsappStyle = options.channel === "whatsapp" || stateIsWhatsApp(options.state);
   const input = history
     .filter((m) => m.role !== "system")
     .map((m) => ({ role: m.role, content: m.content }));
@@ -140,7 +153,7 @@ export async function askOpenAI(
     logDiagnostic("info", "openai.request.start", {
       provider: "openai",
       model,
-      channel: options.channel ?? "web",
+      channel: whatsappStyle ? "whatsapp" : (options.channel ?? "web"),
       reasoning_effort: supportsReasoningConfig(model) ? reasoningEffort : undefined,
       max_output_tokens: maxOutputTokens,
       timeout_ms: timeoutMs,
