@@ -1,9 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-import {
-  controlWhatsAppMessage,
-  dispatchClaimedWhatsAppChat,
-} from "./backend.server.ts";
+import { controlWhatsAppMessage, dispatchClaimedWhatsAppChat } from "./backend.server.ts";
 import {
   buildWhatsAppProgressPlan,
   emptyWhatsAppReply,
@@ -225,7 +222,11 @@ async function deliverPendingReply(
   let delivery = await control({ action: "claim_delivery", messageId: message.messageId });
 
   if (delivery.kind === "missing" && fallbackReply?.trim()) {
-    await control({ action: "complete", messageId: message.messageId, reply: fallbackReply.trim() });
+    await control({
+      action: "complete",
+      messageId: message.messageId,
+      reply: fallbackReply.trim(),
+    });
     delivery = await control({ action: "claim_delivery", messageId: message.messageId });
   }
 
@@ -366,13 +367,7 @@ export async function handleEnhancedWhatsAppWebhookRequest(
         task,
         buildWhatsAppProgressPlan(message.text, message.messageId),
         async (progress) => {
-          await trySendWhatsAppText(
-            message.phone,
-            progress,
-            env,
-            fetchImpl,
-            "progress.notice",
-          );
+          await trySendWhatsAppText(message.phone, progress, env, fetchImpl, "progress.notice");
         },
         dependencies.sleepImpl,
       );
