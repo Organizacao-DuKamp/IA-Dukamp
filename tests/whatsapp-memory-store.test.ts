@@ -18,7 +18,7 @@ test("WhatsApp usa memória quando SUPABASE_SERVICE_ROLE_KEY não está configur
     seen.push(input);
     turn += 1;
     const result: ChatCoreResult = {
-      reply: turn === 1 ? "Olá!" : "Continuando a conversa.",
+      reply: turn === 1 ? "Claro, vou verificar." : "Continuando a conversa.",
       state: { current_topic: "teste", turn_count: turn },
       conversationId: `wa:${phone}`,
       diagnostics: { model: "test" },
@@ -28,10 +28,14 @@ test("WhatsApp usa memória quando SUPABASE_SERVICE_ROLE_KEY não está configur
 
   try {
     const first = await processWhatsAppChat(
-      { phone, messageId: `wamid.memory-${Date.now()}-1`, text: "Olá" },
+      {
+        phone,
+        messageId: `wamid.memory-${Date.now()}-1`,
+        text: "Quero saber sobre suplementos para bezerros",
+      },
       { executeChat },
     );
-    assert.equal(first.reply, "Olá!");
+    assert.equal(first.reply, "Claro, vou verificar.");
     assert.deepEqual(seen[0]?.history, []);
 
     const second = await processWhatsAppChat(
@@ -40,8 +44,8 @@ test("WhatsApp usa memória quando SUPABASE_SERVICE_ROLE_KEY não está configur
     );
     assert.equal(second.reply, "Continuando a conversa.");
     assert.deepEqual(seen[1]?.history, [
-      { role: "user", content: "Olá" },
-      { role: "assistant", content: "Olá!" },
+      { role: "user", content: "Quero saber sobre suplementos para bezerros" },
+      { role: "assistant", content: "Claro, vou verificar." },
     ]);
   } finally {
     if (previousKey === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY;
