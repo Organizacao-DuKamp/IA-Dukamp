@@ -2,10 +2,7 @@ import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
 import test from "node:test";
 
-import {
-  processWhatsAppChat,
-  WHATSAPP_CHANNEL_INSTRUCTION,
-} from "../src/lib/whatsapp/conversation.server.ts";
+import { processWhatsAppChat } from "../src/lib/whatsapp/conversation.server.ts";
 import { buildWhatsAppProgressPlan } from "../src/lib/whatsapp/experience.ts";
 import {
   handleInternalWhatsAppChatRequest,
@@ -321,10 +318,7 @@ test("ponte local preserva histórico, estado e idempotência", async () => {
     conversationId: "wa:5517999999999",
     clientMessageId: "wamid.local-1",
     text: "Quero saber o preço",
-    history: [
-      ...previous.history,
-      { role: "system", content: WHATSAPP_CHANNEL_INSTRUCTION },
-    ],
+    history: previous.history,
     state: previous.state,
   });
   assert.deepEqual(saved, {
