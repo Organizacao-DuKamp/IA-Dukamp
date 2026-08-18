@@ -29,6 +29,8 @@ export type IntentClassification = z.infer<typeof IntentSchema>;
 
 const QUOTE_COMMODITIES =
   "boi gordo|boi china|arroba|carne bovina|carnes?|bovinos?|su[ií]nos?|frango|aves?|leite|novilha|vaca|soja|milho|ovos?|pescado|d[oó]lar|c[aâ]mbio";
+const QUOTE_SIGNAL =
+  "pre[cç]o|valor|cota[cç][aã]o|quanto\\s+(?:est[aá]|t[aá])|quanto\\s+custa|arroba";
 
 const rules: Array<[IntentClassification["intent"], RegExp, boolean, boolean]> = [
   [
@@ -49,12 +51,10 @@ const rules: Array<[IntentClassification["intent"], RegExp, boolean, boolean]> =
     false,
     true,
   ],
-  // Cotação exige um sinal explícito de preço/cotação. Nomes como "milho" e
-  // "soja" sozinhos não podem mandar uma dúvida de nutrição para o fluxo rígido.
   [
     "market_quote",
     new RegExp(
-      `\\b(pre[cç]o|valor|cota[cç][aã]o|quanto (?:est[aá]|t[aá])|quanto custa|arroba)\\b.{0,100}\\b(${QUOTE_COMMODITIES})\\b|\\b(${QUOTE_COMMODITIES})\\b.{0,100}\\b(pre[cç]o|valor|cota[cç][aã]o|quanto (?:est[aá]|t[aá])|quanto custa|arroba)\\b`,
+      `(?:${QUOTE_SIGNAL}).{0,40}(?:${QUOTE_COMMODITIES})|(?:${QUOTE_COMMODITIES}).{0,40}(?:${QUOTE_SIGNAL})`,
       "i",
     ),
     false,
