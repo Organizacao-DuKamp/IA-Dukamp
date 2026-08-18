@@ -1,6 +1,7 @@
 // Semantic search over knowledge_chunks. Returns top matches with source metadata.
 
 import { logDiagnostic } from "../chat/diagnostics.server.ts";
+import { classifyDomainIntent } from "../chat/intent";
 import { embeddingProvider, embedQuery, toPgVector } from "./embeddings.server";
 
 export interface Match {
@@ -13,6 +14,24 @@ export interface Match {
 }
 
 export async function searchKnowledge(query: string, matchCount = 6): Promise<Match[]> {
+  // Perguntas cujo objetivo é informação atual e que não pedem pesquisa interna
+  // devem ir direto para a fonte web atual. Além de poupar uma geração de
+  // embedding + RPCs no Supabase, isso evita que material histórico do RAG
+  // concorra com a evidência fresca de mercado recuperada pela Perplexity.
+  const domainIntent = classifyDomainIntent(query);
+  if (
+    !domainIntent.needs_internal_search &&
+    (domainIntent.intent === "current_research" || domainIntent.intent === "market_quote")
+  ) {
+    logDiagnostic("info", "rag.search.skipped", {
+      reason: "current_web_research_only",
+      intent: domainIntent.intent,
+      query_chars: query.length,
+      requested_matches: matchCount,
+    });
+    return [];
+  }
+
   // A base RAG é privada e suas RPCs aceitam apenas service_role. Em runtimes
   // públicos como a Netlify, onde essa chave deliberadamente não existe, não
   // tente inicializar o cliente privilegiado. O orquestrador continuará com
@@ -103,7 +122,9 @@ export async function searchKnowledge(query: string, matchCount = 6): Promise<Ma
     throw new Error(`buscas da base indisponíveis (${errors.join("; ")})`);
   }
 
-  const matches = [...byKey.values()].sort((a, b) => b.similarity - a.similarity).slice(0, matchCount);
+  const matches = [...byKey.values()]
+    .sort((a, b) => b.similarity - a.similarity)
+    .slice(0, matchCount);
   logDiagnostic("info", "rag.search.finish", {
     duration_ms: Date.now() - totalStarted,
     query_chars: query.length,
