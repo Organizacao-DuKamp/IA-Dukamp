@@ -7,6 +7,16 @@ import {
 } from "./diagnostics.server.ts";
 
 const ENDPOINT = "https://api.openai.com/v1/responses";
+const WHATSAPP_CHANNEL_MARKER = "CANAL ATUAL: WhatsApp.";
+const WHATSAPP_STYLE_INSTRUCTION = `ESTILO DO CANAL — WHATSAPP (obrigatório):
+- A resposta final deve parecer uma conversa real no WhatsApp brasileiro, não um relatório, ficha ou comunicado.
+- Vá direto ao ponto e escreva em 2 a 5 parágrafos curtos sempre que possível.
+- Não abra com cabeçalhos burocráticos como "Referência de mercado externa", "Observação", "Resumo" ou "Conclusão" quando uma frase natural resolver.
+- Use listas apenas quando houver vários itens que realmente precisem ser comparados.
+- Em cotações, preserve obrigatoriamente preço + unidade + praça + data + fonte, mas integre esses dados em frases naturais. Prefira algo como "A referência mais recente que encontrei para São Paulo é...".
+- Não reapresente a TPEC-IA em conversas já iniciadas e não termine toda resposta com "posso ajudar em algo mais?".
+- Use no máximo um emoji quando combinar com a conversa.
+- Não escreva mensagens de espera como "estou pesquisando" na resposta final; o transporte do WhatsApp já cuida dos avisos de andamento.`;
 
 export class OpenAIError extends Error {
   readonly status: number;
@@ -38,8 +48,9 @@ export function openAIModel(kind: "fast" | "capable" = "capable"): string {
     : process.env.OPENAI_CAPABLE_MODEL || "gpt-5";
 }
 
-function instructions(options: OpenAIOptions): string {
+function instructions(options: OpenAIOptions, useWhatsAppStyle: boolean): string {
   const layers = [TPEC_SYSTEM_PROMPT];
+  if (useWhatsAppStyle) layers.push(WHATSAPP_STYLE_INSTRUCTION);
   if (options.summary) {
     layers.push(
       `RESUMO ESTRUTURADO DA CONVERSA (uso interno; nunca cite nem exiba este JSON):\n${options.summary}`,
@@ -103,6 +114,10 @@ export async function askOpenAI(
   }
 
   const fetchImpl = options.fetchImpl ?? fetch;
+  const useWhatsAppStyle = history.some(
+    (message) =>
+      message.role === "system" && message.content.trim().startsWith(WHATSAPP_CHANNEL_MARKER),
+  );
   const input = history
     .filter((m) => m.role !== "system")
     .map((m) => ({ role: m.role, content: m.content }));
@@ -115,7 +130,7 @@ export async function askOpenAI(
     const started = Date.now();
     const body: Record<string, unknown> = {
       model,
-      instructions: instructions(options),
+      instructions: instructions(options, useWhatsAppStyle),
       input,
       // Em modelos de raciocínio, este limite inclui raciocínio + texto visível.
       max_output_tokens: maxOutputTokens,
@@ -126,6 +141,7 @@ export async function askOpenAI(
     logDiagnostic("info", "openai.request.start", {
       provider: "openai",
       model,
+      channel_style: useWhatsAppStyle ? "whatsapp" : "default",
       reasoning_effort: supportsReasoningConfig(model) ? reasoningEffort : undefined,
       max_output_tokens: maxOutputTokens,
       timeout_ms: timeoutMs,
@@ -224,7 +240,11 @@ export async function askOpenAI(
 
   // Se o orçamento foi consumido pelo raciocínio antes de sair texto visível,
   // faça uma única tentativa mais econômica em raciocínio e com orçamento maior.
-  if (!text && data.status === "incomplete" && data.incomplete_details?.reason === "max_output_tokens") {
+  if (
+    !text &&
+    data.status === "incomplete" &&
+    data.incomplete_details?.reason === "max_output_tokens"
+  ) {
     logDiagnostic("warn", "openai.response.retry_after_incomplete", {
       provider: "openai",
       model,
