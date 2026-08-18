@@ -1,9 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 async function handle(request: Request) {
-  const { handleEnhancedWhatsAppWebhookRequest } = await import(
-    "@/lib/whatsapp/enhanced-http.server"
-  );
+  const { handleEnhancedWhatsAppWebhookRequest } =
+    await import("@/lib/whatsapp/enhanced-http.server");
   return handleEnhancedWhatsAppWebhookRequest(request);
 }
 
