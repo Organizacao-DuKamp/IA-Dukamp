@@ -4,9 +4,8 @@ export const Route = createFileRoute("/api/internal/whatsapp-chat")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const { handleInternalWhatsAppChatRequest } = await import(
-          "@/lib/whatsapp/internal-http.server"
-        );
+        const { handleInternalWhatsAppChatRequest } =
+          await import("@/lib/whatsapp/internal-http.server");
         return handleInternalWhatsAppChatRequest(request);
       },
     },
