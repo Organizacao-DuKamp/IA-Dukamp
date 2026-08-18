@@ -15,17 +15,14 @@ test("estado de conversa WhatsApp ativa estilo conversacional", async () => {
   let requestBody: Record<string, unknown> | undefined;
 
   try {
-    const reply = await askOpenAI(
-      [{ role: "user", content: "Qual o preço do boi China hoje?" }],
-      {
-        model: "fast",
-        state: JSON.stringify({ conversation_id: "wa:5517999999999" }),
-        fetchImpl: (async (_input: RequestInfo | URL, init?: RequestInit) => {
-          requestBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
-          return new Response(JSON.stringify({ output_text: "Resposta natural" }), { status: 200 });
-        }) as typeof fetch,
-      },
-    );
+    const reply = await askOpenAI([{ role: "user", content: "Qual o preço do boi China hoje?" }], {
+      model: "fast",
+      state: JSON.stringify({ conversation_id: "wa:5517999999999" }),
+      fetchImpl: (async (_input: RequestInfo | URL, init?: RequestInit) => {
+        requestBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
+        return new Response(JSON.stringify({ output_text: "Resposta natural" }), { status: 200 });
+      }) as typeof fetch,
+    });
 
     assert.equal(reply, "Resposta natural");
     assert.match(String(requestBody?.instructions), /ESTILO DO CANAL — WHATSAPP/);
