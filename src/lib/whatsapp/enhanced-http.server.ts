@@ -19,6 +19,8 @@ type EnvLike = Record<string, string | undefined>;
 
 const MAX_WEBHOOK_BODY_BYTES = 512 * 1024;
 const MAX_OUTBOUND_CHARS = 3500;
+const DELIVERY_CONFIRM_ATTEMPTS = 3;
+const DELIVERY_CONFIRM_RETRY_MS = 120;
 
 export interface EnhancedWhatsAppHttpDependencies {
   env?: EnvLike;
@@ -212,12 +214,39 @@ async function trySendWhatsAppText(
   }
 }
 
+async function confirmWhatsAppDelivery(
+  messageId: string,
+  reply: string,
+  control: (request: WhatsAppControlRequest) => Promise<WhatsAppControlResult>,
+  sleepImpl: (ms: number) => Promise<void>,
+): Promise<void> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= DELIVERY_CONFIRM_ATTEMPTS; attempt += 1) {
+    try {
+      await control({ action: "delivered", messageId, reply });
+      return;
+    } catch (error) {
+      lastError = error;
+      console.error(
+        `[whatsapp] delivered_at confirmation failed attempt=${attempt}/${DELIVERY_CONFIRM_ATTEMPTS} ${errorDetails(error)}`,
+      );
+      if (attempt < DELIVERY_CONFIRM_ATTEMPTS) await sleepImpl(DELIVERY_CONFIRM_RETRY_MS);
+    }
+  }
+
+  // A Graph API já aceitou a mensagem. Não libere o lease aqui: fazer isso
+  // tornaria uma resposta possivelmente entregue imediatamente elegível para
+  // reenvio por outro webhook, criando duplicatas para o usuário.
+  throw lastError instanceof Error ? lastError : new Error("whatsapp_delivery_confirmation_failed");
+}
+
 async function deliverPendingReply(
   message: IncomingTextMessage,
   fallbackReply: string | undefined,
   control: (request: WhatsAppControlRequest) => Promise<WhatsAppControlResult>,
   env: EnvLike,
   fetchImpl: typeof fetch,
+  sleepImpl: (ms: number) => Promise<void>,
 ): Promise<void> {
   let delivery = await control({ action: "claim_delivery", messageId: message.messageId });
 
@@ -235,13 +264,10 @@ async function deliverPendingReply(
     throw new Error("whatsapp_delivery_not_ready");
   }
 
+  // Falha ANTES da Graph API aceitar a mensagem: é seguro liberar o lease e
+  // permitir nova tentativa da mesma resposta pronta.
   try {
     await sendWhatsAppText(message.phone, delivery.reply, env, fetchImpl);
-    await control({
-      action: "delivered",
-      messageId: message.messageId,
-      reply: delivery.reply,
-    });
   } catch (error) {
     try {
       await control({
@@ -254,6 +280,10 @@ async function deliverPendingReply(
     }
     throw error;
   }
+
+  // Depois de a Graph API aceitar a mensagem, nunca volte o registro para
+  // "completed" só porque a confirmação no banco falhou. Isso evita reenvio.
+  await confirmWhatsAppDelivery(message.messageId, delivery.reply, control, sleepImpl);
 }
 
 export async function handleEnhancedWhatsAppWebhookRequest(
@@ -261,6 +291,9 @@ export async function handleEnhancedWhatsAppWebhookRequest(
   dependencies: EnhancedWhatsAppHttpDependencies = {},
 ): Promise<Response> {
   const env = envOf(dependencies);
+  const sleepImpl =
+    dependencies.sleepImpl ??
+    ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
 
   if (request.method === "GET") {
     const url = new URL(request.url);
@@ -347,7 +380,7 @@ export async function handleEnhancedWhatsAppWebhookRequest(
     }
     if (claim.kind === "completed") {
       try {
-        await deliverPendingReply(message, claim.reply, control, env, fetchImpl);
+        await deliverPendingReply(message, claim.reply, control, env, fetchImpl, sleepImpl);
       } catch (error) {
         console.error(`[whatsapp] pending delivery failed ${errorDetails(error)}`);
       }
@@ -367,9 +400,28 @@ export async function handleEnhancedWhatsAppWebhookRequest(
         task,
         buildWhatsAppProgressPlan(message.text, message.messageId),
         async (progress) => {
+          // Antes de cada aviso, confira o estado durável. Se outro worker já
+          // concluiu/entregou esta mesma mensagem, o progresso ficou obsoleto.
+          try {
+            const current = await control({
+              action: "claim",
+              phone: message.phone,
+              messageId: message.messageId,
+            });
+            if (current.kind !== "processing") {
+              console.info(
+                `[whatsapp] stale progress suppressed message_id=${message.messageId} state=${current.kind}`,
+              );
+              return;
+            }
+          } catch (error) {
+            // Falhar ao conferir presença não pode derrubar a resposta principal.
+            console.error(`[whatsapp] progress state check failed ${errorDetails(error)}`);
+            return;
+          }
           await trySendWhatsAppText(message.phone, progress, env, fetchImpl, "progress.notice");
         },
-        dependencies.sleepImpl,
+        sleepImpl,
       );
       console.info(
         `[whatsapp] claimed processing completed duration_ms=${Date.now() - started} has_reply=${Boolean(result.reply)}`,
@@ -381,10 +433,15 @@ export async function handleEnhancedWhatsAppWebhookRequest(
       const failure = friendlyWhatsAppError(error);
       try {
         await control({ action: "complete", messageId: message.messageId, reply: failure });
-        await deliverPendingReply(message, failure, control, env, fetchImpl);
+        await deliverPendingReply(message, failure, control, env, fetchImpl, sleepImpl);
       } catch (deliveryError) {
         console.error(`[whatsapp] failure delivery failed ${errorDetails(deliveryError)}`);
       }
+      continue;
+    }
+
+    if (!result.shouldSend) {
+      console.info(`[whatsapp] final delivery suppressed message_id=${message.messageId}`);
       continue;
     }
 
@@ -398,10 +455,10 @@ export async function handleEnhancedWhatsAppWebhookRequest(
       }
     }
 
-    // Entrega é uma fase separada. Se a Graph API falhar, o lease volta para
-    // "completed" e a próxima tentativa entrega a MESMA resposta já calculada.
+    // Entrega é uma fase separada. Falha na própria Graph API libera o lease;
+    // falha apenas ao confirmar delivered_at NÃO libera uma mensagem já aceita.
     try {
-      await deliverPendingReply(message, finalReply, control, env, fetchImpl);
+      await deliverPendingReply(message, finalReply, control, env, fetchImpl, sleepImpl);
     } catch (error) {
       console.error(`[whatsapp] final delivery failed ${errorDetails(error)}`);
     }
