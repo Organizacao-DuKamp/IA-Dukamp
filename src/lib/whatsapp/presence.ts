@@ -170,10 +170,7 @@ function needsRealLookup(classification: IntentClassification): boolean {
   return classification.needs_web_search || classification.needs_internal_search;
 }
 
-function progressContextFor(
-  text: string,
-  classification: IntentClassification,
-): ProgressContext {
+function progressContextFor(text: string, classification: IntentClassification): ProgressContext {
   if (classification.intent === "market_quote") return "market_quote";
   if (classification.intent === "current_research") {
     return MARKET_OVERVIEW.test(text) ? "market_overview" : "current_updates";
