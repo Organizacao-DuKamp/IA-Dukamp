@@ -210,11 +210,39 @@ test("retry do mesmo webhook durante processamento não cria um segundo fluxo de
   const firstResponse = await first;
   assert.equal(firstResponse.status, 200);
   assert.equal(dispatchCalls, 1);
-  // A primeira execução pode enviar no máximo os dois avisos previstos + a
-  // resposta final. Se o retry abrisse um novo fluxo, esse total seria maior.
   assert.equal(sent.length, 3);
   assert.equal(sent.at(-1), finalReply);
   assert.equal(new Set(sent.slice(0, -1)).size, 2);
+  assert.equal(lifecycle.states.get(messageId)?.stage, "delivered");
+});
+
+test("progresso atrasado é suprimido se a resposta já foi entregue por outro worker", async () => {
+  const sent: string[] = [];
+  const lifecycle = fakeLifecycle();
+  const messageId = "wamid.stale-progress";
+  const reply = "Resposta já entregue por outra execução.";
+  let sleepCalls = 0;
+
+  const response = await handleEnhancedWhatsAppWebhookRequest(
+    requestFor("Como está o mercado de carnes no Brasil hoje?", messageId),
+    {
+      env,
+      fetchImpl: graphCapture(sent),
+      controlMessage: lifecycle.control,
+      dispatchChat: async () => {
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        return { reply, shouldSend: true, duplicate: false };
+      },
+      sleepImpl: async () => {
+        sleepCalls += 1;
+        lifecycle.states.set(messageId, { stage: "delivered" });
+      },
+    },
+  );
+
+  assert.equal(response.status, 200);
+  assert.ok(sleepCalls >= 1);
+  assert.deepEqual(sent, []);
   assert.equal(lifecycle.states.get(messageId)?.stage, "delivered");
 });
 
@@ -259,6 +287,75 @@ test("falha na Graph API preserva a resposta pronta e retry não recalcula a IA"
   assert.equal(dispatchCalls, 1);
   assert.deepEqual(attempted, [reply, reply]);
   assert.equal(lifecycle.states.get(messageId)?.stage, "delivered");
+});
+
+test("Graph aceita resposta mas falha ao marcar delivered_at não libera para reenvio", async () => {
+  const sent: string[] = [];
+  const lifecycle = fakeLifecycle();
+  const messageId = "wamid.uncertain-delivery";
+  const reply = "Esta resposta deve aparecer uma única vez.";
+  let dispatchCalls = 0;
+  let deliveredAttempts = 0;
+  let releaseDeliveryCalls = 0;
+
+  const control = async (request: WhatsAppControlRequest): Promise<WhatsAppControlResult> => {
+    if (request.action === "delivered") {
+      deliveredAttempts += 1;
+      throw new Error("temporary_database_failure");
+    }
+    if (request.action === "release_delivery") releaseDeliveryCalls += 1;
+    return lifecycle.control(request);
+  };
+
+  const first = await handleEnhancedWhatsAppWebhookRequest(requestFor("Oi", messageId), {
+    env,
+    fetchImpl: graphCapture(sent),
+    controlMessage: control,
+    dispatchChat: async () => {
+      dispatchCalls += 1;
+      await lifecycle.control({ action: "complete", messageId, reply });
+      return { reply, shouldSend: true, duplicate: false };
+    },
+    sleepImpl: async () => undefined,
+  });
+
+  assert.equal(first.status, 200);
+  assert.deepEqual(sent, [reply]);
+  assert.equal(deliveredAttempts, 3);
+  assert.equal(releaseDeliveryCalls, 0);
+  assert.equal(lifecycle.states.get(messageId)?.stage, "delivery");
+
+  const retry = await handleEnhancedWhatsAppWebhookRequest(requestFor("Oi", messageId), {
+    env,
+    fetchImpl: graphCapture(sent),
+    controlMessage: control,
+    dispatchChat: async () => {
+      dispatchCalls += 1;
+      return { reply: "não deveria recalcular", shouldSend: true, duplicate: false };
+    },
+    sleepImpl: async () => undefined,
+  });
+
+  assert.equal(retry.status, 200);
+  assert.equal(dispatchCalls, 1);
+  assert.deepEqual(sent, [reply]);
+  assert.equal(releaseDeliveryCalls, 0);
+});
+
+test("resultado shouldSend=false nunca dispara resposta final", async () => {
+  const sent: string[] = [];
+  const lifecycle = fakeLifecycle();
+  const messageId = "wamid.no-send";
+
+  const response = await handleEnhancedWhatsAppWebhookRequest(requestFor("Oi", messageId), {
+    env,
+    fetchImpl: graphCapture(sent),
+    controlMessage: lifecycle.control,
+    dispatchChat: async () => ({ duplicate: true, shouldSend: false }),
+  });
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(sent, []);
 });
 
 test("falha do backend vira uma única resposta visível e concluída", async () => {
