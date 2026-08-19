@@ -37,7 +37,8 @@ export function validateGrounding(
 ): GroundingResult {
   const issues: string[] = [];
   const refs = [...reply.matchAll(/\[(\d+)]/g)].map((m) => Number(m[1]));
-  if (refs.some((n) => n < 1 || n > (evidence.citations ?? 0))) addIssue(issues, "unmapped_citation");
+  if (refs.some((n) => n < 1 || n > (evidence.citations ?? 0)))
+    addIssue(issues, "unmapped_citation");
 
   const hasMoney = /(?:R\$\s*\d|US\$\s*\d)/i.test(reply);
   const marketReply = hasMoney && looksLikeMarketReply(reply);
