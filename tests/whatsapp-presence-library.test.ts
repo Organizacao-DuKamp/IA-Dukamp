@@ -10,6 +10,33 @@ test("biblioteca de presença contém exatamente 60 templates", () => {
   assert.equal(WHATSAPP_PROGRESS_TEMPLATE_COUNT, 60);
 });
 
+test("conversa casual curta responde direto sem fingir consulta", () => {
+  for (const text of [
+    "Ah que legak",
+    "Ah que legal",
+    "Que? Não entendi",
+    "Como assim?",
+    "Entendi",
+    "Interessante",
+  ]) {
+    assert.deepEqual(
+      buildWhatsAppProgressPlan(text, `wamid.casual-${text}`),
+      [],
+      `não deveria gerar presença para: ${text}`,
+    );
+  }
+});
+
+test("conversa geral sem busca responde direto mesmo fora da lista de small talk", () => {
+  assert.deepEqual(
+    buildWhatsAppProgressPlan(
+      "Me explica de um jeito mais simples",
+      "wamid.general-no-lookup",
+    ),
+    [],
+  );
+});
+
 test("panorama de mercado recebe linguagem de mercado, não de estoque da DuKamp", () => {
   const plan = buildWhatsAppProgressPlan(
     "Como está o mercado de carnes no Brasil hoje?",
