@@ -283,12 +283,7 @@ async function deliverPendingReply(
 
   // Depois de a Graph API aceitar a mensagem, nunca volte o registro para
   // "completed" só porque a confirmação no banco falhou. Isso evita reenvio.
-  await confirmWhatsAppDelivery(
-    message.messageId,
-    delivery.reply,
-    control,
-    sleepImpl,
-  );
+  await confirmWhatsAppDelivery(message.messageId, delivery.reply, control, sleepImpl);
 }
 
 export async function handleEnhancedWhatsAppWebhookRequest(
@@ -297,7 +292,8 @@ export async function handleEnhancedWhatsAppWebhookRequest(
 ): Promise<Response> {
   const env = envOf(dependencies);
   const sleepImpl =
-    dependencies.sleepImpl ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
+    dependencies.sleepImpl ??
+    ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
 
   if (request.method === "GET") {
     const url = new URL(request.url);
