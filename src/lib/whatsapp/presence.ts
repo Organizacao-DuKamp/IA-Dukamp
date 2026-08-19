@@ -1,16 +1,160 @@
+import { classifyDomainIntent } from "../chat/intent.ts";
+
 export interface WhatsAppProgressMessage {
   delayMs: number;
   text: string;
 }
 
+type ProgressContext =
+  | "market_overview"
+  | "market_quote"
+  | "product"
+  | "commercial"
+  | "nutrition"
+  | "management"
+  | "animal_health"
+  | "document"
+  | "current_updates"
+  | "general";
+
+interface ProgressTemplates {
+  first: readonly string[];
+  second: readonly string[];
+}
+
 const SMALL_TALK =
   /^(oi+|ol[aá]+|opa|e a[ií]|bom dia|boa tarde|boa noite|obrigad[oa]|valeu|vlw|blz|beleza|ok|okay|show|tmj|tamo junto|tchau|at[eé] mais)[!.?\s…]*$/i;
 
-const CURRENT_INFO =
-  /\b(hoje|agora|atual|atualmente|mercado|cota[cç][aã]o|pre[cç]o|valor|not[ií]cia|clima|previs[aã]o|exporta[cç][aã]o|arroba|boi china|boi gordo|soja|milho|leite|carne)\b/i;
+const MARKET_OVERVIEW =
+  /\b(mercado|cen[aá]rio|setor|panorama|tend[eê]ncia|exporta[cç][aã]o|carne|carnes|bovino|bovinos|su[ií]no|su[ií]nos|frango|aves|prote[ií]na animal|soja|milho|leite|gr[aã]os)\b/i;
 
-const COMMERCIAL =
-  /\b(produto|dukamp|estoque|vendedor|representante|consultor|comprar|compra|pedido)\b/i;
+const PROGRESS_TEMPLATES: Record<ProgressContext, ProgressTemplates> = {
+  market_overview: {
+    first: [
+      "Boa, vou levantar o panorama mais recente desse mercado e comparar as referências antes de te responder.",
+      "Deixa eu olhar como esse mercado está se comportando agora e cruzar as fontes mais atuais.",
+      "Vou montar uma visão atual desse mercado pra você, conferindo os dados recentes antes de fechar a resposta.",
+    ],
+    second: [
+      "Tô cruzando as referências porque os indicadores não estão todos apontando na mesma direção. Já fecho o panorama.",
+      "Ainda conferindo por aqui — quero separar tendência de mercado de dado isolado antes de te passar a leitura.",
+      "Essa análise pediu uma checagem a mais nas fontes recentes. Continuo comparando os sinais antes de concluir.",
+    ],
+  },
+  market_quote: {
+    first: [
+      "Vou conferir a cotação mais recente, com data, praça e fonte, pra não te passar valor velho.",
+      "Certo, deixa eu buscar a referência de preço mais atual e validar de onde esse número veio.",
+      "Vou checar essa cotação agora e comparar as publicações mais recentes antes de te dar o valor.",
+    ],
+    second: [
+      "Ainda comparando data e praça da cotação — prefiro segurar um pouco do que misturar valores de dias diferentes.",
+      "A cotação está exigindo uma conferência extra entre as fontes. Tô validando qual referência é realmente a mais recente.",
+      "Continuo checando os valores porque encontrei referências de momentos diferentes. Já organizo isso certinho.",
+    ],
+  },
+  product: {
+    first: [
+      "Beleza, vou conferir o cadastro oficial da DuKamp e separar o que realmente corresponde ao que você pediu.",
+      "Deixa eu consultar os produtos da DuKamp certinho antes de te indicar qualquer coisa.",
+      "Vou olhar essa informação direto na base da DuKamp pra te responder com produto e dado corretos.",
+    ],
+    second: [
+      "Ainda conferindo o cadastro porque quero evitar te indicar um item parecido, mas que não seja exatamente o que você precisa.",
+      "Tô revisando os detalhes do produto na base antes de fechar a resposta. Só mais um pouco.",
+      "A busca no catálogo pediu uma checagem extra. Continuo validando os dados oficiais da DuKamp.",
+    ],
+  },
+  commercial: {
+    first: [
+      "Certo, vou conferir essa informação comercial na DuKamp e já te retorno com o dado correto.",
+      "Deixa eu verificar isso na parte comercial pra não te passar contato, pedido ou informação desatualizada.",
+      "Vou checar esse ponto direto nos dados da DuKamp antes de te responder.",
+    ],
+    second: [
+      "Ainda verificando os dados comerciais por aqui. Quero confirmar tudo antes de te direcionar.",
+      "Essa consulta comercial levou um pouco mais que o normal; continuo conferindo pra não te mandar pro lugar errado.",
+      "Tô fechando a conferência dos dados da DuKamp. Prefiro validar antes de te passar a informação pela metade.",
+    ],
+  },
+  nutrition: {
+    first: [
+      "Boa pergunta. Vou analisar isso pelo lado nutricional e conferir os pontos importantes antes de te responder.",
+      "Deixa eu organizar essa parte de alimentação e nutrição com cuidado pra te dar uma orientação coerente.",
+      "Vou conferir os critérios nutricionais envolvidos nisso antes de fechar a resposta pra você.",
+    ],
+    second: [
+      "Ainda analisando porque essa parte nutricional depende de alguns detalhes que eu não quero simplificar demais.",
+      "Tô cruzando os pontos de nutrição e manejo alimentar antes de concluir. Já te respondo com isso organizado.",
+      "Essa dúvida nutricional pediu uma checagem a mais. Continuo revisando pra não te dar uma resposta genérica demais.",
+    ],
+  },
+  management: {
+    first: [
+      "Vou analisar esse cenário de manejo com calma e organizar uma resposta prática pra sua situação.",
+      "Certo, deixa eu revisar os pontos de manejo envolvidos nisso antes de te sugerir um caminho.",
+      "Vou conferir esse manejo por etapas pra te responder de um jeito que faça sentido na prática.",
+    ],
+    second: [
+      "Ainda organizando os pontos de manejo porque tem mais de um fator envolvido. Já fecho uma orientação mais útil.",
+      "Tô revisando esse cenário com um pouco mais de cuidado pra não te passar uma recomendação rasa.",
+      "Essa análise de manejo levou uma checagem extra. Continuo por aqui e já concluo.",
+    ],
+  },
+  animal_health: {
+    first: [
+      "Vou olhar isso com atenção porque envolve saúde animal e eu não quero responder no automático.",
+      "Entendi. Deixa eu revisar os sinais e os cuidados envolvidos antes de te orientar com segurança.",
+      "Vou analisar essa situação de sanidade com mais cuidado antes de te responder.",
+    ],
+    second: [
+      "Ainda revisando porque, em saúde animal, alguns detalhes mudam bastante a orientação. Já organizo os próximos passos.",
+      "Tô conferindo os pontos de segurança antes de concluir — nesse tipo de dúvida vale evitar qualquer resposta apressada.",
+      "Essa situação de sanidade merece uma checagem a mais. Continuo analisando e já te retorno de forma objetiva.",
+    ],
+  },
+  document: {
+    first: [
+      "Vou conferir o material que você mencionou e organizar os pontos relevantes antes de responder.",
+      "Certo, deixa eu revisar esse documento ou conteúdo com atenção pra não deixar passar detalhe importante.",
+      "Vou analisar o material primeiro e depois te devolvo uma resposta já organizada.",
+    ],
+    second: [
+      "Ainda revisando o conteúdo porque tem alguns detalhes que preciso cruzar antes de concluir.",
+      "Tô terminando a leitura e separando o que realmente importa pra sua pergunta. Já fecho a resposta.",
+      "Esse material pediu uma revisão um pouco mais cuidadosa. Continuo por aqui e já te retorno.",
+    ],
+  },
+  current_updates: {
+    first: [
+      "Vou conferir as informações mais recentes sobre isso antes de te responder, porque esse assunto pode ter mudado.",
+      "Deixa eu checar o que está valendo agora e comparar as fontes atuais antes de concluir.",
+      "Vou buscar a atualização mais recente desse assunto pra não me apoiar em informação antiga.",
+    ],
+    second: [
+      "Ainda conferindo as atualizações porque encontrei informações de datas diferentes. Já separo o que está valendo agora.",
+      "Tô comparando as fontes mais recentes antes de fechar a resposta. Esse assunto mudou bastante com o tempo.",
+      "Essa atualização levou uma checagem extra. Continuo validando qual informação é realmente a mais atual.",
+    ],
+  },
+  general: {
+    first: [
+      "Boa pergunta. Vou organizar isso direitinho antes de te responder.",
+      "Entendi. Deixa eu analisar os pontos principais e já te devolvo uma resposta mais redonda.",
+      "Certo, vou conferir isso com cuidado pra te responder sem atropelar os detalhes.",
+    ],
+    second: [
+      "Ainda tô por aqui — essa resposta pediu uma análise a mais antes de eu fechar.",
+      "Só está levando um pouco mais que o normal. Tô revisando os detalhes pra te responder direito.",
+      "Continuo verificando. Prefiro gastar mais alguns segundos do que te devolver uma resposta pela metade.",
+    ],
+  },
+};
+
+export const WHATSAPP_PROGRESS_TEMPLATE_COUNT = Object.values(PROGRESS_TEMPLATES).reduce(
+  (total, templates) => total + templates.first.length + templates.second.length,
+  0,
+);
 
 function stableIndex(seed: string, length: number): number {
   let hash = 0;
@@ -22,6 +166,35 @@ function pick(seed: string, values: readonly string[]): string {
   return values[stableIndex(seed, values.length)];
 }
 
+function progressContextFor(text: string): ProgressContext {
+  const classification = classifyDomainIntent(text);
+
+  if (classification.intent === "market_quote") return "market_quote";
+  if (classification.intent === "current_research") {
+    return MARKET_OVERVIEW.test(text) ? "market_overview" : "current_updates";
+  }
+  if (
+    classification.intent === "product" ||
+    classification.intent === "product_recommendation" ||
+    classification.intent === "internal_price"
+  ) {
+    return "product";
+  }
+  if (
+    classification.intent === "seller_contact" ||
+    classification.intent === "store" ||
+    classification.intent === "order" ||
+    classification.intent === "human_support"
+  ) {
+    return "commercial";
+  }
+  if (classification.intent === "nutrition") return "nutrition";
+  if (classification.intent === "management") return "management";
+  if (classification.intent === "animal_health") return "animal_health";
+  if (classification.intent === "document_or_image") return "document";
+  return "general";
+}
+
 export function isWhatsAppSmallTalk(text: string): boolean {
   return SMALL_TALK.test(text.trim());
 }
@@ -29,42 +202,16 @@ export function isWhatsAppSmallTalk(text: string): boolean {
 /**
  * No máximo duas mensagens de presença por pergunta. Os tempos são absolutos
  * desde o início do processamento e nunca são executados por timers soltos.
+ * O catálogo contém 60 frases distribuídas por dez contextos diferentes.
  */
 export function buildWhatsAppProgressPlan(text: string, seed = text): WhatsAppProgressMessage[] {
   const normalized = text.trim();
   if (!normalized || isWhatsAppSmallTalk(normalized)) return [];
 
-  const current = CURRENT_INFO.test(normalized);
-  const commercial = COMMERCIAL.test(normalized);
-  const first = current
-    ? pick(`${seed}:current:first`, [
-        "Deixa eu conferir as informações mais recentes pra não te passar algo desatualizado.",
-        "Vou checar os dados mais atuais antes de te responder. Já volto com isso.",
-        "Boa, vou conferir isso nas informações mais recentes pra te responder direito.",
-      ])
-    : commercial
-      ? pick(`${seed}:commercial:first`, [
-          "Beleza, vou conferir isso certinho na DuKamp antes de te responder.",
-          "Certo, deixa eu verificar essa informação direitinho pra você.",
-          "Entendi. Vou conferir os dados certos antes de te responder.",
-        ])
-      : pick(`${seed}:general:first`, [
-          "Boa pergunta. Vou conferir isso com cuidado e já te respondo.",
-          "Entendi. Deixa eu verificar isso direitinho antes de fechar a resposta.",
-          "Certo, vou analisar isso com cuidado pra te responder direito.",
-        ]);
-
-  const second = current
-    ? pick(`${seed}:current:second`, [
-        "Ainda tô conferindo. Essa busca levou um pouco mais, mas prefiro fechar com uma fonte confiável.",
-        "Essa consulta tá levando um pouco mais que o normal. Continuo checando pra não te passar um dado no chute.",
-        "Ainda verificando por aqui — estou cruzando as referências antes de fechar a resposta.",
-      ])
-    : pick(`${seed}:general:second`, [
-        "Ainda tô por aqui. Essa resposta exigiu uma checagem a mais antes de eu fechar.",
-        "Só está levando um pouco mais que o normal; continuo conferindo os detalhes.",
-        "Ainda verificando. Prefiro demorar um pouco mais do que te responder pela metade.",
-      ]);
+  const context = progressContextFor(normalized);
+  const templates = PROGRESS_TEMPLATES[context];
+  const first = pick(`${seed}:${context}:first`, templates.first);
+  const second = pick(`${seed}:${context}:second`, templates.second);
 
   return [
     { delayMs: 900, text: first },
