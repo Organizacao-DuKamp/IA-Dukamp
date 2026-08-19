@@ -21,6 +21,10 @@ export type WhatsAppDeliveryClaim =
 
 const MAX_STORED_HISTORY = 40;
 const PROCESSING_STALE_MS = 2 * 60_000;
+// Se a Graph API aceitou a resposta, mas a gravação de delivered_at falhou,
+// o registro fica processing + reply. Uma janela maior reduz drasticamente o
+// risco de reenviar uma mensagem que provavelmente já chegou ao usuário.
+const DELIVERY_STALE_MS = 30 * 60_000;
 
 function db() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -116,12 +120,14 @@ export async function claimWhatsAppMessage(
   }
 
   const updatedAt = Date.parse(String(data.updated_at ?? ""));
-  const stale = Number.isFinite(updatedAt) && Date.now() - updatedAt > PROCESSING_STALE_MS;
+  const hasPendingReply = typeof data.reply === "string" && data.reply.length > 0;
+  const staleAfterMs = hasPendingReply ? DELIVERY_STALE_MS : PROCESSING_STALE_MS;
+  const stale = Number.isFinite(updatedAt) && Date.now() - updatedAt > staleAfterMs;
   if (!stale) return { kind: "processing" };
 
-  // Lease de entrega órfão: restaura resposta pronta. Processamento sem reply:
-  // permite reprocessar somente após o TTL.
-  if (typeof data.reply === "string" && data.reply.length > 0) {
+  // Lease de entrega órfão: só restaura a resposta após uma janela conservadora.
+  // Processamento sem reply continua podendo ser retomado mais cedo.
+  if (hasPendingReply) {
     const { error: restoreError } = await db()
       .from("whatsapp_processed_messages")
       .update({ status: "completed", delivered_at: null, updated_at: now })
