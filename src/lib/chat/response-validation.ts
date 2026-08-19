@@ -10,9 +10,25 @@ function hasExplicitDate(reply: string): boolean {
 }
 
 function hasIdentifiedSource(reply: string): boolean {
-  return /(?:\bfonte\s*:|\bsegundo\s+(?:o|a)\b|\b(?:CEPEA|ESALQ|Scot|B3|Conab|IMEA|IEA|Not[ií]cias\s+Agr[ií]colas|Canal\s+Rural|Agrolink|ANP|Banco\s+Central|IBGE|MAPA|MDIC|Comex\s+Stat)\b)/i.test(
+  return /(?:\bfonte\s*:|\bsegundo\s+(?:o|a)\b|\b(?:CEPEA|ESALQ|Scot|B3|Conab|IMEA|IEA|Not[ií]cias\s+Agr[ií]colas|Canal\s+Rural|Agrolink|ANP|Banco\s+Central|IBGE|MAPA|MDIC|Comex\s+Stat|Brasil61|Agron|Safras\s*&\s*Mercado)\b)/i.test(
     reply,
   );
+}
+
+function hasMarketUnit(reply: string): boolean {
+  return /(?:\/@|\b(?:arrobas?|sacas?|kg|quilos?|litros?|cabe[cç]as?|toneladas?|bushels?|R\$\s*\/\s*(?:@|kg|l|t))\b)/i.test(
+    reply,
+  );
+}
+
+function looksLikeMarketReply(reply: string): boolean {
+  return /(?:\b(?:mercado|cota[cç][aã]o|indicador|boi\s+gordo|arroba|carca[cç]a|atacado|pra[cç]a|CEPEA|ESALQ|Scot|Conab|Brasil61|Agron|Safras\s*&\s*Mercado)\b|\/@)/i.test(
+    reply,
+  );
+}
+
+function addIssue(issues: string[], issue: string): void {
+  if (!issues.includes(issue)) issues.push(issue);
 }
 
 export function validateGrounding(
@@ -21,21 +37,29 @@ export function validateGrounding(
 ): GroundingResult {
   const issues: string[] = [];
   const refs = [...reply.matchAll(/\[(\d+)]/g)].map((m) => Number(m[1]));
-  if (refs.some((n) => n < 1 || n > (evidence.citations ?? 0))) issues.push("unmapped_citation");
+  if (refs.some((n) => n < 1 || n > (evidence.citations ?? 0)))
+    addIssue(issues, "unmapped_citation");
 
-  // Uma resposta ampla sobre mercado pode trazer um indicador monetário vindo
-  // da pesquisa externa, mesmo sem catálogo/mercado interno. Nessa situação o
-  // número só é aceito quando a própria resposta preserva fonte identificada +
-  // data explícita. Um "Custa R$ 99" sem evidência continua bloqueado.
   const hasMoney = /(?:R\$\s*\d|US\$\s*\d)/i.test(reply);
+  const marketReply = hasMoney && looksLikeMarketReply(reply);
   const externallyAttributedMarketFact =
-    hasMoney && hasExplicitDate(reply) && hasIdentifiedSource(reply);
-  if (
+    marketReply && hasExplicitDate(reply) && hasIdentifiedSource(reply) && hasMarketUnit(reply);
+
+  // Valores de mercado não são fatos comerciais da DuKamp. Se uma resposta
+  // sobre mercado vier incompleta, sinalize como problema de grounding de
+  // mercado para que o orquestrador a corrija com fonte/data/unidade. Isso
+  // impede que uma análise de boi, carne, frango etc. seja substituída pelo
+  // fallback de "estoque/preço da base oficial da DuKamp".
+  if (!evidence.commercial && marketReply && !externallyAttributedMarketFact) {
+    if (!hasExplicitDate(reply)) addIssue(issues, "market_price_without_explicit_date");
+    if (!hasIdentifiedSource(reply)) addIssue(issues, "market_price_without_source");
+    if (!hasMarketUnit(reply)) addIssue(issues, "market_price_without_unit");
+  } else if (
     !evidence.commercial &&
     !externallyAttributedMarketFact &&
     /(?:R\$\s*\d|\b(?:estoque|dispon[ií]vel)\s*(?:de|:)?\s*\d)/i.test(reply)
   ) {
-    issues.push("unsupported_commercial_fact");
+    addIssue(issues, "unsupported_commercial_fact");
   }
 
   if (evidence.currentMarket) {
@@ -46,18 +70,12 @@ export function validateGrounding(
       /\b(?:posso|consigo)\s+(?:te\s+)?(?:buscar|pesquisar|consultar|verificar|passar)\b[\s\S]{0,120}\b(?:mais\s+recent\w*|atualizad[oa]|de\s+hoje)\b/i.test(
         reply,
       );
-    if (offersCurrentLookupLater) issues.push("deferred_current_market_lookup");
+    if (offersCurrentLookupLater) addIssue(issues, "deferred_current_market_lookup");
 
     if (hasMoney) {
-      if (!hasExplicitDate(reply)) issues.push("market_price_without_explicit_date");
-      if (!hasIdentifiedSource(reply)) issues.push("market_price_without_source");
-      if (
-        !/(?:\/@|\b(?:arrobas?|sacas?|kg|quilos?|litros?|cabe[cç]as?|toneladas?|bushels?|R\$\s*\/\s*(?:@|kg|l|t))\b)/i.test(
-          reply,
-        )
-      ) {
-        issues.push("market_price_without_unit");
-      }
+      if (!hasExplicitDate(reply)) addIssue(issues, "market_price_without_explicit_date");
+      if (!hasIdentifiedSource(reply)) addIssue(issues, "market_price_without_source");
+      if (!hasMarketUnit(reply)) addIssue(issues, "market_price_without_unit");
     }
   }
   return { valid: issues.length === 0, issues };
