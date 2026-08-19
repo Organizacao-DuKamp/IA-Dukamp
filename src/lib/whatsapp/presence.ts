@@ -1,4 +1,4 @@
-import { classifyDomainIntent } from "../chat/intent.ts";
+import { classifyDomainIntent, type IntentClassification } from "../chat/intent.ts";
 
 export interface WhatsAppProgressMessage {
   delayMs: number;
@@ -23,7 +23,7 @@ interface ProgressTemplates {
 }
 
 const SMALL_TALK =
-  /^(oi+|ol[aá]+|opa|e a[ií]|bom dia|boa tarde|boa noite|obrigad[oa]|valeu|vlw|blz|beleza|ok|okay|show|tmj|tamo junto|tchau|at[eé] mais)[!.?\s…]*$/i;
+  /^(oi+|ol[aá]+|opa|e a[ií]|bom dia|boa tarde|boa noite|obrigad[oa]|valeu|vlw|blz|beleza|ok|okay|show|tmj|tamo junto|tchau|at[eé] mais|ah+h?\s*(?:que\s+)?lega[lk]|(?:que\s+)?legal|bacana|massa|top|interessante|entendi|saquei|perfeito|[oó]timo|kk+|rs+|ha(?:ha)+|que|qu[eê]\??|como assim|n[aã]o entendi|n[aã]o saquei|h[aã]+|hein)[!.?\s…]*$/i;
 
 const MARKET_OVERVIEW =
   /\b(mercado|cen[aá]rio|setor|panorama|tend[eê]ncia|exporta[cç][aã]o|carne|carnes|bovino|bovinos|su[ií]no|su[ií]nos|frango|aves|prote[ií]na animal|soja|milho|leite|gr[aã]os)\b/i;
@@ -166,9 +166,11 @@ function pick(seed: string, values: readonly string[]): string {
   return values[stableIndex(seed, values.length)];
 }
 
-function progressContextFor(text: string): ProgressContext {
-  const classification = classifyDomainIntent(text);
+function needsRealLookup(classification: IntentClassification): boolean {
+  return classification.needs_web_search || classification.needs_internal_search;
+}
 
+function progressContextFor(text: string, classification: IntentClassification): ProgressContext {
   if (classification.intent === "market_quote") return "market_quote";
   if (classification.intent === "current_research") {
     return MARKET_OVERVIEW.test(text) ? "market_overview" : "current_updates";
@@ -200,15 +202,19 @@ export function isWhatsAppSmallTalk(text: string): boolean {
 }
 
 /**
- * No máximo duas mensagens de presença por pergunta. Os tempos são absolutos
- * desde o início do processamento e nunca são executados por timers soltos.
- * O catálogo contém 60 frases distribuídas por dez contextos diferentes.
+ * Mensagens de presença só aparecem quando o classificador prevê uma consulta
+ * real (web ou base interna). Conversa normal, opinião, confirmação, reação e
+ * pedido de esclarecimento respondem diretamente, sem fingir uma pesquisa.
+ * Quando há consulta, continuam existindo no máximo dois avisos de presença.
  */
 export function buildWhatsAppProgressPlan(text: string, seed = text): WhatsAppProgressMessage[] {
   const normalized = text.trim();
   if (!normalized || isWhatsAppSmallTalk(normalized)) return [];
 
-  const context = progressContextFor(normalized);
+  const classification = classifyDomainIntent(normalized);
+  if (!needsRealLookup(classification)) return [];
+
+  const context = progressContextFor(normalized, classification);
   const templates = PROGRESS_TEMPLATES[context];
   const first = pick(`${seed}:${context}:first`, templates.first);
   const second = pick(`${seed}:${context}:second`, templates.second);
