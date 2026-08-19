@@ -22,7 +22,7 @@ function hasMarketUnit(reply: string): boolean {
 }
 
 function looksLikeMarketReply(reply: string): boolean {
-  return /(?:\b(?:mercado|cota[cç][aã]o|indicador|boi\s+gordo|arroba|carne\s+bovina|carca[cç]a|atacado|frango|su[ií]nos?|soja|milho|leite|pra[cç]a|CEPEA|ESALQ|Scot|Conab|Brasil61|Agron|Safras\s*&\s*Mercado)\b|\/@)/i.test(
+  return /(?:\b(?:mercado|cota[cç][aã]o|indicador|boi\s+gordo|arroba|carca[cç]a|atacado|pra[cç]a|CEPEA|ESALQ|Scot|Conab|Brasil61|Agron|Safras\s*&\s*Mercado)\b|\/@)/i.test(
     reply,
   );
 }
