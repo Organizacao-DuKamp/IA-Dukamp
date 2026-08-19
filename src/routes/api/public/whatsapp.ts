@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { enforceDurableWhatsAppStateStore } from "@/lib/whatsapp/state-store-guard.server";
+
 async function handle(request: Request) {
+  enforceDurableWhatsAppStateStore();
   const { handleEnhancedWhatsAppWebhookRequest } =
     await import("@/lib/whatsapp/enhanced-http.server");
   return handleEnhancedWhatsAppWebhookRequest(request);
