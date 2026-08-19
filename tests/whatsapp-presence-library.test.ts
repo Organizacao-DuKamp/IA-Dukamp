@@ -29,10 +29,7 @@ test("conversa casual curta responde direto sem fingir consulta", () => {
 
 test("conversa geral sem busca responde direto mesmo fora da lista de small talk", () => {
   assert.deepEqual(
-    buildWhatsAppProgressPlan(
-      "Me explica de um jeito mais simples",
-      "wamid.general-no-lookup",
-    ),
+    buildWhatsAppProgressPlan("Me explica de um jeito mais simples", "wamid.general-no-lookup"),
     [],
   );
 });
