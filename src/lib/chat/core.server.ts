@@ -77,7 +77,7 @@ function detectSmallTalk(raw: string): string | null {
   if (!t || t.length > 60) return null;
 
   if (/^(oi|ol[aá]|e\s?a[ií]|opa|bom\s+dia|boa\s+tarde|boa\s+noite|hey|hi|hello)$/i.test(t)) {
-    return "Oi! Sou a TPEC-IA, assistente da DuKamp. Como posso te ajudar hoje — dúvidas sobre produtos, manejo, vendedores ou preços?";
+    return "Oi! Sou a TPEC-IA, a inteligência artificial da pecuária. Como posso te ajudar hoje — manejo, nutrição, produtos, vendedores ou preços?";
   }
   if (/^(obrigad[ao]|valeu|vlw|thanks|obg|grat[oa])$/i.test(t)) {
     return "Por nada! Se precisar de mais alguma coisa, é só chamar.";
@@ -89,10 +89,10 @@ function detectSmallTalk(raw: string): string | null {
     /^(nossa|uau|wow|caramba|s[eé]rio|puxa)$/i.test(t) ||
     /^ah\s+(sim|ok|entendi|legal|bacana)$/i.test(t)
   ) {
-    return "Que bom! 😊 Precisa de mais alguma coisa sobre os produtos DuKamp, manejo ou algum vendedor?";
+    return "Que bom! 😊 Precisa de mais alguma coisa sobre pecuária, produtos ou manejo?";
   }
   if (/^(tchau|at[eé]\s+mais|falou|flw|adeus|bye)$/i.test(t)) {
-    return "Até mais! Qualquer dúvida sobre DuKamp, é só voltar. 👋";
+    return "Até mais! Qualquer dúvida sobre pecuária, é só voltar. 👋";
   }
   if (
     /^(acho\s+que\s+n[aã]o|sei\s+l[aá]|n[aã]o\s+sei|hmm+|humm+|nop|nao\s+mesmo|agora\s+n[aã]o|depois|mais\s+tarde|de\s+boa|tranquilo|suave|nada)$/i.test(
