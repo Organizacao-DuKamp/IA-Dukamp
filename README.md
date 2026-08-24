@@ -1,6 +1,6 @@
 # TPEC-IA
 
-Assistente de IA especialista em pecuária brasileira, com chat web, memória curta de conversa, base RAG e integração comercial somente leitura com o Supabase do site DuKamp.
+Assistente de IA especialista em pecuária brasileira, com vitrine institucional em `/`, atendimento pelo WhatsApp, memória curta de conversa, base RAG e integração comercial somente leitura com o Supabase do site DuKamp.
 
 ## Stack
 
@@ -26,9 +26,13 @@ Use `.env.example` como referência. Sem `TPEC_BACKEND_MODE`, o projeto usa `loc
 
 ```text
 Navegador
-  -> POST /api/public/chat na Netlify
-  -> função server da Netlify
-  -> POST /api/internal/chat no Lovable, autenticado por segredo
+  -> GET / na Netlify
+  -> vitrine TPEC-IA
+  -> botão abre a conversa oficial no WhatsApp
+
+Meta WhatsApp
+  -> POST /api/public/whatsapp na Netlify
+  -> POST /api/internal/whatsapp-chat no Lovable, autenticado por segredo
   -> handleIncoming
   -> Supabase principal + RAG OpenAI + pesquisa Perplexity + resposta OpenAI
 ```
@@ -126,19 +130,18 @@ DUKAMP_SITE_SUPABASE_ANON_KEY=...
 
 A tabela pública `sellers` fornece os vendedores ativos e a tabela `products` fornece o catálogo comercial. A chave deve ser `anon`/publicável, nunca `service_role`. Mantenha RLS ativa e conceda apenas `SELECT` aos registros públicos.
 
-## Caminho do chat
+## Caminho do atendimento pelo WhatsApp
 
 ```text
-src/routes/index.tsx
-  -> src/lib/chat/web-adapter.ts
-  -> POST /api/public/chat
-  -> src/lib/chat/http.server.ts
-  -> src/lib/chat/backend.server.ts
-       local -> src/lib/chat/core.server.ts
-       proxy -> Lovable /api/internal/chat -> core.server.ts
+src/routes/api/public/whatsapp.ts
+  -> src/lib/whatsapp/enhanced-http.server.ts
+  -> src/lib/whatsapp/backend.server.ts
+       local -> src/lib/whatsapp/conversation.server.ts
+       proxy -> Lovable /api/internal/whatsapp-chat
+  -> src/lib/chat/core.server.ts
 ```
 
-A server function `src/lib/chat.functions.ts` continua disponível para compatibilidade, mas usa o mesmo dispatcher local/proxy.
+A rota `/` não carrega cliente de chat nem formulário de mensagens. Ela apresenta a TPEC-IA e direciona todos os chamados para o WhatsApp oficial.
 
 ## Segurança
 

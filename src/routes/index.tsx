@@ -1,357 +1,249 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import ReactMarkdown from "react-markdown";
-import { WebChatAdapter, loadConversation, saveConversation } from "@/lib/chat/web-adapter";
-import { MAX_MESSAGE_CHARS, type ChatMessage } from "@/lib/chat/types";
-const TPEC_LOGO_URL = "/tpec-logo.png";
+import "../landing.css";
+
+const whatsappUrl =
+  "https://wa.me/5517992256069?text=Ol%C3%A1%2C%20quero%20conhecer%20a%20TPEC-IA%2C%20a%20IA%20do%20Boi.";
+
+const features = [
+  "Manejo e organização do rebanho",
+  "Nutrição e suplementação",
+  "Pastagens e planejamento para a seca",
+  "Reprodução e indicadores do lote",
+  "Sanidade com orientação responsável",
+  "Cotações e inteligência de mercado",
+  "Informações sobre soluções DuKamp",
+  "Análise de fotos, áudios e documentos",
+];
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "TPEC-IA · Assistente especialista em pecuária" },
+      { title: "TPEC-IA — IA do Boi" },
       {
         name: "description",
         content:
-          "TPEC-IA é uma assistente de IA em português voltada à pecuária brasileira: manejo, nutrição, pastagens, reprodução, sanidade e gestão da propriedade.",
+          "A inteligência artificial especialista em pecuária. Manejo, nutrição, pastagens, reprodução, sanidade, gestão e mercado direto no WhatsApp.",
       },
-      { property: "og:title", content: "TPEC-IA · Assistente especialista em pecuária" },
+      { property: "og:title", content: "TPEC-IA — IA do Boi" },
       {
         property: "og:description",
-        content:
-          "TPEC-IA é uma assistente de IA em pecuária brasileira: manejo, nutrição, pastagens, reprodução, sanidade e gestão da propriedade.",
+        content: "Inteligência artificial para o dia a dia da pecuária, direto no WhatsApp.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:image", content: "/og.png" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "TPEC-IA — IA do Boi" },
+      {
+        name: "twitter:description",
+        content: "Inteligência artificial para o dia a dia da pecuária, direto no WhatsApp.",
+      },
+      { name: "twitter:image", content: "/og.png" },
     ],
+    links: [{ rel: "canonical", href: "/" }],
   }),
-  component: ChatPage,
+  component: LandingPage,
 });
 
-type UIMessage = ChatMessage & {
-  id: string;
-  providerLabel?: string;
-  transient?: boolean;
-  presentation?: "status" | "error";
-};
-
-function initialProgressMessage(text: string): string {
-  if (/\b(hoje|agora|atual|mercado|cota[cç][aã]o|pre[cç]o|not[ií]cia|clima)\b/i.test(text)) {
-    return "Humm, vou conferir as informações mais recentes sobre isso. Só um instante.";
-  }
-  return "Entendi. Vou verificar isso com cuidado para te responder direito.";
-}
-
-function friendlyChatError(error: unknown): string {
-  const message = error instanceof Error ? error.message : "";
-  if (/demorou|timeout|tempo limite/i.test(message)) {
-    return "Poxa, essa consulta demorou mais do que deveria e eu não consegui concluir agora. Pode mandar a pergunta novamente que eu tento uma nova consulta.";
-  }
-  if (/pesquisa atual|consultar a pesquisa|perplexity/i.test(message)) {
-    return "Tive um problema ao consultar as informações mais recentes e não consegui confirmar a resposta agora. Prefiro te avisar do que inventar um resultado. Tente novamente em instantes.";
-  }
-  if (/muitas (mensagens|requisi[cç][oõ]es|pesquisas)/i.test(message)) {
-    return "Recebi muitas consultas em sequência e não consegui processar esta agora. Tente novamente em alguns instantes.";
-  }
-  return "Ops, ocorreu um problema enquanto eu verificava isso e eu não consegui concluir a resposta. Pode tentar novamente em instantes.";
-}
-
-function ChatPage() {
-  const [conv] = useState(() => loadConversation());
-  const [messages, setMessages] = useState<UIMessage[]>(conv.messages);
-  const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const listRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
-  const adapter = useMemo(() => new WebChatAdapter(conv), [conv]);
-
-  useEffect(() => {
-    listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, loading]);
-
-  useEffect(() => {
-    if (!loading) inputRef.current?.focus();
-  }, [loading]);
-
-  function persist(next: UIMessage[]) {
-    const durable = next
-      .filter((message) => !message.transient)
-      .map(({ id, role, content, providerLabel }) => ({ id, role, content, providerLabel }));
-    saveConversation({
-      conversationId: adapter.getConversationId(),
-      sessionId: adapter.getSessionId(),
-      messages: durable,
-      state: adapter.getState(),
-      updatedAt: new Date().toISOString(),
-    });
-  }
-
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    const text = input.trim();
-    if (!text || loading) return;
-    if (text.length > MAX_MESSAGE_CHARS) {
-      setError(`Mensagem excede ${MAX_MESSAGE_CHARS} caracteres.`);
-      return;
-    }
-    setError(null);
-    const clientMessageId = crypto.randomUUID();
-    const userMsg: UIMessage = { id: clientMessageId, role: "user", content: text };
-    const history = messages
-      .filter((message) => !message.transient)
-      .map(({ role, content }) => ({ role, content }));
-    const withUser = [...messages, userMsg];
-    const firstStatus: UIMessage = {
-      id: crypto.randomUUID(),
-      role: "assistant",
-      content: initialProgressMessage(text),
-      transient: true,
-      presentation: "status",
-    };
-    setMessages([...withUser, firstStatus]);
-    persist(withUser);
-    setInput("");
-    setLoading(true);
-
-    const timers = [
-      window.setTimeout(() => {
-        setMessages((current) => [
-          ...current,
-          {
-            id: crypto.randomUUID(),
-            role: "assistant",
-            content:
-              "Ainda estou cruzando as informações para não te passar algo desatualizado ou incompleto.",
-            transient: true,
-            presentation: "status",
-          },
-        ]);
-      }, 7_000),
-      window.setTimeout(() => {
-        setMessages((current) => [
-          ...current,
-          {
-            id: crypto.randomUUID(),
-            role: "assistant",
-            content:
-              "Está levando um pouco mais que o normal para achar resultados confiáveis. Continuo verificando por aqui.",
-            transient: true,
-            presentation: "status",
-          },
-        ]);
-      }, 16_000),
-    ];
-
-    try {
-      const { reply, providerLabel } = await adapter.ask(text, history, clientMessageId);
-      const finalMessage: UIMessage = {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: reply,
-        providerLabel,
-      };
-      setMessages((current) => [...current, finalMessage]);
-      persist([...withUser, finalMessage]);
-    } catch (err) {
-      setMessages((current) => [
-        ...current,
-        {
-          id: crypto.randomUUID(),
-          role: "assistant",
-          content: friendlyChatError(err),
-          transient: true,
-          presentation: "error",
-        },
-      ]);
-    } finally {
-      timers.forEach((timer) => window.clearTimeout(timer));
-      setLoading(false);
-    }
-  }
-
-  function handleClear() {
-    setMessages([]);
-    setError(null);
-    adapter.resetSession();
-  }
-
+function ArrowIcon() {
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground">
-      <header className="border-b border-border bg-card/60 backdrop-blur">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-4">
-          <div className="flex items-center gap-3">
-            <img
-              src={TPEC_LOGO_URL}
-              alt="TPEC-IA"
-              className="h-10 w-10 rounded-full object-cover"
-            />
-            <div>
-              <h1 className="font-display text-lg font-semibold tracking-[0.12em]">TPEC-IA</h1>
-              <p className="text-xs text-muted-foreground">A inteligência artificial da Pecuária</p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={handleClear}
-            disabled={messages.length === 0 && !error}
-            className="rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Limpar conversa
-          </button>
-        </div>
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      <path d="M5 12h13M13 6l6 6-6 6" />
+    </svg>
+  );
+}
+
+function WhatsappIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      <path d="M20.5 11.8a8.5 8.5 0 0 1-12.6 7.4L3.5 20.5l1.3-4.3a8.5 8.5 0 1 1 15.7-4.4Z" />
+      <path d="M8.2 7.7c.2-.4.4-.4.7-.4h.5c.2 0 .4.1.5.4l.8 2c.1.3 0 .5-.2.7l-.6.8c-.2.2-.1.4 0 .6.6 1.1 1.5 2 2.6 2.6.2.1.4.2.6 0l.8-1c.2-.2.4-.3.7-.2l2 .9c.3.1.4.3.4.5 0 .4-.2 1.3-.7 1.8-.5.5-1.3.8-2.2.6-1-.2-2.7-.8-4.7-2.5-1.6-1.4-2.7-3.2-3-4.2-.3-1 0-2 .4-2.6Z" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      <path d="m5 12 4 4L19 6" />
+    </svg>
+  );
+}
+
+function LandingPage() {
+  return (
+    <main className="tpec-landing">
+      <header className="site-header">
+        <a className="brand" href="#inicio" aria-label="TPEC-IA — início">
+          <img src="/tpec-logo.png" alt="" />
+          <span>
+            <strong>TPEC-IA</strong>
+            <small>IA DO BOI</small>
+          </span>
+        </a>
+
+        <nav aria-label="Navegação principal">
+          <a href="#funcoes">O que ela faz</a>
+          <a href="#como-funciona">Como funciona</a>
+        </nav>
+
+        <a className="header-button" href={whatsappUrl} target="_blank" rel="noreferrer">
+          Testar no WhatsApp
+          <ArrowIcon />
+        </a>
       </header>
 
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4">
-        <div ref={listRef} className="flex-1 space-y-4 overflow-y-auto py-6">
-          {messages.length === 0 && !loading && <EmptyState onPick={setInput} />}
-          {messages.map((message) => (
-            <MessageBubble key={message.id} message={message} />
-          ))}
+      <section className="hero" id="inicio">
+        <picture className="hero-art" aria-hidden="true">
+          <source media="(max-width: 700px)" srcSet="/tpec-mobile.png" />
+          <img src="/tpec-hero.png" alt="" />
+        </picture>
+        <div className="hero-photo" aria-hidden="true" />
+        <div className="hero-content">
+          <span className="hero-badge">
+            <i />
+            TPEC-IA — IA DO BOI
+          </span>
+          <h1>
+            Todo o conhecimento da pecuária.
+            <em>No seu WhatsApp.</em>
+          </h1>
+          <p>
+            Tire dúvidas sobre o rebanho, entenda o mercado e encontre respostas técnicas em uma
+            conversa simples, rápida e feita para quem vive o campo.
+          </p>
+          <div className="hero-actions">
+            <a className="primary-button" href={whatsappUrl} target="_blank" rel="noreferrer">
+              <WhatsappIcon />
+              Falar com a IA do Boi
+              <ArrowIcon />
+            </a>
+            <a className="secondary-link" href="#funcoes">
+              Conhecer as funções
+              <ArrowIcon />
+            </a>
+          </div>
+          <div className="media-types" aria-label="Formas de conversar">
+            <span>Texto</span>
+            <span>Áudio</span>
+            <span>Foto</span>
+            <span>Documento</span>
+          </div>
+        </div>
+      </section>
+
+      <section className="functions" id="funcoes">
+        <div className="section-intro">
+          <span className="section-tag">O QUE ELA FAZ</span>
+          <h2>Uma especialista para o dia a dia da pecuária.</h2>
+          <p>
+            Pergunte do seu jeito. A TPEC-IA entende o contexto e organiza a resposta para ajudar
+            você a tomar uma decisão mais bem informada.
+          </p>
         </div>
 
-        {error && (
-          <div
-            role="alert"
-            className="mb-3 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-          >
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="sticky bottom-0 pb-4 pt-2">
-          <div className="flex items-end gap-2 rounded-2xl border border-border bg-card p-2 shadow-sm">
-            <textarea
-              ref={inputRef}
-              autoFocus
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSubmit(e as unknown as FormEvent);
-                }
-              }}
-              placeholder="Pergunte sobre manejo, nutrição, pastagens, sanidade…"
-              rows={1}
-              maxLength={MAX_MESSAGE_CHARS}
-              disabled={loading}
-              className="max-h-40 min-h-10 flex-1 resize-none bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground disabled:opacity-60"
-            />
-            <button
-              type="submit"
-              disabled={loading || input.trim().length === 0}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
-              aria-label="Enviar"
-            >
-              <SendIcon className="h-4 w-4" />
-            </button>
-          </div>
-          <p className="mt-2 px-1 text-[11px] text-muted-foreground">
-            Respostas geradas por IA. Para diagnósticos e prescrições, consulte um
-            médico-veterinário registrado no CRMV. Nada é salvo — o histórico existe apenas nesta
-            aba.
-          </p>
-        </form>
-      </main>
-    </div>
-  );
-}
-
-function MessageBubble({ message }: { message: UIMessage }) {
-  const isUser = message.role === "user";
-  const isStatus = message.presentation === "status";
-  const isError = message.presentation === "error";
-
-  return (
-    <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
-      <div
-        className={
-          isUser
-            ? "max-w-[85%] rounded-2xl rounded-br-sm bg-primary px-4 py-2.5 text-sm text-primary-foreground shadow-sm"
-            : isError
-              ? "max-w-[92%] rounded-2xl rounded-bl-sm border border-destructive/30 bg-destructive/10 px-4 py-2.5 text-sm text-foreground"
-              : isStatus
-                ? "max-w-[88%] rounded-2xl rounded-bl-sm bg-secondary/70 px-4 py-2.5 text-sm text-muted-foreground"
-                : "max-w-[92%] text-sm text-foreground"
-        }
-      >
-        {isUser || isStatus || isError ? (
-          <p className="whitespace-pre-wrap">{message.content}</p>
-        ) : (
-          <>
-            {message.providerLabel && (
-              <div className="mb-1.5 inline-flex rounded-full border border-border bg-secondary/60 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
-                {message.providerLabel}
+        <div className="functions-layout">
+          <div className="feature-list">
+            {features.map((feature) => (
+              <div className="feature-item" key={feature}>
+                <span>
+                  <CheckIcon />
+                </span>
+                <p>{feature}</p>
               </div>
-            )}
-            <div className="prose prose-sm max-w-none prose-headings:mt-3 prose-headings:mb-2 prose-p:my-2 prose-ul:my-2 prose-li:my-0.5 prose-strong:text-foreground">
-              <ReactMarkdown>{message.content}</ReactMarkdown>
+            ))}
+          </div>
+
+          <div className="chat-card" aria-label="Exemplo de conversa com a TPEC-IA">
+            <div className="chat-header">
+              <img src="/tpec-logo.png" alt="" />
+              <div>
+                <strong>TPEC-IA</strong>
+                <small>
+                  <i /> Especialista em pecuária
+                </small>
+              </div>
             </div>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
+            <div className="chat-content">
+              <div className="message user">
+                O que devo avaliar antes de escolher um suplemento para a seca?
+                <time>09:41</time>
+              </div>
+              <div className="message bot">
+                Avalie a categoria e o peso dos animais, a disponibilidade do pasto, a meta de ganho
+                e o consumo esperado. Com esses dados, a comparação fica muito mais segura.
+                <time>09:41 ✓</time>
+              </div>
+            </div>
+            <a href={whatsappUrl} target="_blank" rel="noreferrer">
+              Faça sua pergunta
+              <ArrowIcon />
+            </a>
+          </div>
+        </div>
+      </section>
 
-function EmptyState({ onPick }: { onPick: (s: string) => void }) {
-  const examples = [
-    "Como calcular a taxa de lotação ideal para pasto de Brachiaria brizantha?",
-    "Quais os principais indicadores zootécnicos de um confinamento de corte?",
-    "Como estruturar um protocolo de IATF em vacas de leite?",
-    "Sinais clínicos iniciais de tristeza parasitária bovina?",
-  ];
-  return (
-    <div className="mx-auto max-w-2xl py-10 text-center">
-      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-        <LeafIcon className="h-7 w-7" />
-      </div>
-      <h2 className="text-xl font-semibold tracking-tight">Bem-vindo à TPEC-IA</h2>
-      <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-        Sua assistente de IA em pecuária. Faça perguntas sobre manejo, nutrição, pastagens,
-        reprodução, sanidade e gestão da propriedade.
-      </p>
-      <div className="mt-6 grid gap-2 sm:grid-cols-2">
-        {examples.map((ex) => (
-          <button
-            key={ex}
-            type="button"
-            onClick={() => onPick(ex)}
-            className="rounded-xl border border-border bg-card px-3 py-2.5 text-left text-xs text-foreground transition hover:border-primary/40 hover:bg-secondary"
-          >
-            {ex}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
+      <section className="how" id="como-funciona">
+        <div className="how-heading">
+          <span className="section-tag">SIMPLES ASSIM</span>
+          <h2>Sem baixar aplicativo.</h2>
+        </div>
+        <ol>
+          <li>
+            <b>1</b>
+            <div>
+              <strong>Chame no WhatsApp</strong>
+              <p>Abra a conversa com a TPEC-IA.</p>
+            </div>
+          </li>
+          <li>
+            <b>2</b>
+            <div>
+              <strong>Conte sua dúvida</strong>
+              <p>Envie texto, áudio, foto ou documento.</p>
+            </div>
+          </li>
+          <li>
+            <b>3</b>
+            <div>
+              <strong>Receba apoio</strong>
+              <p>Continue perguntando até entender.</p>
+            </div>
+          </li>
+        </ol>
+      </section>
 
-function LeafIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      className={className}
-    >
-      <path d="M11 20A7 7 0 0 1 4 13V6a2 2 0 0 1 2-2h7a7 7 0 0 1 7 7v0a7 7 0 0 1-7 7h-2Z" />
-      <path d="M4 22c4-6 8-8 14-9" strokeLinecap="round" />
-    </svg>
-  );
-}
+      <section className="final-cta">
+        <div>
+          <span className="section-tag">COMECE AGORA</span>
+          <h2>Sua próxima resposta está a uma mensagem de distância.</h2>
+        </div>
+        <a className="primary-button" href={whatsappUrl} target="_blank" rel="noreferrer">
+          <WhatsappIcon />
+          Conversar no WhatsApp
+          <ArrowIcon />
+        </a>
+      </section>
 
-function SendIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      className={className}
-    >
-      <path d="m22 2-7 20-4-9-9-4 20-7Z" strokeLinejoin="round" />
-    </svg>
+      <footer>
+        <a className="brand footer-brand" href="#inicio">
+          <img src="/tpec-logo.png" alt="Logo da TPEC-IA" />
+          <span>
+            <strong>TPEC-IA</strong>
+            <small>IA DO BOI</small>
+          </span>
+        </a>
+        <p>© 2026 TPEC-IA. Inteligência artificial para o dia a dia da pecuária.</p>
+        <div className="footer-links">
+          <a href="/politica-de-privacidade">Privacidade</a>
+          <a href="/termos-de-uso">Termos de uso</a>
+          <a href="/exclusao-de-dados">Exclusão de dados</a>
+        </div>
+      </footer>
+
+      <a className="mobile-whatsapp" href={whatsappUrl} target="_blank" rel="noreferrer">
+        <WhatsappIcon />
+        Falar com a IA
+      </a>
+    </main>
   );
 }

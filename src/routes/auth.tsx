@@ -65,7 +65,7 @@ function AuthPage() {
       <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-sm">
         <h1 className="text-lg font-semibold">TPEC-IA · Admin</h1>
         <p className="mt-1 text-xs text-muted-foreground">
-          Acesso restrito. O chat público continua em{" "}
+          Acesso restrito. A página principal pública está em{" "}
           <a href="/" className="underline">
             /
           </a>
