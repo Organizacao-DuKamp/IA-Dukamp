@@ -41,7 +41,7 @@ test("panorama de mercado recebe linguagem de mercado, não de estoque da DuKamp
   );
   const joined = plan.map((item) => item.text).join(" ");
 
-  assert.equal(plan.length, 2);
+  assert.equal(plan.length, 1);
   assert.match(joined, /mercado|indicadores|tendência|fontes|referências/i);
   assert.doesNotMatch(joined, /estoque|cadastro oficial da DuKamp|catálogo/i);
 });
@@ -54,7 +54,7 @@ test("cotação recebe linguagem própria de preço, data, praça e fonte", () =
   const joined = plan.map((item) => item.text).join(" ");
 
   assert.match(joined, /cotação|preço|valor/i);
-  assert.match(joined, /data|praça|fonte|referência/i);
+  assert.match(joined, /data|praça|fonte|referência|publica/i);
 });
 
 test("produto da DuKamp usa presença comercial interna sem fingir pesquisa externa", () => {
@@ -92,7 +92,7 @@ test("manejo e nutrição usam contextos diferentes", () => {
   assert.match(nutrition.map((item) => item.text).join(" "), /nutri|aliment/i);
 });
 
-test("a mesma categoria varia entre mensagens diferentes sem repetir primeiro e segundo aviso", () => {
+test("a mesma categoria varia o único sinal interno entre mensagens diferentes", () => {
   const variants = new Set<string>();
 
   for (let index = 0; index < 18; index += 1) {
@@ -100,9 +100,8 @@ test("a mesma categoria varia entre mensagens diferentes sem repetir primeiro e 
       "Como está o mercado de carnes no Brasil hoje?",
       `wamid.variant-${index}`,
     );
-    assert.notEqual(plan[0]?.text, plan[1]?.text);
     for (const item of plan) variants.add(item.text);
   }
 
-  assert.ok(variants.size >= 4, `esperava variedade real; encontrei ${variants.size} frases`);
+  assert.ok(variants.size >= 3, `esperava variedade real; encontrei ${variants.size} frases`);
 });

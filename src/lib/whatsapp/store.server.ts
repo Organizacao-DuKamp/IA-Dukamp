@@ -19,6 +19,13 @@ export type WhatsAppDeliveryClaim =
   | { kind: "delivered" }
   | { kind: "missing" };
 
+export type WhatsAppPresenceClaim =
+  | { kind: "claimed" }
+  | { kind: "completed"; reply: string }
+  | { kind: "processing" }
+  | { kind: "delivered" }
+  | { kind: "missing" };
+
 const MAX_STORED_HISTORY = 40;
 const PROCESSING_STALE_MS = 2 * 60_000;
 // Se a Graph API aceitou a resposta, mas a gravação de delivered_at falhou,
@@ -142,7 +149,13 @@ export async function claimWhatsAppMessage(
 
   const { error: reclaimError } = await db()
     .from("whatsapp_processed_messages")
-    .update({ status: "processing", reply: null, delivered_at: null, updated_at: now })
+    .update({
+      status: "processing",
+      reply: null,
+      presence_claimed_at: null,
+      delivered_at: null,
+      updated_at: now,
+    })
     .eq("message_id", messageId)
     .eq("status", "processing")
     .is("delivered_at", null);
@@ -175,6 +188,43 @@ export async function releaseWhatsAppMessage(messageId: string): Promise<void> {
     .is("reply", null)
     .is("delivered_at", null);
   if (error) throw new Error(`whatsapp_message_release_failed:${error.code ?? "unknown"}`);
+}
+
+/**
+ * Reserva atomicamente o único sinal de presença permitido para a mensagem.
+ * A condição presence_claimed_at IS NULL é reavaliada pelo Postgres depois do
+ * lock da linha, então apenas uma instância recebe kind=claimed.
+ */
+export async function claimWhatsAppPresence(messageId: string): Promise<WhatsAppPresenceClaim> {
+  const now = new Date().toISOString();
+  const { data, error } = await db()
+    .from("whatsapp_processed_messages")
+    .update({ presence_claimed_at: now })
+    .eq("message_id", messageId)
+    .eq("status", "processing")
+    .is("reply", null)
+    .is("delivered_at", null)
+    .is("presence_claimed_at", null)
+    .select("message_id")
+    .maybeSingle();
+
+  if (error) throw new Error(`whatsapp_presence_claim_failed:${error.code ?? "unknown"}`);
+  if (data?.message_id) return { kind: "claimed" };
+
+  const { data: current, error: lookupError } = await db()
+    .from("whatsapp_processed_messages")
+    .select("status,reply,delivered_at,presence_claimed_at")
+    .eq("message_id", messageId)
+    .maybeSingle();
+  if (lookupError) {
+    throw new Error(`whatsapp_presence_claim_lookup_failed:${lookupError.code ?? "unknown"}`);
+  }
+  if (!current) return { kind: "missing" };
+  if (current.delivered_at) return { kind: "delivered" };
+  if (typeof current.reply === "string" && current.reply.length > 0) {
+    return { kind: "completed", reply: current.reply };
+  }
+  return { kind: "processing" };
 }
 
 export async function claimWhatsAppDelivery(messageId: string): Promise<WhatsAppDeliveryClaim> {

@@ -342,6 +342,21 @@ function supportsReasoningConfig(model: string): boolean {
   return /^(gpt-5|o\d|o[134](?:-|$))/i.test(model);
 }
 
+function imageDetailFor(userText: string, env: EnvLike): "auto" | "high" | "low" {
+  const configured = env.OPENAI_MEDIA_IMAGE_DETAIL?.trim().toLowerCase();
+  if (configured === "auto" || configured === "high" || configured === "low") {
+    return configured;
+  }
+
+  // Fotos comuns usam baixa resolução para reduzir latência. Pedidos de OCR e
+  // telas/tabelas preservam detalhe alto para não sacrificar números e texto.
+  return /\b(escrit[oa]|texto|leia|ler|transcrev|n[uú]mero|valor|tabela|planilha|r[oó]tulo|etiqueta|print|captura|tela|documento)\b/i.test(
+    userText,
+  )
+    ? "high"
+    : "low";
+}
+
 async function analyzeImageOrDocument(
   media: WhatsAppMedia,
   downloaded: DownloadedMedia,
@@ -350,7 +365,7 @@ async function analyzeImageOrDocument(
 ): Promise<string> {
   const env = envOf(dependencies);
   const apiKey = requireEnv(env, "OPENAI_API_KEY");
-  const model = env.OPENAI_MEDIA_MODEL?.trim() || env.OPENAI_FAST_MODEL?.trim() || "gpt-5-mini";
+  const model = env.OPENAI_MEDIA_MODEL?.trim() || "gpt-4o-mini";
   const dataUrl = `data:${downloaded.mimeType};base64,${Buffer.from(downloaded.bytes).toString("base64")}`;
   const extractionPrompt = `Extraia o conteúdo desta mídia para outro assistente responder ao usuário.
 - Responda em português brasileiro com fatos observáveis, texto legível e números exatos.
@@ -360,7 +375,11 @@ async function analyzeImageOrDocument(
 - Seja conciso e priorize o que ajuda a responder à mensagem: ${userText}`;
   const content: Array<Record<string, unknown>> = [{ type: "input_text", text: extractionPrompt }];
   if (media.type === "image") {
-    content.push({ type: "input_image", image_url: dataUrl, detail: "auto" });
+    content.push({
+      type: "input_image",
+      image_url: dataUrl,
+      detail: imageDetailFor(userText, env),
+    });
   } else {
     content.push({
       type: "input_file",
@@ -374,7 +393,7 @@ async function analyzeImageOrDocument(
     instructions:
       "Você é um extrator seguro de conteúdo multimídia da TPEC-IA. Produza somente observações verificáveis para uso interno.",
     input: [{ role: "user", content }],
-    max_output_tokens: 1200,
+    max_output_tokens: 800,
     store: false,
   };
   if (supportsReasoningConfig(model)) body.reasoning = { effort: "minimal" };
@@ -443,7 +462,7 @@ async function transcribeAudioOrVideo(
 ): Promise<string> {
   const env = envOf(dependencies);
   const apiKey = requireEnv(env, "OPENAI_API_KEY");
-  const model = env.OPENAI_TRANSCRIPTION_MODEL?.trim() || "gpt-transcribe";
+  const model = env.OPENAI_TRANSCRIPTION_MODEL?.trim() || "gpt-4o-mini-transcribe";
   const form = new FormData();
   form.append(
     "file",

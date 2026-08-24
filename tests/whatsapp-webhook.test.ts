@@ -287,6 +287,43 @@ test("ponte local transforma mídia antes do chat e salva somente o texto deriva
   assert.doesNotMatch(JSON.stringify(savedHistory), /media-audio/);
 });
 
+test("histórico e mídia começam em paralelo para reduzir o caminho crítico", async () => {
+  let mediaStarted = false;
+
+  await processWhatsAppChat(
+    {
+      phone: "5517999999999",
+      messageId: "wamid.parallel-media",
+      text: "Analise o áudio",
+      media: { id: "parallel-audio", type: "audio", mimeType: "audio/ogg" },
+    },
+    {
+      claimMessage: async () => ({ kind: "claimed" }),
+      loadConversation: async () => {
+        await new Promise<void>((resolve) => setImmediate(resolve));
+        assert.equal(mediaStarted, true);
+        return null;
+      },
+      resolveUserText: async () => {
+        mediaStarted = true;
+        return "[Mensagem recebida por áudio no WhatsApp] Transcrição: teste rápido.";
+      },
+      executeChat: async () => ({
+        status: 200,
+        body: {
+          reply: "Resposta rápida.",
+          state: {},
+          conversationId: "wa:5517999999999",
+          diagnostics: { model: "test" },
+        },
+      }),
+      saveConversation: async () => undefined,
+      completeMessage: async () => undefined,
+      releaseMessage: async () => undefined,
+    },
+  );
+});
+
 test("mensagem já concluída reutiliza resposta sem chamar o modelo", async () => {
   let executed = false;
   const result = await processWhatsAppChat(

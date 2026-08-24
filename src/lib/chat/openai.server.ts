@@ -50,6 +50,10 @@ export function openAIModel(kind: "fast" | "capable" = "capable"): string {
     : process.env.OPENAI_CAPABLE_MODEL || "gpt-5";
 }
 
+export function chatModelKindForChannel(channel: ChatChannel | undefined): "fast" | "capable" {
+  return channel === "whatsapp" ? "fast" : "capable";
+}
+
 function stateIsWhatsApp(state: string | null | undefined): boolean {
   if (!state) return false;
   try {
@@ -259,7 +263,10 @@ export async function askOpenAI(
     }
   }
 
-  let data = await requestResponse(whatsappStyle ? 4_000 : 3_000, correction ? "minimal" : "low");
+  let data = await requestResponse(
+    whatsappStyle ? 2_500 : 3_000,
+    whatsappStyle || correction ? "minimal" : "low",
+  );
   let text = extractResponseText(data);
 
   if (

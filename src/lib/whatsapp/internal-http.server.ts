@@ -137,6 +137,9 @@ export async function handleInternalWhatsAppControlRequest(
         await conversation.releaseWhatsAppInboundMessage(parsed.data.messageId);
         result = { kind: "ok" };
         break;
+      case "claim_presence":
+        result = await conversation.claimWhatsAppPresenceNotice(parsed.data.messageId);
+        break;
       case "claim_delivery":
         result = await conversation.claimPendingWhatsAppDelivery(parsed.data.messageId);
         break;

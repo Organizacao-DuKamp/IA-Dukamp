@@ -44,6 +44,10 @@ export const WhatsAppControlRequestSchema = z.discriminatedUnion("action", [
     messageId: z.string().min(1).max(128),
   }),
   z.object({
+    action: z.literal("claim_presence"),
+    messageId: z.string().min(1).max(128),
+  }),
+  z.object({
     action: z.literal("claim_delivery"),
     messageId: z.string().min(1).max(128),
   }),

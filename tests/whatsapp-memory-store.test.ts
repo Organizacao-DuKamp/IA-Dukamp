@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { processWhatsAppChat } from "../src/lib/whatsapp/conversation.server.ts";
+import {
+  claimWhatsAppInboundMessage,
+  claimWhatsAppPresenceNotice,
+  processWhatsAppChat,
+  releaseWhatsAppInboundMessage,
+} from "../src/lib/whatsapp/conversation.server.ts";
 import type { ChatCoreResult, ChatInput } from "../src/lib/chat/input.ts";
 
 test("WhatsApp usa memória quando SUPABASE_SERVICE_ROLE_KEY não está configurada", async () => {
@@ -50,6 +55,28 @@ test("WhatsApp usa memória quando SUPABASE_SERVICE_ROLE_KEY não está configur
       { role: "assistant", content: "Claro, vou verificar." },
     ]);
   } finally {
+    if (previousKey === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    else process.env.SUPABASE_SERVICE_ROLE_KEY = previousKey;
+    if (previousStore === undefined) delete process.env.WHATSAPP_STATE_STORE;
+    else process.env.WHATSAPP_STATE_STORE = previousStore;
+  }
+});
+
+test("memória também limita a presença a uma reserva por mensagem", async () => {
+  const previousKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const previousStore = process.env.WHATSAPP_STATE_STORE;
+  delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+  process.env.WHATSAPP_STATE_STORE = "memory";
+  const messageId = `wamid.presence-memory-${Date.now()}`;
+
+  try {
+    assert.deepEqual(await claimWhatsAppInboundMessage(messageId, "5517999999999"), {
+      kind: "claimed",
+    });
+    assert.deepEqual(await claimWhatsAppPresenceNotice(messageId), { kind: "claimed" });
+    assert.deepEqual(await claimWhatsAppPresenceNotice(messageId), { kind: "processing" });
+  } finally {
+    await releaseWhatsAppInboundMessage(messageId);
     if (previousKey === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY;
     else process.env.SUPABASE_SERVICE_ROLE_KEY = previousKey;
     if (previousStore === undefined) delete process.env.WHATSAPP_STATE_STORE;

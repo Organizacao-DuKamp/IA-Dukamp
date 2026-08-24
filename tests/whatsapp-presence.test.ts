@@ -24,6 +24,7 @@ type Stage = "processing" | "ready" | "delivery" | "delivered";
 interface FakeMessageState {
   stage: Stage;
   reply?: string;
+  presenceClaimed?: boolean;
 }
 
 function fakeLifecycle() {
@@ -42,25 +43,49 @@ function fakeLifecycle() {
         if (current.stage === "delivered") return { kind: "delivered" };
         return { kind: "processing" };
       case "complete":
-        states.set(request.messageId, { stage: "ready", reply: request.reply });
+        states.set(request.messageId, {
+          stage: "ready",
+          reply: request.reply,
+          presenceClaimed: current?.presenceClaimed,
+        });
         return { kind: "ok" };
       case "release":
         if (current?.stage === "processing") states.delete(request.messageId);
         return { kind: "ok" };
+      case "claim_presence":
+        if (!current) return { kind: "missing" };
+        if (current.stage === "delivered") return { kind: "delivered" };
+        if (current.reply) return { kind: "completed", reply: current.reply };
+        if (current.stage !== "processing" || current.presenceClaimed) {
+          return { kind: "processing" };
+        }
+        current.presenceClaimed = true;
+        return { kind: "claimed" };
       case "claim_delivery":
         if (!current) return { kind: "missing" };
         if (current.stage === "delivered") return { kind: "delivered" };
         if (current.stage !== "ready" || !current.reply) return { kind: "processing" };
-        states.set(request.messageId, { stage: "delivery", reply: current.reply });
+        states.set(request.messageId, {
+          stage: "delivery",
+          reply: current.reply,
+          presenceClaimed: current.presenceClaimed,
+        });
         return { kind: "claimed", reply: current.reply };
       case "delivered":
         if (current?.stage === "delivery" && current.reply === request.reply) {
-          states.set(request.messageId, { stage: "delivered" });
+          states.set(request.messageId, {
+            stage: "delivered",
+            presenceClaimed: current.presenceClaimed,
+          });
         }
         return { kind: "ok" };
       case "release_delivery":
         if (current?.stage === "delivery" && current.reply === request.reply) {
-          states.set(request.messageId, { stage: "ready", reply: request.reply });
+          states.set(request.messageId, {
+            stage: "ready",
+            reply: request.reply,
+            presenceClaimed: current.presenceClaimed,
+          });
         }
         return { kind: "ok" };
     }
@@ -162,27 +187,33 @@ function mediaRequestFor(
   });
 }
 
-function graphCapture(target: string[], statusForCall?: (call: number) => number) {
+function graphCapture(
+  target: string[],
+  statusForCall?: (call: number) => number,
+  typingTarget?: Array<Record<string, unknown>>,
+) {
   let call = 0;
   return (async (_input: RequestInfo | URL, init?: RequestInit) => {
     call += 1;
-    const body = JSON.parse(String(init?.body)) as { text?: { body?: string } };
-    target.push(body.text?.body ?? "");
+    const body = JSON.parse(String(init?.body)) as {
+      text?: { body?: string };
+      typing_indicator?: unknown;
+    };
+    if (body.typing_indicator) typingTarget?.push(body);
+    else target.push(body.text?.body ?? "");
     const status = statusForCall?.(call) ?? 200;
     return new Response(JSON.stringify({ messages: [{ id: `wamid.out-${call}` }] }), { status });
   }) as typeof fetch;
 }
 
-test("plano de progresso é limitado a duas mensagens e não começa imediatamente", () => {
+test("plano de presença contém um único sinal e não começa imediatamente", () => {
   const plan = buildWhatsAppProgressPlan(
     "Como está o mercado de carnes no Brasil hoje?",
     "wamid.market",
   );
-  assert.equal(plan.length, 2);
+  assert.equal(plan.length, 1);
   assert.equal(plan[0]?.delayMs, 900);
-  assert.equal(plan[1]?.delayMs, 10_000);
   assert.ok((plan[0]?.text.length ?? 0) > 20);
-  assert.notEqual(plan[0]?.text, plan[1]?.text);
 });
 
 test("cumprimento simples não dispara mensagens artificiais de pesquisa", () => {
@@ -269,11 +300,11 @@ test("webhook ativo encaminha áudio, imagem, vídeo e documento para o backend 
   }
 });
 
-test("retry do mesmo webhook durante processamento não cria um segundo fluxo de progresso", async () => {
+test("retry de áudio lento mostra um indicador e uma resposta final, sem balões repetidos", async () => {
   const sent: string[] = [];
+  const typing: Array<Record<string, unknown>> = [];
   const lifecycle = fakeLifecycle();
   const messageId = "wamid.loop-proof";
-  const question = "Como está o mercado de carnes no Brasil hoje?";
   const finalReply = "O panorama atual foi confirmado com fontes recentes.";
   let dispatchCalls = 0;
   let finishDispatch!: () => Promise<void>;
@@ -293,18 +324,18 @@ test("retry do mesmo webhook durante processamento não cria um segundo fluxo de
     });
   };
 
-  const first = handleEnhancedWhatsAppWebhookRequest(requestFor(question, messageId), {
+  const first = handleEnhancedWhatsAppWebhookRequest(mediaRequestFor("audio", messageId), {
     env,
-    fetchImpl: graphCapture(sent),
+    fetchImpl: graphCapture(sent, undefined, typing),
     controlMessage: lifecycle.control,
     dispatchChat,
     sleepImpl: async () => undefined,
   });
   await dispatchStarted;
 
-  const retry = await handleEnhancedWhatsAppWebhookRequest(requestFor(question, messageId), {
+  const retry = await handleEnhancedWhatsAppWebhookRequest(mediaRequestFor("audio", messageId), {
     env,
-    fetchImpl: graphCapture(sent),
+    fetchImpl: graphCapture(sent, undefined, typing),
     controlMessage: lifecycle.control,
     dispatchChat,
     sleepImpl: async () => undefined,
@@ -317,9 +348,14 @@ test("retry do mesmo webhook durante processamento não cria um segundo fluxo de
   assert.equal(firstResponse.status, 200);
   assert.equal(dispatchCalls, 1);
   assert.equal(sent.at(-1), finalReply);
-  const progressMessages = sent.slice(0, -1);
-  assert.ok(progressMessages.length <= 2);
-  assert.equal(new Set(progressMessages).size, progressMessages.length);
+  assert.deepEqual(sent, [finalReply]);
+  assert.equal(typing.length, 1);
+  assert.deepEqual(typing[0], {
+    messaging_product: "whatsapp",
+    status: "read",
+    message_id: messageId,
+    typing_indicator: { type: "text" },
+  });
   assert.equal(lifecycle.states.get(messageId)?.stage, "delivered");
 });
 
