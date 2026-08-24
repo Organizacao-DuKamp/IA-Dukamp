@@ -232,6 +232,30 @@ export function friendlyWhatsAppError(error: unknown): string {
   const status = typeof candidate?.status === "number" ? candidate.status : 0;
   const searchable = `${message} ${code}`;
 
+  if (status === 413 || /media_too_large|maior que o limite/i.test(searchable)) {
+    return "Esse arquivo passou do limite de 25 MB que eu consigo analisar. Envie uma versão menor ou divida o conteúdo em mais de uma mensagem.";
+  }
+  if (status === 415 || /unsupported_whatsapp_media|formato de mídia/i.test(searchable)) {
+    return "Ainda não consigo analisar esse formato. Tente enviar imagem em JPG, PNG ou WebP; áudio/vídeo em MP4, MPEG, OGG, WAV ou WebM; ou um documento comum como PDF, Word, Excel, PowerPoint, CSV ou texto.";
+  }
+  if (
+    /missing_(whatsapp_access_token|openai_api_key)|mídia.*não está configurad/i.test(searchable)
+  ) {
+    return "A leitura de arquivos ainda não está configurada corretamente por aqui. Já identifiquei o problema; por enquanto, envie sua dúvida em texto.";
+  }
+  if (
+    /media_(metadata|download)|media_url|checksum|integridade|localizar|baixar|endere[cç]o de mídia/i.test(
+      searchable,
+    )
+  ) {
+    return "Não consegui baixar esse arquivo do WhatsApp com segurança. Tente reenviá-lo; se continuar, mande o conteúdo em outro formato ou escreva a dúvida.";
+  }
+  if (/media_transcription|transcrever|fala compreensível/i.test(searchable)) {
+    return "Não consegui entender o áudio desse arquivo. Tente reenviar com o som mais nítido ou escreva a dúvida na mensagem.";
+  }
+  if (/media_analysis|interpretar a mídia|conteúdo na mídia/i.test(searchable)) {
+    return "Não consegui ler o conteúdo desse arquivo com confiança. Tente reenviar com melhor qualidade ou escreva o ponto principal na mensagem.";
+  }
   if (status === 504 || /timeout|tempo limite|demorou/i.test(searchable)) {
     return "Essa consulta demorou mais do que deveria e eu não consegui fechar uma resposta confiável agora. Não vou inventar um resultado — tenta me mandar a pergunta novamente daqui a pouco.";
   }

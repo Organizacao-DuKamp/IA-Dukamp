@@ -1,9 +1,21 @@
 import { z } from "zod";
 
+export const WhatsAppMediaSchema = z.object({
+  id: z.string().min(1).max(256),
+  type: z.enum(["audio", "image", "video", "document"]),
+  mimeType: z.string().min(1).max(160),
+  sha256: z.string().min(1).max(256).optional(),
+  filename: z.string().min(1).max(255).optional(),
+  caption: z.string().max(2000).optional(),
+});
+
+export type WhatsAppMedia = z.infer<typeof WhatsAppMediaSchema>;
+
 export const WhatsAppChatInputSchema = z.object({
   phone: z.string().regex(/^\d{6,20}$/),
   messageId: z.string().min(1).max(128),
   text: z.string().min(1).max(2000),
+  media: WhatsAppMediaSchema.optional(),
 });
 
 export type WhatsAppChatInput = z.infer<typeof WhatsAppChatInputSchema>;

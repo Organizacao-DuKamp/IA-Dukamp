@@ -242,9 +242,7 @@ function AdminKnowledgeBase() {
   const recoverableRateLimitErrors = docs.filter(
     (doc) => doc.status === "erro" && isRateLimitMessage(doc.error_message),
   ).length;
-  const hasProcessableWork = Boolean(
-    s && (s.aguardando > 0 || recoverableRateLimitErrors > 0),
-  );
+  const hasProcessableWork = Boolean(s && (s.aguardando > 0 || recoverableRateLimitErrors > 0));
 
   return (
     <div className="min-h-screen bg-background text-foreground">

@@ -259,10 +259,7 @@ export async function askOpenAI(
     }
   }
 
-  let data = await requestResponse(
-    whatsappStyle ? 4_000 : 3_000,
-    correction ? "minimal" : "low",
-  );
+  let data = await requestResponse(whatsappStyle ? 4_000 : 3_000, correction ? "minimal" : "low");
   let text = extractResponseText(data);
 
   if (

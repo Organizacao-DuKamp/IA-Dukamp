@@ -55,6 +55,7 @@ export interface WhatsAppConversationDependencies {
   loadConversation?: (phone: string) => Promise<WhatsAppConversationSnapshot | null>;
   saveConversation?: (phone: string, snapshot: WhatsAppConversationSnapshot) => Promise<void>;
   executeChat?: (input: ChatInput) => Promise<{ status: number; body: unknown }>;
+  resolveUserText?: (input: WhatsAppChatInput) => Promise<string>;
 }
 
 function cloneSnapshot(snapshot: WhatsAppConversationSnapshot): WhatsAppConversationSnapshot {
@@ -243,6 +244,12 @@ async function defaultSaveConversation(
   return store.saveWhatsAppConversation(phone, snapshot);
 }
 
+async function defaultResolveUserText(input: WhatsAppChatInput): Promise<string> {
+  if (!input.media) return input.text;
+  const media = await import("./media.server.ts");
+  return media.resolveWhatsAppUserText(input);
+}
+
 function depsWithDefaults(deps: WhatsAppConversationDependencies) {
   return {
     claimMessage: deps.claimMessage ?? defaultClaimMessage,
@@ -254,6 +261,7 @@ function depsWithDefaults(deps: WhatsAppConversationDependencies) {
     loadConversation: deps.loadConversation ?? defaultLoadConversation,
     saveConversation: deps.saveConversation ?? defaultSaveConversation,
     executeChat: deps.executeChat ?? ((input: ChatInput) => executeLocalChat(input)),
+    resolveUserText: deps.resolveUserText ?? defaultResolveUserText,
   };
 }
 
@@ -337,10 +345,11 @@ export async function processClaimedWhatsAppChat(
   const deps = depsWithDefaults(dependencies);
   const previous = await deps.loadConversation(input.phone);
   const conversationId = previous?.conversationId ?? `wa:${input.phone}`;
-  const casualGreeting = greetingReply(input.text, Boolean(previous?.history.length));
+  const userText = await deps.resolveUserText(input);
+  const casualGreeting = greetingReply(userText, Boolean(previous?.history.length));
 
   if (casualGreeting) {
-    const nextHistory = appendTurn(previous?.history ?? [], input.text, casualGreeting);
+    const nextHistory = appendTurn(previous?.history ?? [], userText, casualGreeting);
     await deps.saveConversation(input.phone, {
       conversationId,
       state: previous?.state,
@@ -355,7 +364,7 @@ export async function processClaimedWhatsAppChat(
     conversationId,
     clientMessageId: input.messageId,
     channel: "whatsapp",
-    text: input.text,
+    text: userText,
     history: previous?.history ?? [],
     state: previous?.state,
   };
@@ -373,7 +382,7 @@ export async function processClaimedWhatsAppChat(
 
   const core = ChatCoreResultSchema.parse(result.body);
   if (!core.reply.trim()) throw new Error("empty_chat_reply");
-  const nextHistory = appendTurn(previous?.history ?? [], input.text, core.reply);
+  const nextHistory = appendTurn(previous?.history ?? [], userText, core.reply);
 
   await deps.saveConversation(input.phone, {
     conversationId: core.conversationId,

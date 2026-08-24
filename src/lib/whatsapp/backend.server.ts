@@ -149,7 +149,15 @@ async function proxyJson(
         body && typeof body === "object" && "error" in body
           ? String((body as { error?: unknown }).error ?? "whatsapp_proxy_failed")
           : "Falha no backend do WhatsApp.";
-      throw new TpecBackendError(message, response.status, "whatsapp_proxy_failed");
+      const backendCode =
+        body && typeof body === "object" && "code" in body
+          ? (body as { code?: unknown }).code
+          : undefined;
+      const code =
+        typeof backendCode === "string" && /^[a-z0-9_:-]{1,128}$/i.test(backendCode)
+          ? backendCode
+          : "whatsapp_proxy_failed";
+      throw new TpecBackendError(message, response.status, code);
     }
     return body;
   } catch (error) {

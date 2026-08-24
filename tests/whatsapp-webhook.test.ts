@@ -242,6 +242,51 @@ test("ponte local preserva histórico, estado, canal e idempotência", async () 
   });
 });
 
+test("ponte local transforma mídia antes do chat e salva somente o texto derivado", async () => {
+  const derivedText =
+    "[Mensagem recebida por áudio no WhatsApp] Transcrição do áudio: quero saber sobre suplemento mineral.";
+  let sentToCore: ChatInput | undefined;
+  let savedHistory: unknown;
+
+  await processWhatsAppChat(
+    {
+      phone: "5517999999999",
+      messageId: "wamid.audio-local",
+      text: "Analise e responda ao áudio que enviei.",
+      media: { id: "media-audio", type: "audio", mimeType: "audio/ogg" },
+    },
+    {
+      claimMessage: async () => ({ kind: "claimed" }),
+      loadConversation: async () => null,
+      resolveUserText: async () => derivedText,
+      executeChat: async (input) => {
+        sentToCore = input;
+        return {
+          status: 200,
+          body: {
+            reply: "Entendi sua dúvida sobre suplemento mineral.",
+            state: { current_topic: "nutrition" },
+            conversationId: "wa:5517999999999",
+            diagnostics: { model: "test-media-model" },
+          },
+        };
+      },
+      saveConversation: async (_phone, snapshot) => {
+        savedHistory = snapshot.history;
+      },
+      completeMessage: async () => undefined,
+      releaseMessage: async () => undefined,
+    },
+  );
+
+  assert.equal(sentToCore?.text, derivedText);
+  assert.deepEqual(savedHistory, [
+    { role: "user", content: derivedText },
+    { role: "assistant", content: "Entendi sua dúvida sobre suplemento mineral." },
+  ]);
+  assert.doesNotMatch(JSON.stringify(savedHistory), /media-audio/);
+});
+
 test("mensagem já concluída reutiliza resposta sem chamar o modelo", async () => {
   let executed = false;
   const result = await processWhatsAppChat(

@@ -30,12 +30,14 @@ export interface EnhancedWhatsAppHttpDependencies {
   sleepImpl?: (ms: number) => Promise<void>;
 }
 
-interface IncomingTextMessage {
-  phoneNumberId: string;
-  phone: string;
-  messageId: string;
-  text: string;
-}
+type IncomingWhatsAppMessage = WhatsAppChatInput & { phoneNumberId: string };
+
+const MEDIA_DEFAULT_TEXT: Record<"audio" | "image" | "video" | "document", string> = {
+  audio: "Analise e responda ao áudio que enviei.",
+  image: "Analise e responda à imagem que enviei.",
+  video: "Analise e responda ao vídeo que enviei.",
+  document: "Analise e responda ao documento que enviei.",
+};
 
 function envOf(deps: EnhancedWhatsAppHttpDependencies): EnvLike {
   return deps.env ?? process.env;
@@ -109,11 +111,11 @@ function asRecord(value: unknown): Record<string, unknown> | null {
     : null;
 }
 
-function extractTextMessages(payload: unknown): IncomingTextMessage[] {
+function extractIncomingMessages(payload: unknown): IncomingWhatsAppMessage[] {
   const root = asRecord(payload);
   if (!root || root.object !== "whatsapp_business_account" || !Array.isArray(root.entry)) return [];
 
-  const messages: IncomingTextMessage[] = [];
+  const messages: IncomingWhatsAppMessage[] = [];
   for (const rawEntry of root.entry) {
     const entry = asRecord(rawEntry);
     if (!entry || !Array.isArray(entry.changes)) continue;
@@ -129,21 +131,47 @@ function extractTextMessages(payload: unknown): IncomingTextMessage[] {
 
       for (const rawMessage of value.messages) {
         const message = asRecord(rawMessage);
-        const textObject = asRecord(message?.text);
-        if (
-          !message ||
-          message.type !== "text" ||
-          typeof message.from !== "string" ||
-          typeof message.id !== "string" ||
-          typeof textObject?.body !== "string"
+        if (!message || typeof message.from !== "string" || typeof message.id !== "string")
+          continue;
+
+        const messageType = message.type;
+        let textValue = "";
+        let media: WhatsAppChatInput["media"];
+        if (messageType === "text") {
+          const textObject = asRecord(message.text);
+          if (typeof textObject?.body !== "string") continue;
+          textValue = textObject.body;
+        } else if (
+          messageType === "audio" ||
+          messageType === "image" ||
+          messageType === "video" ||
+          messageType === "document"
         ) {
+          const mediaObject = asRecord(message[messageType]);
+          if (!mediaObject || typeof mediaObject.id !== "string") continue;
+          const caption =
+            typeof mediaObject.caption === "string" ? mediaObject.caption.trim() : undefined;
+          textValue = caption || MEDIA_DEFAULT_TEXT[messageType];
+          media = {
+            id: mediaObject.id,
+            type: messageType,
+            mimeType:
+              typeof mediaObject.mime_type === "string"
+                ? mediaObject.mime_type
+                : "application/octet-stream",
+            ...(typeof mediaObject.sha256 === "string" ? { sha256: mediaObject.sha256 } : {}),
+            ...(typeof mediaObject.filename === "string" ? { filename: mediaObject.filename } : {}),
+            ...(caption ? { caption } : {}),
+          };
+        } else {
           continue;
         }
 
         const parsed = WhatsAppChatInputSchema.safeParse({
           phone: message.from,
           messageId: message.id,
-          text: textObject.body,
+          text: textValue,
+          ...(media ? { media } : {}),
         });
         if (parsed.success) messages.push({ phoneNumberId, ...parsed.data });
       }
@@ -241,7 +269,7 @@ async function confirmWhatsAppDelivery(
 }
 
 async function deliverPendingReply(
-  message: IncomingTextMessage,
+  message: IncomingWhatsAppMessage,
   fallbackReply: string | undefined,
   control: (request: WhatsAppControlRequest) => Promise<WhatsAppControlResult>,
   env: EnvLike,
@@ -337,7 +365,7 @@ export async function handleEnhancedWhatsAppWebhookRequest(
   }
 
   const configuredPhoneNumberId = env.WHATSAPP_PHONE_NUMBER_ID?.trim() ?? "";
-  const incoming = extractTextMessages(payload).filter(
+  const incoming = extractIncomingMessages(payload).filter(
     (message) => !configuredPhoneNumberId || message.phoneNumberId === configuredPhoneNumberId,
   );
   if (incoming.length === 0) return json({ received: true });
@@ -395,10 +423,12 @@ export async function handleEnhancedWhatsAppWebhookRequest(
         phone: message.phone,
         messageId: message.messageId,
         text: message.text,
+        ...(message.media ? { media: message.media } : {}),
       });
+      const progressText = message.media ? `${message.media.type}: ${message.text}` : message.text;
       result = await resolveWithWhatsAppProgress(
         task,
-        buildWhatsAppProgressPlan(message.text, message.messageId),
+        buildWhatsAppProgressPlan(progressText, message.messageId),
         async (progress) => {
           // Antes de cada aviso, confira o estado durável. Se outro worker já
           // concluiu/entregou esta mesma mensagem, o progresso ficou obsoleto.
