@@ -48,7 +48,10 @@ function runtimeEnv(deps: TpecBackendDependencies): EnvLike {
 
 function traceContext(input: ChatInput) {
   return {
-    traceId: (input.clientMessageId || input.conversationId || input.sessionId || "unknown").slice(0, 128),
+    traceId: (input.clientMessageId || input.conversationId || input.sessionId || "unknown").slice(
+      0,
+      128,
+    ),
     conversationId: (input.conversationId || input.sessionId || "unknown").slice(0, 128),
   };
 }

@@ -84,13 +84,10 @@ export async function searchKnowledge(query: string, matchCount = 6): Promise<Ma
   // se o provedor de embeddings estiver temporariamente fora do ar.
   const lexicalStarted = Date.now();
   try {
-    const { data, error } = await supabaseAdmin.rpc(
-      "search_knowledge_lexical",
-      {
-        search_query: query,
-        match_count: matchCount * 2,
-      }
-    );
+    const { data, error } = await supabaseAdmin.rpc("search_knowledge_lexical", {
+      search_query: query,
+      match_count: matchCount * 2,
+    });
 
     if (error) throw error;
     for (const match of (data ?? []) as Match[]) {
