@@ -13,8 +13,6 @@ const env = {
   WHATSAPP_ACCESS_TOKEN: "whatsapp-token-for-tests",
   WHATSAPP_GRAPH_API_VERSION: "v25.0",
   OPENAI_API_KEY: "openai-key-for-tests",
-  OPENAI_MEDIA_MODEL: "gpt-5-mini",
-  OPENAI_TRANSCRIPTION_MODEL: "gpt-transcribe",
 };
 
 interface MediaFetchOptions {
@@ -112,7 +110,7 @@ test("áudio do WhatsApp é baixado com token e transcrito", async () => {
   );
   const transcriptionForm = mocked.calls[2]?.init?.body;
   assert.ok(transcriptionForm instanceof FormData);
-  assert.equal(transcriptionForm.get("model"), "gpt-transcribe");
+  assert.equal(transcriptionForm.get("model"), "gpt-4o-mini-transcribe");
   assert.equal(transcriptionForm.get("language"), "pt");
 });
 
@@ -137,10 +135,37 @@ test("imagem é enviada como input_image e a legenda orienta a resposta", async 
   assert.match(result, /Legenda ou pedido do usuário: Qual é este produto\?/);
   assert.match(result, /A foto mostra um saco do produto DuKamp 80/);
   const requestBody = JSON.parse(String(mocked.calls[2]?.init?.body)) as {
-    input: Array<{ content: Array<{ type: string; image_url?: string }> }>;
+    model?: string;
+    max_output_tokens?: number;
+    input: Array<{
+      content: Array<{ type: string; image_url?: string; detail?: string }>;
+    }>;
   };
   const imageInput = requestBody.input[0]?.content.find((item) => item.type === "input_image");
+  assert.equal(requestBody.model, "gpt-4o-mini");
+  assert.equal(requestBody.max_output_tokens, 800);
+  assert.equal(imageInput?.detail, "low");
   assert.match(imageInput?.image_url ?? "", /^data:image\/jpeg;base64,/);
+});
+
+test("pedido de leitura de tela usa detalhe alto para preservar OCR", async () => {
+  const mocked = mockMediaFetch({
+    mimeType: "image/png",
+    analysis: "A tela mostra o número 0,82.",
+  });
+  await resolveWhatsAppUserText(
+    inputFor(
+      { id: "ocr-image", type: "image", mimeType: "image/png" },
+      "O que está escrito nesta tela?",
+    ),
+    { env, fetchImpl: mocked.fetchImpl },
+  );
+
+  const requestBody = JSON.parse(String(mocked.calls[2]?.init?.body)) as {
+    input: Array<{ content: Array<{ type: string; detail?: string }> }>;
+  };
+  const imageInput = requestBody.input[0]?.content.find((item) => item.type === "input_image");
+  assert.equal(imageInput?.detail, "high");
 });
 
 test("documento é enviado como input_file com nome seguro", async () => {

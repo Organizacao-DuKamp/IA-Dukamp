@@ -225,6 +225,37 @@ async function sendWhatsAppText(
   }
 }
 
+async function sendWhatsAppTypingIndicator(
+  messageId: string,
+  env: EnvLike,
+  fetchImpl: typeof fetch,
+): Promise<void> {
+  const accessToken = requireEnv(env, "WHATSAPP_ACCESS_TOKEN");
+  const phoneNumberId = requireEnv(env, "WHATSAPP_PHONE_NUMBER_ID");
+  const version = (env.WHATSAPP_GRAPH_API_VERSION?.trim() || "v25.0").replace(/^\/+|\/+$/g, "");
+  if (!/^v\d+\.\d+$/.test(version)) throw new Error("invalid_whatsapp_graph_api_version");
+
+  const response = await fetchImpl(
+    `https://graph.facebook.com/${version}/${encodeURIComponent(phoneNumberId)}/messages`,
+    {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${accessToken}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        status: "read",
+        message_id: messageId,
+        typing_indicator: { type: "text" },
+      }),
+      redirect: "error",
+      signal: AbortSignal.timeout(2_000),
+    },
+  );
+  if (!response.ok) throw new Error(`whatsapp_typing_indicator_failed:${response.status}`);
+}
+
 async function trySendWhatsAppText(
   to: string,
   body: string,
@@ -238,6 +269,22 @@ async function trySendWhatsAppText(
     return true;
   } catch (error) {
     console.error(`[whatsapp] ${label} send failed ${errorDetails(error)}`);
+    return false;
+  }
+}
+
+async function trySendWhatsAppTypingIndicator(
+  messageId: string,
+  env: EnvLike,
+  fetchImpl: typeof fetch,
+): Promise<boolean> {
+  try {
+    await sendWhatsAppTypingIndicator(messageId, env, fetchImpl);
+    console.info("[whatsapp] typing.indicator sent");
+    return true;
+  } catch (error) {
+    // Presença é opcional: nunca atrase nem substitua a resposta final por ela.
+    console.error(`[whatsapp] typing.indicator send failed ${errorDetails(error)}`);
     return false;
   }
 }
@@ -429,18 +476,17 @@ export async function handleEnhancedWhatsAppWebhookRequest(
       result = await resolveWithWhatsAppProgress(
         task,
         buildWhatsAppProgressPlan(progressText, message.messageId),
-        async (progress) => {
-          // Antes de cada aviso, confira o estado durável. Se outro worker já
-          // concluiu/entregou esta mesma mensagem, o progresso ficou obsoleto.
+        async () => {
+          // Reserva uma única presença por messageId. Isso elimina avisos
+          // repetidos mesmo quando a Meta repete o webhook em outra instância.
           try {
             const current = await control({
-              action: "claim",
-              phone: message.phone,
+              action: "claim_presence",
               messageId: message.messageId,
             });
-            if (current.kind !== "processing") {
+            if (current.kind !== "claimed") {
               console.info(
-                `[whatsapp] stale progress suppressed message_id=${message.messageId} state=${current.kind}`,
+                `[whatsapp] duplicate/stale presence suppressed message_id=${message.messageId} state=${current.kind}`,
               );
               return;
             }
@@ -449,7 +495,9 @@ export async function handleEnhancedWhatsAppWebhookRequest(
             console.error(`[whatsapp] progress state check failed ${errorDetails(error)}`);
             return;
           }
-          await trySendWhatsAppText(message.phone, progress, env, fetchImpl, "progress.notice");
+          // O indicador nativo desaparece quando a resposta chega e não deixa
+          // mensagens de "estou processando" acumuladas no histórico do chat.
+          await trySendWhatsAppTypingIndicator(message.messageId, env, fetchImpl);
         },
         sleepImpl,
       );

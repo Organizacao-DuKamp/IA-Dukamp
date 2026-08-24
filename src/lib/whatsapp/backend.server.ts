@@ -242,6 +242,8 @@ async function controlLocal(request: WhatsAppControlRequest): Promise<WhatsAppCo
     case "release":
       await conversation.releaseWhatsAppInboundMessage(request.messageId);
       return { kind: "ok" };
+    case "claim_presence":
+      return conversation.claimWhatsAppPresenceNotice(request.messageId);
     case "claim_delivery":
       return conversation.claimPendingWhatsAppDelivery(request.messageId);
     case "delivered":

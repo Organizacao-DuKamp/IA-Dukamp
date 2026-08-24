@@ -202,10 +202,10 @@ export function isWhatsAppSmallTalk(text: string): boolean {
 }
 
 /**
- * Mensagens de presença só aparecem quando o classificador prevê uma consulta
- * real (web ou base interna). Conversa normal, opinião, confirmação, reação e
- * pedido de esclarecimento respondem diretamente, sem fingir uma pesquisa.
- * Quando há consulta, continuam existindo no máximo dois avisos de presença.
+ * A presença só aparece quando o classificador prevê uma consulta real (web ou
+ * base interna). O texto permanece apenas como metadado determinístico do plano:
+ * o transporte usa o indicador nativo de digitação, não envia esta frase ao chat.
+ * Existe exatamente um sinal para evitar ruído e repetição em consultas lentas.
  */
 export function buildWhatsAppProgressPlan(text: string, seed = text): WhatsAppProgressMessage[] {
   const normalized = text.trim();
@@ -217,12 +217,7 @@ export function buildWhatsAppProgressPlan(text: string, seed = text): WhatsAppPr
   const context = progressContextFor(normalized, classification);
   const templates = PROGRESS_TEMPLATES[context];
   const first = pick(`${seed}:${context}:first`, templates.first);
-  const second = pick(`${seed}:${context}:second`, templates.second);
-
-  return [
-    { delayMs: 900, text: first },
-    { delayMs: 10_000, text: second },
-  ];
+  return [{ delayMs: 900, text: first }];
 }
 
 export function friendlyWhatsAppError(error: unknown): string {

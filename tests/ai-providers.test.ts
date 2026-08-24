@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { askOpenAI } from "../src/lib/chat/openai.server.ts";
+import { askOpenAI, chatModelKindForChannel } from "../src/lib/chat/openai.server.ts";
 import { researchPerplexity } from "../src/lib/chat/perplexity.server.ts";
 import { embeddingProvider, embedTexts } from "../src/lib/rag/embeddings.server.ts";
 
@@ -53,6 +53,37 @@ test("OpenAI recebe histórico, estado, RAG e pesquisa para produzir a resposta 
   } finally {
     if (previous === undefined) delete process.env.OPENAI_API_KEY;
     else process.env.OPENAI_API_KEY = previous;
+  }
+});
+
+test("WhatsApp usa modelo rápido, raciocínio mínimo e resposta curta", async () => {
+  const previousKey = process.env.OPENAI_API_KEY;
+  const previousFast = process.env.OPENAI_FAST_MODEL;
+  process.env.OPENAI_API_KEY = "openai-whatsapp-test-key";
+  process.env.OPENAI_FAST_MODEL = "gpt-5-mini-test";
+  let requestBody: Record<string, unknown> = {};
+
+  try {
+    assert.equal(chatModelKindForChannel("whatsapp"), "fast");
+    assert.equal(chatModelKindForChannel("web"), "capable");
+
+    await askOpenAI([{ role: "user", content: "Responda direto" }], {
+      model: chatModelKindForChannel("whatsapp"),
+      channel: "whatsapp",
+      fetchImpl: (async (_url: RequestInfo | URL, init?: RequestInit) => {
+        requestBody = JSON.parse(String(init?.body));
+        return new Response(JSON.stringify({ output_text: "Resposta curta." }), { status: 200 });
+      }) as typeof fetch,
+    });
+
+    assert.equal(requestBody.model, "gpt-5-mini-test");
+    assert.equal(requestBody.max_output_tokens, 2_500);
+    assert.deepEqual(requestBody.reasoning, { effort: "minimal" });
+  } finally {
+    if (previousKey === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = previousKey;
+    if (previousFast === undefined) delete process.env.OPENAI_FAST_MODEL;
+    else process.env.OPENAI_FAST_MODEL = previousFast;
   }
 });
 

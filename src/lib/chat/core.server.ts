@@ -9,7 +9,7 @@
 //  6) monta as camadas de contexto e chama o modelo
 //  7) atualiza o estado a partir da resposta e devolve ao canal
 
-import { askOpenAI, OpenAIError, openAIModel } from "./openai.server";
+import { askOpenAI, chatModelKindForChannel, OpenAIError, openAIModel } from "./openai.server";
 import { researchPerplexity, PerplexityError } from "./perplexity.server";
 import { checkRateLimit } from "./rate-limit.server";
 import { productContextBlock, routeQuery } from "./query-router.server";
@@ -490,8 +490,12 @@ async function runTurn(
   try {
     const sourcePolicy = sourceDirective(evidence);
     const modelContext = contextParts.length > 0 ? contextParts.join("\n\n") : null;
+    // WhatsApp privilegia baixa latência; o chat web mantém o modelo completo.
+    // Grounding, RAG e validações continuam iguais nos dois canais.
+    const modelKind = chatModelKindForChannel(input.channel);
     let reply = await askOpenAI(conversation, {
-      model: "capable",
+      model: modelKind,
+      channel: input.channel,
       summary: renderSummaryForModel(state.conversation_summary),
       state: renderStateForModel(state),
       directive,
@@ -509,7 +513,8 @@ async function runTurn(
     );
     if (marketIssues.length > 0) {
       reply = await askOpenAI(conversation, {
-        model: "capable",
+        model: modelKind,
+        channel: input.channel,
         summary: renderSummaryForModel(state.conversation_summary),
         state: renderStateForModel(state),
         directive,
@@ -556,7 +561,7 @@ async function runTurn(
         analysis,
         stateBefore,
         retrieved,
-        openAIModel("capable"),
+        openAIModel(modelKind),
       ),
     };
   } catch (err) {

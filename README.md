@@ -106,8 +106,14 @@ seguro e só então chama o núcleo da TPEC-IA com o histórico existente.
 No modo `proxy`, `WHATSAPP_ACCESS_TOKEN` precisa existir como segredo
 server-only tanto na Netlify (receber/enviar) quanto no Lovable (baixar a
 mídia). `OPENAI_API_KEY` continua somente no Lovable. Os modelos opcionais são
-`OPENAI_MEDIA_MODEL` (padrão `gpt-5-mini`) e `OPENAI_TRANSCRIPTION_MODEL`
-(padrão `gpt-transcribe`).
+`OPENAI_MEDIA_MODEL` (padrão `gpt-4o-mini`) e `OPENAI_TRANSCRIPTION_MODEL`
+(padrão `gpt-4o-mini-transcribe`). `OPENAI_MEDIA_IMAGE_DETAIL` aceita `low`,
+`high` ou `auto`; sem configuração, fotos comuns usam `low` e pedidos de leitura
+de texto, tela ou tabela usam `high`.
+
+Quando uma consulta demora, o webhook usa uma única reserva durável para exibir
+o indicador nativo de digitação do WhatsApp. Nenhuma mensagem textual de
+“estou processando” é adicionada à conversa, inclusive em retries do webhook.
 
 ## Supabase comercial da DuKamp
 

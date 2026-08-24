@@ -28,6 +28,13 @@ export type WhatsAppDeliveryClaim =
   | { kind: "delivered" }
   | { kind: "missing" };
 
+export type WhatsAppPresenceClaim =
+  | { kind: "claimed" }
+  | { kind: "completed"; reply: string }
+  | { kind: "processing" }
+  | { kind: "delivered" }
+  | { kind: "missing" };
+
 interface MemoryConversationEntry {
   snapshot: WhatsAppConversationSnapshot;
   updatedAt: number;
@@ -37,6 +44,7 @@ interface MemoryMessageEntry {
   phone: string;
   status: "processing" | "completed";
   reply?: string;
+  presenceClaimedAt?: number;
   deliveredAt?: number;
   updatedAt: number;
 }
@@ -49,6 +57,7 @@ export interface WhatsAppConversationDependencies {
   claimMessage?: (messageId: string, phone: string) => Promise<WhatsAppMessageClaim>;
   completeMessage?: (messageId: string, reply: string) => Promise<void>;
   releaseMessage?: (messageId: string) => Promise<void>;
+  claimPresence?: (messageId: string) => Promise<WhatsAppPresenceClaim>;
   claimDelivery?: (messageId: string) => Promise<WhatsAppDeliveryClaim>;
   markDelivered?: (messageId: string, reply: string) => Promise<void>;
   releaseDelivery?: (messageId: string, reply: string) => Promise<void>;
@@ -143,6 +152,19 @@ async function memoryReleaseMessage(messageId: string): Promise<void> {
   }
 }
 
+async function memoryClaimPresence(messageId: string): Promise<WhatsAppPresenceClaim> {
+  const existing = memoryMessages.get(messageId);
+  if (!existing) return { kind: "missing" };
+  if (existing.deliveredAt) return { kind: "delivered" };
+  if (existing.reply) return { kind: "completed", reply: existing.reply };
+  if (existing.status !== "processing" || existing.presenceClaimedAt) {
+    return { kind: "processing" };
+  }
+
+  existing.presenceClaimedAt = Date.now();
+  return { kind: "claimed" };
+}
+
 async function memoryClaimDelivery(messageId: string): Promise<WhatsAppDeliveryClaim> {
   const existing = memoryMessages.get(messageId);
   if (!existing) return { kind: "missing" };
@@ -215,6 +237,12 @@ async function defaultClaimDelivery(messageId: string): Promise<WhatsAppDelivery
   return store.claimWhatsAppDelivery(messageId);
 }
 
+async function defaultClaimPresence(messageId: string): Promise<WhatsAppPresenceClaim> {
+  if (stateStoreMode() === "memory") return memoryClaimPresence(messageId);
+  const store = await import("./store.server.ts");
+  return store.claimWhatsAppPresence(messageId);
+}
+
 async function defaultMarkDelivered(messageId: string, reply: string): Promise<void> {
   if (stateStoreMode() === "memory") return memoryMarkDelivered(messageId, reply);
   const store = await import("./store.server.ts");
@@ -255,6 +283,7 @@ function depsWithDefaults(deps: WhatsAppConversationDependencies) {
     claimMessage: deps.claimMessage ?? defaultClaimMessage,
     completeMessage: deps.completeMessage ?? defaultCompleteMessage,
     releaseMessage: deps.releaseMessage ?? defaultReleaseMessage,
+    claimPresence: deps.claimPresence ?? defaultClaimPresence,
     claimDelivery: deps.claimDelivery ?? defaultClaimDelivery,
     markDelivered: deps.markDelivered ?? defaultMarkDelivered,
     releaseDelivery: deps.releaseDelivery ?? defaultReleaseDelivery,
@@ -315,6 +344,13 @@ export async function releaseWhatsAppInboundMessage(
   return depsWithDefaults(dependencies).releaseMessage(messageId);
 }
 
+export async function claimWhatsAppPresenceNotice(
+  messageId: string,
+  dependencies: WhatsAppConversationDependencies = {},
+): Promise<WhatsAppPresenceClaim> {
+  return depsWithDefaults(dependencies).claimPresence(messageId);
+}
+
 export async function claimPendingWhatsAppDelivery(
   messageId: string,
   dependencies: WhatsAppConversationDependencies = {},
@@ -343,9 +379,13 @@ export async function processClaimedWhatsAppChat(
   dependencies: WhatsAppConversationDependencies = {},
 ): Promise<WhatsAppChatResult> {
   const deps = depsWithDefaults(dependencies);
-  const previous = await deps.loadConversation(input.phone);
+  // O download/transcrição da mídia não depende do histórico. Iniciar os dois
+  // juntos elimina uma ida ao banco do caminho crítico de áudio, imagem e arquivo.
+  const [previous, userText] = await Promise.all([
+    deps.loadConversation(input.phone),
+    deps.resolveUserText(input),
+  ]);
   const conversationId = previous?.conversationId ?? `wa:${input.phone}`;
-  const userText = await deps.resolveUserText(input);
   const casualGreeting = greetingReply(userText, Boolean(previous?.history.length));
 
   if (casualGreeting) {
