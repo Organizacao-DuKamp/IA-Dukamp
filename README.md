@@ -91,6 +91,24 @@ Netlify -> Deploys -> Trigger deploy -> Clear cache and deploy site
 
 A documentação completa está em [`docs/netlify-lovable-proxy.md`](docs/netlify-lovable-proxy.md).
 
+## Mídia recebida pelo WhatsApp
+
+O webhook aceita texto, áudio, imagem, vídeo e documento. A mensagem conserva o
+mesmo fluxo de idempotência e entrega do texto: o backend privado baixa a mídia
+diretamente da Meta, valida formato, tamanho e integridade, extrai um texto
+seguro e só então chama o núcleo da TPEC-IA com o histórico existente.
+
+- Áudios são transcritos; imagens e documentos são analisados pelo modelo multimodal.
+- Vídeos usam a legenda e a transcrição da faixa de áudio; o arquivo visual completo não é enviado ao modelo.
+- Cada arquivo pode ter até 25 MB. O conteúdo bruto não é salvo no histórico nem encaminhado pelo proxy.
+- São aceitas imagens JPG, PNG, WebP e GIF; áudios/vídeos AAC, FLAC, M4A, MP3, MP4, MPEG, OGG, WAV e WebM; e documentos comuns como PDF, Word, Excel, PowerPoint, CSV e texto.
+
+No modo `proxy`, `WHATSAPP_ACCESS_TOKEN` precisa existir como segredo
+server-only tanto na Netlify (receber/enviar) quanto no Lovable (baixar a
+mídia). `OPENAI_API_KEY` continua somente no Lovable. Os modelos opcionais são
+`OPENAI_MEDIA_MODEL` (padrão `gpt-5-mini`) e `OPENAI_TRANSCRIPTION_MODEL`
+(padrão `gpt-transcribe`).
+
 ## Supabase comercial da DuKamp
 
 A integração permanece separada e somente leitura:

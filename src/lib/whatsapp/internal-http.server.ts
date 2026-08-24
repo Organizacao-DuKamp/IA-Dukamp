@@ -90,10 +90,12 @@ export async function handleInternalWhatsAppChatRequest(
       : await conversation.processWhatsAppChat(parsed.data);
     return json(result, 200);
   } catch (error) {
-    const status = (error as { status?: unknown } | null)?.status;
+    const candidate = error as { status?: unknown; code?: unknown } | null;
+    const status = candidate?.status;
+    const code = typeof candidate?.code === "string" ? candidate.code : "whatsapp_chat_failed";
     const message = error instanceof Error ? error.message : "whatsapp_chat_failed";
     return json(
-      { error: message },
+      { error: message, code },
       typeof status === "number" && status >= 400 && status <= 599 ? status : 500,
     );
   }
@@ -128,10 +130,7 @@ export async function handleInternalWhatsAppControlRequest(
         );
         break;
       case "complete":
-        await conversation.completeWhatsAppInboundMessage(
-          parsed.data.messageId,
-          parsed.data.reply,
-        );
+        await conversation.completeWhatsAppInboundMessage(parsed.data.messageId, parsed.data.reply);
         result = { kind: "ok" };
         break;
       case "release":
@@ -142,7 +141,10 @@ export async function handleInternalWhatsAppControlRequest(
         result = await conversation.claimPendingWhatsAppDelivery(parsed.data.messageId);
         break;
       case "delivered":
-        await conversation.markPendingWhatsAppDeliveryDone(parsed.data.messageId, parsed.data.reply);
+        await conversation.markPendingWhatsAppDeliveryDone(
+          parsed.data.messageId,
+          parsed.data.reply,
+        );
         result = { kind: "ok" };
         break;
       case "release_delivery":
