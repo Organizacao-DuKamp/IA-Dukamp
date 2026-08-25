@@ -277,7 +277,7 @@ export function humanizeWhatsAppReply(userText: string, reply: string): string {
   const normalizedReply = reply.trim();
   if (!isWhatsAppSmallTalk(userText)) return normalizedReply;
 
-  if (/^oi! sou a tpec-ia, assistente da dukamp\./i.test(normalizedReply)) {
+  if (/^oi!?\s*(?:👋\s*)?sou a tpec-ia(?:,|\.)/i.test(normalizedReply)) {
     return "Oi! 👋 Tô por aqui. Pode mandar.";
   }
   if (/^ol[aá]! sou a tpec-ia/i.test(normalizedReply)) {

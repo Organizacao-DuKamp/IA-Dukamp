@@ -3,10 +3,10 @@ CAMINHO ORIGINAL: 03-REGRAS-DA-IA/referenciasIA.pdf
 FORMATO ORIGINAL: .pdf
 ========================================================================
 
-POLÍTICA DE FONTES TÉCNICAS DA IA DUKAMP
+POLÍTICA DE FONTES TÉCNICAS DA TPEC-IA
 
 1. OBJETIVO
-A IA DuKamp deve utilizar fontes técnicas, científicas, oficiais e comerciais
+A TPEC-IA deve utilizar fontes técnicas, científicas, oficiais e comerciais
 confiáveis para responder perguntas sobre pecuária de corte e leiteira,
 nutrição animal, suplementação, pastagens, confinamento, reprodução,
 melhoramento genético, sanidade, bem-estar animal, raças bovinas e equinas,

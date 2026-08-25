@@ -77,7 +77,7 @@ function detectSmallTalk(raw: string): string | null {
   if (!t || t.length > 60) return null;
 
   if (/^(oi|ol[aá]|e\s?a[ií]|opa|bom\s+dia|boa\s+tarde|boa\s+noite|hey|hi|hello)$/i.test(t)) {
-    return "Oi! Sou a TPEC-IA, assistente da DuKamp. Como posso te ajudar hoje — dúvidas sobre produtos, manejo, vendedores ou preços?";
+    return "Oi! Sou a TPEC-IA, a IA da pecuária. Como posso te ajudar hoje — dúvidas sobre produtos, manejo, vendedores ou preços?";
   }
   if (/^(obrigad[ao]|valeu|vlw|thanks|obg|grat[oa])$/i.test(t)) {
     return "Por nada! Se precisar de mais alguma coisa, é só chamar.";

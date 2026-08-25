@@ -310,7 +310,7 @@ function greetingReply(text: string, hasHistory: boolean): string | null {
     if (normalized === "boa noite") return "Boa noite! Tô por aqui 😊 Pode mandar.";
     return "Opa! Tô por aqui 😊 Pode mandar.";
   }
-  return "Oi! 👋 Sou a TPEC-IA, da DuKamp. Pode mandar sua dúvida.";
+  return "Oi! 👋 Sou a TPEC-IA, a IA da pecuária. Pode mandar sua dúvida.";
 }
 
 function appendTurn(history: ChatMessage[], user: string, assistant: string): ChatMessage[] {
