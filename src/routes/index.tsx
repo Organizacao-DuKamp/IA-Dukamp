@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import "../landing.css";
 
 const whatsappUrl =
-  "https://wa.me/5517992256069?text=Ol%C3%A1%2C%20quero%20conhecer%20a%20TPEC-IA%2C%20a%20IA%20do%20Boi.";
+  "https://wa.me/5516992256069?text=Ol%C3%A1%2C%20quero%20conhecer%20a%20TPEC-IA%2C%20a%20IA%20do%20Boi.";
 
 const features = [
   "Manejo e organização do rebanho",
