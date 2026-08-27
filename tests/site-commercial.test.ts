@@ -167,7 +167,20 @@ test("coluna opcional inexistente refaz produtos com colunas comerciais essencia
   const client = new MockSupabase({
     products: [
       { error: { code: "42703", message: "column description does not exist" } },
-      { data: [{ id: "p1", name: "DuKamp 60", code: "DK60", slug: null, price: 99, active: true, stock: 4, featured: true }] },
+      {
+        data: [
+          {
+            id: "p1",
+            name: "DuKamp 60",
+            code: "DK60",
+            slug: null,
+            price: 99,
+            active: true,
+            stock: 4,
+            featured: true,
+          },
+        ],
+      },
     ],
   });
   const result = await querySiteProducts("DuKamp 60", 8, deps(client));

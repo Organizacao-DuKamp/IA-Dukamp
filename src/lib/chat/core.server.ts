@@ -298,6 +298,7 @@ async function runTurn(
   let hasCatalogEvidence = false;
   let hasSiteEvidence = false;
   let hasMarketEvidence = false;
+  let needsExternalProductFallback = false;
   const requiresCurrentMarketSearch =
     routed.kind === "passthrough" &&
     (routed.marketFreshness === "stale" || routed.marketFreshness === "missing");
@@ -354,6 +355,28 @@ async function runTurn(
         const result = await querySiteProducts(productHint.product.official_name, 6);
         if (result.data.length) lookup.products = result.data;
         retrieved.push(`site-products:${result.status}`);
+      }
+      if (domainIntent.intent === "product_recommendation") {
+        const liveMatch =
+          lookup.products?.some((product) => product.stock == null || product.stock > 0) ?? false;
+        const productStatus = commercial.statuses.find((status) =>
+          status.startsWith("site-products:"),
+        );
+        if (liveMatch) {
+          contextParts.push(
+            "PRIORIDADE DUKAMP: há produto(s) oficial(is), ativo(s) e disponível(is) recuperado(s) do catálogo vivo. Se forem tecnicamente adequados ao objetivo informado, recomende primeiro a melhor opção da DuKamp e explique por quê. Não force uma opção inadequada apenas por ser da DuKamp.",
+          );
+          retrieved.push("dukamp:priority-match");
+        } else {
+          needsExternalProductFallback = true;
+          const confirmedEmpty = productStatus === "site-products:empty_result";
+          contextParts.push(
+            confirmedEmpty
+              ? "FALLBACK COMERCIAL: o catálogo vivo da DuKamp foi consultado e não retornou produto adequado disponível para este objetivo. Pesquise na web uma alternativa externa confiável e deixe claro que ela NÃO é um produto DuKamp."
+              : "FALLBACK COMERCIAL: não foi possível confirmar uma opção adequada no catálogo vivo da DuKamp neste turno. Pesquise na web uma alternativa externa confiável, sem afirmar que a DuKamp não possui o produto e sem apresentar a alternativa como DuKamp.",
+          );
+          retrieved.push(confirmedEmpty ? "dukamp:fallback-empty" : "dukamp:fallback-unavailable");
+        }
       }
       if (lookup.sellers?.length) {
         const normalizedLookup = lookupText.toLocaleLowerCase("pt-BR");
@@ -428,7 +451,9 @@ async function runTurn(
       ? false
       : weatherLocation
         ? !weatherIntelligence || weatherIntelligence.analysis.needsWebCrosscheck
-        : domainIntent.needs_web_search || requiresCurrentMarketSearch;
+        : domainIntent.needs_web_search ||
+          requiresCurrentMarketSearch ||
+          needsExternalProductFallback;
 
   if (needsWebResearch) {
     const livestock = livestockContextFromState(state);
@@ -446,6 +471,9 @@ async function runTurn(
       ? buildWeatherResearchQuery(text, weatherLocation)
       : [
           routerInput,
+          needsExternalProductFallback
+            ? "O catálogo vivo da DuKamp não trouxe uma opção adequada confirmada. Pesquise uma alternativa comercial externa tecnicamente pertinente e confiável; não a apresente como produto DuKamp."
+            : null,
           currentMarketDetails ? `Contexto confirmado da cotação: ${currentMarketDetails}.` : null,
         ]
           .filter(Boolean)

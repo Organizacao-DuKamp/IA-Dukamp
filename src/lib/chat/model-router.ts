@@ -18,7 +18,12 @@ export interface AdaptiveModelRoute {
 }
 
 function lastUserText(history: ChatMessage[]): string {
-  return [...history].reverse().find((message) => message.role === "user")?.content?.trim() ?? "";
+  return (
+    [...history]
+      .reverse()
+      .find((message) => message.role === "user")
+      ?.content?.trim() ?? ""
+  );
 }
 
 function isCorrection(sourcePolicy: string): boolean {

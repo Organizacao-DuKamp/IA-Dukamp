@@ -5,6 +5,7 @@ import { isSiteConfigured, siteConfigurationStatus, siteSupabase } from "./site-
 import { normalizeName } from "../products/normalize.ts";
 import { matchSellerRequest } from "./seller-domain.ts";
 import type { IntentClassification } from "../chat/intent.ts";
+import { rankDuKampProductsForNeed } from "./dukamp-product-ranking.ts";
 
 export type SiteQueryStatus =
   | "ok"
@@ -30,6 +31,19 @@ export interface SiteProduct {
   active: boolean | null;
   stock: number | null;
   featured?: boolean | null;
+  description?: string | null;
+  images?: string[] | null;
+  brand?: string | null;
+  consumer_price?: number | null;
+  consumer_pix_price?: number | null;
+  producer_price?: number | null;
+  producer_pix_price?: number | null;
+  reseller_price?: number | null;
+  reseller_pix_price?: number | null;
+  installments?: number | null;
+  on_sale?: boolean | null;
+  sale_consumer_price?: number | null;
+  sale_consumer_pix_price?: number | null;
 }
 export interface SiteSeller {
   id: string;
@@ -89,6 +103,10 @@ const PRODUCT_SEARCH_STOPWORDS = new Set([
   "lista",
   "todos",
 ]);
+
+const PRODUCT_SELECT =
+  "id,name,code,slug,price,active,stock,featured,description,images,brand,consumer_price,consumer_pix_price,producer_price,producer_pix_price,reseller_price,reseller_pix_price,installments,on_sale,sale_consumer_price,sale_consumer_pix_price";
+const PRODUCT_FALLBACK_SELECT = "id,name,code,slug,price,active,stock,featured";
 
 export function siteIntentHints(text: string) {
   return {
@@ -203,10 +221,7 @@ export async function querySiteProducts(
       .split(/\s+/)
       .filter((token) => token.length >= 2 && !PRODUCT_SEARCH_STOPWORDS.has(token))
       .slice(0, 8);
-    let request = client
-      .from("products")
-      .select("id,name,code,slug,price,active,stock,featured")
-      .eq("active", true);
+    let request = client.from("products").select(PRODUCT_SELECT).eq("active", true);
     if (!listAll && tokens.length)
       request = request.or(
         tokens.flatMap((token) => [`name.ilike.*${token}*`, `code.ilike.*${token}*`]).join(","),
@@ -215,7 +230,7 @@ export async function querySiteProducts(
       Math.min(Math.max(limit * 5, 20), 100),
     );
     if (response.error && classifyError(response.error).status === "schema_error") {
-      let fallback = client.from("products").select("id,name,code,slug,active").eq("active", true);
+      let fallback = client.from("products").select(PRODUCT_FALLBACK_SELECT).eq("active", true);
       if (!listAll && tokens.length)
         fallback = fallback.or(
           tokens.flatMap((token) => [`name.ilike.*${token}*`, `code.ilike.*${token}*`]).join(","),
@@ -223,15 +238,11 @@ export async function querySiteProducts(
       response = await fallback.limit(Math.min(Math.max(limit * 5, 20), 100));
     }
     if (!response.error && !listAll && tokens.length && (response.data?.length ?? 0) === 0) {
-      response = await client
-        .from("products")
-        .select("id,name,code,slug,price,active,stock,featured")
-        .eq("active", true)
-        .limit(100);
+      response = await client.from("products").select(PRODUCT_SELECT).eq("active", true).limit(100);
       if (response.error && classifyError(response.error).status === "schema_error")
         response = await client
           .from("products")
-          .select("id,name,code,slug,active")
+          .select(PRODUCT_FALLBACK_SELECT)
           .eq("active", true)
           .limit(100);
     }
@@ -247,6 +258,21 @@ export async function querySiteProducts(
       active: p.active ?? true,
       stock: p.stock ?? null,
       featured: p.featured ?? null,
+      description: p.description ?? null,
+      images: Array.isArray(p.images)
+        ? p.images.filter((item): item is string => typeof item === "string")
+        : [],
+      brand: p.brand ?? null,
+      consumer_price: p.consumer_price ?? null,
+      consumer_pix_price: p.consumer_pix_price ?? null,
+      producer_price: p.producer_price ?? null,
+      producer_pix_price: p.producer_pix_price ?? null,
+      reseller_price: p.reseller_price ?? null,
+      reseller_pix_price: p.reseller_pix_price ?? null,
+      installments: p.installments ?? null,
+      on_sale: p.on_sale ?? null,
+      sale_consumer_price: p.sale_consumer_price ?? null,
+      sale_consumer_pix_price: p.sale_consumer_pix_price ?? null,
     }));
     if (listAll || !tokens.length) return finish(operation, started, products.slice(0, limit));
     const ranked = products
@@ -261,6 +287,63 @@ export async function querySiteProducts(
       .sort((a, b) => b.score - a.score || a.product.name.localeCompare(b.product.name, "pt-BR"))
       .slice(0, limit)
       .map(({ product }) => product);
+    return finish(operation, started, ranked);
+  } catch (error) {
+    return finish(operation, started, [], error);
+  }
+}
+
+export async function queryRecommendedSiteProducts(
+  query: string,
+  limit = 8,
+  deps: SiteLookupDependencies = {},
+): Promise<SiteQueryResult<SiteProduct[]>> {
+  const operation = "products recommendation lookup";
+  if (!configured(deps)) return unavailable(operation, []);
+  const started = Date.now();
+  try {
+    const client = clientFor(deps);
+    let response: { data: unknown[] | null; error: unknown } = await client
+      .from("products")
+      .select(PRODUCT_SELECT)
+      .eq("active", true)
+      .limit(500);
+    if (response.error && classifyError(response.error).status === "schema_error") {
+      response = await client
+        .from("products")
+        .select(PRODUCT_FALLBACK_SELECT)
+        .eq("active", true)
+        .limit(500);
+    }
+    if (response.error) return finish(operation, started, [], response.error);
+    const products = (
+      (response.data ?? []) as Array<Partial<SiteProduct> & { id: string; name: string }>
+    ).map((p) => ({
+      id: p.id,
+      name: p.name,
+      code: p.code ?? null,
+      slug: p.slug ?? null,
+      price: p.price ?? null,
+      active: p.active ?? true,
+      stock: p.stock ?? null,
+      featured: p.featured ?? null,
+      description: p.description ?? null,
+      images: Array.isArray(p.images)
+        ? p.images.filter((item): item is string => typeof item === "string")
+        : [],
+      brand: p.brand ?? null,
+      consumer_price: p.consumer_price ?? null,
+      consumer_pix_price: p.consumer_pix_price ?? null,
+      producer_price: p.producer_price ?? null,
+      producer_pix_price: p.producer_pix_price ?? null,
+      reseller_price: p.reseller_price ?? null,
+      reseller_pix_price: p.reseller_pix_price ?? null,
+      installments: p.installments ?? null,
+      on_sale: p.on_sale ?? null,
+      sale_consumer_price: p.sale_consumer_price ?? null,
+      sale_consumer_pix_price: p.sale_consumer_pix_price ?? null,
+    }));
+    const ranked = rankDuKampProductsForNeed(products, query, limit);
     return finish(operation, started, ranked);
   } catch (error) {
     return finish(operation, started, [], error);
@@ -374,12 +457,10 @@ export async function executeCommercialLookup(
   const lookup: SiteLookup = {};
   const statuses: string[] = [];
   if (["product", "product_recommendation", "internal_price"].includes(intent.intent)) {
-    const products = await querySiteProducts(
-      text,
-      12,
-      deps,
-      hints.listProducts || intent.intent === "product_recommendation" || PURPOSE_RE.test(text),
-    );
+    const products =
+      intent.intent === "product_recommendation" || PURPOSE_RE.test(text)
+        ? await queryRecommendedSiteProducts(text, 8, deps)
+        : await querySiteProducts(text, 12, deps, hints.listProducts);
     if (products.data.length) lookup.products = products.data;
     statuses.push(`site-products:${products.status}`);
   }
@@ -410,16 +491,30 @@ export function siteBlock(look: SiteLookup): string {
   const parts: string[] = [];
   if (look.products && look.products.length > 0) {
     const lines = look.products.map((p) => {
-      const price = p.price != null ? ` — ${fmtPrice(p.price)}` : "";
-      const stock =
-        p.stock != null && p.stock > 0
-          ? " (em estoque)"
-          : p.stock === 0
-            ? " (sem estoque no momento)"
-            : "";
-      return `- ${p.name}${price}${stock}`;
+      const publicPrice =
+        p.on_sale && p.sale_consumer_price != null
+          ? p.sale_consumer_price
+          : (p.consumer_price ?? p.price);
+      const publicPix =
+        p.on_sale && p.sale_consumer_pix_price != null
+          ? p.sale_consumer_pix_price
+          : p.consumer_pix_price;
+      const details = [
+        p.brand ? `marca: ${p.brand}` : null,
+        p.code ? `código: ${p.code}` : null,
+        publicPrice != null ? `preço público: ${fmtPrice(publicPrice)}` : null,
+        publicPix != null ? `Pix público: ${fmtPrice(publicPix)}` : null,
+        p.installments && p.installments > 1 ? `até ${p.installments}x` : null,
+        p.stock != null ? `estoque: ${p.stock}` : null,
+      ].filter(Boolean);
+      const description = p.description?.trim()
+        ? `\n  descrição oficial: ${p.description.trim().slice(0, 700)}`
+        : "";
+      const images = (p.images ?? []).filter(Boolean).slice(0, 3);
+      const imageLine = images.length ? `\n  imagens oficiais: ${images.join(" | ")}` : "";
+      return `- ${p.name}${details.length ? ` — ${details.join("; ")}` : ""}${description}${imageLine}`;
     });
-    parts.push(`DADOS DO SITE DUKAMP — PRODUTOS COMERCIAIS:\n${lines.join("\n")}`);
+    parts.push(`DADOS OFICIAIS E ATUAIS DA DUKAMP — PRODUTOS COMERCIAIS:\n${lines.join("\n")}`);
   }
   if (look.sellers && look.sellers.length > 0) {
     const lines = look.sellers.map((s) => {
