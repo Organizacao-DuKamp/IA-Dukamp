@@ -5,8 +5,8 @@
 // real acontece dentro da Responses API da OpenAI, usando o Web Search nativo
 // do mesmo GPT que produz a resposta final.
 //
-// Manter os exports antigos evita quebrar o orquestrador e rotas já publicadas
-// enquanto a TPEC-IA migra para a arquitetura ChatGPT-first.
+// Manter os exports antigos evita quebrar rotas publicadas durante a migração
+// para a arquitetura ChatGPT-first.
 
 export type ResearchProfile =
   | "weather"
@@ -28,7 +28,7 @@ export interface ResearchOptions {
   fetchImpl?: typeof fetch;
 }
 
-/** @deprecated Mantido apenas para compatibilidade com catches existentes. */
+/** @deprecated Mantido apenas para compatibilidade binária com código legado. */
 export class PerplexityError extends Error {
   readonly status: number;
 
@@ -71,20 +71,22 @@ export function researchProfileForQuery(
     return "animal_health_status";
   }
 
+  // Panorama/tendência é análise de mercado, mesmo quando a commodity é citada.
+  // Uma simples ocorrência de "boi gordo" não transforma a consulta em pedido
+  // de cotação; preço exato exige linguagem explícita de valor/cotação.
   if (
-    /\b(cotacao|arroba|preco do boi|boi gordo|boi china|preco do milho|preco da soja|preco do leite)\b/.test(
+    /\b(panorama|tendencia|cenario|mercado|exportacao|abate|oferta|demanda|relacao de troca)\b/.test(q) &&
+    !/\b(cotacao|preco|quanto (?:esta|ta|custa)|valor|r\$)\b/.test(q)
+  ) {
+    return "market_intelligence";
+  }
+
+  if (
+    /\b(cotacao|preco|quanto (?:esta|ta|custa)|valor|arroba|preco do boi|boi china|preco do milho|preco da soja|preco do leite)\b/.test(
       q,
     )
   ) {
     return "current_market";
-  }
-
-  if (
-    /\b(mercado|panorama|tendencia|exportacao|abate|oferta|demanda|relacao de troca|cenário|cenario)\b/.test(
-      q,
-    )
-  ) {
-    return "market_intelligence";
   }
 
   if (
@@ -131,7 +133,7 @@ function sourceGuidance(profile: ResearchProfile, location?: string | null): str
       ];
     case "current_market":
       return [
-        "Procure a publicação mais recente e verificável para a praça/região pedida.",
+        "Para cotação diária, procure primeiro hoje, depois ontem e anteontem; se não houver publicação nesse intervalo, use a publicação confiável mais recente e destaque a data real.",
         "Todo valor deve conservar unidade, praça, data de referência e fonte.",
         "Prefira CEPEA/ESALQ, B3, Conab, IEA, órgãos públicos, bolsas, cooperativas e fontes setoriais reconhecidas.",
       ];
@@ -191,8 +193,7 @@ export async function researchChatGPT(
 }
 
 /**
- * @deprecated Nome legado mantido porque core.server.ts ainda importa esta
- * função. Não há nenhuma chamada à Perplexity por trás dela.
+ * @deprecated Alias legado. Não há nenhuma chamada à Perplexity por trás dele.
  */
 export async function researchPerplexity(
   query: string,
