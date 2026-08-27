@@ -17,45 +17,72 @@ function openAIResponse(text: string) {
   });
 }
 
-test("GPT-5.6 Sol é o cérebro padrão em web e WhatsApp", () => {
-  const previousTpec = process.env.OPENAI_TPEC_MODEL;
-  const previousLegacyCapable = process.env.OPENAI_CAPABLE_MODEL;
-  const previousLegacyModel = process.env.OPENAI_MODEL;
+test("família GPT-5.6 usa Luna Terra Sol com seleção adaptativa", () => {
+  const previous = {
+    luna: process.env.OPENAI_TPEC_LUNA_MODEL,
+    terra: process.env.OPENAI_TPEC_TERRA_MODEL,
+    sol: process.env.OPENAI_TPEC_SOL_MODEL,
+    legacyTpec: process.env.OPENAI_TPEC_MODEL,
+    legacyCapable: process.env.OPENAI_CAPABLE_MODEL,
+    legacyModel: process.env.OPENAI_MODEL,
+  };
+  delete process.env.OPENAI_TPEC_LUNA_MODEL;
+  delete process.env.OPENAI_TPEC_TERRA_MODEL;
+  delete process.env.OPENAI_TPEC_SOL_MODEL;
   delete process.env.OPENAI_TPEC_MODEL;
   process.env.OPENAI_CAPABLE_MODEL = "gpt-5";
   process.env.OPENAI_MODEL = "gpt-5-mini";
 
   try {
+    assert.equal(openAIModel("luna"), "gpt-5.6-luna");
+    assert.equal(openAIModel("terra"), "gpt-5.6-terra");
+    assert.equal(openAIModel("sol"), "gpt-5.6-sol");
+    assert.equal(openAIModel("fast"), "gpt-5.6-terra");
     assert.equal(openAIModel("capable"), "gpt-5.6-sol");
-    assert.equal(openAIModel("fast"), "gpt-5.6-sol");
-    assert.equal(chatModelKindForChannel("whatsapp"), "capable");
-    assert.equal(chatModelKindForChannel("web"), "capable");
+    assert.equal(openAIModel("adaptive"), "adaptive:gpt-5.6");
+    assert.equal(chatModelKindForChannel("whatsapp"), "adaptive");
+    assert.equal(chatModelKindForChannel("web"), "adaptive");
   } finally {
-    if (previousTpec === undefined) delete process.env.OPENAI_TPEC_MODEL;
-    else process.env.OPENAI_TPEC_MODEL = previousTpec;
-    if (previousLegacyCapable === undefined) delete process.env.OPENAI_CAPABLE_MODEL;
-    else process.env.OPENAI_CAPABLE_MODEL = previousLegacyCapable;
-    if (previousLegacyModel === undefined) delete process.env.OPENAI_MODEL;
-    else process.env.OPENAI_MODEL = previousLegacyModel;
+    for (const [key, value] of Object.entries({
+      OPENAI_TPEC_LUNA_MODEL: previous.luna,
+      OPENAI_TPEC_TERRA_MODEL: previous.terra,
+      OPENAI_TPEC_SOL_MODEL: previous.sol,
+      OPENAI_TPEC_MODEL: previous.legacyTpec,
+      OPENAI_CAPABLE_MODEL: previous.legacyCapable,
+      OPENAI_MODEL: previous.legacyModel,
+    })) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
   }
 });
 
-test("OPENAI_TPEC_MODEL permite trocar explicitamente o cérebro da TPEC", () => {
-  const previous = process.env.OPENAI_TPEC_MODEL;
-  process.env.OPENAI_TPEC_MODEL = "gpt-5.6-sol-custom";
+test("variáveis exclusivas permitem trocar cada tier sem afetar os demais", () => {
+  const previousTerra = process.env.OPENAI_TPEC_TERRA_MODEL;
+  const previousSol = process.env.OPENAI_TPEC_SOL_MODEL;
+  const previousLegacy = process.env.OPENAI_TPEC_MODEL;
+  process.env.OPENAI_TPEC_TERRA_MODEL = "gpt-5.6-terra-custom";
+  process.env.OPENAI_TPEC_SOL_MODEL = "gpt-5.6-sol-custom";
+  process.env.OPENAI_TPEC_MODEL = "gpt-5.6-sol-legacy";
+
   try {
-    assert.equal(openAIModel(), "gpt-5.6-sol-custom");
+    assert.equal(openAIModel("terra"), "gpt-5.6-terra-custom");
+    assert.equal(openAIModel("sol"), "gpt-5.6-sol-custom");
   } finally {
-    if (previous === undefined) delete process.env.OPENAI_TPEC_MODEL;
-    else process.env.OPENAI_TPEC_MODEL = previous;
+    if (previousTerra === undefined) delete process.env.OPENAI_TPEC_TERRA_MODEL;
+    else process.env.OPENAI_TPEC_TERRA_MODEL = previousTerra;
+    if (previousSol === undefined) delete process.env.OPENAI_TPEC_SOL_MODEL;
+    else process.env.OPENAI_TPEC_SOL_MODEL = previousSol;
+    if (previousLegacy === undefined) delete process.env.OPENAI_TPEC_MODEL;
+    else process.env.OPENAI_TPEC_MODEL = previousLegacy;
   }
 });
 
-test("turno sem evidência privada recebe Web Search do ChatGPT em modo auto", async () => {
+test("turno normal sem evidência privada usa Terra medium com Web Search limitado", async () => {
   const previousKey = process.env.OPENAI_API_KEY;
-  const previousModel = process.env.OPENAI_TPEC_MODEL;
+  const previousTerra = process.env.OPENAI_TPEC_TERRA_MODEL;
   process.env.OPENAI_API_KEY = "openai-test-key";
-  process.env.OPENAI_TPEC_MODEL = "gpt-5.6-sol";
+  delete process.env.OPENAI_TPEC_TERRA_MODEL;
   let requestBody: Record<string, unknown> = {};
 
   try {
@@ -68,30 +95,59 @@ test("turno sem evidência privada recebe Web Search do ChatGPT em modo auto", a
     });
 
     assert.equal(reply, "Resposta pesquisada quando necessário.");
-    assert.equal(requestBody.model, "gpt-5.6-sol");
+    assert.equal(requestBody.model, "gpt-5.6-terra");
     assert.equal(requestBody.store, false);
     assert.deepEqual(requestBody.reasoning, { effort: "medium" });
     assert.equal(requestBody.tool_choice, "auto");
     assert.deepEqual(requestBody.tools, [
       { type: "web_search_preview", search_context_size: "medium" },
     ]);
+    assert.equal(requestBody.max_tool_calls, 2);
     assert.deepEqual(requestBody.include, ["web_search_call.action.sources"]);
-    assert.equal(requestBody.max_output_tokens, 4_000);
+    assert.equal(requestBody.max_output_tokens, 3_200);
+    assert.equal(requestBody.prompt_cache_key, "tpec-terra-whatsapp");
+    assert.deepEqual(requestBody.text, { verbosity: "low" });
   } finally {
     if (previousKey === undefined) delete process.env.OPENAI_API_KEY;
     else process.env.OPENAI_API_KEY = previousKey;
-    if (previousModel === undefined) delete process.env.OPENAI_TPEC_MODEL;
-    else process.env.OPENAI_TPEC_MODEL = previousModel;
+    if (previousTerra === undefined) delete process.env.OPENAI_TPEC_TERRA_MODEL;
+    else process.env.OPENAI_TPEC_TERRA_MODEL = previousTerra;
   }
 });
 
-test("pesquisa aprofundada é obrigatória e sobe raciocínio para high", async () => {
+test("conversa casual usa Luna low sem pesquisa", async () => {
+  const previousKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "openai-luna-test-key";
+  let requestBody: Record<string, unknown> = {};
+
+  try {
+    await askOpenAI([{ role: "user", content: "Bom dia" }], {
+      channel: "whatsapp",
+      sourcePolicy: "CONVERSA CASUAL: responda naturalmente.",
+      researchDepth: "none",
+      fetchImpl: (async (_url: RequestInfo | URL, init?: RequestInit) => {
+        requestBody = JSON.parse(String(init?.body));
+        return openAIResponse("Bom dia!");
+      }) as typeof fetch,
+    });
+
+    assert.equal(requestBody.model, "gpt-5.6-luna");
+    assert.deepEqual(requestBody.reasoning, { effort: "low" });
+    assert.equal("tools" in requestBody, false);
+    assert.equal(requestBody.max_output_tokens, 1_800);
+  } finally {
+    if (previousKey === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = previousKey;
+  }
+});
+
+test("pesquisa aprofundada escala para Sol high e limita ferramentas", async () => {
   const previousKey = process.env.OPENAI_API_KEY;
   process.env.OPENAI_API_KEY = "openai-deep-test-key";
   let requestBody: Record<string, unknown> = {};
 
   try {
-    await askOpenAI([{ role: "user", content: "Qual a situação atual do mercado?" }], {
+    await askOpenAI([{ role: "user", content: "Faça uma análise aprofundada do mercado." }], {
       context:
         "PESQUISA EXTERNA ATUAL\nCHATGPT_WEB_SEARCH_REQUIRED\nPROFILE: market_intelligence\nDEPTH: high\nQUERY: mercado do boi gordo",
       fetchImpl: (async (_url: RequestInfo | URL, init?: RequestInit) => {
@@ -100,8 +156,10 @@ test("pesquisa aprofundada é obrigatória e sobe raciocínio para high", async 
       }) as typeof fetch,
     });
 
+    assert.equal(requestBody.model, "gpt-5.6-sol");
     assert.deepEqual(requestBody.reasoning, { effort: "high" });
     assert.equal(requestBody.tool_choice, "required");
+    assert.equal(requestBody.max_tool_calls, 3);
     assert.deepEqual(requestBody.tools, [
       { type: "web_search_preview", search_context_size: "high" },
     ]);
@@ -113,7 +171,7 @@ test("pesquisa aprofundada é obrigatória e sobe raciocínio para high", async 
   }
 });
 
-test("evidência privada explícita é usada sem forçar pesquisa externa", async () => {
+test("evidência privada explícita usa Terra sem forçar pesquisa externa", async () => {
   const previousKey = process.env.OPENAI_API_KEY;
   process.env.OPENAI_API_KEY = "openai-private-test-key";
   let requestBody: Record<string, unknown> = {};
@@ -128,6 +186,7 @@ test("evidência privada explícita é usada sem forçar pesquisa externa", asyn
       }) as typeof fetch,
     });
 
+    assert.equal(requestBody.model, "gpt-5.6-terra");
     assert.deepEqual(requestBody.reasoning, { effort: "medium" });
     assert.equal("tools" in requestBody, false);
     assert.equal("tool_choice" in requestBody, false);
@@ -192,6 +251,7 @@ test("OpenAI recebe histórico, estado e contexto para produzir a resposta final
     assert.equal(reply, "Resposta fundamentada.");
     assert.equal(requestUrl, "https://api.openai.com/v1/responses");
     assert.equal(requestHeaders.get("authorization"), "Bearer openai-history-test-key");
+    assert.equal(requestBody.model, "gpt-5.6-terra");
     assert.match(String(requestBody.instructions), /DADOS OFICIAIS PRIVADOS/);
     assert.match(String(requestBody.instructions), /product/);
     assert.deepEqual(
