@@ -5,11 +5,15 @@ import {
   logDiagnostic,
   safeErrorSnippet,
 } from "./diagnostics.server.ts";
+import {
+  selectAdaptiveModelRoute,
+  type AdaptiveModelTier,
+  type AdaptiveReasoningEffort,
+} from "./model-router.ts";
 
 const ENDPOINT = "https://api.openai.com/v1/responses";
 const DEFAULT_TIMEOUT_MS = 45_000;
-const CORRECTION_TIMEOUT_MS = 30_000;
-const INCOMPLETE_RETRY_TIMEOUT_MS = 20_000;
+const INCOMPLETE_RETRY_TIMEOUT_MS = 25_000;
 const RESEARCH_MARKER = "CHATGPT_WEB_SEARCH_REQUIRED";
 
 const WHATSAPP_STYLE_INSTRUCTION = `ESTILO DO CANAL — WHATSAPP:
@@ -31,13 +35,12 @@ export class OpenAIError extends Error {
   }
 }
 
-export type ReasoningEffort = "medium" | "high" | "xhigh";
+export type ReasoningEffort = AdaptiveReasoningEffort;
 export type ResearchDepth = "none" | "medium" | "high";
+export type ModelSelection = "adaptive" | AdaptiveModelTier | "fast" | "capable";
 
 export interface OpenAIOptions {
-  // Mantido por compatibilidade de chamada. Na arquitetura ChatGPT-first ambos
-  // os nomes apontam para o mesmo cérebro e WhatsApp nunca recebe downgrade.
-  model?: "fast" | "capable";
+  model?: ModelSelection;
   channel?: ChatChannel;
   summary?: string | null;
   state?: string | null;
@@ -48,6 +51,7 @@ export interface OpenAIOptions {
   fetchImpl?: typeof fetch;
   reasoningEffort?: ReasoningEffort;
   researchDepth?: ResearchDepth;
+  maxToolCalls?: number;
 }
 
 export interface ResearchPlan {
@@ -57,17 +61,37 @@ export interface ResearchPlan {
   reasoningEffort: ReasoningEffort;
 }
 
-/**
- * GPT-5.6 Sol é o cérebro padrão da TPEC-IA em todos os canais.
- * Usamos uma variável exclusiva da TPEC para impedir que configurações antigas
- * como OPENAI_CAPABLE_MODEL=gpt-5 mantenham silenciosamente o modelo legado.
- */
-export function openAIModel(_kind: "fast" | "capable" = "capable"): string {
-  return process.env.OPENAI_TPEC_MODEL || "gpt-5.6-sol";
+function modelForTier(tier: AdaptiveModelTier): string {
+  switch (tier) {
+    case "luna":
+      return process.env.OPENAI_TPEC_LUNA_MODEL || "gpt-5.6-luna";
+    case "terra":
+      return process.env.OPENAI_TPEC_TERRA_MODEL || "gpt-5.6-terra";
+    case "sol":
+      // OPENAI_TPEC_MODEL fica como compatibilidade para quem já configurou
+      // o modelo flagship antes do roteamento adaptativo.
+      return process.env.OPENAI_TPEC_SOL_MODEL || process.env.OPENAI_TPEC_MODEL || "gpt-5.6-sol";
+  }
 }
 
-export function chatModelKindForChannel(_channel: ChatChannel | undefined): "capable" {
-  return "capable";
+function forcedTier(selection: ModelSelection | undefined): AdaptiveModelTier | null {
+  if (selection === "luna" || selection === "terra" || selection === "sol") return selection;
+  if (selection === "fast") return "terra";
+  if (selection === "capable") return "sol";
+  return null;
+}
+
+/**
+ * Resolve nomes de modelo para testes, diagnósticos e chamadas explicitamente
+ * fixadas. O fluxo normal usa `adaptive`, que escolhe o tier por turno.
+ */
+export function openAIModel(selection: ModelSelection = "adaptive"): string {
+  if (selection === "adaptive") return "adaptive:gpt-5.6";
+  return modelForTier(forcedTier(selection) ?? "terra");
+}
+
+export function chatModelKindForChannel(_channel: ChatChannel | undefined): "adaptive" {
+  return "adaptive";
 }
 
 function stateIsWhatsApp(state: string | null | undefined): boolean {
@@ -151,12 +175,11 @@ function markerDepth(context: string | null | undefined): "medium" | "high" | nu
 }
 
 /**
- * Replica o comportamento ChatGPT-first:
- * - se o orquestrador pediu pesquisa explicitamente, Web Search é obrigatório;
- * - se não há contexto interno explícito, o modelo recebe Web Search em modo
- *   auto e decide se realmente precisa pesquisar;
- * - se há uma evidência interna suficiente, ela é usada primeiro e a pesquisa
- *   externa não é forçada.
+ * ChatGPT-first com pesquisa adaptativa:
+ * - pesquisa explicitamente solicitada continua obrigatória;
+ * - a primeira tentativa usa medium por padrão;
+ * - high só aparece quando o core pede escalada/deep research;
+ * - sem contexto interno, Web Search fica disponível em auto.
  */
 export function researchPlanForRequest(
   history: ChatMessage[],
@@ -193,9 +216,6 @@ export function researchPlanForRequest(
     };
   }
 
-  // O core já encerra cumprimentos/reconhecimentos simples antes desta função.
-  // Para qualquer turno substantivo sem evidência interna, disponibilizamos a
-  // pesquisa como o ChatGPT faz: o próprio modelo decide se precisa usá-la.
   if (!hasContext && history.some((message) => message.role === "user")) {
     return {
       enabled: true,
@@ -213,17 +233,41 @@ export function researchPlanForRequest(
   };
 }
 
+function timeoutForRoute(
+  tier: AdaptiveModelTier,
+  plan: ResearchPlan,
+  correction: boolean,
+  explicit?: number,
+): number {
+  if (explicit) return explicit;
+  if (correction) return DEFAULT_TIMEOUT_MS;
+  if (tier === "luna") return 15_000;
+  if (tier === "terra") return plan.enabled ? 45_000 : 30_000;
+  return DEFAULT_TIMEOUT_MS;
+}
+
+function initialOutputBudget(tier: AdaptiveModelTier, whatsapp: boolean): number {
+  if (!whatsapp) return tier === "sol" ? 5_000 : 4_000;
+  if (tier === "luna") return 1_800;
+  if (tier === "terra") return 3_200;
+  return 4_200;
+}
+
 export async function askOpenAI(
   history: ChatMessage[],
   options: OpenAIOptions = {},
 ): Promise<string> {
   const key = process.env.OPENAI_API_KEY;
-  const model = openAIModel(options.model);
+  const adaptiveRoute = selectAdaptiveModelRoute(history, options);
+  const modelTier = forcedTier(options.model) ?? adaptiveRoute.tier;
+  const model = modelForTier(modelTier);
 
   if (!key) {
     logDiagnostic("error", "openai.configuration_error", {
       provider: "openai",
       model,
+      model_tier: modelTier,
+      route_reason: adaptiveRoute.reason,
       reason: "missing_api_key",
     });
     throw new OpenAIError("Serviço de IA indisponível no momento.", 500);
@@ -233,16 +277,25 @@ export async function askOpenAI(
   const whatsappStyle = options.channel === "whatsapp" || stateIsWhatsApp(options.state);
   const correction = Boolean(
     options.sourcePolicy?.includes("CORREÇÃO OBRIGATÓRIA") ||
-    options.sourcePolicy?.includes("CORREÇÃO METEOROLÓGICA"),
+      options.sourcePolicy?.includes("CORREÇÃO METEOROLÓGICA") ||
+      options.sourcePolicy?.includes("CORREÇÃO COMERCIAL"),
   );
-  const plan = researchPlanForRequest(history, options);
-  const defaultTimeoutMs =
-    options.timeoutMs ?? (correction ? CORRECTION_TIMEOUT_MS : DEFAULT_TIMEOUT_MS);
+  const effectiveOptions: OpenAIOptions = {
+    ...options,
+    reasoningEffort: options.reasoningEffort ?? adaptiveRoute.reasoningEffort,
+  };
+  const plan = researchPlanForRequest(history, effectiveOptions);
+  const defaultTimeoutMs = timeoutForRoute(modelTier, plan, correction, options.timeoutMs);
+  const maxToolCalls = Math.min(
+    Math.max(Math.trunc(options.maxToolCalls ?? (plan.depth === "high" ? 3 : 2)), 1),
+    4,
+  );
 
   const input = history
     .filter((message) => message.role !== "system")
     .map((message) => ({ role: message.role, content: message.content }));
   const inputChars = input.reduce((total, message) => total + message.content.length, 0);
+  const promptCacheKey = `tpec-${modelTier}-${whatsappStyle ? "whatsapp" : "web"}`;
 
   async function requestResponse(
     maxOutputTokens: number,
@@ -253,10 +306,12 @@ export async function askOpenAI(
     const started = Date.now();
     const body: Record<string, unknown> = {
       model,
-      instructions: instructions(options),
+      instructions: instructions(effectiveOptions),
       input,
       max_output_tokens: maxOutputTokens,
       store: false,
+      prompt_cache_key: promptCacheKey,
+      text: { verbosity: whatsappStyle && modelTier !== "sol" ? "low" : "medium" },
     };
 
     if (supportsReasoningConfig(model)) {
@@ -271,20 +326,23 @@ export async function askOpenAI(
         },
       ];
       body.tool_choice = plan.required ? "required" : "auto";
-      // Faz a Responses API devolver também a lista de fontes usadas pela
-      // pesquisa, além das citações presentes no texto final.
+      body.max_tool_calls = maxToolCalls;
       body.include = ["web_search_call.action.sources"];
     }
 
     logDiagnostic("info", "openai.request.start", {
       provider: "openai",
       model,
+      model_tier: modelTier,
+      route_reason: adaptiveRoute.reason,
+      escalated: adaptiveRoute.escalated || correction,
       channel: whatsappStyle ? "whatsapp" : (options.channel ?? "web"),
       correction,
       reasoning_effort: supportsReasoningConfig(model) ? plan.reasoningEffort : undefined,
       web_search: plan.enabled,
       web_search_required: plan.required,
       research_depth: plan.enabled ? plan.depth : "none",
+      max_tool_calls: plan.enabled ? maxToolCalls : 0,
       max_output_tokens: maxOutputTokens,
       timeout_ms: requestTimeoutMs,
       message_count: input.length,
@@ -311,6 +369,8 @@ export async function askOpenAI(
         logDiagnostic("error", "openai.response.error", {
           provider: "openai",
           model,
+          model_tier: modelTier,
+          route_reason: adaptiveRoute.reason,
           status: response.status,
           status_text: response.statusText,
           duration_ms: durationMs,
@@ -319,6 +379,7 @@ export async function askOpenAI(
           reasoning_effort: supportsReasoningConfig(model) ? plan.reasoningEffort : undefined,
           web_search: plan.enabled,
           research_depth: plan.enabled ? plan.depth : "none",
+          max_tool_calls: plan.enabled ? maxToolCalls : 0,
           max_output_tokens: maxOutputTokens,
         });
 
@@ -338,6 +399,7 @@ export async function askOpenAI(
         logDiagnostic("error", "openai.response.invalid_json", {
           provider: "openai",
           model,
+          model_tier: modelTier,
           status: response.status,
           duration_ms: durationMs,
           response_headers: headers,
@@ -350,6 +412,8 @@ export async function askOpenAI(
       logDiagnostic("info", "openai.response.received", {
         provider: "openai",
         model,
+        model_tier: modelTier,
+        route_reason: adaptiveRoute.reason,
         status: response.status,
         duration_ms: durationMs,
         response_headers: headers,
@@ -368,6 +432,8 @@ export async function askOpenAI(
         logDiagnostic("error", "openai.request.timeout", {
           provider: "openai",
           model,
+          model_tier: modelTier,
+          route_reason: adaptiveRoute.reason,
           timeout_ms: requestTimeoutMs,
           duration_ms: durationMs,
         });
@@ -377,6 +443,8 @@ export async function askOpenAI(
       logDiagnostic("error", "openai.request.network_error", {
         provider: "openai",
         model,
+        model_tier: modelTier,
+        route_reason: adaptiveRoute.reason,
         duration_ms: durationMs,
         error_name: error instanceof Error ? error.name : "unknown",
         error_message: error instanceof Error ? error.message : String(error),
@@ -387,8 +455,7 @@ export async function askOpenAI(
     }
   }
 
-  // Sem downgrade no WhatsApp: o mesmo GPT-5.6 Sol e o mesmo raciocínio base.
-  let data = await requestResponse(whatsappStyle ? 4_000 : 6_000);
+  let data = await requestResponse(initialOutputBudget(modelTier, whatsappStyle));
   let text = extractResponseText(data);
 
   if (
@@ -400,10 +467,12 @@ export async function askOpenAI(
     logDiagnostic("warn", "openai.response.retry_after_incomplete", {
       provider: "openai",
       model,
+      model_tier: modelTier,
+      route_reason: adaptiveRoute.reason,
       reason: data.incomplete_details.reason,
       first_usage: data.usage,
     });
-    data = await requestResponse(8_000, INCOMPLETE_RETRY_TIMEOUT_MS);
+    data = await requestResponse(6_000, INCOMPLETE_RETRY_TIMEOUT_MS);
     text = extractResponseText(data);
   }
 
@@ -411,6 +480,8 @@ export async function askOpenAI(
     logDiagnostic("error", "openai.response.empty", {
       provider: "openai",
       model,
+      model_tier: modelTier,
+      route_reason: adaptiveRoute.reason,
       response_status: data.status ?? null,
       incomplete_reason: data.incomplete_details?.reason ?? null,
       usage: data.usage,
@@ -422,10 +493,14 @@ export async function askOpenAI(
   logDiagnostic("info", "openai.response.success", {
     provider: "openai",
     model,
+    model_tier: modelTier,
+    route_reason: adaptiveRoute.reason,
+    escalated: adaptiveRoute.escalated || correction,
     reply_chars: text.length,
     web_search: plan.enabled,
     web_search_required: plan.required,
     research_depth: plan.enabled ? plan.depth : "none",
+    max_tool_calls: plan.enabled ? maxToolCalls : 0,
     usage: data.usage,
   });
 
