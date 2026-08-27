@@ -24,13 +24,14 @@ jobs:
           node-version: 22
       - name: Install dependencies
         run: npm install
-      - name: Normalize temporary migration anchor
+      - name: Normalize temporary migration anchors
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
           p = Path("scripts/apply-dukamp-live-priority.mjs")
           s = p.read_text()
+
           start = s.index('  const stopwordEnd = `')
           end = s.index('  source = source.replaceAll(', start)
           replacement = '''  const stopwordEnd = `]);\n\nexport function siteIntentHints(text: string) {`;
@@ -42,7 +43,55 @@ jobs:
             );
 
           '''
-          p.write_text(s[:start] + replacement + s[end:])
+          s = s[:start] + replacement + s[end:]
+
+          rich_start = s.index('  source = replaceOnce(\n    source,\n    `    const lines = look.products.map((p) => {')
+          rich_end = s.index('  return source;\n});\n\nawait edit("src/lib/chat/core.server.ts"', rich_start)
+          rich_replacement = r'''  const siteBlockFunction = source.indexOf("export function siteBlock(");
+            const siteBlockStart = source.indexOf("    const lines = look.products.map((p) => {", siteBlockFunction);
+            const siteBlockEndMarker = '    parts.push(`DADOS DO SITE DUKAMP — PRODUTOS COMERCIAIS:\\n${lines.join("\\n")}`);';
+            const siteBlockEnd = source.indexOf(siteBlockEndMarker, siteBlockStart);
+            if (siteBlockFunction < 0 || siteBlockStart < 0 || siteBlockEnd < 0) {
+              throw new Error("Trecho não encontrado: rich site block");
+            }
+            const richBlock = `    const lines = look.products.map((p) => {
+              const publicPrice =
+                p.on_sale && p.sale_consumer_price != null
+                  ? p.sale_consumer_price
+                  : (p.consumer_price ?? p.price);
+              const publicPix =
+                p.on_sale && p.sale_consumer_pix_price != null
+                  ? p.sale_consumer_pix_price
+                  : p.consumer_pix_price;
+              const details = [
+                p.brand ? \`marca: \${p.brand}\` : null,
+                p.code ? \`código: \${p.code}\` : null,
+                publicPrice != null ? \`preço público: \${fmtPrice(publicPrice)}\` : null,
+                publicPix != null ? \`Pix público: \${fmtPrice(publicPix)}\` : null,
+                p.installments && p.installments > 1 ? \`até \${p.installments}x\` : null,
+                p.stock != null ? \`estoque: \${p.stock}\` : null,
+              ].filter(Boolean);
+              const description = p.description?.trim()
+                ? \`\\n  descrição oficial: \${p.description.trim().slice(0, 700)}\`
+                : "";
+              const images = (p.images ?? []).filter(Boolean).slice(0, 3);
+              const imageLine = images.length ? \`\\n  imagens oficiais: \${images.join(" | ")}\` : "";
+              return \`- \${p.name}\${details.length ? \` — \${details.join("; ")}\` : ""}\${description}\${imageLine}\`;
+            });
+            parts.push(
+              \`DADOS OFICIAIS E ATUAIS DA DUKAMP — PRODUTOS COMERCIAIS:\\n\${lines.join("\\n")}\`,
+            );`;
+            source =
+              source.slice(0, siteBlockStart) +
+              richBlock +
+              source.slice(siteBlockEnd + siteBlockEndMarker.length);
+            return source;
+          });
+
+          await edit("src/lib/chat/core.server.ts"'''
+          s = s[:rich_start] + rich_replacement + s[rich_end + len('  return source;\n});\n\nawait edit("src/lib/chat/core.server.ts"'):]
+
+          p.write_text(s)
           PY
       - name: Apply live-first integration
         run: node scripts/apply-dukamp-live-priority.mjs
