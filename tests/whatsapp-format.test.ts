@@ -15,45 +15,54 @@ test("normaliza títulos markdown para o formato de negrito do WhatsApp", () => 
   ]);
 });
 
-test("previsão longa é dividida por blocos sem misturar tudo em uma bolha", () => {
+test("previsão normal permanece em uma mensagem mas ganha separação visual", () => {
   const reply = [
-    "*Monte Aprazível — previsão*",
+    "## Monte Aprazível — previsão",
+    "• 27/08 — tempo com muitas nuvens; mínima ~16–17 °C, máxima ~29–33 °C; chuva fraca isolada (~1–1,5 mm); vento fraco a moderado.",
+    "• 28–31/08 — sequência de dias quentes e secos; máximas entre ~34–37 °C; chance de chuva muito baixa.",
+    "• 01/09 — maior chance de chuva; probabilidade até ~60%; acumulado moderado possível.",
     "",
-    "*Hoje (27/08)*\nMáxima de 33 °C e mínima de 27 °C. Tempo predominantemente seco, com baixa chance de chuva durante a tarde.",
+    "**Pecuária**",
+    "O principal ponto de atenção é o calor da tarde. Água disponível e sombra são importantes para reduzir o estresse térmico.",
     "",
-    "*Amanhã (28/08)*\nO calor continua, com máxima perto de 34 °C. A chance de chuva segue baixa e não há indicação de volume significativo.",
-    "",
-    "*Próximos dias*\nEntre sábado e segunda, as máximas podem ficar entre 35 e 38 °C. A mudança mais provável aparece na terça, quando cresce a chance de chuva.",
-    "",
-    "*Chuva*\nOs modelos ainda divergem sobre o volume, então a leitura mais segura é de chuva fraca a moderada, sem cravar um único valor.",
-    "",
-    "_Atualizado em 27/08/2026, 14:11 (Brasília) | Fontes: INMET, ECMWF, GFS e ICON._",
+    "Atualizado em 27/08/2026, 14:11 (Brasília). Fontes: INMET, ECMWF, GFS e ICON.",
   ].join("\n");
 
   const chunks = splitWhatsAppOutboundText(reply);
-  assert.ok(chunks.length >= 2, `esperava mais de uma bolha, recebi ${chunks.length}`);
-  assert.ok(chunks.every((chunk) => chunk.length <= 3500));
-  assert.equal(chunks.join("\n\n"), reply);
+  assert.equal(chunks.length, 1);
+  const formatted = chunks[0] ?? "";
+  assert.match(formatted, /^\*Monte Aprazível — previsão\*/u);
+  assert.match(formatted, /• \*27\/08\*\n  tempo com muitas nuvens;\n  mínima/u);
+  assert.match(formatted, /vento fraco a moderado\.\n\n• \*28–31\/08\*/u);
+  assert.match(formatted, /\n\n\*Pecuária\*\n/u);
+  assert.match(formatted, /\n\nAtualizado em 27\/08\/2026/u);
 });
 
-test("texto longo sem parágrafos prefere frases completas em vez de corte cego", () => {
+test("itens longos ficam escaneáveis sem reescrever o conteúdo", () => {
+  const reply =
+    "• Hoje — calor forte à tarde; umidade mais baixa; vento moderado; sem chuva significativa.";
+  const [formatted] = splitWhatsAppOutboundText(reply);
+
+  assert.equal(
+    formatted,
+    "• *Hoje*\n  calor forte à tarde;\n  umidade mais baixa;\n  vento moderado;\n  sem chuva significativa.",
+  );
+});
+
+test("texto acima do limite é dividido em fronteiras legíveis", () => {
   const sentence =
     "A previsão indica calor forte durante a tarde e baixa chance de chuva no município.";
-  const reply = Array.from({ length: 14 }, () => sentence).join(" ");
+  const reply = Array.from({ length: 55 }, () => sentence).join(" ");
   const chunks = splitWhatsAppOutboundText(reply);
 
   assert.ok(chunks.length >= 2);
+  assert.ok(chunks.every((chunk) => Array.from(chunk).length <= 3500));
   assert.ok(chunks.every((chunk) => /[.!?]$/u.test(chunk)));
-  assert.equal(chunks.join(" "), reply);
 });
 
-test("nenhuma bolha ultrapassa o limite rígido da Graph API", () => {
+test("nenhuma bolha ultrapassa o limite rígido configurado", () => {
   const reply = `${"palavra ".repeat(700)}fim.`;
-  const chunks = splitWhatsAppOutboundText(reply, {
-    softSplitTriggerChars: 3500,
-    softTargetChars: 3500,
-    hardMaxChars: 3500,
-  });
+  const chunks = splitWhatsAppOutboundText(reply, { hardMaxChars: 3500 });
 
   assert.ok(chunks.length >= 2);
   assert.ok(chunks.every((chunk) => Array.from(chunk).length <= 3500));
