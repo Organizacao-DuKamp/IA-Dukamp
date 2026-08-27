@@ -174,7 +174,10 @@ export function analyzeWeatherRequest(text: string): WeatherRequestAnalysis {
   };
 }
 
-function datePartsInTimezone(now: Date, timezone: string): {
+function datePartsInTimezone(
+  now: Date,
+  timezone: string,
+): {
   year: number;
   month: number;
   day: number;
@@ -276,9 +279,7 @@ export function resolveWeatherTimeWindow(
   const localNow = `${localDate} ${String(parts.hour).padStart(2, "0")}:${String(parts.minute).padStart(2, "0")}`;
   const periodText = analysis.period ? `, período ${analysis.period}` : "";
   const description =
-    startDate === endDate
-      ? `${startDate}${periodText}`
-      : `${startDate} a ${endDate}${periodText}`;
+    startDate === endDate ? `${startDate}${periodText}` : `${startDate} a ${endDate}${periodText}`;
 
   return {
     timezone,

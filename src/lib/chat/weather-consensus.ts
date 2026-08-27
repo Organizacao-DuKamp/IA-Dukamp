@@ -59,7 +59,9 @@ export interface WeatherHourConsensus {
 const RAIN_SIGNAL_MM = 0.2;
 
 function finite(values: Array<number | null>): number[] {
-  return values.filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+  return values.filter(
+    (value): value is number => typeof value === "number" && Number.isFinite(value),
+  );
 }
 
 function minOrNull(values: number[]): number | null {
@@ -145,8 +147,7 @@ export function buildDailyConsensus(days: WeatherModelDay[]): WeatherDayConsensu
           minMm: round(precipMin),
           maxMm: round(precipMax),
           medianMm: round(medianOrNull(precipitation)),
-          spreadMm:
-            precipMin !== null && precipMax !== null ? round(precipMax - precipMin) : null,
+          spreadMm: precipMin !== null && precipMax !== null ? round(precipMax - precipMin) : null,
           rainVotes: precipitation.filter((value) => value >= RAIN_SIGNAL_MM).length,
           dryVotes: precipitation.filter((value) => value < RAIN_SIGNAL_MM).length,
           confidence: precipitationConfidence(precipitation),

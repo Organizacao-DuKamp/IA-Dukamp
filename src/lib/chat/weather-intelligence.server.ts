@@ -276,7 +276,9 @@ function clampNumber(
 
 function arrayOfStrings(record: JsonRecord | null, key: string): string[] {
   const value = record?.[key];
-  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
 }
 
 function valueAt(record: JsonRecord | null, key: string, index: number): unknown {
@@ -335,7 +337,8 @@ function resolveMunicipality(location: string, list: Municipality[]): Municipali
   const wanted = normalizeComparable(hint.city);
   const exact = list.filter(
     (municipality) =>
-      normalizeComparable(municipality.name) === wanted && (!hint.uf || municipality.uf === hint.uf),
+      normalizeComparable(municipality.name) === wanted &&
+      (!hint.uf || municipality.uf === hint.uf),
   );
   if (exact.length === 1) return exact[0];
   if (exact.length > 1) {
@@ -451,7 +454,10 @@ async function loadMunicipalities(
 
 function geocodeUrl(municipality: Municipality): string {
   const url = new URL(OPEN_METEO_GEOCODING_URL);
-  url.searchParams.set("name", `${municipality.name}, ${UF_NAMES[municipality.uf] ?? municipality.uf}`);
+  url.searchParams.set(
+    "name",
+    `${municipality.name}, ${UF_NAMES[municipality.uf] ?? municipality.uf}`,
+  );
   url.searchParams.set("count", "10");
   url.searchParams.set("language", "pt");
   url.searchParams.set("format", "json");
@@ -466,7 +472,9 @@ function geocodeMatches(record: JsonRecord, municipality: Municipality): boolean
   if (!name || countryCode !== "BR") return false;
   if (normalizeComparable(name) !== normalizeComparable(municipality.name)) return false;
   const stateName = UF_NAMES[municipality.uf];
-  return !admin1 || normalizeComparable(admin1) === normalizeComparable(stateName ?? municipality.uf);
+  return (
+    !admin1 || normalizeComparable(admin1) === normalizeComparable(stateName ?? municipality.uf)
+  );
 }
 
 async function geocodeMunicipality(
@@ -488,7 +496,9 @@ async function geocodeMunicipality(
   );
   const results = asRecord(payload)?.results;
   const candidates = Array.isArray(results) ? results.map(asRecord).filter(Boolean) : [];
-  const match = candidates.find((candidate) => geocodeMatches(candidate as JsonRecord, municipality));
+  const match = candidates.find((candidate) =>
+    geocodeMatches(candidate as JsonRecord, municipality),
+  );
   if (!match) {
     throw new WeatherIntelligenceError(
       `Não consegui obter coordenadas confiáveis para ${municipality.name} - ${municipality.uf}.`,
@@ -721,7 +731,12 @@ function parseOpenMeteo(payload: unknown, source: string): OpenMeteoParsed {
       "weather_daily_max_temperature_invalid",
       issues,
     );
-    if (min !== null && max !== null && min > max && !issues.includes("weather_daily_min_above_max")) {
+    if (
+      min !== null &&
+      max !== null &&
+      min > max &&
+      !issues.includes("weather_daily_min_above_max")
+    ) {
       issues.push("weather_daily_min_above_max");
     }
     return {
@@ -907,7 +922,9 @@ function parseStationObservation(payload: unknown): WeatherCurrentConditions | n
   return {
     source: "INMET estação automática",
     observed: true,
-    time: Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : textField(latest, "DT_MEDICAO") ?? "",
+    time: Number.isFinite(timestamp)
+      ? new Date(timestamp).toISOString()
+      : (textField(latest, "DT_MEDICAO") ?? ""),
     temperatureC: clampNumber(
       numberField(latest, "TEM_INS", "TEMP_INS", "TEMPERATURA"),
       -60,
@@ -939,7 +956,8 @@ function parseStationObservation(payload: unknown): WeatherCurrentConditions | n
         issues,
       ) === null
         ? null
-        : Math.round((numberField(latest, "VEN_VEL", "VENTO_VEL", "VEL_VENTO") ?? 0) * 3.6 * 10) / 10,
+        : Math.round((numberField(latest, "VEN_VEL", "VENTO_VEL", "VEL_VENTO") ?? 0) * 3.6 * 10) /
+          10,
     windDirectionDeg: clampNumber(
       numberField(latest, "VEN_DIR", "VENTO_DIR"),
       0,
@@ -1027,7 +1045,11 @@ function parsePolygon(raw: string): Array<[number, number]> {
     .map(([lat, lon]) => [lat, lon] as [number, number]);
 }
 
-function pointInPolygon(latitude: number, longitude: number, polygon: Array<[number, number]>): boolean {
+function pointInPolygon(
+  latitude: number,
+  longitude: number,
+  polygon: Array<[number, number]>,
+): boolean {
   if (polygon.length < 3) return false;
   let inside = false;
   for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
@@ -1052,11 +1074,14 @@ function alertApplies(block: string, location: ResolvedWeatherLocation): boolean
   return normalizeComparable(area).includes(normalizeComparable(location.city));
 }
 
-function parseInmetAlertsXml(raw: string, location: ResolvedWeatherLocation, nowMs: number): WeatherAlert[] {
-  const blocks =
-    [...raw.matchAll(/<(?:item|entry|alert)(?:\s[^>]*)?>([\s\S]*?)<\/(?:item|entry|alert)>/gi)].map(
-      (match) => match[0],
-    );
+function parseInmetAlertsXml(
+  raw: string,
+  location: ResolvedWeatherLocation,
+  nowMs: number,
+): WeatherAlert[] {
+  const blocks = [
+    ...raw.matchAll(/<(?:item|entry|alert)(?:\s[^>]*)?>([\s\S]*?)<\/(?:item|entry|alert)>/gi),
+  ].map((match) => match[0]);
   const candidates = blocks.length ? blocks : [raw];
   const alerts: WeatherAlert[] = [];
   for (const block of candidates) {
@@ -1096,7 +1121,11 @@ function collectJsonRecords(value: unknown, out: JsonRecord[] = []): JsonRecord[
   return out;
 }
 
-function parseInmetAlertsJson(payload: unknown, location: ResolvedWeatherLocation, nowMs: number): WeatherAlert[] {
+function parseInmetAlertsJson(
+  payload: unknown,
+  location: ResolvedWeatherLocation,
+  nowMs: number,
+): WeatherAlert[] {
   const city = normalizeComparable(location.city);
   const alerts: WeatherAlert[] = [];
   for (const record of collectJsonRecords(payload)) {
@@ -1104,7 +1133,9 @@ function parseInmetAlertsJson(payload: unknown, location: ResolvedWeatherLocatio
     const polygonRaw = textField(record, "polygon", "poligono");
     const applies =
       (area ? normalizeComparable(area).includes(city) : false) ||
-      (polygonRaw ? pointInPolygon(location.latitude, location.longitude, parsePolygon(polygonRaw)) : false);
+      (polygonRaw
+        ? pointInPolygon(location.latitude, location.longitude, parsePolygon(polygonRaw))
+        : false);
     if (!applies) continue;
     const expires = textField(record, "expires", "fim", "validade_fim", "end");
     if (expires) {
@@ -1136,15 +1167,11 @@ async function fetchInmetAlerts(
   const key = `${location.ibgeCode}`;
   const cached = alertsCache.get(key);
   if (allowCache && cached && now() - cached.at < ALERT_TTL_MS) return cached.value;
-  const raw = await fetchText(
-    INMET_ALERTS_URL,
-    fetchImpl,
-    timeoutMs,
-    "INMET alertas",
-    { "user-agent": "TPEC-IA/1.0 weather-intelligence" },
-  );
+  const raw = await fetchText(INMET_ALERTS_URL, fetchImpl, timeoutMs, "INMET alertas", {
+    "user-agent": "TPEC-IA/1.0 weather-intelligence",
+  });
   let alerts: WeatherAlert[];
-  if (/^[\s\n]*[\[{]/.test(raw)) {
+  if (/^[\s\n]*[[{]/.test(raw)) {
     try {
       alerts = parseInmetAlertsJson(JSON.parse(raw) as unknown, location, now());
     } catch {
@@ -1197,10 +1224,7 @@ async function settledSource<T>(
   }
 }
 
-function targetHours(
-  hours: WeatherHourlyPoint[],
-  window: WeatherTimeWindow,
-): WeatherHourlyPoint[] {
+function targetHours(hours: WeatherHourlyPoint[], window: WeatherTimeWindow): WeatherHourlyPoint[] {
   return hours.filter((hour) => {
     const [date, time = "00:00"] = hour.time.split("T");
     if (date < window.startDate || date > window.endDate) return false;
@@ -1244,7 +1268,13 @@ async function fetchWeatherIntelligenceUncached(
   const analysis = analyzeWeatherRequest(userText);
   const list = await loadMunicipalities(fetchImpl, timeoutMs, now, allowCache);
   const municipality = resolveMunicipality(requestedLocation, list);
-  const coordinates = await geocodeMunicipality(municipality, fetchImpl, timeoutMs, now, allowCache);
+  const coordinates = await geocodeMunicipality(
+    municipality,
+    fetchImpl,
+    timeoutMs,
+    now,
+    allowCache,
+  );
   const location: ResolvedWeatherLocation = {
     requested: requestedLocation,
     city: municipality.name,
@@ -1279,7 +1309,9 @@ async function fetchWeatherIntelligenceUncached(
   ];
 
   const baselineUrl = openMeteoUrl(OPEN_METEO_FORECAST_URL, location, true);
-  const tasks: Array<Promise<{ result: PromiseSettledResult<unknown>; status: WeatherSourceStatus }>> = [
+  const tasks: Array<
+    Promise<{ result: PromiseSettledResult<unknown>; status: WeatherSourceStatus }>
+  > = [
     settledSource(
       "open-meteo-best-match",
       "Open-Meteo Best Match",
@@ -1372,7 +1404,9 @@ async function fetchWeatherIntelligenceUncached(
   const modelDays: WeatherModelDay[] = [];
   const modelHours: WeatherModelHour[] = [];
   const validationIssues = [...baseline.issues];
-  for (const item of settled.filter((entry) => entry.status.id.startsWith("model-") && entry.status.id !== "open-meteo-best-match")) {
+  for (const item of settled.filter(
+    (entry) => entry.status.id.startsWith("model-") && entry.status.id !== "open-meteo-best-match",
+  )) {
     if (item.result.status !== "fulfilled") continue;
     try {
       const parsed = parseModel(item.result.value, item.status.label);
@@ -1386,9 +1420,21 @@ async function fetchWeatherIntelligenceUncached(
 
   const dailyConsensus = buildDailyConsensus(modelDays);
   const hourlyConsensus = buildHourlyConsensus(modelHours);
-  const confidence = confidenceFor(analysis, observation, baseline.current, dailyConsensus, sources);
+  const confidence = confidenceFor(
+    analysis,
+    observation,
+    baseline.current,
+    dailyConsensus,
+    sources,
+  );
 
-  if (!observation && !baseline.current && baseline.daily.length === 0 && !officialForecastText && dailyConsensus.length === 0) {
+  if (
+    !observation &&
+    !baseline.current &&
+    baseline.daily.length === 0 &&
+    !officialForecastText &&
+    dailyConsensus.length === 0
+  ) {
     throw new WeatherIntelligenceError(
       "Nenhuma fonte meteorológica estruturada retornou dados confiáveis para essa localidade.",
       503,
@@ -1405,7 +1451,9 @@ async function fetchWeatherIntelligenceUncached(
     confidence,
     source_count: sources.length,
     sources_ok: sources.filter((source) => source.status === "ok").map((source) => source.id),
-    sources_failed: sources.filter((source) => source.status === "failed").map((source) => source.id),
+    sources_failed: sources
+      .filter((source) => source.status === "failed")
+      .map((source) => source.id),
     alerts: alerts.length,
     daily_consensus_days: dailyConsensus.length,
     hourly_consensus_points: hourlyConsensus.length,
@@ -1470,13 +1518,15 @@ function fmt(value: number | null, unit: string): string {
 
 function targetDaily(intelligence: WeatherIntelligence): WeatherDailyPoint[] {
   return intelligence.daily.filter(
-    (day) => day.date >= intelligence.timeWindow.startDate && day.date <= intelligence.timeWindow.endDate,
+    (day) =>
+      day.date >= intelligence.timeWindow.startDate && day.date <= intelligence.timeWindow.endDate,
   );
 }
 
 function targetConsensus(intelligence: WeatherIntelligence): WeatherDayConsensus[] {
   return intelligence.dailyConsensus.filter(
-    (day) => day.date >= intelligence.timeWindow.startDate && day.date <= intelligence.timeWindow.endDate,
+    (day) =>
+      day.date >= intelligence.timeWindow.startDate && day.date <= intelligence.timeWindow.endDate,
   );
 }
 
@@ -1497,7 +1547,8 @@ function rainWindows(intelligence: WeatherIntelligence): RainWindow[] {
   let previousMs: number | null = null;
   for (const hour of hours) {
     const currentMs = Date.parse(hour.time);
-    const contiguous = previousMs !== null && Number.isFinite(currentMs) && currentMs - previousMs <= 60 * 60_000;
+    const contiguous =
+      previousMs !== null && Number.isFinite(currentMs) && currentMs - previousMs <= 60 * 60_000;
     if (!current || !contiguous) {
       if (current) windows.push(current);
       current = {
@@ -1648,9 +1699,7 @@ export function renderWeatherFallbackReply(intelligence: WeatherIntelligence): s
   }
 
   if (intelligence.analysis.agroAnalysis) {
-    const hottest = Math.max(
-      ...days.map((day) => day.temperatureMaxC ?? Number.NEGATIVE_INFINITY),
-    );
+    const hottest = Math.max(...days.map((day) => day.temperatureMaxC ?? Number.NEGATIVE_INFINITY));
     const wettest = Math.max(...days.map((day) => day.precipitationSumMm ?? 0));
     if (Number.isFinite(hottest) && hottest >= 32) {
       lines.push(

@@ -173,9 +173,12 @@ function fixtureFetch(options: FixtureOptions = {}) {
     }
 
     if (url.startsWith("https://api.open-meteo.com/v1/forecast")) {
-      return new Response(JSON.stringify(baselinePayload({ invalidDaily: options.invalidBaseline })), {
-        status: 200,
-      });
+      return new Response(
+        JSON.stringify(baselinePayload({ invalidDaily: options.invalidBaseline })),
+        {
+          status: 200,
+        },
+      );
     }
 
     if (url.startsWith("https://api.open-meteo.com/v1/ecmwf")) {
@@ -325,11 +328,26 @@ test("consulta simples de temperatura não dispara três modelos nem alerta/prev
   );
 
   assert.equal(intelligence.analysis.depth, "quick");
-  assert.equal(calls.some((url) => url.includes("/v1/ecmwf")), false);
-  assert.equal(calls.some((url) => url.includes("/v1/gfs")), false);
-  assert.equal(calls.some((url) => url.includes("/v1/dwd-icon")), false);
-  assert.equal(calls.some((url) => url.includes("/avisos/ativos")), false);
-  assert.equal(calls.some((url) => url.includes("/previsao/3531407")), false);
+  assert.equal(
+    calls.some((url) => url.includes("/v1/ecmwf")),
+    false,
+  );
+  assert.equal(
+    calls.some((url) => url.includes("/v1/gfs")),
+    false,
+  );
+  assert.equal(
+    calls.some((url) => url.includes("/v1/dwd-icon")),
+    false,
+  );
+  assert.equal(
+    calls.some((url) => url.includes("/avisos/ativos")),
+    false,
+  );
+  assert.equal(
+    calls.some((url) => url.includes("/previsao/3531407")),
+    false,
+  );
   assert.ok(intelligence.current || intelligence.modeledCurrent);
 });
 

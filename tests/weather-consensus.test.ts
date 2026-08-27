@@ -1,10 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import {
-  buildDailyConsensus,
-  precipitationConfidence,
-} from "../src/lib/chat/weather-consensus.ts";
+import { buildDailyConsensus, precipitationConfidence } from "../src/lib/chat/weather-consensus.ts";
 
 test("consenso preserva faixa quando ECMWF GFS e ICON divergem no volume", () => {
   const [day] = buildDailyConsensus([
