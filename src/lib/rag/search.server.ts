@@ -13,11 +13,17 @@ export interface Match {
   similarity: number;
 }
 
+function minimumExplicitSimilarity(): number {
+  const configured = Number(process.env.TPEC_KNOWLEDGE_MIN_SIMILARITY ?? 0.72);
+  if (!Number.isFinite(configured)) return 0.72;
+  return Math.min(Math.max(configured, 0.6), 0.95);
+}
+
 export async function searchKnowledge(query: string, matchCount = 6): Promise<Match[]> {
   // Perguntas cujo objetivo é informação atual e que não pedem pesquisa interna
-  // devem ir direto para a fonte web atual. Além de poupar uma geração de
-  // embedding + RPCs no Supabase, isso evita que material histórico do RAG
-  // concorra com a evidência fresca de mercado recuperada pela Perplexity.
+  // devem ir direto para a pesquisa web do ChatGPT. Além de poupar uma geração
+  // de embedding + RPCs no Supabase, isso evita material histórico concorrendo
+  // com evidência atual.
   const domainIntent = classifyDomainIntent(query);
   if (
     !domainIntent.needs_internal_search &&
@@ -33,9 +39,8 @@ export async function searchKnowledge(query: string, matchCount = 6): Promise<Ma
   }
 
   // A base RAG é privada e suas RPCs aceitam apenas service_role. Em runtimes
-  // públicos como a Netlify, onde essa chave deliberadamente não existe, não
-  // tente inicializar o cliente privilegiado. O orquestrador continuará com
-  // as demais fontes disponíveis (catálogo/site/Perplexity/OpenAI).
+  // públicos onde essa chave deliberadamente não existe, o ChatGPT segue com
+  // seu próprio conhecimento e Web Search.
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()) {
     logDiagnostic("warn", "rag.search.skipped", {
       reason: "service_role_unavailable",
@@ -50,7 +55,7 @@ export async function searchKnowledge(query: string, matchCount = 6): Promise<Ma
   const errors: string[] = [];
   const totalStarted = Date.now();
 
-  // Busca semântica continua sendo a principal: entende intenção e sinônimos.
+  // Busca semântica: entende intenção e sinônimos.
   const semanticStarted = Date.now();
   try {
     const vec = await embedQuery(query);
@@ -79,9 +84,8 @@ export async function searchKnowledge(query: string, matchCount = 6): Promise<Ma
     });
   }
 
-  // Busca lexical recupera nomes, códigos, siglas e números exatos, nos quais
-  // embeddings costumam ser menos confiáveis. Também mantém a base disponível
-  // se o provedor de embeddings estiver temporariamente fora do ar.
+  // Busca lexical: recupera nomes, códigos, siglas e números exatos e funciona
+  // também como fallback quando o provedor de embeddings estiver indisponível.
   const lexicalStarted = Date.now();
   try {
     const { data, error } = await supabaseAdmin.rpc("search_knowledge_lexical", {
@@ -119,16 +123,24 @@ export async function searchKnowledge(query: string, matchCount = 6): Promise<Ma
     throw new Error(`buscas da base indisponíveis (${errors.join("; ")})`);
   }
 
+  // ChatGPT-first: a base privada só é considerada "evidência explícita" com
+  // correspondência forte. Se nenhum trecho atingir o limiar, devolvemos [] e
+  // o modelo fica livre para usar Web Search em vez de forçar um RAG parecido.
+  const minimumSimilarity = minimumExplicitSimilarity();
   const matches = [...byKey.values()]
+    .filter((match) => match.similarity >= minimumSimilarity)
     .sort((a, b) => b.similarity - a.similarity)
     .slice(0, matchCount);
+
   logDiagnostic("info", "rag.search.finish", {
     duration_ms: Date.now() - totalStarted,
     query_chars: query.length,
     requested_matches: matchCount,
     returned_matches: matches.length,
+    explicit_similarity_threshold: minimumSimilarity,
     top_similarity: matches[0]?.similarity ?? null,
     partial_errors: errors,
   });
+
   return matches;
 }
