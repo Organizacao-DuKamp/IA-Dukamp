@@ -123,7 +123,8 @@ test("pesquisa externa repete uma única vez após erro transitório", async () 
       }) as typeof fetch,
     });
 
-    assert.equal(calls, 2);
+    // Três rodadas são iniciadas em paralelo; somente a primeira falha e faz um retry.
+    assert.equal(calls, 4);
     assert.match(result, /Pesquisa recuperada/);
   } finally {
     restoreEnv();
