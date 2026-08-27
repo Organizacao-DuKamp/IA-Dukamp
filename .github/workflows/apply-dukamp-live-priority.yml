@@ -93,6 +93,12 @@ jobs:
           await edit("src/lib/chat/core.server.ts"'''
           s = s[:rich_start] + rich_replacement + s[rich_end + len('  return source;\n});\n\nawait edit("src/lib/chat/core.server.ts"'):]
 
+          old_rank_cutoff = '.filter(({ score, matchedTerms }) => score >= 4 && matchedTerms >= 1)'
+          new_rank_cutoff = '.filter(({ score, matchedTerms }) => score >= 1.5 && matchedTerms >= 1)'
+          if old_rank_cutoff not in s:
+              raise SystemExit("rank cutoff anchor not found")
+          s = s.replace(old_rank_cutoff, new_rank_cutoff, 1)
+
           p.write_text(s)
           PY
       - name: Apply live-first integration
