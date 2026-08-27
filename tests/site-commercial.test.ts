@@ -90,6 +90,7 @@ const product = {
   active: true,
   stock: 4,
   featured: true,
+  description: "Suplemento mineral indicado para bezerros e recria.",
 };
 const sellers = [
   {
@@ -162,19 +163,32 @@ test("chave inválida é diferenciada de bloqueio RLS", async () => {
   assert.equal(result.status, "unauthorized");
   assert.equal(result.errorCode, "invalid_key");
 });
-test("coluna opcional inexistente refaz produtos com colunas essenciais", async () => {
+test("coluna opcional inexistente refaz produtos com colunas comerciais essenciais", async () => {
   const client = new MockSupabase({
     products: [
-      { error: { code: "42703", message: "column featured does not exist" } },
-      { data: [{ id: "p1", name: "DuKamp 60", code: "DK60", slug: null, active: true }] },
+      { error: { code: "42703", message: "column description does not exist" } },
+      {
+        data: [
+          {
+            id: "p1",
+            name: "DuKamp 60",
+            code: "DK60",
+            slug: null,
+            price: 99,
+            active: true,
+            stock: 4,
+            featured: true,
+          },
+        ],
+      },
     ],
   });
   const result = await querySiteProducts("DuKamp 60", 8, deps(client));
   assert.equal(result.status, "ok");
-  assert.equal(result.data[0]?.price, null);
+  assert.equal(result.data[0]?.price, 99);
   assert.equal(client.calls.length, 2);
-  assert.match(client.selects[0]!.columns, /price,active,stock,featured/);
-  assert.equal(client.selects[1]!.columns, "id,name,code,slug,active");
+  assert.match(client.selects[0]!.columns, /description,images,brand/);
+  assert.equal(client.selects[1]!.columns, "id,name,code,slug,price,active,stock,featured");
 });
 test("lista de vendedores consulta colunas reais e retorna ativos", async () => {
   const client = new MockSupabase({ sellers: { data: sellers } });

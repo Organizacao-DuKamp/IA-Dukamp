@@ -191,6 +191,57 @@ function splitOutboundText(value: string): string[] {
   return chunks;
 }
 
+function extractOfficialImageUrls(body: string): string[] {
+  const urls = body.match(/https:\/\/[^\s<>()]+/g) ?? [];
+  const unique = new Set<string>();
+  for (const raw of urls) {
+    const candidate = raw.replace(/[),.;]+$/, "");
+    try {
+      const url = new URL(candidate);
+      if (!/^https:$/.test(url.protocol)) continue;
+      const officialDuKampHost =
+        url.hostname === "pioyrbcdprnplhcoyzam.supabase.co" ||
+        url.hostname === "dukamp.com.br" ||
+        url.hostname.endsWith(".dukamp.com.br");
+      if (!officialDuKampHost) continue;
+      if (!/\.(?:jpe?g|png|webp|gif)$/i.test(url.pathname)) continue;
+      unique.add(url.toString());
+    } catch {
+      // URL inválida: não converta em mídia.
+    }
+    if (unique.size >= 3) break;
+  }
+  return [...unique];
+}
+
+async function sendWhatsAppImage(
+  to: string,
+  imageUrl: string,
+  env: EnvLike,
+  fetchImpl: typeof fetch,
+): Promise<void> {
+  const accessToken = requireEnv(env, "WHATSAPP_ACCESS_TOKEN");
+  const phoneNumberId = requireEnv(env, "WHATSAPP_PHONE_NUMBER_ID");
+  const version = (env.WHATSAPP_GRAPH_API_VERSION?.trim() || "v25.0").replace(/^\/+|\/+$/g, "");
+  if (!/^v\d+\.\d+$/.test(version)) throw new Error("invalid_whatsapp_graph_api_version");
+  const response = await fetchImpl(
+    `https://graph.facebook.com/${version}/${encodeURIComponent(phoneNumberId)}/messages`,
+    {
+      method: "POST",
+      headers: { authorization: `Bearer ${accessToken}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to,
+        type: "image",
+        image: { link: imageUrl },
+      }),
+      redirect: "error",
+    },
+  );
+  if (!response.ok) throw new Error(`whatsapp_image_send_failed:${response.status}`);
+}
+
 async function sendWhatsAppText(
   to: string,
   body: string,
@@ -202,7 +253,13 @@ async function sendWhatsAppText(
   const version = (env.WHATSAPP_GRAPH_API_VERSION?.trim() || "v25.0").replace(/^\/+|\/+$/g, "");
   if (!/^v\d+\.\d+$/.test(version)) throw new Error("invalid_whatsapp_graph_api_version");
 
-  for (const chunk of splitOutboundText(body)) {
+  const imageUrls = extractOfficialImageUrls(body);
+  const textBody = imageUrls
+    .reduce((value, url) => value.replaceAll(url, ""), body)
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  for (const chunk of splitOutboundText(textBody)) {
     const response = await fetchImpl(
       `https://graph.facebook.com/${version}/${encodeURIComponent(phoneNumberId)}/messages`,
       {
@@ -222,6 +279,10 @@ async function sendWhatsAppText(
       },
     );
     if (!response.ok) throw new Error(`whatsapp_send_failed:${response.status}`);
+  }
+
+  for (const imageUrl of imageUrls) {
+    await sendWhatsAppImage(to, imageUrl, env, fetchImpl);
   }
 }
 

@@ -102,23 +102,27 @@ export function researchProfileForQuery(
   return "general_current";
 }
 
+function explicitlyRequestsDeepResearch(query: string): boolean {
+  const q = normalized(query);
+  return /\b(?:aprofundad[ao]s?|profund[ao]s?|pesquisa profunda|pesquisa aprofundada|analis[ea] aprofundad[ao]|investigue a fundo|a fundo|em profundidade|deep research)\b/.test(
+    q,
+  );
+}
+
+/**
+ * Pesquisa média é o padrão deliberado, inclusive para informação dinâmica.
+ * Web Search ainda é obrigatório nesses perfis; apenas evitamos começar toda
+ * pergunta com contexto "high", que aumenta muito latência e tokens.
+ *
+ * High fica reservado à escalada explícita feita pelo core após validação ruim,
+ * conflito de evidências, `deepResearch` programático ou quando o próprio
+ * usuário pede claramente uma pesquisa/análise aprofundada.
+ */
 export function researchDepthForQuery(query: string, options: ResearchOptions = {}): ResearchDepth {
-  const profile = researchProfileForQuery(query, options);
-
-  if (options.deepResearch === true) return "high";
-
-  switch (profile) {
-    case "weather":
-    case "current_market":
-    case "regulation":
-    case "animal_health_status":
-    case "market_intelligence":
-      return "high";
-    case "technical_livestock":
-    case "general_current":
-    default:
-      return "medium";
-  }
+  // Mantém a classificação do perfil exercitada mesmo quando a profundidade
+  // padrão é uniforme; o perfil continua definindo a estratégia de fontes.
+  researchProfileForQuery(query, options);
+  return options.deepResearch === true || explicitlyRequestsDeepResearch(query) ? "high" : "medium";
 }
 
 function sourceGuidance(profile: ResearchProfile, location?: string | null): string[] {

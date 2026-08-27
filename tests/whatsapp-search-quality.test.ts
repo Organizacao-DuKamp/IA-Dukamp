@@ -42,6 +42,7 @@ test("WhatsApp recebe instrução conversacional sem contaminar o input do usuá
     assert.deepEqual(body?.input, [
       { role: "user", content: "Como está o mercado de carnes hoje?" },
     ]);
+    // `capable` é um override explícito legado e continua fixando Sol.
     assert.equal(body?.model, "gpt-5.6-sol");
     assert.deepEqual(body?.reasoning, { effort: "medium" });
     assert.equal(body?.tool_choice, "auto");
@@ -70,20 +71,20 @@ test("estado wa também ativa o estilo de WhatsApp quando o canal não foi propa
   }
 });
 
-test("panorama atual de mercado vira pesquisa aprofundada do ChatGPT", async () => {
+test("panorama atual de mercado começa em pesquisa média com fontes fortes", async () => {
   const result = await researchChatGPT("Como está o mercado de carnes no Brasil hoje?");
 
   assert.equal(
     researchProfileForQuery("Como está o mercado de carnes no Brasil hoje?"),
     "market_intelligence",
   );
-  assert.equal(researchDepthForQuery("Como está o mercado de carnes no Brasil hoje?"), "high");
+  assert.equal(researchDepthForQuery("Como está o mercado de carnes no Brasil hoje?"), "medium");
   assert.match(result, /CHATGPT_WEB_SEARCH_REQUIRED/);
-  assert.match(result, /DEPTH: high/);
+  assert.match(result, /DEPTH: medium/);
   assert.match(result, /Cruze dados primários recentes/i);
 });
 
-test("regra sanitária vigente exige fonte oficial e pesquisa aprofundada", async () => {
+test("regra sanitária vigente exige fonte oficial sem começar em high", async () => {
   const result = await researchChatGPT(
     "Qual a regra vigente para vacinação contra brucelose hoje?",
   );
@@ -94,8 +95,9 @@ test("regra sanitária vigente exige fonte oficial e pesquisa aprofundada", asyn
   );
   assert.equal(
     researchDepthForQuery("Qual a regra vigente para vacinação contra brucelose hoje?"),
-    "high",
+    "medium",
   );
+  assert.match(result, /DEPTH: medium/);
   assert.match(result, /MAPA, Diário Oficial, órgãos estaduais/i);
   assert.match(result, /alterações, revogações, data de vigência/i);
 });
