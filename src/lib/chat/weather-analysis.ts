@@ -146,7 +146,8 @@ export function analyzeWeatherRequest(text: string): WeatherRequestAnalysis {
     asksCurrent,
     needsHourly,
     needsAlerts,
-    needsModelConsensus: depth !== "quick" && modelSensitive,
+    needsModelConsensus:
+      depth !== "quick" && (modelSensitive || intents.includes("WEATHER_FORECAST")),
     needsWebCrosscheck: deep && SYNOPTIC_RE.test(text),
     agroAnalysis,
     highImpactDecision,
