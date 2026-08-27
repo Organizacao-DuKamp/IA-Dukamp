@@ -18,10 +18,12 @@ function openAIResponse(text: string) {
 }
 
 test("GPT-5.6 Sol é o cérebro padrão em web e WhatsApp", () => {
-  const previousCapable = process.env.OPENAI_CAPABLE_MODEL;
-  const previousModel = process.env.OPENAI_MODEL;
-  delete process.env.OPENAI_CAPABLE_MODEL;
-  delete process.env.OPENAI_MODEL;
+  const previousTpec = process.env.OPENAI_TPEC_MODEL;
+  const previousLegacyCapable = process.env.OPENAI_CAPABLE_MODEL;
+  const previousLegacyModel = process.env.OPENAI_MODEL;
+  delete process.env.OPENAI_TPEC_MODEL;
+  process.env.OPENAI_CAPABLE_MODEL = "gpt-5";
+  process.env.OPENAI_MODEL = "gpt-5-mini";
 
   try {
     assert.equal(openAIModel("capable"), "gpt-5.6-sol");
@@ -29,18 +31,31 @@ test("GPT-5.6 Sol é o cérebro padrão em web e WhatsApp", () => {
     assert.equal(chatModelKindForChannel("whatsapp"), "capable");
     assert.equal(chatModelKindForChannel("web"), "capable");
   } finally {
-    if (previousCapable === undefined) delete process.env.OPENAI_CAPABLE_MODEL;
-    else process.env.OPENAI_CAPABLE_MODEL = previousCapable;
-    if (previousModel === undefined) delete process.env.OPENAI_MODEL;
-    else process.env.OPENAI_MODEL = previousModel;
+    if (previousTpec === undefined) delete process.env.OPENAI_TPEC_MODEL;
+    else process.env.OPENAI_TPEC_MODEL = previousTpec;
+    if (previousLegacyCapable === undefined) delete process.env.OPENAI_CAPABLE_MODEL;
+    else process.env.OPENAI_CAPABLE_MODEL = previousLegacyCapable;
+    if (previousLegacyModel === undefined) delete process.env.OPENAI_MODEL;
+    else process.env.OPENAI_MODEL = previousLegacyModel;
+  }
+});
+
+test("OPENAI_TPEC_MODEL permite trocar explicitamente o cérebro da TPEC", () => {
+  const previous = process.env.OPENAI_TPEC_MODEL;
+  process.env.OPENAI_TPEC_MODEL = "gpt-5.6-sol-custom";
+  try {
+    assert.equal(openAIModel(), "gpt-5.6-sol-custom");
+  } finally {
+    if (previous === undefined) delete process.env.OPENAI_TPEC_MODEL;
+    else process.env.OPENAI_TPEC_MODEL = previous;
   }
 });
 
 test("turno sem evidência privada recebe Web Search do ChatGPT em modo auto", async () => {
   const previousKey = process.env.OPENAI_API_KEY;
-  const previousModel = process.env.OPENAI_CAPABLE_MODEL;
+  const previousModel = process.env.OPENAI_TPEC_MODEL;
   process.env.OPENAI_API_KEY = "openai-test-key";
-  process.env.OPENAI_CAPABLE_MODEL = "gpt-5.6-sol";
+  process.env.OPENAI_TPEC_MODEL = "gpt-5.6-sol";
   let requestBody: Record<string, unknown> = {};
 
   try {
@@ -65,8 +80,8 @@ test("turno sem evidência privada recebe Web Search do ChatGPT em modo auto", a
   } finally {
     if (previousKey === undefined) delete process.env.OPENAI_API_KEY;
     else process.env.OPENAI_API_KEY = previousKey;
-    if (previousModel === undefined) delete process.env.OPENAI_CAPABLE_MODEL;
-    else process.env.OPENAI_CAPABLE_MODEL = previousModel;
+    if (previousModel === undefined) delete process.env.OPENAI_TPEC_MODEL;
+    else process.env.OPENAI_TPEC_MODEL = previousModel;
   }
 });
 
