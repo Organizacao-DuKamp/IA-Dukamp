@@ -27,12 +27,23 @@ function boundaryCut(value: string, maxChars: number): number {
   if (chars.length <= maxChars) return chars.length;
 
   const floor = Math.max(1, Math.floor(maxChars * 0.58));
-  const candidate = chars.slice(0, maxChars).join("");
-  const boundaries = ["\n", ". ", "! ", "? ", "; ", ": ", ", ", " "];
+  const ceiling = Math.min(maxChars, chars.length);
 
-  for (const boundary of boundaries) {
-    const index = candidate.lastIndexOf(boundary);
-    if (index >= floor) return index + boundary.length;
+  // Trabalha somente com índices de code points. Assim emojis e caracteres
+  // acentuados nunca deslocam o ponto de corte em relação ao Array.from usado
+  // por hardSplit.
+  for (let index = ceiling - 1; index >= floor; index -= 1) {
+    if (chars[index] === "\n") return index;
+  }
+
+  for (let index = ceiling - 1; index >= floor; index -= 1) {
+    if (/\s/u.test(chars[index] ?? "") && /[.!?;:,]/u.test(chars[index - 1] ?? "")) {
+      return index;
+    }
+  }
+
+  for (let index = ceiling - 1; index >= floor; index -= 1) {
+    if (/\s/u.test(chars[index] ?? "")) return index;
   }
 
   return maxChars;
