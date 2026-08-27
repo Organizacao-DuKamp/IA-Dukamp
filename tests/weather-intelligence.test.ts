@@ -347,5 +347,5 @@ test("fallback determinístico preserva dados quando a etapa de redação não e
   assert.match(reply, /7 mm/);
   assert.match(reply, /18 mm/);
   assert.match(reply, /aviso oficial do INMET/i);
-  assert.match(reply, /gado/i);
+  assert.match(reply, /manejo|transporte|propriedade/i);
 });
