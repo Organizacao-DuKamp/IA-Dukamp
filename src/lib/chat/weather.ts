@@ -10,6 +10,8 @@ const NON_WEATHER_RE =
   /\b(tempo\s+de\s+(?:entrega|espera|viagem|trabalho|servi[cç]o|uso|car[eê]ncia)|quanto\s+tempo|previs[aã]o\s+de\s+(?:venda|pre[cç]o|mercado|entrega|abate|parto)|clima\s+organizacional)\b/i;
 const WEATHER_TOPIC_RE = /clima|meteorolog|previs[aã]o do tempo/i;
 const WEATHER_PENDING_RE = /consultar_previsao_tempo/i;
+const WEATHER_LOCATION_PROMPT_RE =
+  /\bqual\s+(?:é\s+)?(?:a\s+sua\s+)?cidade[\s\S]{0,100}(?:estado|uf)\b|\bcidade[\s\S]{0,50}(?:estado|uf)\b/i;
 const WEATHER_FOLLOW_UP_RE =
   /^(?:e\s+)?(?:amanh[aã]|depois\s+de\s+amanh[aã]|hoje|essa\s+semana|no\s+fim\s+de\s+semana|nos\s+pr[oó]ximos\s+dias|e?\s*a\s+chuva|e?\s*o\s+vento|e?\s*a\s+umidade|e?\s*a\s+temperatura|e?\s*a\s+geada|e\s+para\s+.+)[?.!]*$/i;
 const TEMPORAL_TAIL_RE =
@@ -93,11 +95,20 @@ function rememberedLocation(state: ConversationState): string | null {
   return typeof value === "string" ? cleanLocationCandidate(value) : null;
 }
 
-export function resolveWeatherTurn(text: string, state: ConversationState): WeatherTurnResolution {
+export function isWeatherLocationPrompt(text: string | null | undefined): boolean {
+  return Boolean(text && WEATHER_LOCATION_PROMPT_RE.test(text));
+}
+
+export function resolveWeatherTurn(
+  text: string,
+  state: ConversationState,
+  lastAssistantText?: string | null,
+): WeatherTurnResolution {
   const direct = isWeatherRequest(text);
   const pending =
     WEATHER_PENDING_RE.test(state.pending_action ?? "") ||
-    /qual\s+cidade[\s\S]*estado|cidade\s+e\s+(?:estado|uf)/i.test(state.pending_question ?? "");
+    isWeatherLocationPrompt(state.pending_question) ||
+    isWeatherLocationPrompt(lastAssistantText);
   const topic = WEATHER_TOPIC_RE.test(state.current_topic ?? "");
   const contextualFollowUp = topic && WEATHER_FOLLOW_UP_RE.test(text.trim());
   const isWeatherTurn = direct || pending || contextualFollowUp;
