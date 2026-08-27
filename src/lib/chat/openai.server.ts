@@ -35,8 +35,8 @@ export type ReasoningEffort = "medium" | "high" | "xhigh";
 export type ResearchDepth = "none" | "medium" | "high";
 
 export interface OpenAIOptions {
-  // Mantido por compatibilidade. Na arquitetura ChatGPT-first ambos apontam
-  // para o mesmo modelo capaz; WhatsApp não recebe mais downgrade automático.
+  // Mantido por compatibilidade de chamada. Na arquitetura ChatGPT-first ambos
+  // os nomes apontam para o mesmo cérebro e WhatsApp nunca recebe downgrade.
   model?: "fast" | "capable";
   channel?: ChatChannel;
   summary?: string | null;
@@ -59,11 +59,11 @@ export interface ResearchPlan {
 
 /**
  * GPT-5.6 Sol é o cérebro padrão da TPEC-IA em todos os canais.
- * OPENAI_FAST_MODEL continua sendo aceito apenas para instalações antigas,
- * mas não é escolhido automaticamente para WhatsApp.
+ * Usamos uma variável exclusiva da TPEC para impedir que configurações antigas
+ * como OPENAI_CAPABLE_MODEL=gpt-5 mantenham silenciosamente o modelo legado.
  */
 export function openAIModel(_kind: "fast" | "capable" = "capable"): string {
-  return process.env.OPENAI_CAPABLE_MODEL || process.env.OPENAI_MODEL || "gpt-5.6-sol";
+  return process.env.OPENAI_TPEC_MODEL || "gpt-5.6-sol";
 }
 
 export function chatModelKindForChannel(_channel: ChatChannel | undefined): "capable" {
