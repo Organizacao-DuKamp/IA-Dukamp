@@ -563,6 +563,8 @@ export function analyzeAssistantReply(reply: string): {
 /** Deriva um rótulo de ação pendente a partir da pergunta feita pela IA. */
 export function derivePendingAction(question: string | null): string | null {
   if (!question) return null;
+  if (/previs[aã]o\s+(?:do\s+)?tempo|meteorolog|cidade\s+e\s+(?:estado|uf)/i.test(question))
+    return "consultar_previsao_tempo";
   if (/calcul|consumo|quantidade|dieta|dimension/i.test(question))
     return "calcular_quantidade_suplemento";
   if (/vendedor|contato|whats/i.test(question)) return "indicar_vendedor";
@@ -577,6 +579,10 @@ export function derivePendingAction(question: string | null): string | null {
 // ---------------------------------------------------------------------------
 
 const TOPIC_PATTERNS: Array<[RegExp, string]> = [
+  [
+    /previs[aã]o\s+(?:do\s+)?tempo|meteorolog|vai\s+chover|chuva|temperatura|umidade|vento|geada|tempestade/i,
+    "clima e previsão do tempo",
+  ],
   [
     /proteinad|suplement|mineral|ra[çc][ãa]o|n[úu]cleo|concentrado|creep/i,
     "suplementação e nutrição animal",

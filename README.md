@@ -1,6 +1,6 @@
 # TPEC-IA
 
-Assistente de IA especialista em pecuária brasileira, com vitrine institucional em `/`, atendimento pelo WhatsApp, memória curta de conversa, base RAG e integração comercial somente leitura com o Supabase do site DuKamp.
+Assistente de IA especialista em pecuária brasileira, com vitrine institucional em `/`, atendimento pelo WhatsApp, memória curta de conversa, base RAG, previsão meteorológica aprofundada por região e integração comercial somente leitura com o Supabase do site DuKamp.
 
 ## Stack
 
@@ -70,6 +70,21 @@ O fluxo por mensagem é: bancos internos e RAG recuperam evidências; quando a
 pergunta exige informação atual, a Perplexity pesquisa a web; por fim, a OpenAI
 recebe histórico, estado, RAG e pesquisa para raciocinar e produzir a única
 resposta enviada ao usuário.
+
+## Previsão do tempo aplicada à pecuária
+
+Pedidos de chuva, temperatura, vento, geada, tempestade ou previsão do tempo
+usam uma intenção própria. Sem localização confirmada, a TPEC-IA pergunta cidade
+e UF e aguarda a resposta. A localização fica no estado da conversa para
+continuações como “e amanhã?”, mas é substituída quando o usuário informar outra.
+
+Com a região confirmada, a Perplexity usa contexto de busca alto e prioriza
+fontes meteorológicas oficiais e regionais. A resposta final precisa identificar
+local, data, hora/fuso e fontes, sintetizar agora/24 horas/7 dias quando houver
+dados e relacionar a previsão a decisões pecuárias como conforto térmico, água,
+sombra, manejo, transporte, pastagem, alimentos, lama, geada, raios e fogo.
+Respostas sem localização, data, fonte ou elementos meteorológicos são
+reprocessadas antes do envio.
 
 Depois da migração para embeddings OpenAI, documentos legados aparecem como
 `aguardando` no painel da base de conhecimento. A busca lexical continua

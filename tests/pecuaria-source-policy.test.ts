@@ -83,3 +83,12 @@ test("current regulation must use dated official evidence", () => {
   assert.match(directive, /informe data de referência/i);
   assert.match(directive, /não use catálogo comercial como resposta/i);
 });
+
+test("weather policy requires current regional and official evidence", () => {
+  const directive = sourceDirective(assessEvidence({ knowledgeScores: [0.84] }));
+
+  assert.match(directive, /localização confirmada/i);
+  assert.match(directive, /INMET/);
+  assert.match(directive, /CPTEC\/INPE/);
+  assert.match(directive, /data, hora\/fuso, período e incerteza/i);
+});

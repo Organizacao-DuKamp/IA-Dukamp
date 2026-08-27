@@ -11,6 +11,7 @@ const features = [
   "Reprodução e indicadores do lote",
   "Sanidade com orientação responsável",
   "Cotações e inteligência de mercado",
+  "Previsão do tempo aplicada à sua região",
   "Informações sobre soluções DuKamp",
   "Análise de fotos, áudios e documentos",
 ];

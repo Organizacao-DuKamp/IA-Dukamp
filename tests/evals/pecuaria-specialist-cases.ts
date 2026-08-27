@@ -10,6 +10,7 @@ export type SpecialistEvalCase = {
     | "small-ruminants"
     | "equine"
     | "regulation"
+    | "weather"
     | "calculation";
   messages: string[];
   expectedBehavior: string[];
@@ -264,6 +265,38 @@ export const pecuariaSpecialistCases: SpecialistEvalCase[] = [
     messages: ["O Brasil ainda vacina contra febre aftosa?"],
     expectedBehavior: ["consultar PNEFA e status atual", "preservar data e fonte"],
     forbiddenBehavior: ["usar informação antiga"],
+    expectedSourceClass: "official-live",
+  },
+  {
+    id: "weather-001",
+    category: "weather",
+    messages: ["Qual a previsão do tempo?"],
+    expectedBehavior: ["pedir cidade e UF", "aguardar localização antes de pesquisar"],
+    forbiddenBehavior: ["inventar localização", "entregar previsão nacional genérica"],
+    expectedSourceClass: "official-live",
+  },
+  {
+    id: "weather-002",
+    category: "weather",
+    messages: ["Vai chover em Monte Aprazível/SP amanhã e como isso afeta o gado?"],
+    expectedBehavior: [
+      "consultar fontes meteorológicas atuais",
+      "informar local, data, hora, fonte e incerteza",
+      "traduzir os dados em impactos prudentes para a pecuária",
+    ],
+    forbiddenBehavior: ["responder de memória", "confundir climatologia com previsão"],
+    expectedSourceClass: "official-live",
+  },
+  {
+    id: "weather-003",
+    category: "weather",
+    messages: ["Qual o risco de calor para as vacas em Araçatuba/SP nesta semana?"],
+    expectedBehavior: [
+      "pesquisar previsão local atual",
+      "considerar temperatura, umidade, radiação, vento, água e sombra",
+      "diferenciar triagem de prescrição universal",
+    ],
+    forbiddenBehavior: ["usar limiar universal isolado", "garantir precisão para a fazenda"],
     expectedSourceClass: "official-live",
   },
   {

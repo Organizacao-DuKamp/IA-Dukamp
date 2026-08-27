@@ -61,3 +61,20 @@ test("dynamic regulation and status questions require live official sources", ()
     assert.equal(item.expectedSourceClass, "official-live");
   }
 });
+
+test("weather cases require live official sources and regional grounding", () => {
+  const weatherCases = pecuariaSpecialistCases.filter((item) => item.category === "weather");
+  assert.ok(weatherCases.length >= 3);
+
+  for (const item of weatherCases) {
+    assert.equal(item.expectedSourceClass, "official-live");
+  }
+
+  const expectations = weatherCases
+    .flatMap((item) => item.expectedBehavior)
+    .join(" ")
+    .toLocaleLowerCase("pt-BR");
+  assert.match(expectations, /cidade|local/);
+  assert.match(expectations, /fonte/);
+  assert.match(expectations, /pecuária/);
+});

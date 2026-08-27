@@ -11,6 +11,7 @@ test("rota raiz apresenta a vitrine e direciona o atendimento para o WhatsApp", 
   assert.match(source, /Todo o conhecimento da pecuária/);
   assert.match(source, /https:\/\/wa\.me\/5516992256069/);
   assert.match(source, /Falar com a IA do Boi/);
+  assert.match(source, /Previsão do tempo aplicada à sua região/);
   assert.doesNotMatch(source, /CattleShowcase|model-viewer|bull-3d/);
 });
 

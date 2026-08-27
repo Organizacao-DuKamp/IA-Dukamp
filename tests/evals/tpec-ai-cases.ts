@@ -275,7 +275,7 @@ export const tpecAiCases: EvalCase[] = [
     id: "web-01",
     category: "pesquisa-atual",
     messages: ["Qual a previsão do tempo para amanhã?"],
-    expectedIntent: "current_research",
+    expectedIntent: "weather_forecast",
     expectedTool: "search_current_information",
   },
   {

@@ -1,0 +1,177 @@
+TPEC-IA — CLIMA, PREVISÃO DO TEMPO E DECISÕES PECUÁRIAS
+Versão: 2026-08-27
+Status: referência conceitual para RAG; dados meteorológicos devem vir de pesquisa atual
+Escopo: bovinos de corte e leite, ovinos, caprinos, equinos, pastagens, alimentos, instalações, transporte e segurança operacional.
+
+OBJETIVO
+Orientar a interpretação responsável de observações, previsões e alertas meteorológicos no contexto da pecuária brasileira. Este documento ensina como transformar dados atuais em decisões prudentes, mas não contém uma previsão permanente. Chuva, temperatura, umidade, vento e alertas sempre devem ser consultados em fontes vivas para a localização e o período pedidos.
+
+1. LOCALIZAÇÃO É OBRIGATÓRIA
+Antes de pesquisar previsão do tempo, confirmar pelo menos:
+- município ou região;
+- estado (UF);
+- país quando não for Brasil;
+- período desejado: agora, próximas horas, amanhã, sete dias ou janela de manejo.
+
+Se cidade e UF não estiverem informadas nem confirmadas na conversa, fazer uma única pergunta curta solicitando esses dados. Não entregar previsão genérica do estado ou do Brasil como substituta.
+
+Quando houver nomes de municípios repetidos, confirmar a UF. Se a fonte representar uma estação ou grade de modelo afastada da fazenda, informar essa limitação. Não prometer precisão para talhão, bairro ou propriedade sem observação local compatível.
+
+2. HIERARQUIA DE FONTES METEOROLÓGICAS
+Priorizar, conforme disponibilidade e cobertura da região:
+1) INMET: observações de estações, previsão municipal, avisos meteorológicos e produtos agrometeorológicos.
+2) CPTEC/INPE: previsão numérica, meteogramas, satélite, nowcasting, geada e produtos regionais.
+3) Defesa Civil e CEMADEN: alertas e riscos hidrológicos ou geo-hidrológicos.
+4) ANA/SNIRH: chuva observada, níveis, vazões e séries hidrometeorológicas quando o risco hídrico for relevante.
+5) Institutos estaduais e regionais com competência na área, como IPMet, Simepar, Epagri/Ciram, Funceme e equivalentes.
+6) Modelos e serviços meteorológicos reconhecidos como complemento, deixando claro quando o valor é previsão de modelo e não observação oficial.
+
+Cruzar pelo menos duas fontes atuais quando possível. Um alerta oficial não deve ser descartado porque outro aplicativo mostra condição diferente. Quando houver divergência, informar a faixa ou o cenário e aumentar a prudência da recomendação.
+
+3. METADADOS QUE DEVEM ACOMPANHAR A PREVISÃO
+Toda resposta meteorológica deve preservar:
+- localização consultada;
+- data explícita com ano;
+- hora e fuso da atualização;
+- período de validade;
+- fonte ou organização;
+- se o dado é observado, previsto por modelo ou alerta oficial;
+- unidade: °C, %, mm, km/h ou m/s, conforme a fonte;
+- grau de incerteza ou divergência relevante.
+
+Não confundir:
+- tempo atual com previsão futura;
+- probabilidade de chuva com volume acumulado;
+- chuva pontual com média municipal;
+- velocidade média do vento com rajada;
+- alerta de perigo com certeza de ocorrência na fazenda;
+- climatologia mensal com previsão para a próxima semana.
+
+4. RESUMO MÍNIMO PARA O PRODUTOR
+Quando disponível, organizar:
+- condição atual;
+- próximas 24 horas;
+- próximos sete dias;
+- temperatura mínima e máxima;
+- probabilidade e volume de chuva;
+- umidade relativa;
+- vento e rajadas;
+- alertas oficiais;
+- principal incerteza;
+- consequências práticas para o sistema pecuário informado.
+
+Evitar despejar tabelas extensas. Destacar primeiro risco imediato e janela operacional útil. Se um campo não foi encontrado, declarar ausência; nunca completar por memória.
+
+5. CALOR, UMIDADE E CONFORTO TÉRMICO
+O risco térmico não depende apenas da temperatura do ar. Considerar também:
+- umidade;
+- radiação solar;
+- vento e ventilação;
+- duração da exposição;
+- sombra natural ou artificial;
+- disponibilidade, vazão e temperatura da água;
+- espécie, raça, pelagem, adaptação e categoria;
+- produção de leite, gestação, idade e condição corporal;
+- densidade de animais e instalações.
+
+Índices como temperatura e umidade podem apoiar triagem, mas limiares variam com método, espécie, categoria e ambiente. Não declarar segurança apenas porque um número ficou abaixo de um corte genérico. Observar ofegação, aglomeração, procura intensa por sombra/água, redução de consumo, salivação e dificuldade de locomoção. Sinais importantes exigem ação local e avaliação profissional.
+
+Com calor previsto, avaliar de forma prática:
+- água contínua e vazão suficiente;
+- sombra e ventilação;
+- evitar manejo, embarque e transporte nas horas mais quentes;
+- conferir funcionamento de bebedouros;
+- reduzir lotação em áreas críticas quando tecnicamente possível;
+- proteger ração e cocho contra deterioração;
+- acompanhar animais de maior risco.
+
+Não prescrever alteração universal de dieta, eletrólito, medicamento ou consumo sem responsável técnico e dados do sistema.
+
+6. FRIO, CHUVA E RECÉM-NASCIDOS
+Frio com vento e chuva aumenta perda de calor, especialmente em recém-nascidos, animais molhados, debilitados ou sem abrigo. Avaliar:
+- abrigo seco e quebra-vento sem impedir ventilação;
+- cama, drenagem e lama;
+- observação de partos e ingestão de colostro sob protocolo da fazenda;
+- acesso a água e alimento;
+- risco de hipotermia, pneumonia e redução de consumo;
+- segurança de estradas, currais e embarque.
+
+Geada pode afetar pastagem e qualidade da forragem. Não concluir toxicidade ou segurança de uma planta apenas pela ocorrência de geada; identificar espécie, condição e orientação agronômica/veterinária.
+
+7. CHUVA, SOLO, PASTAGEM E FORRAGEM
+A previsão de chuva deve apoiar, não substituir, observação de campo e planejamento forrageiro. Considerar:
+- umidade antecedente do solo;
+- distribuição e intensidade, não apenas acumulado total;
+- infiltração, declive, cobertura do solo e compactação;
+- risco de erosão, encharcamento e pisoteio;
+- acesso de máquinas e animais;
+- implantação, adubação e manejo da pastagem conforme recomendação agronômica;
+- fechamento de silagem, fenação e armazenamento;
+- proteção de suplemento, sal, ração e feno contra água e umidade.
+
+Probabilidade elevada com baixo acumulado possível não equivale a chuva suficiente para recuperar pasto. Um grande acumulado em poucas horas pode gerar escoamento e dano em vez de reposição uniforme.
+
+8. TEMPESTADE, RAIOS, VENDAVAL, GRANIZO E ALAGAMENTO
+Alerta oficial vigente deve aparecer no início da resposta. Ações prudentes incluem:
+- evitar manejo e pessoas em áreas abertas durante trovoadas;
+- afastar-se de árvores isoladas, cercas energizadas danificadas e estruturas inseguras;
+- revisar fixação de coberturas, silos, placas e objetos soltos;
+- não conduzir animais por áreas alagadas ou correnteza;
+- planejar rota alternativa e acesso de emergência;
+- proteger energia, bombas de água e comunicação conforme plano local;
+- acompanhar Defesa Civil e alertas oficiais.
+
+Não instruir improvisos elétricos, resgate em correnteza ou outras ações que exponham pessoas ao risco.
+
+9. SECA, BAIXA UMIDADE E FOGO
+Previsão de período seco deve ser combinada com estoque de água e forragem, condição do pasto e plano de lotação. Baixa umidade, calor e vento podem elevar risco de incêndio. Recomendar:
+- verificar água, bombas, reservatórios e vazamentos;
+- revisar aceiros e plano de emergência conforme regras locais;
+- evitar uso de fogo sem autorização e condições técnicas;
+- proteger feno, palhada, combustível e instalações;
+- acompanhar proibições e alertas da Defesa Civil e órgãos ambientais;
+- ajustar o planejamento forrageiro antes da perda crítica de condição corporal.
+
+10. MANEJO, TRANSPORTE E JANELA OPERACIONAL
+Para recomendar horário de vacinação, pesagem, apartação, embarque, transporte, fenação ou aplicação no pasto, usar previsão horária quando disponível. Considerar simultaneamente:
+- temperatura e sensação térmica;
+- chuva e raios;
+- vento e rajadas;
+- condição da estrada e do curral;
+- tempo total de espera e transporte;
+- categoria e estado dos animais;
+- equipe e infraestrutura.
+
+A melhor janela é a que reduz risco conjunto, não apenas a hora com menor temperatura.
+
+11. INCERTEZA E ATUALIZAÇÃO
+Previsões mudam. Quanto maior o horizonte e menor a cobertura de estações, maior a incerteza. Para decisão crítica:
+- conferir atualização mais recente;
+- comparar fontes/modelos;
+- reduzir o horizonte para previsão horária ou nowcasting;
+- verificar alerta oficial;
+- observar condições reais na propriedade;
+- manter plano alternativo.
+
+Expressões recomendadas: “há convergência entre as fontes”, “os modelos divergem”, “a previsão regional não garante ocorrência na fazenda”, “confira novamente antes do manejo”. Nunca apresentar cenário como certeza absoluta.
+
+12. MODELO DE RESPOSTA
+1) Local, data/hora/fuso e fontes.
+2) Alerta oficial, se houver.
+3) Resumo de agora/24 h/7 dias conforme o pedido.
+4) Chuva, temperatura, umidade e vento com unidades.
+5) Divergências ou limitações.
+6) Impacto direto para a pecuária.
+7) Próxima checagem recomendada para decisão crítica.
+
+13. FONTES PRINCIPAIS
+- INMET — portal, previsão, estações e avisos: https://portal.inmet.gov.br/
+- INMET — avisos meteorológicos: https://alertas2.inmet.gov.br/
+- CPTEC/INPE — previsão numérica e aplicações meteorológicas: https://www.cptec.inpe.br/
+- CPTEC/INPE — previsão numérica: https://previsaonumerica.cptec.inpe.br/
+- CEMADEN — monitoramento e alertas de riscos: https://www.gov.br/cemaden/pt-br
+- ANA/SNIRH — HidroWeb e dados hidrometeorológicos: https://www.snirh.gov.br/hidroweb/
+- ANA/SNIRH — telemetria quase em tempo real: https://www.snirh.gov.br/hidrotelemetria/
+- Embrapa — publicações e recomendações aplicadas ao sistema produtivo: https://www.embrapa.br/busca-de-publicacoes
+
+Revisão: trimestral para links e política de fontes; a previsão e os alertas devem ser consultados novamente em cada pedido do usuário.

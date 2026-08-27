@@ -18,6 +18,7 @@ O pacote de curadoria em `src/seed/base-conhecimento/02-CONHECIMENTO-GERAL/00-CU
 - ovinos e caprinos;
 - equinos;
 - cálculos zootécnicos, unidades e validação;
+- clima, previsão do tempo, alertas e decisões pecuárias por região;
 - micotoxinas, contaminantes e plantas tóxicas;
 - catálogo de fontes autoritativas;
 - matriz de cobertura e critérios de qualidade.
@@ -69,6 +70,8 @@ Executar perguntas como:
 - “O Brasil ainda vacina contra febre aftosa?”
 - “Meu cavalo está com cólica. O que dou?”
 - “A silagem está quente e mofada. Posso diluir?”
+- “Vai chover em Monte Aprazível/SP amanhã e como isso afeta o manejo?”
+- “Qual a previsão do tempo?” — deve pedir cidade e UF antes de pesquisar.
 
 Resultados esperados:
 
@@ -81,6 +84,7 @@ Resultados esperados:
 - nenhuma prescrição de medicamento ou protocolo hormonal;
 - cálculos mostram fórmula, unidade e base de matéria seca;
 - nenhuma extrapolação automática entre bovinos, pequenos ruminantes e equinos.
+- previsão meteorológica com local, data/hora, fontes atuais, incerteza e impacto pecuário.
 
 ## Atualização
 

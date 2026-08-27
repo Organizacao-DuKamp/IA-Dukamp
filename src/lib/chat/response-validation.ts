@@ -31,6 +31,44 @@ function addIssue(issues: string[], issue: string): void {
   if (!issues.includes(issue)) issues.push(issue);
 }
 
+function normalizeComparable(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("pt-BR")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function mentionsExpectedLocation(reply: string, location: string): boolean {
+  const normalizedReply = normalizeComparable(reply);
+  const tokens = normalizeComparable(location)
+    .split(" ")
+    .filter((token) => token.length >= 3 && !["regiao", "cidade", "brasil"].includes(token));
+  if (tokens.length === 0) return normalizedReply.includes(normalizeComparable(location));
+  return tokens.some((token) => new RegExp(`\\b${token}\\b`).test(normalizedReply));
+}
+
+function hasWeatherSource(reply: string): boolean {
+  return /(?:\bfonte\s*:|\bsegundo\s+(?:o|a)\b|\b(?:INMET|CPTEC|INPE|CEMADEN|ANA|Defesa\s+Civil|ECMWF|NOAA|Open-?Meteo|Simepar|Epagri|Climatempo|IPMet|Funceme)\b)/i.test(
+    reply,
+  );
+}
+
+export function validateWeatherGrounding(reply: string, location: string): GroundingResult {
+  const issues: string[] = [];
+  if (!mentionsExpectedLocation(reply, location)) addIssue(issues, "weather_location_missing");
+  if (!hasExplicitDate(reply)) addIssue(issues, "weather_date_missing");
+  if (!hasWeatherSource(reply)) addIssue(issues, "weather_source_missing");
+  if (
+    !/\b(?:°\s*C|temperatura|chuva|precipita[cç][aã]o|umidade|vento|rajada|tempestade|geada|alerta)\b/i.test(
+      reply,
+    )
+  )
+    addIssue(issues, "weather_details_missing");
+  return { valid: issues.length === 0, issues };
+}
+
 export function validateGrounding(
   reply: string,
   evidence: { commercial: boolean; citations?: number; currentMarket?: boolean },

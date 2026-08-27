@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { extractWeatherLocation, isWeatherRequest } from "./weather.ts";
 
 export const IntentSchema = z.object({
   intent: z.enum([
@@ -13,6 +14,7 @@ export const IntentSchema = z.object({
     "management",
     "nutrition",
     "animal_health",
+    "weather_forecast",
     "document_or_image",
     "current_research",
     "human_support",
@@ -122,7 +124,9 @@ const rules: Array<[IntentClassification["intent"], RegExp, boolean, boolean]> =
 
 export function classifyDomainIntent(text: string, hasHistory = false): IntentClassification {
   const normalized = text.trim();
-  const hit = rules.find(([, pattern]) => pattern.test(normalized));
+  const hit = isWeatherRequest(normalized)
+    ? (["weather_forecast", /$^/, true, true] as const)
+    : rules.find(([, pattern]) => pattern.test(normalized));
   const followUp =
     hasHistory &&
     /^(e\s+)?(qual|quais|quanto|onde|quem|ness[ae]|dele|deles|esse|essa|aquele|aquela)/i.test(
@@ -130,8 +134,11 @@ export function classifyDomainIntent(text: string, hasHistory = false): IntentCl
     );
   const [intent, , internal, web] = hit ?? ["general_conversation", /$^/, false, false];
   const location =
-    normalized.match(/(?:em|na regi[aã]o de|para)\s+([A-ZÀ-Ú][\p{L}\s.'-]{2,60})/u)?.[1]?.trim() ??
-    null;
+    intent === "weather_forecast"
+      ? extractWeatherLocation(normalized)
+      : (normalized
+          .match(/(?:em|na regi[aã]o de|para)\s+([A-ZÀ-Ú][\p{L}\s.'-]{2,60})/u)?.[1]
+          ?.trim() ?? null);
   return IntentSchema.parse({
     intent,
     needs_internal_search: internal,

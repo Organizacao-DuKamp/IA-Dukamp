@@ -120,6 +120,44 @@ test("Perplexity executa apenas pesquisa web e devolve as fontes ao orquestrador
   }
 });
 
+test("pesquisa meteorológica usa recência diária e contexto alto", async () => {
+  const previous = process.env.PERPLEXITY_API_KEY;
+  process.env.PERPLEXITY_API_KEY = "perplexity-weather-test-key";
+  let requestBody: Record<string, unknown> = {};
+
+  try {
+    await researchPerplexity("previsão detalhada para Monte Aprazível - SP", {
+      weatherSearch: true,
+      weatherLocation: "Monte Aprazível - SP",
+      fetchImpl: (async (_url: RequestInfo | URL, init?: RequestInit) => {
+        requestBody = JSON.parse(String(init?.body));
+        return new Response(
+          JSON.stringify({
+            choices: [{ message: { content: "Evidências meteorológicas confirmadas." } }],
+            citations: ["https://portal.inmet.gov.br/"],
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }) as typeof fetch,
+    });
+
+    assert.equal(requestBody.search_recency_filter, "day");
+    assert.equal(requestBody.max_tokens, 1700);
+    assert.deepEqual(requestBody.web_search_options, { search_context_size: "high" });
+    const instructions = String(
+      (requestBody.messages as Array<{ content: string }>)[0]?.content ?? "",
+    );
+    assert.match(instructions, /Monte Aprazível - SP/);
+    assert.match(instructions, /INMET/);
+    assert.match(instructions, /CPTEC\/INPE/);
+    assert.match(instructions, /Cruze pelo menos duas fontes/i);
+    assert.match(instructions, /impactos pecuários/i);
+  } finally {
+    if (previous === undefined) delete process.env.PERPLEXITY_API_KEY;
+    else process.env.PERPLEXITY_API_KEY = previous;
+  }
+});
+
 test("embeddings do RAG usam OpenAI com 3072 dimensões", async () => {
   const previousKey = process.env.OPENAI_API_KEY;
   const previousFetch = globalThis.fetch;

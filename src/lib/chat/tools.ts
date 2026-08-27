@@ -77,6 +77,7 @@ export function toolsForIntent(c: IntentClassification): ToolDefinition[] {
     nutrition: ["search_internal_documents"],
     management: ["search_internal_documents"],
     animal_health: ["search_internal_documents", "handoff_to_human"],
+    weather_forecast: ["search_internal_documents", "search_current_information"],
   };
   return (map[c.intent] ?? []).map((name) => toolDefinitions[name]);
 }
