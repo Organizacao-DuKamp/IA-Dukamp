@@ -75,7 +75,9 @@ export function researchProfileForQuery(
   // Uma simples ocorrência de "boi gordo" não transforma a consulta em pedido
   // de cotação; preço exato exige linguagem explícita de valor/cotação.
   if (
-    /\b(panorama|tendencia|cenario|mercado|exportacao|abate|oferta|demanda|relacao de troca)\b/.test(q) &&
+    /\b(panorama|tendencia|cenario|mercado|exportacao|abate|oferta|demanda|relacao de troca)\b/.test(
+      q,
+    ) &&
     !/\b(cotacao|preco|quanto (?:esta|ta|custa)|valor|r\$)\b/.test(q)
   ) {
     return "market_intelligence";
@@ -100,10 +102,7 @@ export function researchProfileForQuery(
   return "general_current";
 }
 
-export function researchDepthForQuery(
-  query: string,
-  options: ResearchOptions = {},
-): ResearchDepth {
+export function researchDepthForQuery(query: string, options: ResearchOptions = {}): ResearchDepth {
   const profile = researchProfileForQuery(query, options);
 
   if (options.deepResearch === true) return "high";

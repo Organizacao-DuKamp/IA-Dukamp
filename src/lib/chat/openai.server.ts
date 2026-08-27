@@ -100,9 +100,7 @@ function instructions(options: OpenAIOptions): string {
   }
 
   if (options.directive) {
-    layers.push(
-      `INTERPRETAÇÃO DA MENSAGEM ATUAL (uso interno; não cite):\n${options.directive}`,
-    );
+    layers.push(`INTERPRETAÇÃO DA MENSAGEM ATUAL (uso interno; não cite):\n${options.directive}`);
   }
 
   if (options.sourcePolicy) layers.push(options.sourcePolicy);
@@ -235,7 +233,7 @@ export async function askOpenAI(
   const whatsappStyle = options.channel === "whatsapp" || stateIsWhatsApp(options.state);
   const correction = Boolean(
     options.sourcePolicy?.includes("CORREÇÃO OBRIGATÓRIA") ||
-      options.sourcePolicy?.includes("CORREÇÃO METEOROLÓGICA"),
+    options.sourcePolicy?.includes("CORREÇÃO METEOROLÓGICA"),
   );
   const plan = researchPlanForRequest(history, options);
   const defaultTimeoutMs =

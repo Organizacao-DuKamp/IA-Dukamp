@@ -88,12 +88,18 @@ function isSmallTalk(raw: string): boolean {
   return (
     /^(oi|ol[aá]|e\s?a[ií]|opa|bom\s+dia|boa\s+tarde|boa\s+noite|hey|hi|hello)$/i.test(t) ||
     /^(obrigad[ao]|valeu|vlw|thanks|obg|grat[oa])$/i.test(t) ||
-    /^(ah\s+)?(que\s+)?(legal|bacana|[óo]timo|show|massa|top|bom|dahora|maneiro|interessante|bem\s+legal|muito\s+bom)$/i.test(t) ||
+    /^(ah\s+)?(que\s+)?(legal|bacana|[óo]timo|show|massa|top|bom|dahora|maneiro|interessante|bem\s+legal|muito\s+bom)$/i.test(
+      t,
+    ) ||
     /^(nossa|uau|wow|caramba|s[eé]rio|puxa)$/i.test(t) ||
     /^ah\s+(sim|ok|entendi|legal|bacana)$/i.test(t) ||
     /^(tchau|at[eé]\s+mais|falou|flw|adeus|bye)$/i.test(t) ||
-    /^(acho\s+que\s+n[aã]o|sei\s+l[aá]|n[aã]o\s+sei|hmm+|humm+|nop|nao\s+mesmo|agora\s+n[aã]o|depois|mais\s+tarde|de\s+boa|tranquilo|suave|nada)$/i.test(t) ||
-    /^(toma\s+jeito+|para\s+com\s+isso|par[ae]\s+com\s+isso|melhora(\s+a[ií])?|se\s+ajeita|ajeita\s+isso|arruma\s+isso|ta\s+ruim|est[aá]\s+ruim|nao\s+ta\s+bom|n[aã]o\s+est[aá]\s+bom|que\s+isso|credo|aff+|eita)$/i.test(t)
+    /^(acho\s+que\s+n[aã]o|sei\s+l[aá]|n[aã]o\s+sei|hmm+|humm+|nop|nao\s+mesmo|agora\s+n[aã]o|depois|mais\s+tarde|de\s+boa|tranquilo|suave|nada)$/i.test(
+      t,
+    ) ||
+    /^(toma\s+jeito+|para\s+com\s+isso|par[ae]\s+com\s+isso|melhora(\s+a[ií])?|se\s+ajeita|ajeita\s+isso|arruma\s+isso|ta\s+ruim|est[aá]\s+ruim|nao\s+ta\s+bom|n[aã]o\s+est[aá]\s+bom|que\s+isso|credo|aff+|eita)$/i.test(
+      t,
+    )
   );
 }
 
@@ -417,11 +423,12 @@ async function runTurn(
 
   // O planejador não consulta um segundo provedor: ele apenas sinaliza ao mesmo
   // GPT que deve usar seu Web Search nativo na chamada final da Responses API.
-  const needsWebResearch = conversationalOnly || weatherLocationRequired
-    ? false
-    : weatherLocation
-      ? !weatherIntelligence || weatherIntelligence.analysis.needsWebCrosscheck
-      : domainIntent.needs_web_search || requiresCurrentMarketSearch;
+  const needsWebResearch =
+    conversationalOnly || weatherLocationRequired
+      ? false
+      : weatherLocation
+        ? !weatherIntelligence || weatherIntelligence.analysis.needsWebCrosscheck
+        : domainIntent.needs_web_search || requiresCurrentMarketSearch;
 
   if (needsWebResearch) {
     const livestock = livestockContextFromState(state);
@@ -591,8 +598,7 @@ async function runTurn(
         summary: renderSummaryForModel(state.conversation_summary),
         state: renderStateForModel(state),
         directive,
-        sourcePolicy:
-          `${sourcePolicy}\nCORREÇÃO COMERCIAL: remova qualquer preço, estoque, disponibilidade, vendedor ou contato não confirmado pelos dados oficiais presentes no contexto. Responda de forma útil apenas com o que está sustentado.`,
+        sourcePolicy: `${sourcePolicy}\nCORREÇÃO COMERCIAL: remova qualquer preço, estoque, disponibilidade, vendedor ou contato não confirmado pelos dados oficiais presentes no contexto. Responda de forma útil apenas com o que está sustentado.`,
         context: modelContext,
         researchDepth: "none",
       });

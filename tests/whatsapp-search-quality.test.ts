@@ -73,7 +73,10 @@ test("estado wa também ativa o estilo de WhatsApp quando o canal não foi propa
 test("panorama atual de mercado vira pesquisa aprofundada do ChatGPT", async () => {
   const result = await researchChatGPT("Como está o mercado de carnes no Brasil hoje?");
 
-  assert.equal(researchProfileForQuery("Como está o mercado de carnes no Brasil hoje?"), "market_intelligence");
+  assert.equal(
+    researchProfileForQuery("Como está o mercado de carnes no Brasil hoje?"),
+    "market_intelligence",
+  );
   assert.equal(researchDepthForQuery("Como está o mercado de carnes no Brasil hoje?"), "high");
   assert.match(result, /CHATGPT_WEB_SEARCH_REQUIRED/);
   assert.match(result, /DEPTH: high/);
@@ -81,10 +84,18 @@ test("panorama atual de mercado vira pesquisa aprofundada do ChatGPT", async () 
 });
 
 test("regra sanitária vigente exige fonte oficial e pesquisa aprofundada", async () => {
-  const result = await researchChatGPT("Qual a regra vigente para vacinação contra brucelose hoje?");
+  const result = await researchChatGPT(
+    "Qual a regra vigente para vacinação contra brucelose hoje?",
+  );
 
-  assert.equal(researchProfileForQuery("Qual a regra vigente para vacinação contra brucelose hoje?"), "regulation");
-  assert.equal(researchDepthForQuery("Qual a regra vigente para vacinação contra brucelose hoje?"), "high");
+  assert.equal(
+    researchProfileForQuery("Qual a regra vigente para vacinação contra brucelose hoje?"),
+    "regulation",
+  );
+  assert.equal(
+    researchDepthForQuery("Qual a regra vigente para vacinação contra brucelose hoje?"),
+    "high",
+  );
   assert.match(result, /MAPA, Diário Oficial, órgãos estaduais/i);
   assert.match(result, /alterações, revogações, data de vigência/i);
 });
