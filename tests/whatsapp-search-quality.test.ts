@@ -9,18 +9,18 @@ import {
 } from "../src/lib/chat/perplexity.server.ts";
 
 const previousOpenAIKey = process.env.OPENAI_API_KEY;
-const previousModel = process.env.OPENAI_CAPABLE_MODEL;
+const previousModel = process.env.OPENAI_TPEC_MODEL;
 
 function restoreEnv() {
   if (previousOpenAIKey === undefined) delete process.env.OPENAI_API_KEY;
   else process.env.OPENAI_API_KEY = previousOpenAIKey;
-  if (previousModel === undefined) delete process.env.OPENAI_CAPABLE_MODEL;
-  else process.env.OPENAI_CAPABLE_MODEL = previousModel;
+  if (previousModel === undefined) delete process.env.OPENAI_TPEC_MODEL;
+  else process.env.OPENAI_TPEC_MODEL = previousModel;
 }
 
 test("WhatsApp recebe instrução conversacional sem contaminar o input do usuário", async () => {
   process.env.OPENAI_API_KEY = "test-openai-key";
-  process.env.OPENAI_CAPABLE_MODEL = "gpt-5.6-sol";
+  process.env.OPENAI_TPEC_MODEL = "gpt-5.6-sol";
   let body: Record<string, unknown> | undefined;
 
   try {
