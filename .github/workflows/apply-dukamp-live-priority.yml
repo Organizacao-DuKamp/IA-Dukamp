@@ -101,6 +101,8 @@ jobs:
 
           p.write_text(s)
           PY
+      - name: Format temporary migration script
+        run: npx prettier --write scripts/apply-dukamp-live-priority.mjs
       - name: Apply live-first integration
         run: node scripts/apply-dukamp-live-priority.mjs
       - name: Restrict outbound product images to official DuKamp hosts
