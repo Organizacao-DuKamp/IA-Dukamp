@@ -92,6 +92,12 @@ const rules: Array<[IntentClassification["intent"], RegExp, boolean, boolean]> =
   ],
   [
     "product_recommendation",
+    /\b(?:tem|t[eê]m|quero|preciso|procuro|busco|alguma coisa|algo|op[cç][aã]o)\b.{0,100}\b(?:engorda|ganho de peso|ganhar peso|seca|[áa]guas|recria|cria|termina[cç][aã]o|confinamento|semi[- ]?confinamento|lacta[cç][aã]o|leite|bezerros?|suplemento|ra[cç][aã]o|proteinado|mineral)\b|\b(?:engorda|ganho de peso|ganhar peso|seca|[áa]guas|recria|cria|termina[cç][aã]o|confinamento|semi[- ]?confinamento|lacta[cç][aã]o|leite|bezerros?)\b.{0,100}\b(?:produto|suplemento|ra[cç][aã]o|proteinado|mineral|op[cç][aã]o)\b/i,
+    true,
+    false,
+  ],
+  [
+    "product_recommendation",
     /\b(recomend\w*|qual produto|qual suplemento|melhor para|indiqu\w*|produto para)\b/i,
     true,
     false,
@@ -124,9 +130,16 @@ const rules: Array<[IntentClassification["intent"], RegExp, boolean, boolean]> =
 
 export function classifyDomainIntent(text: string, hasHistory = false): IntentClassification {
   const normalized = text.trim();
+  const productImageFollowUp =
+    hasHistory &&
+    /^(?:(?:manda|mande|mostra|mostre|quero|tem)\s+)?(?:a\s+)?(?:foto|imagem)(?:\s+(?:dele|dela|desse|dessa|do produto))?\s*[?.!]*$/i.test(
+      normalized,
+    );
   const hit = isWeatherRequest(normalized)
     ? (["weather_forecast", /$^/, true, true] as const)
-    : rules.find(([, pattern]) => pattern.test(normalized));
+    : productImageFollowUp
+      ? (["product", /$^/, true, false] as const)
+      : rules.find(([, pattern]) => pattern.test(normalized));
   const followUp =
     hasHistory &&
     /^(e\s+)?(qual|quais|quanto|onde|quem|ness[ae]|dele|deles|esse|essa|aquele|aquela)/i.test(

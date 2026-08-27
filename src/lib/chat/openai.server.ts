@@ -277,8 +277,8 @@ export async function askOpenAI(
   const whatsappStyle = options.channel === "whatsapp" || stateIsWhatsApp(options.state);
   const correction = Boolean(
     options.sourcePolicy?.includes("CORREÇÃO OBRIGATÓRIA") ||
-      options.sourcePolicy?.includes("CORREÇÃO METEOROLÓGICA") ||
-      options.sourcePolicy?.includes("CORREÇÃO COMERCIAL"),
+    options.sourcePolicy?.includes("CORREÇÃO METEOROLÓGICA") ||
+    options.sourcePolicy?.includes("CORREÇÃO COMERCIAL"),
   );
   const effectiveOptions: OpenAIOptions = {
     ...options,
