@@ -5,6 +5,8 @@ on:
     branches: [dukamp-live-priority]
     paths:
       - .github/workflows/apply-dukamp-live-priority.yml
+      - scripts/apply-dukamp-live-priority.mjs
+      - tests/site-commercial.test.ts
   workflow_dispatch:
 
 permissions:
@@ -109,7 +111,7 @@ jobs:
           p.write_text(s.replace(old, new, 1))
           PY
       - name: Format changed files
-        run: npx prettier --write src/lib/site/dukamp-product-ranking.ts src/lib/site/site-lookup.server.ts src/lib/chat/core.server.ts src/lib/chat/intent.ts src/lib/chat/system-prompt.ts src/lib/whatsapp/enhanced-http.server.ts tests/dukamp-live-priority.test.ts src/lib/chat/model-router.ts src/lib/chat/openai.server.ts src/lib/chat/perplexity.server.ts tests/whatsapp-search-quality.test.ts
+        run: npx prettier --write src/lib/site/dukamp-product-ranking.ts src/lib/site/site-lookup.server.ts src/lib/chat/core.server.ts src/lib/chat/intent.ts src/lib/chat/system-prompt.ts src/lib/whatsapp/enhanced-http.server.ts tests/dukamp-live-priority.test.ts src/lib/chat/model-router.ts src/lib/chat/openai.server.ts src/lib/chat/perplexity.server.ts tests/whatsapp-search-quality.test.ts tests/site-commercial.test.ts
       - name: Audit privileged imports
         run: npm run audit:privileged
       - name: Test
@@ -127,6 +129,6 @@ jobs:
         run: |
           git config user.name "Eduardoo"
           git config user.email "137733778+Eduardoo8442@users.noreply.github.com"
-          git add src/lib/site/dukamp-product-ranking.ts src/lib/site/site-lookup.server.ts src/lib/chat/core.server.ts src/lib/chat/intent.ts src/lib/chat/system-prompt.ts src/lib/whatsapp/enhanced-http.server.ts tests/dukamp-live-priority.test.ts src/lib/chat/model-router.ts src/lib/chat/openai.server.ts src/lib/chat/perplexity.server.ts tests/whatsapp-search-quality.test.ts
+          git add src/lib/site/dukamp-product-ranking.ts src/lib/site/site-lookup.server.ts src/lib/chat/core.server.ts src/lib/chat/intent.ts src/lib/chat/system-prompt.ts src/lib/whatsapp/enhanced-http.server.ts tests/dukamp-live-priority.test.ts src/lib/chat/model-router.ts src/lib/chat/openai.server.ts src/lib/chat/perplexity.server.ts tests/whatsapp-search-quality.test.ts tests/site-commercial.test.ts
           git commit -m "feat: priorizar catálogo vivo da DuKamp na TPEC-IA"
           git push origin HEAD:dukamp-live-priority
