@@ -53,20 +53,16 @@ function requestFor(text: string, messageId: string): Request {
   });
 }
 
-test("entrega longa usa várias bolhas em limites semânticos", async () => {
+test("previsão normal chega como uma mensagem visualmente organizada", async () => {
   const messageId = "wamid.readable-weather";
   const reply = [
     "## Monte Aprazível — previsão",
+    "• 27/08 — tempo com muitas nuvens; mínima ~16–17 °C, máxima ~29–33 °C; chuva fraca isolada (~1–1,5 mm); vento fraco a moderado.",
+    "• 28–31/08 — sequência de dias quentes e secos; máximas entre ~34–37 °C; chance de chuva muito baixa.",
+    "• 01/09 — maior chance de chuva; probabilidade até ~60%; acumulado moderado possível.",
     "",
-    "**Hoje (27/08)**\nMáxima de 33 °C e mínima de 27 °C. Tempo seco na maior parte do dia, com baixa chance de chuva durante a tarde.",
-    "",
-    "**Amanhã (28/08)**\nO calor continua, com máxima perto de 34 °C. A chance de chuva segue baixa e não há indicação de volume significativo.",
-    "",
-    "**Próximos dias**\nEntre sábado e segunda, as máximas podem ficar entre 35 e 38 °C. A mudança mais provável aparece na terça, quando cresce a chance de chuva.",
-    "",
-    "**Chuva**\nOs modelos ainda divergem sobre o volume previsto. A leitura mais segura é de chuva fraca a moderada, sem cravar um único valor agora.",
-    "",
-    "**Pecuária**\nO ponto de atenção é o calor da tarde. Água disponível e sombra ajudam a reduzir o estresse térmico do rebanho durante os horários mais quentes.",
+    "**Pecuária**",
+    "O ponto de atenção é o calor da tarde. Água disponível e sombra ajudam a reduzir o estresse térmico do rebanho.",
     "",
     "Atualizado em 27/08/2026, 14:11 (Brasília). Fontes: INMET, ECMWF, GFS e ICON.",
   ].join("\n");
@@ -124,9 +120,12 @@ test("entrega longa usa várias bolhas em limites semânticos", async () => {
 
   assert.equal(response.status, 200);
   assert.equal(stage, "delivered");
-  assert.ok(sent.length >= 2, `esperava várias bolhas, recebeu ${sent.length}`);
-  assert.ok(sent.every((chunk) => chunk.length <= 3500));
-  assert.equal(sent[0]?.startsWith("*Monte Aprazível — previsão*"), true);
-  assert.ok(sent.some((chunk) => chunk.includes("*Pecuária*")));
-  assert.ok(sent.some((chunk) => chunk.includes("Fontes: INMET")));
+  assert.equal(sent.length, 1, "resposta normal não deve criar múltiplos envios na Graph API");
+  const delivered = sent[0] ?? "";
+  assert.ok(Array.from(delivered).length <= 3500);
+  assert.equal(delivered.startsWith("*Monte Aprazível — previsão*"), true);
+  assert.match(delivered, /• \*27\/08\*\n  tempo com muitas nuvens;\n  mínima/u);
+  assert.match(delivered, /\n\n• \*28–31\/08\*/u);
+  assert.match(delivered, /\n\n\*Pecuária\*\n/u);
+  assert.match(delivered, /Fontes: INMET/u);
 });
