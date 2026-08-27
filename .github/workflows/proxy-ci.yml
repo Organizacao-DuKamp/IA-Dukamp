@@ -2,15 +2,44 @@ name: Proxy CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, fix/whatsapp-weather-resilience]
   pull_request:
     branches: [main]
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
+  patch-weather:
+    if: github.ref == 'refs/heads/fix/whatsapp-weather-resilience' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/whatsapp-weather-resilience
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply weather integration patch
+        run: python scripts/patch-weather-resilience.py
+      - name: Install dependencies
+        run: npm install
+      - name: Format weather files
+        run: npx prettier --write src/lib/chat/core.server.ts src/lib/chat/weather.ts src/lib/chat/weather-official.server.ts tests/weather-official.test.ts
+      - name: Commit patch
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No patch changes needed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/lib/chat/core.server.ts src/lib/chat/weather.ts src/lib/chat/weather-official.server.ts tests/weather-official.test.ts
+          git commit -m "fix: make WhatsApp weather resilient to provider limits"
+          git push origin HEAD:fix/whatsapp-weather-resilience
+
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 20
