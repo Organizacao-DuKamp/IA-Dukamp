@@ -228,14 +228,14 @@ async function runTurn(
     ? normalizeState(input.state as Partial<ConversationState>, conversationId)
     : createConversationState(conversationId);
 
-  const analysis = classifyUserIntent(text, stateBefore);
-  let domainIntent = classifyDomainIntent(text, history.length > 0);
-  const weatherTurn = resolveWeatherTurn(text, stateBefore);
-  const state = applyUserTurn(stateBefore, text, analysis);
-  state.conversation_summary = updateSummary(state, windowed.dropped);
-
   const lastAssistant = [...history].reverse().find((m) => m.role === "assistant");
   const lastUser = [...history].reverse().find((m) => m.role === "user");
+
+  const analysis = classifyUserIntent(text, stateBefore);
+  let domainIntent = classifyDomainIntent(text, history.length > 0);
+  const weatherTurn = resolveWeatherTurn(text, stateBefore, lastAssistant?.content ?? null);
+  const state = applyUserTurn(stateBefore, text, analysis);
+  state.conversation_summary = updateSummary(state, windowed.dropped);
 
   // ---- Reconhecimento puro: encerra o turno aqui.
   // Nada de RAG, roteador, mercado, site ou modelo. Uma frase curta e ponto:

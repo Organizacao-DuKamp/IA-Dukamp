@@ -50,6 +50,7 @@ test("WhatsApp usa memória quando SUPABASE_SERVICE_ROLE_KEY não está configur
     );
     assert.equal(second.reply, "Continuando a conversa.");
     assert.equal(seen[1]?.channel, "whatsapp");
+    assert.deepEqual(seen[1]?.state, { current_topic: "teste", turn_count: 1 });
     assert.deepEqual(seen[1]?.history, [
       { role: "user", content: "Quero saber sobre suplemento para bezerros" },
       { role: "assistant", content: "Claro, vou verificar." },

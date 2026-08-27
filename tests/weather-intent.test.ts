@@ -65,6 +65,25 @@ test("cidade enviada sozinha completa a pergunta meteorológica pendente", () =>
   assert.equal(resolved.usedRememberedLocation, false);
 });
 
+test("pergunta de localização exata funciona mesmo se só pending_question sobreviver", () => {
+  const state = createConversationState("weather-pending-question-only");
+  state.pending_question = WEATHER_LOCATION_QUESTION;
+  state.awaiting_user_response = true;
+
+  const resolved = resolveWeatherTurn("Monte aprazivel", state);
+  assert.equal(resolved.isWeatherTurn, true);
+  assert.equal(resolved.location, "Monte aprazivel");
+});
+
+test("histórico recupera cidade enviada após pergunta de clima quando state chega vazio", () => {
+  const state = createConversationState("weather-history-recovery");
+
+  const resolved = resolveWeatherTurn("Monte aprazivel", state, WEATHER_LOCATION_QUESTION);
+  assert.equal(resolved.isWeatherTurn, true);
+  assert.equal(resolved.location, "Monte aprazivel");
+  assert.equal(resolved.usedRememberedLocation, false);
+});
+
 test("continuação como e amanhã reutiliza a última localização meteorológica", () => {
   const state = createConversationState("weather-memory");
   state.current_topic = "clima e previsão do tempo";
