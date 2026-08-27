@@ -1,9 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { researchPerplexity, researchProfileForQuery } from "../src/lib/chat/perplexity.server.ts";
+import {
+  researchChatGPT,
+  researchDepthForQuery,
+  researchPerplexity,
+  researchProfileForQuery,
+} from "../src/lib/chat/perplexity.server.ts";
 
-test("pesquisa externa escolhe perfil pecuário especializado", () => {
+test("pesquisa escolhe perfil pecuário especializado", () => {
   assert.equal(researchProfileForQuery("previsão para amanhã", { weatherSearch: true }), "weather");
   assert.equal(
     researchProfileForQuery("cotação do boi gordo em SP", { currentMarketSearch: true }),
@@ -25,88 +30,48 @@ test("pesquisa externa escolhe perfil pecuário especializado", () => {
   assert.equal(researchProfileForQuery("qual a notícia atual sobre o tema?"), "general_current");
 });
 
-test("deep research executa três rodadas em paralelo e entrega evidência consolidada", async () => {
-  const previous = process.env.PERPLEXITY_API_KEY;
-  process.env.PERPLEXITY_API_KEY = "perplexity-deep-test-key";
-  const requestBodies: Array<Record<string, unknown>> = [];
-  let call = 0;
-
-  try {
-    const evidence = await researchPerplexity("panorama atual do mercado do boi gordo", {
-      fetchImpl: (async (_url: RequestInfo | URL, init?: RequestInit) => {
-        const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
-        requestBodies.push(body);
-        call += 1;
-        return new Response(
-          JSON.stringify({
-            choices: [{ message: { content: `Evidência independente ${call}.` } }],
-            citations: [`https://fonte${call}.example.test/dado`],
-          }),
-          { status: 200, headers: { "content-type": "application/json" } },
-        );
-      }) as typeof fetch,
-    });
-
-    assert.equal(requestBodies.length, 3);
-    assert.ok(requestBodies.every((body) => body.search_mode === "web"));
-    assert.ok(
-      requestBodies.every(
-        (body) =>
-          JSON.stringify(body.web_search_options) ===
-          JSON.stringify({ search_context_size: "high" }),
-      ),
-    );
-    // A consulta pede explicitamente um panorama "atual", então a pesquisa deve
-    // estreitar a janela para a semana em vez de usar o padrão mensal do perfil.
-    assert.ok(requestBodies.every((body) => body.search_recency_filter === "week"));
-    assert.match(evidence, /PERFIL: market_intelligence/);
-    assert.match(evidence, /RODADAS CONCLUÍDAS: 3/);
-    assert.match(evidence, /RODADA primary-data/);
-    assert.match(evidence, /RODADA independent-crosscheck/);
-    assert.match(evidence, /RODADA counterevidence-drivers/);
-    assert.match(evidence, /https:\/\/fonte1\.example\.test\/dado/);
-    assert.match(evidence, /https:\/\/fonte2\.example\.test\/dado/);
-    assert.match(evidence, /https:\/\/fonte3\.example\.test\/dado/);
-  } finally {
-    if (previous === undefined) delete process.env.PERPLEXITY_API_KEY;
-    else process.env.PERPLEXITY_API_KEY = previous;
-  }
+test("perfis dinâmicos e críticos usam pesquisa aprofundada", () => {
+  assert.equal(researchDepthForQuery("previsão", { weatherSearch: true }), "high");
+  assert.equal(researchDepthForQuery("boi gordo", { currentMarketSearch: true }), "high");
+  assert.equal(researchDepthForQuery("portaria vigente do MAPA"), "high");
+  assert.equal(researchDepthForQuery("status da febre aftosa"), "high");
+  assert.equal(researchDepthForQuery("panorama e tendência do boi gordo"), "high");
 });
 
-test("deep research degrada parcialmente quando uma rodada falha", async () => {
-  const previous = process.env.PERPLEXITY_API_KEY;
-  process.env.PERPLEXITY_API_KEY = "perplexity-partial-test-key";
+test("pergunta técnica estável usa pesquisa média quando a base não resolver", () => {
+  assert.equal(researchDepthForQuery("manejo nutricional para semi-confinamento"), "medium");
+});
 
-  try {
-    const evidence = await researchPerplexity(
-      "qual portaria do MAPA está vigente para este tema?",
-      {
-        timeoutMs: 1_000,
-        fetchImpl: (async (_url: RequestInfo | URL, init?: RequestInit) => {
-          const body = String(init?.body ?? "");
-          if (body.includes("implementação oficial que possam mudar a interpretação")) {
-            return new Response(JSON.stringify({ error: "temporary failure" }), {
-              status: 503,
-              headers: { "content-type": "application/json" },
-            });
-          }
-          return new Response(
-            JSON.stringify({
-              choices: [{ message: { content: "Evidência oficial disponível." } }],
-              citations: ["https://www.gov.br/mapa/"],
-            }),
-            { status: 200, headers: { "content-type": "application/json" } },
-          );
-        }) as typeof fetch,
-      },
-    );
+test("planejador gera marcador para Web Search nativo do ChatGPT", async () => {
+  const plan = await researchChatGPT("panorama atual do mercado do boi gordo");
 
-    assert.match(evidence, /PERFIL: regulation/);
-    assert.match(evidence, /RODADAS CONCLUÍDAS: 2/);
-    assert.match(evidence, /RODADAS INCOMPLETAS: amendments-revocations/);
-    assert.match(evidence, /https:\/\/www\.gov\.br\/mapa\//);
-  } finally {
-    if (previous === undefined) delete process.env.PERPLEXITY_API_KEY;
-    else process.env.PERPLEXITY_API_KEY = previous;
-  }
+  assert.match(plan, /CHATGPT_WEB_SEARCH_REQUIRED/);
+  assert.match(plan, /PROFILE: market_intelligence/);
+  assert.match(plan, /DEPTH: high/);
+  assert.match(plan, /QUERY: panorama atual do mercado do boi gordo/);
+  assert.match(plan, /pesquise na web antes de responder/i);
+  assert.match(plan, /fontes primárias|dados primários/i);
+});
+
+test("pesquisa meteorológica preserva localização e exigências de qualidade", async () => {
+  const plan = await researchChatGPT("previsão detalhada para amanhã", {
+    weatherSearch: true,
+    weatherLocation: "Monte Aprazível - SP",
+  });
+
+  assert.match(plan, /PROFILE: weather/);
+  assert.match(plan, /DEPTH: high/);
+  assert.match(plan, /Monte Aprazível - SP/);
+  assert.match(plan, /fontes meteorológicas oficiais/i);
+  assert.match(plan, /alertas, chuva, temperatura, vento e incerteza/i);
+  assert.match(plan, /manejo pecuário/i);
+});
+
+test("nome legado continua compatível sem chamar provedor externo", async () => {
+  const legacy = await researchPerplexity("qual portaria do MAPA está vigente?");
+  const current = await researchChatGPT("qual portaria do MAPA está vigente?");
+
+  assert.equal(legacy, current);
+  assert.match(legacy, /CHATGPT_WEB_SEARCH_REQUIRED/);
+  assert.doesNotMatch(legacy, /pplx-|api\.perplexity/i);
 });
