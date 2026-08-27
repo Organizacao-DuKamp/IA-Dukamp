@@ -58,7 +58,9 @@ test("deep research executa três rodadas em paralelo e entrega evidência conso
           JSON.stringify(body.web_search_options) === JSON.stringify({ search_context_size: "high" }),
       ),
     );
-    assert.ok(requestBodies.every((body) => body.search_recency_filter === "month"));
+    // A consulta pede explicitamente um panorama "atual", então a pesquisa deve
+    // estreitar a janela para a semana em vez de usar o padrão mensal do perfil.
+    assert.ok(requestBodies.every((body) => body.search_recency_filter === "week"));
     assert.match(evidence, /PERFIL: market_intelligence/);
     assert.match(evidence, /RODADAS CONCLUÍDAS: 3/);
     assert.match(evidence, /RODADA primary-data/);
