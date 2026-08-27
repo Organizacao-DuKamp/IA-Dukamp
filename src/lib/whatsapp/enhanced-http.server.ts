@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 import { controlWhatsAppMessage, dispatchClaimedWhatsAppChat } from "./backend.server.ts";
+import { splitWhatsAppOutboundText } from "./format.ts";
 import {
   buildWhatsAppProgressPlan,
   emptyWhatsAppReply,
@@ -18,7 +19,6 @@ import {
 type EnvLike = Record<string, string | undefined>;
 
 const MAX_WEBHOOK_BODY_BYTES = 512 * 1024;
-const MAX_OUTBOUND_CHARS = 3500;
 const DELIVERY_CONFIRM_ATTEMPTS = 3;
 const DELIVERY_CONFIRM_RETRY_MS = 120;
 
@@ -180,17 +180,6 @@ function extractIncomingMessages(payload: unknown): IncomingWhatsAppMessage[] {
   return messages;
 }
 
-function splitOutboundText(value: string): string[] {
-  const normalized = value.trim();
-  if (!normalized) return [];
-  const chars = Array.from(normalized);
-  const chunks: string[] = [];
-  for (let index = 0; index < chars.length; index += MAX_OUTBOUND_CHARS) {
-    chunks.push(chars.slice(index, index + MAX_OUTBOUND_CHARS).join(""));
-  }
-  return chunks;
-}
-
 async function sendWhatsAppText(
   to: string,
   body: string,
@@ -202,7 +191,7 @@ async function sendWhatsAppText(
   const version = (env.WHATSAPP_GRAPH_API_VERSION?.trim() || "v25.0").replace(/^\/+|\/+$/g, "");
   if (!/^v\d+\.\d+$/.test(version)) throw new Error("invalid_whatsapp_graph_api_version");
 
-  for (const chunk of splitOutboundText(body)) {
+  for (const chunk of splitWhatsAppOutboundText(body)) {
     const response = await fetchImpl(
       `https://graph.facebook.com/${version}/${encodeURIComponent(phoneNumberId)}/messages`,
       {
