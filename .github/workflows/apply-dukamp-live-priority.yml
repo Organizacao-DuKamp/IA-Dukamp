@@ -1,0 +1,50 @@
+name: Apply DuKamp live priority
+
+on:
+  push:
+    branches: [dukamp-live-priority]
+    paths:
+      - .github/workflows/apply-dukamp-live-priority.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dukamp-live-priority
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install
+      - name: Apply live-first integration
+        run: node scripts/apply-dukamp-live-priority.mjs
+      - name: Format changed files
+        run: npx prettier --write src/lib/site/dukamp-product-ranking.ts src/lib/site/site-lookup.server.ts src/lib/chat/core.server.ts src/lib/chat/intent.ts src/lib/chat/system-prompt.ts src/lib/whatsapp/enhanced-http.server.ts tests/dukamp-live-priority.test.ts src/lib/chat/model-router.ts src/lib/chat/openai.server.ts src/lib/chat/perplexity.server.ts tests/whatsapp-search-quality.test.ts
+      - name: Audit privileged imports
+        run: npm run audit:privileged
+      - name: Test
+        run: npm test
+      - name: Lint
+        run: npm run lint
+      - name: Build Netlify preset
+        env:
+          NITRO_PRESET: netlify
+          TPEC_BACKEND_MODE: proxy
+          LOVABLE_BACKEND_URL: https://example.lovable.app
+          TPEC_PROXY_SECRET: ci-only-secret-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+        run: npm run build
+      - name: Commit validated implementation
+        run: |
+          git config user.name "Eduardoo"
+          git config user.email "137733778+Eduardoo8442@users.noreply.github.com"
+          git add src/lib/site/dukamp-product-ranking.ts src/lib/site/site-lookup.server.ts src/lib/chat/core.server.ts src/lib/chat/intent.ts src/lib/chat/system-prompt.ts src/lib/whatsapp/enhanced-http.server.ts tests/dukamp-live-priority.test.ts src/lib/chat/model-router.ts src/lib/chat/openai.server.ts src/lib/chat/perplexity.server.ts tests/whatsapp-search-quality.test.ts
+          git commit -m "feat: priorizar catálogo vivo da DuKamp na TPEC-IA"
+          git push origin HEAD:dukamp-live-priority
