@@ -82,7 +82,7 @@ test("deep research degrada parcialmente quando uma rodada falha", async () => {
       timeoutMs: 1_000,
       fetchImpl: (async (_url: RequestInfo | URL, init?: RequestInit) => {
         const body = String(init?.body ?? "");
-        if (body.includes("alterações, revogações")) {
+        if (body.includes("implementação oficial que possam mudar a interpretação")) {
           return new Response(JSON.stringify({ error: "temporary failure" }), {
             status: 503,
             headers: { "content-type": "application/json" },
