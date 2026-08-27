@@ -65,6 +65,16 @@ function pushIntent(intents: WeatherSubIntent[], intent: WeatherSubIntent): void
   if (!intents.includes(intent)) intents.push(intent);
 }
 
+/**
+ * Regex word boundaries in JavaScript are ASCII-oriented. A word ending in an
+ * accented character (for example, "amanhã") can therefore fail a trailing
+ * `\b` check. Normalize only the matching copy; the original user text remains
+ * untouched everywhere else in the pipeline.
+ */
+function normalizeForMatching(text: string): string {
+  return text.normalize("NFD").replace(/\p{Diacritic}/gu, "");
+}
+
 function parseExplicitDate(text: string): string | null {
   const iso = text.match(/\b(20\d{2})-([01]\d)-([0-3]\d)\b/);
   if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
@@ -95,23 +105,25 @@ function periodForText(text: string): WeatherDayPeriod {
 }
 
 export function analyzeWeatherRequest(text: string): WeatherRequestAnalysis {
+  const matchText = normalizeForMatching(text);
   const intents: WeatherSubIntent[] = [];
-  const asksCurrent = CURRENT_RE.test(text);
-  const needsHourly = HOURLY_RE.test(text);
-  const needsAlerts = ALERT_RE.test(text);
-  const agroAnalysis = AGRO_RE.test(text);
-  const highImpactDecision = HIGH_IMPACT_RE.test(text) && (PRECIP_RE.test(text) || agroAnalysis);
+  const asksCurrent = CURRENT_RE.test(matchText);
+  const needsHourly = HOURLY_RE.test(matchText);
+  const needsAlerts = ALERT_RE.test(matchText);
+  const agroAnalysis = AGRO_RE.test(matchText);
+  const highImpactDecision =
+    HIGH_IMPACT_RE.test(matchText) && (PRECIP_RE.test(matchText) || agroAnalysis);
   const explicitDate = parseExplicitDate(text);
-  const weekend = /\b(?:fim|final)\s+de\s+semana\b/i.test(text);
+  const weekend = /\b(?:fim|final)\s+de\s+semana\b/i.test(matchText);
 
   let dayOffset: number | null = null;
-  if (/\bdepois\s+de\s+amanh[aã]\b/i.test(text)) dayOffset = 2;
-  else if (/\bamanh[aã]\b/i.test(text)) dayOffset = 1;
-  else if (/\bhoje\b/i.test(text) || asksCurrent) dayOffset = 0;
+  if (/\bdepois\s+de\s+amanh[aã]\b/i.test(matchText)) dayOffset = 2;
+  else if (/\bamanh[aã]\b/i.test(matchText)) dayOffset = 1;
+  else if (/\bhoje\b/i.test(matchText) || asksCurrent) dayOffset = 0;
 
   let weekday: number | null = null;
   for (const [pattern, value] of WEEKDAYS) {
-    if (pattern.test(text)) {
+    if (pattern.test(matchText)) {
       weekday = value;
       break;
     }
@@ -125,18 +137,20 @@ export function analyzeWeatherRequest(text: string): WeatherRequestAnalysis {
   if (
     !asksCurrent ||
     /\b(amanh[aã]|semana|pr[oó]ximos|vai|previs[aã]o|chover|m[aá]xima|m[ií]nima|esfriar|aquecer)\b/i.test(
-      text,
+      matchText,
     )
   ) {
     pushIntent(intents, "WEATHER_FORECAST");
   }
   if (intents.length === 0) pushIntent(intents, "WEATHER_FORECAST");
 
-  const asksAmount = /\b(quanto|quantos?)\b.{0,25}\b(mm|mil[ií]metros?|chover|chuva)\b|\bacumulado\b/i.test(
-    text,
-  );
-  const modelSensitive = PRECIP_RE.test(text) || needsAlerts || /\b(esfriar|frio|calor|vento)\b/i.test(text);
-  const deep = highImpactDecision || asksAmount || SYNOPTIC_RE.test(text);
+  const asksAmount =
+    /\b(quanto|quantos?)\b.{0,25}\b(mm|mil[ií]metros?|chover|chuva)\b|\bacumulado\b/i.test(
+      matchText,
+    );
+  const modelSensitive =
+    PRECIP_RE.test(matchText) || needsAlerts || /\b(esfriar|frio|calor|vento)\b/i.test(matchText);
+  const deep = highImpactDecision || asksAmount || SYNOPTIC_RE.test(matchText);
   const quick = asksCurrent && !needsHourly && !needsAlerts && !agroAnalysis && !modelSensitive;
   const depth: WeatherResearchDepth = deep ? "deep" : quick ? "quick" : "standard";
 
@@ -148,15 +162,15 @@ export function analyzeWeatherRequest(text: string): WeatherRequestAnalysis {
     needsAlerts,
     needsModelConsensus:
       depth !== "quick" && (modelSensitive || intents.includes("WEATHER_FORECAST")),
-    needsWebCrosscheck: deep && SYNOPTIC_RE.test(text),
+    needsWebCrosscheck: deep && SYNOPTIC_RE.test(matchText),
     agroAnalysis,
     highImpactDecision,
     dayOffset,
     explicitDate,
     weekday,
     weekend,
-    period: periodForText(text),
-    originalTemporalExpression: temporalExpression(text),
+    period: periodForText(matchText),
+    originalTemporalExpression: temporalExpression(matchText),
   };
 }
 
