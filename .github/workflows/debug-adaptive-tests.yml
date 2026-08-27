@@ -1,0 +1,37 @@
+name: Debug adaptive tests
+
+on:
+  push:
+    branches: [adaptive-model-router]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-log:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install
+      - name: Capture test output
+        shell: bash
+        run: |
+          set +e
+          npm test > test-output.txt 2>&1
+          code=$?
+          echo "$code" > test-exit-code.txt
+          cat test-output.txt
+          exit 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: adaptive-test-log
+          path: |
+            test-output.txt
+            test-exit-code.txt
+          if-no-files-found: error
