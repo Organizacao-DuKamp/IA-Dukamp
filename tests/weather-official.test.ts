@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { fetchOfficialWeather, OfficialWeatherError } from "../src/lib/chat/weather-official.server.ts";
+import {
+  fetchOfficialWeather,
+  OfficialWeatherError,
+} from "../src/lib/chat/weather-official.server.ts";
 
 function municipalitiesPayload(extra: Array<Record<string, unknown>> = []) {
   const filler = Array.from({ length: 1_005 }, (_, index) => ({

@@ -73,9 +73,7 @@ const forecastCache = new Map<string, CacheEntry<string>>();
 const inFlightForecasts = new Map<string, Promise<string>>();
 
 function asRecord(value: unknown): JsonRecord | null {
-  return value && typeof value === "object" && !Array.isArray(value)
-    ? (value as JsonRecord)
-    : null;
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as JsonRecord) : null;
 }
 
 function normalizeComparable(value: string): string {
@@ -146,7 +144,13 @@ function locationHint(location: string): { city: string; uf: string | null } {
   const suffix = cleaned.match(/(?:,|\s)\s*([A-Za-z]{2})$/);
   const maybeUf = suffix?.[1]?.toUpperCase() ?? null;
   const uf = maybeUf && BRAZILIAN_UFS.has(maybeUf) ? maybeUf : null;
-  const city = uf && suffix ? cleaned.slice(0, suffix.index).replace(/[\s,/-]+$/g, "").trim() : cleaned;
+  const city =
+    uf && suffix
+      ? cleaned
+          .slice(0, suffix.index)
+          .replace(/[\s,/-]+$/g, "")
+          .trim()
+      : cleaned;
   return { city, uf };
 }
 
@@ -155,7 +159,8 @@ function resolveMunicipality(location: string, municipalities: Municipality[]): 
   const wanted = normalizeComparable(hint.city);
   const exact = municipalities.filter(
     (municipality) =>
-      normalizeComparable(municipality.name) === wanted && (!hint.uf || municipality.uf === hint.uf),
+      normalizeComparable(municipality.name) === wanted &&
+      (!hint.uf || municipality.uf === hint.uf),
   );
 
   if (exact.length === 1) return exact[0];
@@ -272,8 +277,7 @@ function periodLine(label: string, period: JsonRecord): string {
 
   if (summary) parts.push(summary);
   if (min !== null || max !== null) {
-    const temperature =
-      min !== null && max !== null ? `${min}–${max} °C` : `${min ?? max} °C`;
+    const temperature = min !== null && max !== null ? `${min}–${max} °C` : `${min ?? max} °C`;
     parts.push(`temperatura ${temperature}`);
   }
   if (humidityMin !== null || humidityMax !== null) {
