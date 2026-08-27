@@ -24,8 +24,41 @@ jobs:
           node-version: 22
       - name: Install dependencies
         run: npm install
+      - name: Normalize temporary migration anchor
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path("scripts/apply-dukamp-live-priority.mjs")
+          s = p.read_text()
+          start = s.index('  const stopwordEnd = `')
+          end = s.index('  source = source.replaceAll(', start)
+          replacement = '''  const stopwordEnd = `]);\n\nexport function siteIntentHints(text: string) {`;
+            source = replaceOnce(
+              source,
+              stopwordEnd,
+              `]);\n\nconst PRODUCT_SELECT =\n  "id,name,code,slug,price,active,stock,featured,description,images,brand,consumer_price,consumer_pix_price,producer_price,producer_pix_price,reseller_price,reseller_pix_price,installments,on_sale,sale_consumer_price,sale_consumer_pix_price";\nconst PRODUCT_FALLBACK_SELECT = "id,name,code,slug,price,active,stock,featured";\n\nexport function siteIntentHints(text: string) {`,
+              "product selects",
+            );
+
+          '''
+          p.write_text(s[:start] + replacement + s[end:])
+          PY
       - name: Apply live-first integration
         run: node scripts/apply-dukamp-live-priority.mjs
+      - name: Restrict outbound product images to official DuKamp hosts
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path("src/lib/whatsapp/enhanced-http.server.ts")
+          s = p.read_text()
+          old = '      if (!/^https:$/.test(url.protocol)) continue;\n      if (!/\\.(?:jpe?g|png|webp|gif)$/i.test(url.pathname)) continue;'
+          new = '      if (!/^https:$/.test(url.protocol)) continue;\n      const officialDuKampHost =\n        url.hostname === "pioyrbcdprnplhcoyzam.supabase.co" ||\n        url.hostname === "dukamp.com.br" ||\n        url.hostname.endsWith(".dukamp.com.br");\n      if (!officialDuKampHost) continue;\n      if (!/\\.(?:jpe?g|png|webp|gif)$/i.test(url.pathname)) continue;'
+          if old not in s:
+              raise SystemExit("official image anchor not found")
+          p.write_text(s.replace(old, new, 1))
+          PY
       - name: Format changed files
         run: npx prettier --write src/lib/site/dukamp-product-ranking.ts src/lib/site/site-lookup.server.ts src/lib/chat/core.server.ts src/lib/chat/intent.ts src/lib/chat/system-prompt.ts src/lib/whatsapp/enhanced-http.server.ts tests/dukamp-live-priority.test.ts src/lib/chat/model-router.ts src/lib/chat/openai.server.ts src/lib/chat/perplexity.server.ts tests/whatsapp-search-quality.test.ts
       - name: Audit privileged imports
