@@ -26,9 +26,12 @@ function isCorrection(sourcePolicy: string): boolean {
 }
 
 function isLightweightTurn(text: string, sourcePolicy: string): boolean {
+  // A política do core é o sinal mais seguro. Respostas como "sim", "não" e
+  // "ok" podem confirmar uma pergunta anterior e, por isso, não são baratas
+  // automaticamente sem o contexto do turno.
   if (/CONVERSA CASUAL|CLIMA SEM LOCALIZAÇÃO/i.test(sourcePolicy)) return true;
-  if (text.length > 90) return false;
-  return /^(?:oi|ol[aá]|opa|bom dia|boa tarde|boa noite|obrigad[oa]|valeu|vlw|ok|beleza|entendi|show|top|tchau|falou|sim|n[aã]o)[!.?\s]*$/i.test(
+  if (text.length > 70) return false;
+  return /^(?:oi|ol[aá]|opa|bom dia|boa tarde|boa noite|obrigad[oa]|valeu|vlw|tchau|falou)[!.?\s]*$/i.test(
     text,
   );
 }
