@@ -698,10 +698,7 @@ function combineResearchEvidence(
   );
   const fixedChars = header.length + sourceBlock.length + failureBlock.length + blockOverhead + 8;
   const contentBudget = Math.max(1_200, finalCharBudget - fixedChars);
-  const perPassBudget = Math.max(
-    600,
-    Math.floor(contentBudget / Math.max(results.length, 1)),
-  );
+  const perPassBudget = Math.max(600, Math.floor(contentBudget / Math.max(results.length, 1)));
 
   const blocks = results.map((result) => {
     const trimmed =
@@ -778,18 +775,14 @@ export async function researchPerplexity(
 
   if (successes.length === 0) throw preferredFailure(errors);
 
-  logDiagnostic(
-    failedPasses.length ? "warn" : "info",
-    "perplexity.deep_research.complete",
-    {
-      provider: "perplexity",
-      model,
-      research_profile: profile,
-      requested_passes: passes.length,
-      completed_passes: successes.length,
-      failed_passes: failedPasses,
-    },
-  );
+  logDiagnostic(failedPasses.length ? "warn" : "info", "perplexity.deep_research.complete", {
+    provider: "perplexity",
+    model,
+    research_profile: profile,
+    requested_passes: passes.length,
+    completed_passes: successes.length,
+    failed_passes: failedPasses,
+  });
 
   return combineResearchEvidence(profile, successes, failedPasses);
 }

@@ -1,10 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import {
-  researchPerplexity,
-  researchProfileForQuery,
-} from "../src/lib/chat/perplexity.server.ts";
+import { researchPerplexity, researchProfileForQuery } from "../src/lib/chat/perplexity.server.ts";
 
 test("pesquisa externa escolhe perfil pecuário especializado", () => {
   assert.equal(researchProfileForQuery("previsão para amanhã", { weatherSearch: true }), "weather");
@@ -55,7 +52,8 @@ test("deep research executa três rodadas em paralelo e entrega evidência conso
     assert.ok(
       requestBodies.every(
         (body) =>
-          JSON.stringify(body.web_search_options) === JSON.stringify({ search_context_size: "high" }),
+          JSON.stringify(body.web_search_options) ===
+          JSON.stringify({ search_context_size: "high" }),
       ),
     );
     // A consulta pede explicitamente um panorama "atual", então a pesquisa deve
@@ -80,25 +78,28 @@ test("deep research degrada parcialmente quando uma rodada falha", async () => {
   process.env.PERPLEXITY_API_KEY = "perplexity-partial-test-key";
 
   try {
-    const evidence = await researchPerplexity("qual portaria do MAPA está vigente para este tema?", {
-      timeoutMs: 1_000,
-      fetchImpl: (async (_url: RequestInfo | URL, init?: RequestInit) => {
-        const body = String(init?.body ?? "");
-        if (body.includes("implementação oficial que possam mudar a interpretação")) {
-          return new Response(JSON.stringify({ error: "temporary failure" }), {
-            status: 503,
-            headers: { "content-type": "application/json" },
-          });
-        }
-        return new Response(
-          JSON.stringify({
-            choices: [{ message: { content: "Evidência oficial disponível." } }],
-            citations: ["https://www.gov.br/mapa/"],
-          }),
-          { status: 200, headers: { "content-type": "application/json" } },
-        );
-      }) as typeof fetch,
-    });
+    const evidence = await researchPerplexity(
+      "qual portaria do MAPA está vigente para este tema?",
+      {
+        timeoutMs: 1_000,
+        fetchImpl: (async (_url: RequestInfo | URL, init?: RequestInit) => {
+          const body = String(init?.body ?? "");
+          if (body.includes("implementação oficial que possam mudar a interpretação")) {
+            return new Response(JSON.stringify({ error: "temporary failure" }), {
+              status: 503,
+              headers: { "content-type": "application/json" },
+            });
+          }
+          return new Response(
+            JSON.stringify({
+              choices: [{ message: { content: "Evidência oficial disponível." } }],
+              citations: ["https://www.gov.br/mapa/"],
+            }),
+            { status: 200, headers: { "content-type": "application/json" } },
+          );
+        }) as typeof fetch,
+      },
+    );
 
     assert.match(evidence, /PERFIL: regulation/);
     assert.match(evidence, /RODADAS CONCLUÍDAS: 2/);
