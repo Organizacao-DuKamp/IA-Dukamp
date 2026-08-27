@@ -80,7 +80,7 @@ export function researchProfileForQuery(
   const normalized = normalizedQuery(query);
 
   if (
-    /\b(portaria|decreto|lei|legisla[cç][aã]o|instru[cç][aã]o normativa|resolu[cç][aã]o|norma|vigente|revogad[ao]|obrigat[oó]ri|permitid[ao]|proibid[ao]|prazo legal|dou|di[aá]rio oficial)\b/.test(
+    /\b(portaria|decreto|lei|legisla[cç][aã]o|instru[cç][aã]o normativa|resolu[cç][aã]o|norma|regra|vigente|revogad[ao]|obrigat[oó]ri|permitid[ao]|proibid[ao]|prazo legal|dou|di[aá]rio oficial)\b/.test(
       normalized,
     )
   ) {
@@ -96,7 +96,7 @@ export function researchProfileForQuery(
   }
 
   if (
-    /\b(mercado|tend[eê]ncia|exporta[cç][aã]o|importa[cç][aã]o|abate|oferta|demanda|estoque|rela[cç][aã]o de troca|arroba|boi gordo|bezerro|milho|soja|leite|carne bovina|confinamento|margem)\b/.test(
+    /\b(mercado|tend[eê]ncia|exporta[cç][aã]o|importa[cç][aã]o|abate|oferta|demanda|estoque|rela[cç][aã]o de troca|arroba|boi gordo|bezerro|milho|soja|leite|carne bovina|margem)\b/.test(
       normalized,
     )
   ) {
@@ -121,8 +121,9 @@ function inferRecency(
 ): RecencyFilter | undefined {
   if (currentMarketSearch || profile === "current_market") return "week";
   if (profile === "weather") return "day";
-  if (profile === "animal_health_status") return "month";
-  if (profile === "market_intelligence") return "month";
+
+  // Regras e conteúdo técnico podem continuar válidos por muito tempo. Um filtro
+  // recente rígido poderia esconder justamente a norma/manual vigente.
   if (profile === "regulation" || profile === "technical_livestock") return undefined;
 
   const normalized = normalizedQuery(query);
@@ -133,6 +134,9 @@ function inferRecency(
   ) {
     return "week";
   }
+
+  if (profile === "animal_health_status") return "month";
+  if (profile === "market_intelligence") return "month";
   return undefined;
 }
 
@@ -266,19 +270,22 @@ function buildResearchPasses(
       return [
         {
           id: "official-observation-forecast",
-          objective: "Levantar observação, previsão e alertas nas fontes meteorológicas oficiais para a localização confirmada.",
+          objective:
+            "Levantar observação, previsão e alertas nas fontes meteorológicas oficiais para a localização confirmada.",
           recencyFilter: "day",
           maxTokens: 1700,
         },
         {
           id: "independent-crosscheck",
-          objective: "Fazer uma verificação independente da previsão, comparar modelos/fontes e destacar divergências relevantes de chuva, temperatura, vento e alertas.",
+          objective:
+            "Fazer uma verificação independente da previsão, comparar modelos/fontes e destacar divergências relevantes de chuva, temperatura, vento e alertas.",
           recencyFilter: "day",
           maxTokens: 1700,
         },
         {
           id: "livestock-impact",
-          objective: "Buscar evidências meteorológicas necessárias para traduzir a previsão em riscos operacionais para pecuária, sem inventar precisão local.",
+          objective:
+            "Buscar evidências meteorológicas necessárias para traduzir a previsão em riscos operacionais para pecuária, sem inventar precisão local.",
           recencyFilter: "day",
           maxTokens: 1700,
         },
@@ -287,19 +294,22 @@ function buildResearchPasses(
       return [
         {
           id: "exact-current-quote",
-          objective: "Encontrar a cotação mais recente possível com valor, unidade, praça, data de referência e fonte primária ou diretamente responsável pelo indicador.",
+          objective:
+            "Encontrar a cotação mais recente possível com valor, unidade, praça, data de referência e fonte primária ou diretamente responsável pelo indicador.",
           recencyFilter: "week",
           maxTokens: 1500,
         },
         {
           id: "quote-crosscheck",
-          objective: "Confirmar a cotação de forma independente, detectar diferenças de praça/unidade/modalidade e rejeitar números antigos ou sem data.",
+          objective:
+            "Confirmar a cotação de forma independente, detectar diferenças de praça/unidade/modalidade e rejeitar números antigos ou sem data.",
           recencyFilter: "week",
           maxTokens: 1500,
         },
         {
           id: "market-context",
-          objective: "Recuperar somente o contexto recente necessário para explicar a cotação: direção do mercado, oferta/demanda e fatores objetivos, separando fatos de projeções.",
+          objective:
+            "Recuperar somente o contexto recente necessário para explicar a cotação: direção do mercado, oferta/demanda e fatores objetivos, separando fatos de projeções.",
           recencyFilter: "week",
           maxTokens: 1500,
         },
@@ -308,19 +318,22 @@ function buildResearchPasses(
       return [
         {
           id: "primary-data",
-          objective: "Levantar os dados primários mais recentes que medem o mercado perguntado: preços/indicadores, oferta, demanda, abate, exportação e custos quando pertinentes.",
+          objective:
+            "Levantar os dados primários mais recentes que medem o mercado perguntado: preços/indicadores, oferta, demanda, abate, exportação e custos quando pertinentes.",
           recencyFilter: baseRecency ?? "month",
           maxTokens: 1600,
         },
         {
           id: "independent-crosscheck",
-          objective: "Procurar uma segunda leitura baseada em fonte independente e testar se os principais números e tendências da primeira rodada se sustentam.",
+          objective:
+            "Procurar uma segunda leitura baseada em fonte independente e testar se os principais números e tendências da primeira rodada se sustentam.",
           recencyFilter: baseRecency ?? "month",
           maxTokens: 1500,
         },
         {
           id: "counterevidence-drivers",
-          objective: "Buscar fatores que expliquem ou contradigam a tendência aparente e separar dado observado de expectativa/projeção.",
+          objective:
+            "Buscar fatores que expliquem ou contradigam a tendência aparente e separar dado observado de expectativa/projeção.",
           recencyFilter: baseRecency ?? "month",
           maxTokens: 1500,
         },
@@ -329,20 +342,20 @@ function buildResearchPasses(
       return [
         {
           id: "official-rule",
-          objective: "Localizar o ato normativo oficial aplicável e verificar texto, número, órgão, datas, vigência e âmbito de aplicação.",
-          recencyFilter: undefined,
+          objective:
+            "Localizar o ato normativo oficial aplicável e verificar texto, número, órgão, datas, vigência e âmbito de aplicação.",
           maxTokens: 1700,
         },
         {
           id: "amendments-revocations",
-          objective: "Pesquisar alterações, revogações, normas posteriores, notas técnicas e implementação oficial que possam mudar a interpretação do ato encontrado.",
-          recencyFilter: undefined,
+          objective:
+            "Pesquisar alterações, revogações, normas posteriores, notas técnicas e implementação oficial que possam mudar a interpretação do ato encontrado.",
           maxTokens: 1600,
         },
         {
           id: "practical-scope-crosscheck",
-          objective: "Confirmar como a regra se aplica na prática, inclusive diferenças estaduais/regionais e datas de transição, sem usar fonte não oficial para declarar obrigação legal.",
-          recencyFilter: undefined,
+          objective:
+            "Confirmar como a regra se aplica na prática, inclusive diferenças estaduais/regionais e datas de transição, sem usar fonte não oficial para declarar obrigação legal.",
           maxTokens: 1500,
         },
       ];
@@ -350,20 +363,22 @@ function buildResearchPasses(
       return [
         {
           id: "official-sanitary-status",
-          objective: "Verificar o status sanitário mais recente em serviços veterinários oficiais, incluindo local, espécie, data, confirmação e medidas adotadas.",
+          objective:
+            "Verificar o status sanitário mais recente em serviços veterinários oficiais, incluindo local, espécie, data, confirmação e medidas adotadas.",
           recencyFilter: baseRecency ?? "month",
           maxTokens: 1700,
         },
         {
           id: "international-state-crosscheck",
-          objective: "Cruzar o status com WOAH/WAHIS, órgão estadual competente e outras fontes oficiais independentes, distinguindo suspeita, confirmação e encerramento.",
+          objective:
+            "Cruzar o status com WOAH/WAHIS, órgão estadual competente e outras fontes oficiais independentes, distinguindo suspeita, confirmação e encerramento.",
           recencyFilter: baseRecency ?? "month",
           maxTokens: 1600,
         },
         {
           id: "technical-context",
-          objective: "Recuperar contexto técnico confiável necessário para interpretar risco, transmissão, prevenção e manejo, sem diagnosticar um animal individual.",
-          recencyFilter: undefined,
+          objective:
+            "Recuperar contexto técnico confiável necessário para interpretar risco, transmissão, prevenção e manejo, sem diagnosticar um animal individual.",
           maxTokens: 1500,
         },
       ];
@@ -371,20 +386,20 @@ function buildResearchPasses(
       return [
         {
           id: "technical-consensus",
-          objective: "Buscar manual, recomendação institucional, revisão ou referência técnica robusta diretamente aplicável à pergunta pecuária.",
-          recencyFilter: undefined,
+          objective:
+            "Buscar manual, recomendação institucional, revisão ou referência técnica robusta diretamente aplicável à pergunta pecuária.",
           maxTokens: 1600,
         },
         {
           id: "independent-evidence",
-          objective: "Cruzar a orientação com uma segunda instituição ou literatura revisada por pares e registrar condições em que os resultados mudam.",
-          recencyFilter: undefined,
+          objective:
+            "Cruzar a orientação com uma segunda instituição ou literatura revisada por pares e registrar condições em que os resultados mudam.",
           maxTokens: 1500,
         },
         {
           id: "practical-boundaries",
-          objective: "Identificar faixas, pressupostos, limitações, riscos e dados que faltariam para transformar a evidência em decisão prática na fazenda.",
-          recencyFilter: undefined,
+          objective:
+            "Identificar faixas, pressupostos, limitações, riscos e dados que faltariam para transformar a evidência em decisão prática na fazenda.",
           maxTokens: 1500,
         },
       ];
@@ -392,19 +407,22 @@ function buildResearchPasses(
       return [
         {
           id: "primary-evidence",
-          objective: "Localizar as fontes primárias mais atuais e os fatos diretamente necessários para responder à consulta.",
+          objective:
+            "Localizar as fontes primárias mais atuais e os fatos diretamente necessários para responder à consulta.",
           recencyFilter: baseRecency,
           maxTokens: 1500,
         },
         {
           id: "independent-crosscheck",
-          objective: "Fazer verificação independente dos fatos principais, procurando datas, números e possíveis contradições.",
+          objective:
+            "Fazer verificação independente dos fatos principais, procurando datas, números e possíveis contradições.",
           recencyFilter: baseRecency,
           maxTokens: 1400,
         },
         {
           id: "gaps-and-implications",
-          objective: "Identificar lacunas, incertezas e implicações relevantes para a pecuária sem extrapolar além das evidências recuperadas.",
+          objective:
+            "Identificar lacunas, incertezas e implicações relevantes para a pecuária sem extrapolar além das evidências recuperadas.",
           recencyFilter: baseRecency,
           maxTokens: 1400,
         },
@@ -445,6 +463,7 @@ async function executeResearchPass(params: {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
     const started = Date.now();
+
     logDiagnostic("info", "perplexity.request.start", {
       provider: "perplexity",
       model,
@@ -501,6 +520,7 @@ async function executeResearchPass(params: {
       const transient =
         controller.signal.aborted ||
         (error instanceof Error && ["AbortError", "TypeError"].includes(error.name));
+
       logDiagnostic("warn", "perplexity.request.transport_error", {
         provider: "perplexity",
         model,
@@ -512,14 +532,15 @@ async function executeResearchPass(params: {
         error_name: error instanceof Error ? error.name : "unknown",
         error_message: error instanceof Error ? error.message : String(error),
       });
+
       lastError = controller.signal.aborted
         ? new PerplexityError("A pesquisa atual demorou demais. Tente novamente.", 504)
         : new PerplexityError("Não foi possível consultar a pesquisa atual.", 502);
       if (transient && attempt + 1 < attempts.length) continue;
       throw lastError;
     }
-    clearTimeout(timeout);
 
+    clearTimeout(timeout);
     const durationMs = Date.now() - started;
     const headers = diagnosticResponseHeaders(response);
     const raw = await response.text().catch(() => "");
@@ -537,13 +558,16 @@ async function executeResearchPass(params: {
         response_headers: headers,
         error_body: safeErrorSnippet(raw),
       });
+
       if (response.status === 401 && /insufficient_quota|credit|billing/i.test(raw)) {
         throw new PerplexityError("Os créditos da API da Perplexity estão esgotados.", 402);
       }
+
       lastError =
         response.status === 429
           ? new PerplexityError("Muitas pesquisas em pouco tempo. Aguarde alguns segundos.", 429)
           : new PerplexityError("Falha ao consultar a pesquisa atual.", response.status);
+
       if (shouldRetryStatus(response.status) && attempt + 1 < attempts.length) continue;
       throw lastError;
     }
@@ -554,6 +578,7 @@ async function executeResearchPass(params: {
       search_results?: Array<{ title?: string; url?: string; date?: string }>;
       usage?: unknown;
     };
+
     try {
       data = JSON.parse(raw) as typeof data;
     } catch (error) {
@@ -671,8 +696,7 @@ function combineResearchEvidence(
     (total, result) => total + result.id.length + result.objective.length + 28,
     0,
   );
-  const fixedChars =
-    header.length + sourceBlock.length + failureBlock.length + blockOverhead + 8;
+  const fixedChars = header.length + sourceBlock.length + failureBlock.length + blockOverhead + 8;
   const contentBudget = Math.max(1_200, finalCharBudget - fixedChars);
   const perPassBudget = Math.max(
     600,
@@ -689,10 +713,7 @@ function combineResearchEvidence(
     return `\n\nRODADA ${result.id}\nObjetivo: ${result.objective}\n${trimmed}`;
   });
 
-  return `${header}${blocks.join("")}${sourceBlock}${failureBlock}`.slice(
-    0,
-    finalCharBudget,
-  );
+  return `${header}${blocks.join("")}${sourceBlock}${failureBlock}`.slice(0, finalCharBudget);
 }
 
 export async function researchPerplexity(
@@ -703,8 +724,7 @@ export async function researchPerplexity(
   const model = perplexityModel();
   const profile = researchProfileForQuery(query, options);
   const baseRecency =
-    options.recencyFilter ??
-    inferRecency(query, Boolean(options.currentMarketSearch), profile);
+    options.recencyFilter ?? inferRecency(query, Boolean(options.currentMarketSearch), profile);
 
   if (!apiKey) {
     logDiagnostic("error", "perplexity.configuration_error", {
@@ -719,11 +739,7 @@ export async function researchPerplexity(
   const attempts = options.timeoutMs
     ? [options.timeoutMs]
     : [FIRST_ATTEMPT_TIMEOUT_MS, RETRY_TIMEOUT_MS];
-  const passes = buildResearchPasses(
-    profile,
-    baseRecency,
-    options.deepResearch !== false,
-  );
+  const passes = buildResearchPasses(profile, baseRecency, options.deepResearch !== false);
 
   logDiagnostic("info", "perplexity.deep_research.start", {
     provider: "perplexity",
