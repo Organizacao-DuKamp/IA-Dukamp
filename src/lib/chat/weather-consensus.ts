@@ -94,17 +94,26 @@ export function precipitationConfidence(valuesMm: number[]): WeatherConfidence {
   const spread = max - min;
   const median = medianOrNull(valuesMm) ?? 0;
 
+  // Discordância sobre o próprio sinal (chover x permanecer seco) é mais
+  // relevante que a dispersão em milímetros. Com os três modelos principais,
+  // um placar 2 x 1 deve ser comunicado como baixa confiança, não como um
+  // consenso moderado. Com quatro ou mais amostras, só aceitamos moderada se
+  // pelo menos 75% concordarem com o sinal.
+  if (!unanimousSignal) {
+    const dominantShare = Math.max(rainVotes, dryVotes) / valuesMm.length;
+    return dominantShare >= 0.75 ? "moderate" : "low";
+  }
+
   // Para acumulados muito baixos, diferenças pequenas em mm não devem derrubar
   // a confiança de um consenso de "praticamente sem chuva".
-  if (unanimousSignal && max < 2 && spread <= 1.5) return "high";
+  if (max < 2 && spread <= 1.5) return "high";
 
   // Em chuva relevante, combine concordância do sinal e dispersão absoluta/
   // relativa. Assim 7/12/18 mm não vira um falso valor exato, mas ainda é um
   // consenso moderado de que haverá chuva.
   const relativeSpread = median > 0.5 ? spread / median : Number.POSITIVE_INFINITY;
-  if (unanimousSignal && (spread <= 4 || relativeSpread <= 0.35)) return "high";
-  if (Math.max(rainVotes, dryVotes) >= Math.ceil(valuesMm.length * 0.66)) return "moderate";
-  return "low";
+  if (spread <= 4 || relativeSpread <= 0.35) return "high";
+  return "moderate";
 }
 
 export function buildDailyConsensus(days: WeatherModelDay[]): WeatherDayConsensus[] {
