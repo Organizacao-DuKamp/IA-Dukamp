@@ -1,0 +1,44 @@
+name: Format ChatGPT-first branch
+
+on:
+  push:
+    branches: [chatgpt-first-tpec]
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt-first-tpec
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Format changed TPEC files
+        run: >-
+          npx prettier --write
+          src/lib/chat/core.server.ts
+          src/lib/chat/openai.server.ts
+          src/lib/chat/perplexity.server.ts
+          src/lib/chat/source-policy.ts
+          src/routes/api/public/diag.ts
+          tests/weather-resilience.test.ts
+          tests/whatsapp-search-quality.test.ts
+      - name: Commit formatting
+        run: |
+          if git diff --quiet; then
+            echo "No formatting changes needed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/lib/chat/core.server.ts src/lib/chat/openai.server.ts src/lib/chat/perplexity.server.ts src/lib/chat/source-policy.ts src/routes/api/public/diag.ts tests/weather-resilience.test.ts tests/whatsapp-search-quality.test.ts
+          git commit -m "style: format ChatGPT-first implementation"
+          git push origin HEAD:chatgpt-first-tpec
