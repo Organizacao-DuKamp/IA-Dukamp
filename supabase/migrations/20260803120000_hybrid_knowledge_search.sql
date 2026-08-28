@@ -43,7 +43,9 @@ AS $$
       'portuguese',
       coalesce(kc.title, '') || ' ' || coalesce(kc.content, '')
     )
-    AND kd.status = 'ready'
+    AND kd.status IN ('concluido', 'aguardando', 'processando')
+    AND kd.requires_review = false
+    AND kd.is_duplicate_of IS NULL
     AND kd.requires_review = false
     AND kd.is_duplicate_of IS NULL
   ORDER BY similarity DESC, kc.chunk_index ASC
@@ -51,4 +53,4 @@ AS $$
 $$;
 
 REVOKE ALL ON FUNCTION public.search_knowledge_lexical(text, integer) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.search_knowledge_lexical(text, integer) TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.search_knowledge_lexical(text, integer) TO service_role;
