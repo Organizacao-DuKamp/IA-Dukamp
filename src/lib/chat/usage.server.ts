@@ -124,6 +124,15 @@ function envRate(names: string[]): { value: number | null; source: string } {
 
 type RateKind = "input" | "cached" | "output";
 
+// Tarifas de referência usadas quando o ambiente ainda não recebeu as mesmas
+// variáveis no Netlify. Elas também ficam declaradas em netlify.toml para que
+// o custo seja explícito no deploy.
+const TPEC_TIER_RATES: Record<string, Record<Exclude<RateKind, "cached">, number>> = {
+  luna: { input: 0.2, output: 1.2 },
+  terra: { input: 2, output: 12 },
+  sol: { input: 5, output: 30 },
+};
+
 function rateFor(
   event: AIUsageEvent,
   kind: RateKind,
@@ -152,6 +161,13 @@ function rateFor(
 
   const configured = envRate(names);
   if (configured.value !== null) return configured;
+
+  if (event.operation === "chat" && TPEC_TIER_RATES[tier] && kind !== "cached") {
+    return {
+      value: TPEC_TIER_RATES[tier][kind],
+      source: `built-in:tpec-${tier}-${kind}-usd-per-1m`,
+    };
+  }
 
   // This fallback is only for the stable, explicitly named mini model already
   // used by media processing. New/custom GPT tiers must be configured through
