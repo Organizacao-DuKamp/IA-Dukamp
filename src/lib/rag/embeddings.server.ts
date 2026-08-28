@@ -57,7 +57,7 @@ export class EmbeddingError extends Error {
 }
 
 function embeddingApiKey(): string {
-  const apiKey = process.env.OPENAI_API_KEY || process.env.LOVABLE_API_KEY;
+  const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey || apiKey.startsWith("sb_publishable_")) {
     logDiagnostic("error", "embeddings.configuration_error", {
       provider: "openai",
