@@ -19,6 +19,14 @@ test("turnos leves usam Luna com raciocínio low", () => {
   });
 });
 
+test("conversa normal sem domínio usa Luna mesmo com mais de uma frase", () => {
+  const route = selectAdaptiveModelRoute(user("Tudo bem por aí? Como você está?"));
+
+  assert.equal(route.tier, "luna");
+  assert.equal(route.reasoningEffort, "low");
+  assert.equal(route.reason, "lightweight_turn");
+});
+
 test("pergunta pecuária normal usa Terra medium", () => {
   const route = selectAdaptiveModelRoute(user("O que é creep feeding e quando costuma ser usado?"));
 

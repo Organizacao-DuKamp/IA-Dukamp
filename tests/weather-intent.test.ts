@@ -95,6 +95,36 @@ test("continuação como e amanhã reutiliza a última localização meteorológ
   assert.equal(resolved.usedRememberedLocation, true);
 });
 
+test("pergunta de produto não herda um clima pendente", () => {
+  const state = createConversationState("weather-product-switch");
+  state.current_topic = "clima e previsão do tempo";
+  state.pending_action = "consultar_previsao_tempo";
+  state.pending_question = WEATHER_LOCATION_QUESTION;
+  state.awaiting_user_response = true;
+
+  const resolved = resolveWeatherTurn(
+    "Qual o preço da tesoura na DuKamp?",
+    state,
+    WEATHER_LOCATION_QUESTION,
+  );
+  assert.equal(resolved.isWeatherTurn, false);
+  assert.equal(resolved.location, null);
+});
+
+test("correção explícita de assunto cancela o contexto meteorológico", () => {
+  const state = createConversationState("weather-explicit-switch");
+  state.current_topic = "clima e previsão do tempo";
+  state.pending_action = "consultar_previsao_tempo";
+  state.pending_question = WEATHER_LOCATION_QUESTION;
+
+  const resolved = resolveWeatherTurn(
+    "Não me refiro à previsão do tempo, e sim da DuKamp.",
+    state,
+    WEATHER_LOCATION_QUESTION,
+  );
+  assert.equal(resolved.isWeatherTurn, false);
+});
+
 test("pergunta cidade e UF antes de pesquisar e mantém a ação pendente", () => {
   const state = createConversationState("weather-location-required");
   state.current_topic = "clima e previsão do tempo";

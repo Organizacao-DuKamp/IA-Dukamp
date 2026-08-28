@@ -10,6 +10,12 @@ const NON_WEATHER_RE =
   /\b(tempo\s+de\s+(?:entrega|espera|viagem|trabalho|servi[cç]o|uso|car[eê]ncia)|quanto\s+tempo|previs[aã]o\s+de\s+(?:venda|pre[cç]o|mercado|entrega|abate|parto)|clima\s+organizacional)\b/i;
 const WEATHER_TOPIC_RE = /clima|meteorolog|previs[aã]o do tempo/i;
 const WEATHER_PENDING_RE = /consultar_previsao_tempo/i;
+const TOPIC_CHANGE_RE =
+  /\b(?:outro\s+assunto|outra\s+coisa|mudei\s+de\s+assunto|mudando\s+de\s+assunto|vamos\s+falar\s+de\s+outra|estou\s+falando\s+de\s+outra)\b/i;
+const EXPLICIT_NON_WEATHER_RE =
+  /\b(?:n[aã]o\s+(?:me\s+)?refiro|n[aã]o\s+estou\s+falando|n[aã]o\s+[ée]\s+sobre)\b[\s\S]{0,120}\b(?:tempo|clima|previs[aã]o|meteorolog\w*|dukamp|produto|pre[cç]o|valor|cat[aá]logo|tesoura|vendedor)\b/i;
+const NON_WEATHER_TOPIC_RE =
+  /\b(?:pre[cç]o|valor|produto|dukamp|cat[aá]logo|vendedor(?:es)?|tesoura|estoque|ra[cç][aã]o|suplemento|proteinado|mineral|pedido|compra|entrega)\b/i;
 const WEATHER_LOCATION_PROMPT_RE =
   /\bqual\s+(?:é\s+)?(?:a\s+sua\s+)?cidade[\s\S]{0,100}(?:estado|uf)\b|\bcidade[\s\S]{0,50}(?:estado|uf)\b/i;
 const WEATHER_FOLLOW_UP_RE =
@@ -28,7 +34,31 @@ export interface WeatherTurnResolution {
 }
 
 export function isWeatherRequest(text: string): boolean {
-  return WEATHER_INTENT_RE.test(text) && !NON_WEATHER_RE.test(text);
+  return (
+    !TOPIC_CHANGE_RE.test(text) &&
+    !EXPLICIT_NON_WEATHER_RE.test(text) &&
+    !(NON_WEATHER_TOPIC_RE.test(text) && !WEATHER_INTENT_RE.test(text)) &&
+    WEATHER_INTENT_RE.test(text) &&
+    !NON_WEATHER_RE.test(text)
+  );
+}
+
+function isLikelyWeatherLocationReply(text: string): boolean {
+  const normalized = text.replace(/\s+/g, " ").trim();
+  if (!normalized || normalized.length > 120) return false;
+  if (TOPIC_CHANGE_RE.test(normalized) || EXPLICIT_NON_WEATHER_RE.test(normalized)) return false;
+  if (NON_WEATHER_TOPIC_RE.test(normalized)) return false;
+  if (
+    /[?]/.test(normalized) ||
+    /\b(?:qual|quanto|por que|porque|me diga|explique)\b/i.test(normalized)
+  ) {
+    return false;
+  }
+
+  return Boolean(
+    /^(?:em|no|na|nos|nas|para)\s+.{2,100}$/i.test(normalized) ||
+    /^[\p{L}\d][\p{L}\d\s.'/-]{1,100}$/u.test(normalized),
+  );
 }
 
 function cleanLocationCandidate(value: string): string | null {
@@ -105,12 +135,15 @@ export function resolveWeatherTurn(
   lastAssistantText?: string | null,
 ): WeatherTurnResolution {
   const direct = isWeatherRequest(text);
-  const pending =
+  const weatherPending =
     WEATHER_PENDING_RE.test(state.pending_action ?? "") ||
     isWeatherLocationPrompt(state.pending_question) ||
     isWeatherLocationPrompt(lastAssistantText);
   const topic = WEATHER_TOPIC_RE.test(state.current_topic ?? "");
   const contextualFollowUp = topic && WEATHER_FOLLOW_UP_RE.test(text.trim());
+  const pending =
+    weatherPending &&
+    (isLikelyWeatherLocationReply(text) || WEATHER_FOLLOW_UP_RE.test(text.trim()));
   const isWeatherTurn = direct || pending || contextualFollowUp;
 
   if (!isWeatherTurn) {

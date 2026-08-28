@@ -204,7 +204,7 @@ const OPTION_RE =
 const CANCEL_RE = /\b(cancela|cancelar|esquece|deixa\s+pra\s+l[áa]|para\s+tudo|desiste|desisto)\b/i;
 
 const TOPIC_CHANGE_RE =
-  /\b(mudando\s+de\s+assunto|outra\s+coisa|outra\s+pergunta|deixa\s+isso|agora\s+quero\s+saber|falando\s+em\s+outra)\b/i;
+  /\b(mudando\s+de\s+assunto|outro\s+assunto|outra\s+coisa|outra\s+pergunta|deixa\s+isso|agora\s+quero\s+saber|falando\s+em\s+outra|estou\s+falando\s+(?:de|sobre)\s+outra|n[aã]o\s+(?:me\s+)?refiro\s+a?)\b/i;
 
 // ---------------------------------------------------------------------------
 // Reconhecimento / reação curta ("user_acknowledgement")
@@ -649,7 +649,7 @@ export function applyUserTurn(
   next.missing_data = next.missing_data.filter((f) => next.confirmed_data[f] === undefined);
 
   const topic = detectTopic(text);
-  if (topic) next.current_topic = topic;
+  if (topic && analysis.intent !== "mudanca_de_assunto") next.current_topic = topic;
 
   if (analysis.intent === "pedido_de_calculo") {
     next.user_goal = text.slice(0, 300);
@@ -676,6 +676,8 @@ export function applyUserTurn(
     next.pending_question = null;
     next.pending_action = null;
     next.pending_payload = null;
+    next.current_topic = null;
+    delete next.confirmed_data.weather_location;
     next.awaiting_user_response = false;
     next.awaiting_confirmation = false;
     next.expected_response_type = null;

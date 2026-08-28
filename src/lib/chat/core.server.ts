@@ -19,6 +19,7 @@ import { checkRateLimit } from "./rate-limit.server";
 import { productContextBlock, routeQuery } from "./query-router.server";
 import { assessEvidence, sourceDirective } from "./source-policy";
 import { classifyDomainIntent } from "./intent";
+import { isConversationalTurn } from "./model-router";
 import {
   stripUnmappedCitations,
   validateGrounding,
@@ -91,9 +92,10 @@ function isSmallTalk(raw: string): boolean {
     .toLowerCase()
     .replace(/[!.?…]+$/g, "")
     .replace(/\s+/g, " ");
-  if (!t || t.length > 60) return false;
+  if (!t || t.length > 180) return false;
 
   return (
+    isConversationalTurn(t) ||
     /^(oi|ol[aá]|e\s?a[ií]|opa|bom\s+dia|boa\s+tarde|boa\s+noite|hey|hi|hello)$/i.test(t) ||
     /^(obrigad[ao]|valeu|vlw|thanks|obg|grat[oa])$/i.test(t) ||
     /^(ah\s+)?(que\s+)?(legal|bacana|[óo]timo|show|massa|top|bom|dahora|maneiro|interessante|bem\s+legal|muito\s+bom)$/i.test(

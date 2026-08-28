@@ -30,15 +30,32 @@ function isCorrection(sourcePolicy: string): boolean {
   return /CORREÇÃO (?:OBRIGATÓRIA|METEOROLÓGICA|COMERCIAL)/i.test(sourcePolicy);
 }
 
+const DOMAIN_OR_RESEARCH_RE =
+  /\b(?:pecu[aá]ria|gado|boi|vaca|novilha|bezerro|animal|ra[cç][aã]o|suplement\w*|mineral|proteinad\w*|pastagem|pasto|confinament\w*|reprodu[cç][aã]o|sanidade|veterin\w*|produto|pre[cç]o|valor|estoque|dukamp|cat[aá]logo|vendedor\w*|mercado|cota[cç][aã]o|clima|tempo|previs[aã]o|chuva|temperatura|pesquis\w*|an[aá]ise|calcul\w*|dieta|fonte\w*|legisla[cç][aã]o|regulament\w*)\b/i;
+const CASUAL_CONVERSATION_RE =
+  /^(?:oi|ol[aá]|opa|e\s*a[ií]|bom\s+dia|boa\s+tarde|boa\s+noite|hey|hi|hello|obrigad\w*|valeu|vlw|tchau|falou|at[eé]\s+mais|tudo\s+(?:bem|certo)(?:\s+(?:com\s+voc[eê]|por\s+a[ií]))?|como\s+(?:voc[eê]|voc[eê]\s+est[aá])|e\s+voc[eê]|estou\s+(?:bem|tranquilo)|qual\s+[ée]\s+seu\s+nome|quem\s+[ée]\s+voc[eê]|podemos\s+conversar|vamos\s+conversar|o\s+que\s+voc[eê]\s+acha(?:\s+disso)?|tudo\s+tranquilo)[!.?…\s]*$/i;
+
+export function isConversationalTurn(text: string): boolean {
+  const normalized = text.trim().replace(/\s+/g, " ");
+  const clauses = normalized
+    .split(/[!?]+/)
+    .map((clause) => clause.trim())
+    .filter(Boolean);
+  return (
+    normalized.length <= 180 &&
+    !DOMAIN_OR_RESEARCH_RE.test(normalized) &&
+    clauses.length > 0 &&
+    clauses.length <= 3 &&
+    clauses.every((clause) => CASUAL_CONVERSATION_RE.test(clause))
+  );
+}
+
 function isLightweightTurn(text: string, sourcePolicy: string): boolean {
   // A política do core é o sinal mais seguro. Respostas como "sim", "não" e
   // "ok" podem confirmar uma pergunta anterior e, por isso, não são baratas
   // automaticamente sem o contexto do turno.
   if (/CONVERSA CASUAL|CLIMA SEM LOCALIZAÇÃO/i.test(sourcePolicy)) return true;
-  if (text.length > 70) return false;
-  return /^(?:oi|ol[aá]|opa|bom dia|boa tarde|boa noite|obrigad[oa]|valeu|vlw|tchau|falou)[!.?\s]*$/i.test(
-    text,
-  );
+  return isConversationalTurn(text);
 }
 
 function needsFrontierReasoning(text: string): boolean {
