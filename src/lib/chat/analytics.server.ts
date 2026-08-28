@@ -4,6 +4,8 @@ import { logDiagnostic } from "./diagnostics.server.ts";
 import {
   aggregateAIUsage,
   getAIUsageEvents,
+  hasInternalKnowledgeSupport,
+  internalKnowledgeMatchCount,
   type AIUsageAggregate,
   type AIUsageEvent,
   type AIUsageDepth,
@@ -115,11 +117,7 @@ function errorMessage(error: unknown): string | null {
 }
 
 function ragMatchCount(retrieved: string[]): number {
-  for (const item of retrieved) {
-    const match = item.match(/^rag:(\d+)$/);
-    if (match) return Number(match[1]);
-  }
-  return 0;
+  return internalKnowledgeMatchCount(retrieved);
 }
 
 function aggregateMetadata(
@@ -154,7 +152,7 @@ export async function recordAIChatTurn(input: AIChatTurnTelemetryInput): Promise
   const chatEvents = events.filter((event) => event.operation === "chat");
   const usedDeepResearch = boolean(diagnostics.used_deep_research) || aggregate.usedDeepResearch;
   const usedKnowledgeBase =
-    boolean(diagnostics.used_knowledge_base) || retrieved.some((value) => value.startsWith("rag:"));
+    boolean(diagnostics.used_knowledge_base) || hasInternalKnowledgeSupport(retrieved);
   const usedQuickResponse = boolean(diagnostics.used_quick_response) || aggregate.usedQuickResponse;
   const depth = diagnosticsDepth(diagnostics, aggregate);
   const response = responseMode(
