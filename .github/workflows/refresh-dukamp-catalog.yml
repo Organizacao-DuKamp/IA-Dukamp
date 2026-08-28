@@ -1,0 +1,65 @@
+name: Refresh DuKamp catalog snapshot
+
+on:
+  schedule:
+    - cron: "17 7 1 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-dukamp-catalog
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Refresh official DuKamp snapshot
+        run: node scripts/snapshot-dukamp-public-catalog.mjs
+
+      - name: Format snapshot
+        run: npx prettier --write src/lib/site/dukamp-catalog.snapshot.ts scripts/snapshot-dukamp-public-catalog.mjs
+
+      - name: Commercial catalog tests
+        run: npx tsx --test tests/site-commercial.test.ts
+
+      - name: Full test suite
+        run: npm test
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build Netlify preset
+        env:
+          NITRO_PRESET: netlify
+          TPEC_BACKEND_MODE: proxy
+          LOVABLE_BACKEND_URL: https://example.lovable.app
+          TPEC_PROXY_SECRET: ci-only-secret-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+        run: npm run build
+
+      - name: Commit refreshed snapshot
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/lib/site/dukamp-catalog.snapshot.ts
+          git diff --cached --quiet && exit 0
+          git commit -m "chore: atualizar snapshot mensal do catálogo DuKamp"
+          git push origin HEAD:main
