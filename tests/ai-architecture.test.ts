@@ -4,7 +4,12 @@ import { classifyDomainIntent, IntentSchema } from "../src/lib/chat/intent.ts";
 import { toolsForIntent, validateToolArguments } from "../src/lib/chat/tools.ts";
 import { redactLogValue, sanitizeRetrievedContent } from "../src/lib/chat/security.ts";
 import { stripUnmappedCitations, validateGrounding } from "../src/lib/chat/response-validation.ts";
-import { buildHistoryWindow, createConversationState } from "../src/lib/chat/state.ts";
+import {
+  buildHistoryWindow,
+  createConversationState,
+  estimateMessagesTokens,
+  renderSummaryForModel,
+} from "../src/lib/chat/state.ts";
 import { tpecAiCases } from "./evals/tpec-ai-cases.ts";
 
 test("matriz contém exatamente 40 avaliações independentes", () =>
@@ -64,6 +69,26 @@ test("janela preserva mensagens recentes", () => {
   const window = buildHistoryWindow(history, 300, 8);
   assert.equal(window.kept.at(-1)?.content, history.at(-1)?.content);
   assert.ok(window.dropped.length > 0);
+});
+test("janela respeita o orçamento mesmo com uma resposta enorme", () => {
+  const window = buildHistoryWindow([{ role: "assistant", content: "x".repeat(20_000) }], 120, 40);
+  assert.ok(window.truncated);
+  assert.ok(window.tokens <= 120);
+  assert.ok(estimateMessagesTokens(window.kept) <= 120);
+  assert.match(window.kept[0]?.content ?? "", /trecho antigo omitido/i);
+});
+test("resumo não repete fatos que já estão no estado", () => {
+  const state = createConversationState("c1");
+  state.confirmed_data = { species: "bovino", weight_kg: 420 };
+  state.conversation_summary = {
+    ...state.conversation_summary,
+    known_facts: ["species=bovino", "weight_kg=420", "farm=Santa Clara"],
+  };
+  const summary = renderSummaryForModel(state.conversation_summary, state);
+  assert.ok(summary);
+  assert.doesNotMatch(summary, /species=bovino/);
+  assert.doesNotMatch(summary, /weight_kg=420/);
+  assert.match(summary, /farm=Santa Clara/);
 });
 test("estado novo começa sem fatos persistidos", () =>
   assert.deepEqual(createConversationState("c1").confirmed_data, {}));

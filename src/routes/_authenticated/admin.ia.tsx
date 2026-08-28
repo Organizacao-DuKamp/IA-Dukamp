@@ -68,6 +68,40 @@ function formatUsd(value: number): string {
   }).format(Number.isFinite(value) ? value : 0);
 }
 
+function formatBrl(value: number | null | undefined): string {
+  if (value === null || value === undefined || !Number.isFinite(value)) {
+    return "BRL não configurado";
+  }
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 6,
+  }).format(value);
+}
+
+function metadataRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+}
+
+function metadataNumber(metadata: Record<string, unknown>, key: string): number | null {
+  const promptMetrics = metadataRecord(metadata.prompt_metrics);
+  const value = metadata[key] ?? promptMetrics[key];
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function stageCostSummary(metadata: Record<string, unknown>): string | null {
+  const stages = metadataRecord(metadata.usage_breakdown);
+  const entries = Object.entries(stages)
+    .map(([name, value]) => {
+      const cost = metadataNumber(metadataRecord(value), "costUsd");
+      return cost === null ? null : `${name}: ${formatUsd(cost)}`;
+    })
+    .filter((value): value is string => Boolean(value));
+  return entries.length > 0 ? entries.join(" · ") : null;
+}
+
 function formatDate(value: string | null | undefined): string {
   if (!value) return "—";
   const date = new Date(value);
@@ -344,9 +378,10 @@ function AdminAIAnalytics() {
                 label="Custo total estimado"
                 value={formatUsd(overview.total_cost_usd)}
                 detail={
-                  overview.pricing_configured
-                    ? "tarifas configuradas"
-                    : "configure as tarifas no ambiente"
+                  `${formatBrl(overview.total_cost_brl)} · ` +
+                  (overview.pricing_configured
+                    ? "tarifas disponíveis"
+                    : "configure as tarifas no ambiente")
                 }
                 icon={<DollarSign size={18} />}
               />
@@ -588,6 +623,17 @@ function AdminAIAnalytics() {
                             {formatUsd(turn.estimated_cost_usd)}
                           </strong>
                         </span>
+                        <span>BRL: {formatBrl(turn.estimated_cost_brl)}</span>
+                        <span>entrada: {formatNumber(turn.input_tokens)}</span>
+                        <span>saída: {formatNumber(turn.output_tokens)}</span>
+                        <span>cache: {formatNumber(turn.cached_input_tokens)}</span>
+                        <span>RAG: {formatNumber(turn.knowledge_match_count)}</span>
+                        {metadataNumber(turn.metadata, "sourceCount") !== null && (
+                          <span>
+                            fontes:{" "}
+                            {formatNumber(metadataNumber(turn.metadata, "sourceCount") ?? 0)}
+                          </span>
+                        )}
                         <span>tokens: {formatNumber(turn.total_tokens)}</span>
                         <span>modelo: {turn.model || "não informado"}</span>
                         <span>rota: {turn.route_reason || turn.response_mode}</span>
@@ -596,6 +642,11 @@ function AdminAIAnalytics() {
                         </span>
                         {turn.web_search_enabled && (
                           <span>Web Search: {turn.web_search_calls} chamada(s)</span>
+                        )}
+                        {stageCostSummary(turn.metadata) && (
+                          <span className="basis-full">
+                            etapas: {stageCostSummary(turn.metadata)}
+                          </span>
                         )}
                       </div>
                     </article>

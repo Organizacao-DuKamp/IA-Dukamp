@@ -1590,7 +1590,7 @@ export function renderWeatherIntelligenceContext(intelligence: WeatherIntelligen
   const windows = rainWindows(intelligence);
   const sourceLines = intelligence.sources.map(
     (source) =>
-      `- ${source.label}: ${source.status}; tipo=${source.kind}; duração=${source.durationMs} ms; URL=${source.url}${source.detail ? `; detalhe=${source.detail}` : ""}`,
+      `- ${source.label}: ${source.status}; tipo=${source.kind}${source.detail ? `; detalhe=${source.detail.slice(0, 240)}` : ""}`,
   );
 
   return [
@@ -1630,9 +1630,10 @@ export function renderWeatherIntelligenceContext(intelligence: WeatherIntelligen
       : "Janelas horárias: nenhuma janela com sinal de chuva >=25% ou >=0,1 mm foi encontrada na janela solicitada.",
     intelligence.alerts.length
       ? `ALERTAS OFICIAIS INMET ATIVOS PARA O PONTO/MUNICÍPIO:\n${intelligence.alerts
+          .slice(0, 4)
           .map(
             (alert) =>
-              `- ${alert.event}; severidade=${alert.severity ?? "n/d"}; início=${alert.onset ?? "n/d"}; expira=${alert.expires ?? "n/d"}; área=${alert.area ?? "n/d"}; ${alert.description ?? ""}`,
+              `- ${alert.event}; severidade=${alert.severity ?? "n/d"}; início=${alert.onset ?? "n/d"}; expira=${alert.expires ?? "n/d"}; área=${alert.area ?? "n/d"}; ${(alert.description ?? "").slice(0, 600)}`,
           )
           .join("\n")}`
       : "Alertas oficiais INMET: nenhum alerta aplicável foi identificado pela camada estruturada; não transforme isso em garantia de ausência de risco se a fonte de alertas estiver marcada como failed.",

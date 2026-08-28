@@ -38,11 +38,13 @@ test("aggregateAIUsage soma tokens, pesquisa e custo configurado", async () => {
     cached: process.env.OPENAI_TPEC_TERRA_CACHED_INPUT_USD_PER_1M,
     output: process.env.OPENAI_TPEC_TERRA_OUTPUT_USD_PER_1M,
     search: process.env.OPENAI_WEB_SEARCH_USD_PER_CALL,
+    fx: process.env.TPEC_USD_TO_BRL,
   };
   process.env.OPENAI_TPEC_TERRA_INPUT_USD_PER_1M = "2";
   process.env.OPENAI_TPEC_TERRA_CACHED_INPUT_USD_PER_1M = "0.5";
   process.env.OPENAI_TPEC_TERRA_OUTPUT_USD_PER_1M = "8";
   process.env.OPENAI_WEB_SEARCH_USD_PER_CALL = "0.01";
+  process.env.TPEC_USD_TO_BRL = "5";
 
   try {
     const aggregate = await withAIUsageContext(async (events) => {
@@ -52,6 +54,9 @@ test("aggregateAIUsage soma tokens, pesquisa e custo configurado", async () => {
         model: "custom-terra",
         modelTier: "terra",
         routeReason: "deep_research",
+        stage: "research_synthesis",
+        requestSequence: 1,
+        promptCacheKey: "tpec-terra-web",
         researchDepth: "high",
         webSearchEnabled: true,
         webSearchCalls: 2,
@@ -59,6 +64,12 @@ test("aggregateAIUsage soma tokens, pesquisa e custo configurado", async () => {
         cachedInputTokens: 200,
         outputTokens: 500,
         totalTokens: 1_500,
+        instructionChars: 2_000,
+        inputChars: 100,
+        contextChars: 300,
+        ragMatches: 3,
+        ragChars: 900,
+        sourceCount: 4,
       });
       return aggregateAIUsage(events);
     });
@@ -72,12 +83,18 @@ test("aggregateAIUsage soma tokens, pesquisa e custo configurado", async () => {
     assert.equal(aggregate.usedQuickResponse, false);
     assert.equal(aggregate.pricingConfigured, true);
     assert.ok(Math.abs(aggregate.costUsd - 0.0257) < 1e-12);
+    assert.ok(Math.abs((aggregate.costBrl ?? 0) - 0.1285) < 1e-12);
+    assert.equal(aggregate.usdToBrl, 5);
+    assert.equal(aggregate.stageBreakdown.research_synthesis.events, 1);
+    assert.equal(aggregate.promptMetrics.promptChars, 2_100);
+    assert.equal(aggregate.promptMetrics.ragMatches, 3);
   } finally {
     for (const [key, value] of Object.entries({
       OPENAI_TPEC_TERRA_INPUT_USD_PER_1M: previous.input,
       OPENAI_TPEC_TERRA_CACHED_INPUT_USD_PER_1M: previous.cached,
       OPENAI_TPEC_TERRA_OUTPUT_USD_PER_1M: previous.output,
       OPENAI_WEB_SEARCH_USD_PER_CALL: previous.search,
+      TPEC_USD_TO_BRL: previous.fx,
     })) {
       if (value === undefined) delete process.env[key];
       else process.env[key] = value;

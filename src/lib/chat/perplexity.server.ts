@@ -189,10 +189,12 @@ export async function researchChatGPT(
     "CHATGPT_WEB_SEARCH_REQUIRED",
     `PROFILE: ${profile}`,
     `DEPTH: ${depth}`,
-    `QUERY: ${cleanQuery}`,
-    "GOAL: pesquise na web antes de responder, valide os fatos relevantes e use o resultado diretamente na resposta deste turno.",
+    options.weatherLocation ? `TARGET: ${options.weatherLocation}` : null,
+    "GOAL: pesquise na web antes de responder, valide os fatos relevantes e use somente a evidência necessária na resposta deste turno.",
     ...guidance.map((item) => `- ${item}`),
-  ].join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 /**

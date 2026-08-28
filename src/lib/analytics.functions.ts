@@ -16,6 +16,7 @@ export type AIAnalyticsOverview = {
   completed_turns: number;
   failed_turns: number;
   total_cost_usd: number;
+  total_cost_brl: number | null;
   input_tokens: number;
   output_tokens: number;
   total_tokens: number;
@@ -68,6 +69,7 @@ export type AIAnalyticsTurn = {
   reasoning_tokens: number;
   total_tokens: number;
   estimated_cost_usd: number;
+  estimated_cost_brl: number | null;
   pricing_configured: boolean;
   pricing_source: string | null;
   duration_ms: number | null;
@@ -124,6 +126,12 @@ function asBoolean(value: unknown): boolean {
   return value === true || value === "true";
 }
 
+function asNullableNumber(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" ? (value as Record<string, unknown>) : {};
 }
@@ -138,6 +146,7 @@ function normalizeOverview(value: unknown): AIAnalyticsOverview {
     completed_turns: asNumber(row.completed_turns),
     failed_turns: asNumber(row.failed_turns),
     total_cost_usd: asNumber(row.total_cost_usd),
+    total_cost_brl: asNullableNumber(row.total_cost_brl),
     input_tokens: asNumber(row.input_tokens),
     output_tokens: asNumber(row.output_tokens),
     total_tokens: asNumber(row.total_tokens),
@@ -200,6 +209,7 @@ function normalizeTurn(value: unknown): AIAnalyticsTurn {
     reasoning_tokens: asNumber(row.reasoning_tokens),
     total_tokens: asNumber(row.total_tokens),
     estimated_cost_usd: asNumber(row.estimated_cost_usd),
+    estimated_cost_brl: asNullableNumber(row.estimated_cost_brl),
     pricing_configured: asBoolean(row.pricing_configured),
     pricing_source: typeof row.pricing_source === "string" ? row.pricing_source : null,
     duration_ms: row.duration_ms === null ? null : asNumber(row.duration_ms),
@@ -210,7 +220,7 @@ function normalizeTurn(value: unknown): AIAnalyticsTurn {
 }
 
 const HISTORY_COLUMNS =
-  "id,conversation_id,user_key,phone_number,channel,client_message_id,user_text,assistant_text,status,error_code,error_message,model,model_tier,route_reason,response_mode,research_depth,used_deep_research,used_knowledge_base,knowledge_match_count,used_quick_response,web_search_enabled,web_search_calls,input_tokens,output_tokens,cached_input_tokens,reasoning_tokens,total_tokens,estimated_cost_usd,pricing_configured,pricing_source,duration_ms,created_at,completed_at,metadata";
+  "id,conversation_id,user_key,phone_number,channel,client_message_id,user_text,assistant_text,status,error_code,error_message,model,model_tier,route_reason,response_mode,research_depth,used_deep_research,used_knowledge_base,knowledge_match_count,used_quick_response,web_search_enabled,web_search_calls,input_tokens,output_tokens,cached_input_tokens,reasoning_tokens,total_tokens,estimated_cost_usd,estimated_cost_brl,pricing_configured,pricing_source,duration_ms,created_at,completed_at,metadata";
 
 function applyDateRange(query: any, range: { from: string | null; to: string | null }) {
   let current = query;
@@ -227,7 +237,7 @@ export const aiAnalyticsOverview = createServerFn({ method: "GET" })
     const { getPrivilegedClient } = await import("@/lib/privileged.server");
     const db = (await getPrivilegedClient((context as AdminContext).supabase)) as any;
     const range = rangeValues(data);
-    const { data: rows, error } = await db.rpc("admin_ai_chat_overview", {
+    const { data: rows, error } = await db.rpc("admin_ai_chat_overview_v2", {
       p_from: range.from,
       p_to: range.to,
     });

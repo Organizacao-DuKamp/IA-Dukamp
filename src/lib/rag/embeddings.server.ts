@@ -224,6 +224,8 @@ async function embedBatch(
         operation: "embedding",
         model: embeddingModel(),
         modelTier: "embedding",
+        stage: options.purpose === "query" ? "rag_query" : "rag_ingestion",
+        inputChars: inputs.reduce((sum, item) => sum + item.length, 0),
         routeReason: options.purpose,
         durationMs: Date.now() - started,
         ...parseOpenAIUsage(data.usage),

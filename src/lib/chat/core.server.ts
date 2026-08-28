@@ -111,6 +111,26 @@ function isSmallTalk(raw: string): boolean {
   );
 }
 
+function asksForTechnicalProductDetails(raw: string): boolean {
+  return /\b(composi[cç][aã]o|garantia|indica[cç][aã]o|consumo|modo\s+de\s+uso|como\s+usar|para\s+que\s+serve|serve\s+para|ficha\s+t[eé]cnica|descri[cç][aã]o|detalhes?|foto|imagem)\b/i.test(
+    raw,
+  );
+}
+
+function asksForDeepResearch(raw: string): boolean {
+  return /\b(pesquisa\s+(?:profunda|aprofundada)|an[aá]lise\s+(?:profunda|aprofundada)|investigue\s+(?:a\s+)?fundo|em\s+profundidade|deep\s+research|aprofundad[ao]s?)\b/i.test(
+    raw,
+  );
+}
+
+function ragMatchCount(retrieved: string[]): number {
+  for (const value of retrieved) {
+    const match = value.match(/^rag:(\d+)$/i);
+    if (match) return Math.max(0, Number(match[1]));
+  }
+  return 0;
+}
+
 export class ChatError extends Error {
   readonly status: number;
 
@@ -380,11 +400,20 @@ async function runTurn(
   }
 
   if (routed.kind === "structural") {
-    contextParts.push(
-      `DADOS ESTRUTURADOS DO CATÁLOGO (use se ajudar o pedido atual):\n${routed.text}`,
-    );
+    const blockLabel =
+      domainIntent.intent === "seller_contact" || domainIntent.intent === "store"
+        ? "DADOS ESTRUTURADOS DE ATENDIMENTO"
+        : "DADOS ESTRUTURADOS DO CATÁLOGO";
+    contextParts.push(`${blockLabel} (use se ajudar o pedido atual):\n${routed.text}`);
     if (!weatherTurn.isWeatherTurn) retrieved.push("sql:context");
-    hasCatalogEvidence = true;
+    // O roteador já consultou a fonte oficial e montou o bloco final. Não
+    // execute um segundo lookup do mesmo catálogo abaixo; além de economizar
+    // I/O, isso evita reenviar a mesma lista ao modelo.
+    if (domainIntent.intent === "seller_contact" || domainIntent.intent === "store") {
+      hasSiteEvidence = true;
+    } else {
+      hasCatalogEvidence = true;
+    }
   }
   if (routed.kind !== "structural" && routed.marketContext) {
     contextParts.push(routed.marketContext);
@@ -392,18 +421,32 @@ async function runTurn(
     hasMarketEvidence = true;
   }
   if (routed.kind !== "structural" && routed.productHint) {
-    contextParts.push(productContextBlock(routed.productHint.product));
+    contextParts.push(
+      productContextBlock(routed.productHint.product, {
+        compact: domainIntent.intent === "internal_price" && !asksForTechnicalProductDetails(text),
+      }),
+    );
     retrieved.push("produto");
     hasCatalogEvidence = true;
   }
 
-  const lookupText = routerInput !== text ? `${routerInput} ${text}` : text;
+  // Para busca de site/RAG, não precisamos enviar a pergunta duas vezes. O
+  // histórico e a pergunta completa continuam no contexto principal do GPT.
+  const lookupText =
+    routerInput.trim() === text.trim()
+      ? text.slice(0, 1_200)
+      : `${routerInput.trim()}\n${text.trim()}`.slice(0, 1_200);
 
-  if (!weatherLocation && !weatherLocationRequired && !conversationalOnly) {
+  if (
+    !weatherLocation &&
+    !weatherLocationRequired &&
+    !conversationalOnly &&
+    routed.kind !== "structural"
+  ) {
     try {
       const { executeCommercialLookup, querySiteProducts, siteBlock } =
         await import("../site/site-lookup.server");
-      const productHint = routed.kind !== "structural" ? routed.productHint : undefined;
+      const productHint = routed.productHint;
       const commercial = await executeCommercialLookup(domainIntent, lookupText);
       const lookup = commercial.lookup;
       retrieved.push(...commercial.statuses);
@@ -449,7 +492,25 @@ async function runTurn(
           );
         }
       }
-      const block = siteBlock(lookup);
+      const hints = /\b(foto|imagem)\b/i.test(lookupText);
+      const includeDescriptions =
+        !routed.productHint &&
+        (domainIntent.intent === "product_recommendation" ||
+          domainIntent.intent === "product" ||
+          asksForTechnicalProductDetails(lookupText));
+      const block = siteBlock(lookup, {
+        includeDescriptions,
+        includeMedia: hints,
+        maxItems:
+          domainIntent.intent === "seller_contact"
+            ? 30
+            : domainIntent.intent === "product_recommendation"
+              ? 4
+              : routed.productHint
+                ? 1
+                : 8,
+        maxDescriptionChars: includeDescriptions ? 2_200 : 800,
+      });
       if (block) {
         contextParts.push(block);
         retrieved.push("site");
@@ -463,6 +524,8 @@ async function runTurn(
   const skipRag =
     conversationalOnly ||
     weatherLocationRequired ||
+    routed.kind === "structural" ||
+    (domainIntent.intent === "internal_price" && !asksForTechnicalProductDetails(text)) ||
     (analysis.isShort &&
       (analysis.intent === "resposta_a_confirmacao" ||
         analysis.intent === "selecao_de_opcao" ||
@@ -475,7 +538,7 @@ async function runTurn(
       if (matches.length > 0) {
         knowledgeScores.push(...matches.map((match) => match.similarity));
         const rag = matches
-          .map((m, i) => `[TRECHO ${i + 1}]\n${sanitizeRetrievedContent(m.content)}`)
+          .map((m, i) => `[TRECHO ${i + 1}]\n${sanitizeRetrievedContent(m.content, 1_600)}`)
           .join("\n\n---\n\n");
         contextParts.push(
           `TRECHOS TÉCNICOS DA BASE INTERNA (uso interno; NÃO cite fontes, arquivos nem porcentagens; use só o que servir ao pedido atual):\n\n${rag}`,
@@ -513,6 +576,8 @@ async function runTurn(
         : domainIntent.needs_web_search ||
           requiresCurrentMarketSearch ||
           needsExternalProductFallback;
+
+  let requestedResearchDepth: "none" | "medium" | "high" = needsWebResearch ? "medium" : "none";
 
   if (needsWebResearch) {
     const livestock = livestockContextFromState(state);
@@ -552,6 +617,14 @@ async function runTurn(
       retrieved.push(weatherLocation ? "chatgpt:web-weather" : "chatgpt:web");
       if (isCurrentMarketTurn) hasMarketEvidence = true;
     }
+
+    if (
+      asksForDeepResearch(text) ||
+      (weatherIntelligence?.analysis.depth === "deep" &&
+        weatherIntelligence.analysis.needsWebCrosscheck)
+    ) {
+      requestedResearchDepth = "high";
+    }
   }
 
   const directive = buildInterpretationDirective(stateBefore, analysis, text);
@@ -588,16 +661,32 @@ async function runTurn(
       : baseSourcePolicy;
     const modelContext = contextParts.length > 0 ? contextParts.join("\n\n") : null;
     const modelKind = chatModelKindForChannel(input.channel);
+    const promptTelemetry = {
+      historyMessages: conversation.length,
+      historyTokensEstimated: estimateMessagesTokens(conversation),
+      contextChars: modelContext?.length ?? 0,
+      ragMatches: ragMatchCount(retrieved),
+      ragChars: modelContext
+        ? contextParts
+            .filter((part) => part.startsWith("TRECHOS TÉCNICOS DA BASE INTERNA"))
+            .reduce((sum, part) => sum + part.length, 0)
+        : 0,
+      sourceCount:
+        retrieved.filter((value) => !value.startsWith("weather:structured:")).length +
+        (weatherIntelligence?.sources.length ?? 0),
+    };
 
     let reply = await askOpenAI(conversation, {
       model: modelKind,
       channel: input.channel,
-      summary: renderSummaryForModel(state.conversation_summary),
+      summary: renderSummaryForModel(state.conversation_summary, state),
       state: renderStateForModel(state),
       directive,
       sourcePolicy,
       context: modelContext,
-      researchDepth: conversationalOnly || weatherLocationRequired ? "none" : undefined,
+      researchDepth: requestedResearchDepth,
+      stage: requestedResearchDepth === "none" ? "final_response" : "research_synthesis",
+      telemetry: promptTelemetry,
     });
 
     let grounding = validateGrounding(reply, {
@@ -613,7 +702,7 @@ async function runTurn(
       reply = await askOpenAI(conversation, {
         model: modelKind,
         channel: input.channel,
-        summary: renderSummaryForModel(state.conversation_summary),
+        summary: renderSummaryForModel(state.conversation_summary, state),
         state: renderStateForModel(state),
         directive,
         sourcePolicy:
@@ -621,6 +710,8 @@ async function runTurn(
           "Use a pesquisa web já habilitada neste turno e entregue a publicação confiável mais recente. Todo preço precisa trazer unidade, praça, data explícita com ano e fonte identificada. Não ofereça pesquisar depois.",
         context: modelContext,
         researchDepth: "high",
+        stage: "validation_retry_market",
+        telemetry: promptTelemetry,
       });
       grounding = validateGrounding(reply, {
         commercial: hasCatalogEvidence || hasSiteEvidence || hasMarketEvidence,
@@ -652,14 +743,16 @@ async function runTurn(
         reply = await askOpenAI(conversation, {
           model: modelKind,
           channel: input.channel,
-          summary: renderSummaryForModel(state.conversation_summary),
+          summary: renderSummaryForModel(state.conversation_summary, state),
           state: renderStateForModel(state),
           directive,
           sourcePolicy:
             `${sourcePolicy}\nCORREÇÃO METEOROLÓGICA OBRIGATÓRIA: a tentativa anterior falhou em ${weatherGrounding.issues.join(", ")}. ` +
             `Reescreva a resposta para ${weatherLocation} usando os dados estruturados e, quando marcado no contexto, o Web Search nativo. Inclua localização, data explícita com ano, hora/fuso da atualização, fontes identificadas, chuva, temperatura, vento/rajadas, umidade e alertas quando disponíveis. Se os modelos divergirem, informe faixa/consenso e confiança.`,
           context: modelContext,
-          researchDepth: needsWebResearch ? "high" : undefined,
+          researchDepth: needsWebResearch ? "high" : "none",
+          stage: "validation_retry_weather",
+          telemetry: promptTelemetry,
         });
         weatherGrounding = validateWeatherGrounding(reply, weatherLocation);
         grounding = validateGrounding(reply, {
@@ -682,12 +775,14 @@ async function runTurn(
       reply = await askOpenAI(conversation, {
         model: modelKind,
         channel: input.channel,
-        summary: renderSummaryForModel(state.conversation_summary),
+        summary: renderSummaryForModel(state.conversation_summary, state),
         state: renderStateForModel(state),
         directive,
         sourcePolicy: `${sourcePolicy}\nCORREÇÃO COMERCIAL: remova qualquer preço, estoque, disponibilidade, vendedor ou contato não confirmado pelos dados oficiais presentes no contexto. Responda de forma útil apenas com o que está sustentado.`,
         context: modelContext,
         researchDepth: "none",
+        stage: "validation_retry_commercial",
+        telemetry: promptTelemetry,
       });
     }
 

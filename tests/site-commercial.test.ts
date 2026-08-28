@@ -6,6 +6,7 @@ import {
   executeCommercialLookup,
   querySiteProducts,
   querySiteSellers,
+  siteBlock,
   type SiteLookupDependencies,
 } from "../src/lib/site/site-lookup.server.ts";
 
@@ -123,6 +124,26 @@ const sellers = [
     display_order: 2,
   },
 ];
+
+test("bloco comercial não envia descrições e mídias quando não foram pedidas", () => {
+  const longProduct = {
+    ...product,
+    description: "descrição técnica ".repeat(1_000),
+    images: Array.from({ length: 10 }, (_, index) => `https://example.com/image-${index}.webp`),
+  };
+  const compact = siteBlock({ products: [longProduct] });
+  assert.ok(compact.length < 1_000);
+  assert.doesNotMatch(compact, /descrição oficial/i);
+  assert.doesNotMatch(compact, /imagem oficial/i);
+
+  const detailed = siteBlock(
+    { products: [longProduct] },
+    { includeDescriptions: true, includeMedia: true, maxDescriptionChars: 2_200, maxItems: 1 },
+  );
+  assert.match(detailed, /descrição oficial/i);
+  assert.match(detailed, /imagem oficial/i);
+  assert.ok(detailed.length < 3_000);
+});
 
 test("variáveis ausentes produzem health check seguro", async () => {
   const health = await checkDukampSiteHealth({ configured: false });

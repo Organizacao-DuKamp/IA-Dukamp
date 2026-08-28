@@ -55,7 +55,8 @@ test("planejador gera marcador médio para Web Search nativo do ChatGPT", async 
   assert.match(plan, /CHATGPT_WEB_SEARCH_REQUIRED/);
   assert.match(plan, /PROFILE: market_intelligence/);
   assert.match(plan, /DEPTH: medium/);
-  assert.match(plan, /QUERY: panorama atual do mercado do boi gordo/);
+  assert.doesNotMatch(plan, /QUERY:/);
+  assert.match(plan, /use somente a evidência necessária/i);
   assert.match(plan, /pesquise na web antes de responder/i);
   assert.match(plan, /fontes primárias|dados primários/i);
 });

@@ -1,8 +1,8 @@
 // Semantic search over knowledge_chunks. Returns top matches with source metadata.
 
 import { logDiagnostic } from "../chat/diagnostics.server.ts";
-import { classifyDomainIntent } from "../chat/intent";
-import { embeddingProvider, embedQuery, toPgVector } from "./embeddings.server";
+import { classifyDomainIntent } from "../chat/intent.ts";
+import { embeddingProvider, embedQuery, toPgVector } from "./embeddings.server.ts";
 
 export interface Match {
   content: string;
@@ -17,6 +17,78 @@ function minimumExplicitSimilarity(): number {
   const configured = Number(process.env.TPEC_KNOWLEDGE_MIN_SIMILARITY ?? 0.72);
   if (!Number.isFinite(configured)) return 0.72;
   return Math.min(Math.max(configured, 0.6), 0.95);
+}
+
+const RAG_CACHE_TTL_MS = 10 * 60_000;
+const RAG_CACHE_MAX_ENTRIES = 128;
+const RAG_MAX_PER_DOCUMENT = 2;
+const RAG_MAX_CONTEXT_CHARS = 7_500;
+const ragCache = new Map<string, { at: number; value: Match[] }>();
+
+function cacheKey(query: string, matchCount: number, threshold: number): string {
+  return `${embeddingProvider()}|${threshold.toFixed(3)}|${Math.min(Math.max(matchCount, 1), 8)}|${query
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLocaleLowerCase("pt-BR")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 1_200)}`;
+}
+
+function needsExpandedContext(query: string, topSimilarity: number | null): boolean {
+  if (topSimilarity === null || topSimilarity < 0.82) return true;
+  return /\b(e|ou|versus|compar|diferen[cç]|passo\s+a\s+passo|detalh|formula|dimension|cen[aá]rio|por que|porque)\b/i.test(
+    query,
+  );
+}
+
+/** Seleção determinística: forte relevância, diversidade por documento e teto de contexto. */
+export function selectKnowledgeMatches(
+  candidates: Match[],
+  query: string,
+  requestedCount: number,
+  threshold = minimumExplicitSimilarity(),
+): Match[] {
+  const maxRequested = Math.min(Math.max(Math.trunc(requestedCount), 1), 8);
+  const topSimilarity =
+    candidates.find((match) => match.similarity >= threshold)?.similarity ?? null;
+  const target = Math.min(
+    maxRequested,
+    needsExpandedContext(query, topSimilarity) ? 6 : Math.min(3, maxRequested),
+  );
+  const selected: Match[] = [];
+  const perDocument = new Map<string, number>();
+  const seen = new Set<string>();
+  let chars = 0;
+
+  for (const match of candidates) {
+    if (match.similarity < threshold) continue;
+    const contentKey = match.content
+      .normalize("NFD")
+      .replace(/\p{Diacritic}/gu, "")
+      .toLocaleLowerCase("pt-BR")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (!contentKey || seen.has(contentKey)) continue;
+    const documentKey = match.filename || match.title || "unknown-document";
+    if ((perDocument.get(documentKey) ?? 0) >= RAG_MAX_PER_DOCUMENT) continue;
+    if (selected.length >= target) break;
+    if (chars + match.content.length > RAG_MAX_CONTEXT_CHARS && selected.length > 0) continue;
+    selected.push(match);
+    seen.add(contentKey);
+    perDocument.set(documentKey, (perDocument.get(documentKey) ?? 0) + 1);
+    chars += match.content.length;
+  }
+  return selected;
+}
+
+function remember(key: string, value: Match[]): void {
+  ragCache.set(key, { at: Date.now(), value });
+  while (ragCache.size > RAG_CACHE_MAX_ENTRIES) {
+    const first = ragCache.keys().next().value;
+    if (typeof first !== "string") break;
+    ragCache.delete(first);
+  }
 }
 
 export async function searchKnowledge(query: string, matchCount = 6): Promise<Match[]> {
@@ -51,6 +123,18 @@ export async function searchKnowledge(query: string, matchCount = 6): Promise<Ma
   }
 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const minimumSimilarity = minimumExplicitSimilarity();
+  const key = cacheKey(query, matchCount, minimumSimilarity);
+  const cached = ragCache.get(key);
+  if (cached && Date.now() - cached.at < RAG_CACHE_TTL_MS) {
+    logDiagnostic("info", "rag.search.cache_hit", {
+      requested_matches: matchCount,
+      returned_matches: cached.value.length,
+    });
+    return cached.value;
+  }
+  if (cached) ragCache.delete(key);
+
   const byKey = new Map<string, Match>();
   const errors: string[] = [];
   const totalStarted = Date.now();
@@ -126,11 +210,8 @@ export async function searchKnowledge(query: string, matchCount = 6): Promise<Ma
   // ChatGPT-first: a base privada só é considerada "evidência explícita" com
   // correspondência forte. Se nenhum trecho atingir o limiar, devolvemos [] e
   // o modelo fica livre para usar Web Search em vez de forçar um RAG parecido.
-  const minimumSimilarity = minimumExplicitSimilarity();
-  const matches = [...byKey.values()]
-    .filter((match) => match.similarity >= minimumSimilarity)
-    .sort((a, b) => b.similarity - a.similarity)
-    .slice(0, matchCount);
+  const candidates = [...byKey.values()].sort((a, b) => b.similarity - a.similarity);
+  const matches = selectKnowledgeMatches(candidates, query, matchCount, minimumSimilarity);
 
   logDiagnostic("info", "rag.search.finish", {
     duration_ms: Date.now() - totalStarted,
@@ -142,5 +223,6 @@ export async function searchKnowledge(query: string, matchCount = 6): Promise<Ma
     partial_errors: errors,
   });
 
+  remember(key, matches);
   return matches;
 }

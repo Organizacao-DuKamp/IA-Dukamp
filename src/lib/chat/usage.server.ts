@@ -8,16 +8,33 @@ export interface AIUsageEvent {
   operation: AIUsageOperation;
   model: string;
   modelTier?: string | null;
+  stage?: string | null;
+  requestSequence?: number;
+  promptCacheKey?: string | null;
   routeReason?: string | null;
   researchDepth?: AIUsageDepth;
   webSearchEnabled?: boolean;
   webSearchCalls?: number;
+  webSearchSources?: number;
   inputTokens?: number;
   outputTokens?: number;
   cachedInputTokens?: number;
   reasoningTokens?: number;
   totalTokens?: number;
   durationMs?: number;
+  inputChars?: number;
+  instructionChars?: number;
+  systemPromptChars?: number;
+  summaryChars?: number;
+  stateChars?: number;
+  directiveChars?: number;
+  sourcePolicyChars?: number;
+  contextChars?: number;
+  historyMessages?: number;
+  historyTokensEstimated?: number;
+  ragMatches?: number;
+  ragChars?: number;
+  sourceCount?: number;
   audioSeconds?: number;
 }
 
@@ -27,6 +44,27 @@ export interface ParsedAIUsage {
   cachedInputTokens: number;
   reasoningTokens: number;
   totalTokens: number;
+}
+
+export interface AIUsageStageAggregate extends ParsedAIUsage {
+  events: number;
+  costUsd: number;
+  durationMs: number;
+  webSearchCalls: number;
+  webSearchSources: number;
+}
+
+export interface AIUsagePromptMetrics {
+  requests: number;
+  promptChars: number;
+  instructionChars: number;
+  inputChars: number;
+  historyMessages: number;
+  historyTokensEstimated: number;
+  contextChars: number;
+  ragMatches: number;
+  ragChars: number;
+  sourceCount: number;
 }
 
 export interface AIUsageAggregate extends ParsedAIUsage {
@@ -41,6 +79,12 @@ export interface AIUsageAggregate extends ParsedAIUsage {
   usedQuickResponse: boolean;
   models: string[];
   operations: Record<string, number>;
+  stageBreakdown: Record<string, AIUsageStageAggregate>;
+  promptMetrics: AIUsagePromptMetrics;
+  webSearchSources: number;
+  costBrl: number | null;
+  usdToBrl: number | null;
+  usdToBrlSource: string;
 }
 
 type UsageContext = { events: AIUsageEvent[] };
@@ -91,6 +135,8 @@ export function recordAIUsageEvent(event: AIUsageEvent): void {
   usageContext.getStore()?.events.push({
     ...event,
     model: event.model.slice(0, 180),
+    stage: event.stage?.slice(0, 80),
+    promptCacheKey: event.promptCacheKey?.slice(0, 120),
     routeReason: event.routeReason?.slice(0, 120),
   });
 }
@@ -229,48 +275,28 @@ function rateFor(
   return { value: null, source: "" };
 }
 
-export function aggregateAIUsage(events: AIUsageEvent[]): AIUsageAggregate {
-  const chatEvents = events.filter((event) => event.operation === "chat");
-  const models = [...new Set(events.map((event) => event.model).filter(Boolean))];
-  const operations: Record<string, number> = {};
-  let inputTokens = 0;
-  let outputTokens = 0;
-  let cachedInputTokens = 0;
-  let reasoningTokens = 0;
-  let totalTokens = 0;
+type EventCost = {
+  costUsd: number;
+  pricingConfigured: boolean;
+  sources: string[];
+};
+
+function eventCost(event: AIUsageEvent): EventCost {
+  const input = finiteNonNegative(event.inputTokens);
+  const output = finiteNonNegative(event.outputTokens);
+  const cached = Math.min(input, finiteNonNegative(event.cachedInputTokens));
   let costUsd = 0;
   let pricingConfigured = true;
-  const configuredSources = new Set<string>();
-  let webSearchCalls = 0;
-  let webSearchEnabled = false;
+  const sources: string[] = [];
 
-  for (const event of events) {
-    const input = finiteNonNegative(event.inputTokens);
-    const output = finiteNonNegative(event.outputTokens);
-    const cached = Math.min(input, finiteNonNegative(event.cachedInputTokens));
-    inputTokens += input;
-    outputTokens += output;
-    cachedInputTokens += cached;
-    reasoningTokens += finiteNonNegative(event.reasoningTokens);
-    totalTokens += finiteNonNegative(event.totalTokens) || input + output;
-    operations[event.operation] = (operations[event.operation] ?? 0) + 1;
-    webSearchCalls += Math.trunc(finiteNonNegative(event.webSearchCalls));
-    webSearchEnabled ||= Boolean(event.webSearchEnabled);
-
-    if (event.operation === "transcription") {
-      const seconds = finiteNonNegative(event.audioSeconds);
-      const perMinute = envRate(["OPENAI_TRANSCRIPTION_USD_PER_MINUTE"]);
-      if (seconds > 0) {
-        if (perMinute.value === null) pricingConfigured = false;
-        else costUsd += (seconds / 60) * perMinute.value;
-        if (perMinute.source) configuredSources.add(perMinute.source);
-      } else {
-        pricingConfigured = false;
-        configuredSources.add("transcription:duration-missing");
-      }
-      continue;
-    }
-
+  if (event.operation === "transcription") {
+    const seconds = finiteNonNegative(event.audioSeconds);
+    const perMinute = envRate(["OPENAI_TRANSCRIPTION_USD_PER_MINUTE"]);
+    if (seconds > 0 && perMinute.value !== null) costUsd += (seconds / 60) * perMinute.value;
+    else pricingConfigured = false;
+    if (perMinute.source) sources.push(perMinute.source);
+    if (seconds <= 0) sources.push("transcription:duration-missing");
+  } else {
     const inputRate = rateFor(event, "input");
     const cachedRate = rateFor(event, "cached");
     const outputRate = rateFor(event, "output");
@@ -286,16 +312,124 @@ export function aggregateAIUsage(events: AIUsageEvent[]): AIUsageAggregate {
       if (outputRate.value === null) pricingConfigured = false;
       else costUsd += (output / 1_000_000) * outputRate.value;
     }
-    if (inputRate.source) configuredSources.add(inputRate.source);
-    if (cachedRate.source) configuredSources.add(cachedRate.source);
-    if (outputRate.source) configuredSources.add(outputRate.source);
+    if (inputRate.source) sources.push(inputRate.source);
+    if (cachedRate.source) sources.push(cachedRate.source);
+    if (outputRate.source) sources.push(outputRate.source);
   }
 
+  const webSearchCalls = Math.trunc(finiteNonNegative(event.webSearchCalls));
   if (webSearchCalls > 0) {
-    const searchRate = envRate(["OPENAI_WEB_SEARCH_USD_PER_CALL"]);
-    if (searchRate.value === null) pricingConfigured = false;
-    else costUsd += webSearchCalls * searchRate.value;
-    if (searchRate.source) configuredSources.add(searchRate.source);
+    const configured = envRate(["OPENAI_WEB_SEARCH_USD_PER_CALL"]);
+    // A pesquisa web da API é cobrada por chamada; o preço público de
+    // referência é US$10/1.000 chamadas (US$0,01 por chamada). O ambiente
+    // pode sobrescrever isso quando a conta/produto tiver outra tarifa.
+    const searchRateValue = configured.value ?? 0.01;
+    costUsd += webSearchCalls * searchRateValue;
+    sources.push(configured.source || "built-in:openai-web-search-per-call");
+  }
+
+  return { costUsd, pricingConfigured, sources };
+}
+
+function emptyStage(): AIUsageStageAggregate {
+  return {
+    inputTokens: 0,
+    outputTokens: 0,
+    cachedInputTokens: 0,
+    reasoningTokens: 0,
+    totalTokens: 0,
+    events: 0,
+    costUsd: 0,
+    durationMs: 0,
+    webSearchCalls: 0,
+    webSearchSources: 0,
+  };
+}
+
+function usdToBrl(): { value: number | null; source: string } {
+  return envRate(["TPEC_USD_TO_BRL"]);
+}
+
+export function aggregateAIUsage(events: AIUsageEvent[]): AIUsageAggregate {
+  const chatEvents = events.filter((event) => event.operation === "chat");
+  const models = [...new Set(events.map((event) => event.model).filter(Boolean))];
+  const operations: Record<string, number> = {};
+  const stageBreakdown: Record<string, AIUsageStageAggregate> = {};
+  const promptMetrics: AIUsagePromptMetrics = {
+    requests: 0,
+    promptChars: 0,
+    instructionChars: 0,
+    inputChars: 0,
+    historyMessages: 0,
+    historyTokensEstimated: 0,
+    contextChars: 0,
+    ragMatches: 0,
+    ragChars: 0,
+    sourceCount: 0,
+  };
+  let inputTokens = 0;
+  let outputTokens = 0;
+  let cachedInputTokens = 0;
+  let reasoningTokens = 0;
+  let totalTokens = 0;
+  let costUsd = 0;
+  let pricingConfigured = true;
+  const configuredSources = new Set<string>();
+  let webSearchCalls = 0;
+  let webSearchSources = 0;
+  let webSearchEnabled = false;
+
+  for (const event of events) {
+    const input = finiteNonNegative(event.inputTokens);
+    const output = finiteNonNegative(event.outputTokens);
+    const cached = Math.min(input, finiteNonNegative(event.cachedInputTokens));
+    inputTokens += input;
+    outputTokens += output;
+    cachedInputTokens += cached;
+    reasoningTokens += finiteNonNegative(event.reasoningTokens);
+    totalTokens += finiteNonNegative(event.totalTokens) || input + output;
+    operations[event.operation] = (operations[event.operation] ?? 0) + 1;
+    const eventWebSearchCalls = Math.trunc(finiteNonNegative(event.webSearchCalls));
+    const eventWebSearchSources = Math.trunc(finiteNonNegative(event.webSearchSources));
+    webSearchCalls += eventWebSearchCalls;
+    webSearchSources += eventWebSearchSources;
+    webSearchEnabled ||= Boolean(event.webSearchEnabled);
+
+    const details = eventCost(event);
+    costUsd += details.costUsd;
+    pricingConfigured &&= details.pricingConfigured;
+    for (const source of details.sources) configuredSources.add(source);
+
+    const stageName = event.stage?.trim() || event.operation;
+    const stage = (stageBreakdown[stageName] ??= emptyStage());
+    stage.inputTokens += input;
+    stage.outputTokens += output;
+    stage.cachedInputTokens += cached;
+    stage.reasoningTokens += finiteNonNegative(event.reasoningTokens);
+    stage.totalTokens += finiteNonNegative(event.totalTokens) || input + output;
+    stage.events += 1;
+    stage.costUsd += details.costUsd;
+    stage.durationMs += finiteNonNegative(event.durationMs);
+    stage.webSearchCalls += eventWebSearchCalls;
+    stage.webSearchSources += eventWebSearchSources;
+
+    if (event.operation === "chat") promptMetrics.requests += 1;
+    promptMetrics.promptChars +=
+      finiteNonNegative(event.instructionChars) + finiteNonNegative(event.inputChars);
+    promptMetrics.instructionChars += finiteNonNegative(event.instructionChars);
+    promptMetrics.inputChars += finiteNonNegative(event.inputChars);
+    promptMetrics.historyMessages += finiteNonNegative(event.historyMessages);
+    promptMetrics.historyTokensEstimated += finiteNonNegative(event.historyTokensEstimated);
+    promptMetrics.contextChars += finiteNonNegative(event.contextChars);
+    promptMetrics.ragMatches = Math.max(
+      promptMetrics.ragMatches,
+      finiteNonNegative(event.ragMatches),
+    );
+    promptMetrics.ragChars = Math.max(promptMetrics.ragChars, finiteNonNegative(event.ragChars));
+    promptMetrics.sourceCount = Math.max(
+      promptMetrics.sourceCount,
+      finiteNonNegative(event.sourceCount),
+    );
   }
 
   const researchDepth = maxDepth(events);
@@ -305,6 +439,7 @@ export function aggregateAIUsage(events: AIUsageEvent[]): AIUsageAggregate {
     chatEvents.every(
       (event) => event.modelTier === "luna" || event.routeReason === "lightweight_turn",
     );
+  const fx = usdToBrl();
 
   return {
     inputTokens,
@@ -325,5 +460,11 @@ export function aggregateAIUsage(events: AIUsageEvent[]): AIUsageAggregate {
     usedQuickResponse,
     models,
     operations,
+    stageBreakdown,
+    promptMetrics,
+    webSearchSources,
+    costBrl: fx.value === null ? null : costUsd * fx.value,
+    usdToBrl: fx.value,
+    usdToBrlSource: fx.source,
   };
 }

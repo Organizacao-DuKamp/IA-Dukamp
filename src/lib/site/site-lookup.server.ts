@@ -740,10 +740,18 @@ export async function executeCommercialLookup(
     ["product", "product_recommendation", "internal_price"].includes(intent.intent) ||
     hints.productAsset
   ) {
+    const productLimit =
+      intent.intent === "internal_price"
+        ? 3
+        : intent.intent === "product_recommendation"
+          ? 8
+          : hints.listProducts
+            ? 20
+            : 6;
     const products =
       intent.intent === "product_recommendation" || PURPOSE_RE.test(text)
-        ? await queryRecommendedSiteProducts(text, 8, deps)
-        : await querySiteProducts(text, 12, deps, hints.listProducts);
+        ? await queryRecommendedSiteProducts(text, productLimit, deps)
+        : await querySiteProducts(text, productLimit, deps, hints.listProducts);
     if (products.data.length) lookup.products = products.data;
     statuses.push(`site-products:${products.status}`);
   }
@@ -769,11 +777,30 @@ function fmtPrice(n: number | null): string {
   }
 }
 
+export interface SiteBlockOptions {
+  /** Inclui descrição técnica somente quando ela ajuda a responder o pedido. */
+  includeDescriptions?: boolean;
+  /** URLs de mídia só são necessárias quando o usuário pediu imagem/foto. */
+  includeMedia?: boolean;
+  /** Limite total de produtos/vendedores apresentados ao modelo. */
+  maxItems?: number;
+  /** Limite por descrição, com teto defensivo para evitar páginas inteiras. */
+  maxDescriptionChars?: number;
+}
+
 /** Format a compact block for the LLM (or direct reply). */
-export function siteBlock(look: SiteLookup): string {
+export function siteBlock(look: SiteLookup, options: SiteBlockOptions = {}): string {
   const parts: string[] = [];
+  const maxItems = Math.min(Math.max(Math.trunc(options.maxItems ?? 12), 1), 30);
+  const includeDescriptions = options.includeDescriptions ?? false;
+  const includeMedia = options.includeMedia ?? false;
+  const maxDescriptionChars = Math.min(
+    Math.max(Math.trunc(options.maxDescriptionChars ?? 2_400), 400),
+    4_000,
+  );
   if (look.products && look.products.length > 0) {
-    const lines = look.products.map((p) => {
+    const products = look.products.slice(0, maxItems);
+    const lines = products.map((p) => {
       const publicPrice =
         p.on_sale && p.sale_consumer_price != null
           ? p.sale_consumer_price
@@ -791,16 +818,15 @@ export function siteBlock(look: SiteLookup): string {
         p.stock != null ? `estoque: ${p.stock}` : null,
         p.weight != null ? `peso: ${p.weight} kg` : p.peso != null ? `peso: ${p.peso} kg` : null,
       ].filter(Boolean);
-      const descriptionLimit = look.products!.length <= 2 ? 12000 : 1800;
-      const officialDescription = stripHtml(p.description?.trim() ?? "");
+      const officialDescription = includeDescriptions ? stripHtml(p.description?.trim() ?? "") : "";
       const description = officialDescription
-        ? `\n  descrição oficial: ${officialDescription.slice(0, descriptionLimit)}`
+        ? `\n  descrição oficial: ${officialDescription.slice(0, maxDescriptionChars)}`
         : "";
-      const images = (p.images ?? []).filter(Boolean).slice(0, look.products!.length <= 2 ? 10 : 3);
-      const imageLine = images.length ? `\n  imagens oficiais: ${images.join(" | ")}` : "";
+      const images = includeMedia ? (p.images ?? []).filter(Boolean).slice(0, 1) : [];
+      const imageLine = images.length ? `\n  imagem oficial: ${images[0]}` : "";
       return `- ${p.name}${details.length ? ` — ${details.join("; ")}` : ""}${description}${imageLine}`;
     });
-    const snapshotNote = look.products.some((product) => product.source === "snapshot")
+    const snapshotNote = products.some((product) => product.source === "snapshot")
       ? "\nOBS.: itens marcados pelo snapshot servem para descrição, identificação e imagens; preço e estoque só devem ser afirmados quando vierem do catálogo vivo neste turno."
       : "";
     parts.push(
@@ -808,14 +834,13 @@ export function siteBlock(look: SiteLookup): string {
     );
   }
   if (look.sellers && look.sellers.length > 0) {
-    const lines = look.sellers.map((s) => {
+    const sellers = look.sellers.slice(0, maxItems);
+    const lines = sellers.map((s) => {
       const role = s.role ? ` — ${s.role}` : "";
       const region = s.region ? ` — ${s.region}` : "";
       const wpp = s.whatsapp ? ` — WhatsApp: ${s.whatsapp}` : s.phone ? ` — Tel: ${s.phone}` : "";
-      const media = [s.photo_url, s.cutout_url, s.banner_url].filter(Boolean);
-      const mediaLine = media.length
-        ? `\n  imagens oficiais do vendedor: ${media.join(" | ")}`
-        : "";
+      const media = includeMedia ? [s.photo_url, s.cutout_url, s.banner_url].filter(Boolean) : [];
+      const mediaLine = media.length ? `\n  imagem oficial do vendedor: ${media[0]}` : "";
       return `- ${s.name}${role}${region}${wpp}${mediaLine}`;
     });
     parts.push(`DADOS DO SITE DUKAMP — VENDEDORES:\n${lines.join("\n")}`);

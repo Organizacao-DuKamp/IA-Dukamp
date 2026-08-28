@@ -1143,8 +1143,16 @@ export async function routeQuery(
   return { kind: "passthrough" };
 }
 
+export interface ProductContextBlockOptions {
+  /** Fatos mínimos para desambiguar um preço/estoque sem repetir a ficha. */
+  compact?: boolean;
+}
+
 /** Build a structured product context block to feed the LLM (never exposed raw to user). */
-export function productContextBlock(p: ProductMention["product"]): string {
+export function productContextBlock(
+  p: ProductMention["product"],
+  options: ProductContextBlockOptions = {},
+): string {
   const rows: string[] = [`FICHA OFICIAL DO PRODUTO **${p.official_name}**`];
   const push = (label: string, v: string | null) => {
     if (v && v.trim()) rows.push(`- ${label}: ${v.trim()}`);
@@ -1153,6 +1161,7 @@ export function productContextBlock(p: ProductMention["product"]): string {
   push("Categoria", p.category);
   push("Fase animal", p.animal_phase);
   push("Embalagem", p.package_weight);
+  if (options.compact) return rows.join("\n");
   push("Indicação", p.indication);
   push("Consumo", p.consumption);
   push("Modo de uso", p.usage_instructions);

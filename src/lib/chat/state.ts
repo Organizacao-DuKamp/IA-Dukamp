@@ -905,9 +905,9 @@ export interface WindowResult {
 }
 
 /**
- * Monta a janela de histórico: mantém as últimas KEEP_FULL_TURNS mensagens
- * sempre (nunca corta uma pergunta pendente e sua resposta) e adiciona as mais
- * antigas enquanto couber no orçamento de tokens.
+ * Monta a janela de histórico priorizando as mensagens mais recentes e
+ * respeitando de fato o orçamento de tokens. O resumo/estado estruturado
+ * preserva os fatos que ficaram fora da janela.
  */
 export function buildHistoryWindow(
   history: ChatMessage[],
@@ -916,26 +916,45 @@ export function buildHistoryWindow(
 ): WindowResult {
   const recentCap = history.slice(-maxMessages);
   const dropped: ChatMessage[] = history.slice(0, Math.max(0, history.length - maxMessages));
-  const mandatory = recentCap.slice(-KEEP_FULL_TURNS);
-  const older = recentCap.slice(0, Math.max(0, recentCap.length - KEEP_FULL_TURNS));
-
-  let tokens = estimateMessagesTokens(mandatory);
-  const kept: ChatMessage[] = [];
+  const keptReverse: ChatMessage[] = [];
+  let tokens = 0;
   let truncated = dropped.length > 0;
 
-  for (let i = older.length - 1; i >= 0; i--) {
-    const cost = estimateTokens(older[i].content) + 4;
-    if (tokens + cost > budgetTokens) {
-      dropped.unshift(...older.slice(0, i + 1));
-      truncated = true;
-      break;
+  // A versão anterior mantinha sempre dez mensagens, mesmo quando uma única
+  // resposta tinha milhares de caracteres. O orçamento agora é efetivo: a
+  // janela preserva o trecho mais recente e usa o resumo estruturado para o
+  // que ficou fora dela. Se a mensagem mais recente sozinha exceder o limite,
+  // preservamos início e fim, marcando a omissão.
+  for (let i = recentCap.length - 1; i >= 0; i -= 1) {
+    const message = recentCap[i];
+    const cost = estimateTokens(message.content) + 4;
+    if (tokens + cost <= budgetTokens) {
+      keptReverse.push(message);
+      tokens += cost;
+      continue;
     }
-    tokens += cost;
-    kept.unshift(older[i]);
+
+    const availableTokens = Math.max(0, budgetTokens - tokens - 4);
+    if (keptReverse.length === 0 && availableTokens > 8) {
+      const maxChars = availableTokens * 4;
+      const headChars = Math.max(1, Math.floor(maxChars * 0.65));
+      const tailChars = Math.max(1, maxChars - headChars - 40);
+      keptReverse.push({
+        role: message.role,
+        content:
+          message.content.slice(0, headChars) +
+          "\n[… trecho antigo omitido da janela …]\n" +
+          message.content.slice(-tailChars),
+      });
+      tokens = budgetTokens;
+    }
+    dropped.unshift(...recentCap.slice(0, i + 1));
+    truncated = true;
+    break;
   }
 
   return {
-    kept: [...kept, ...mandatory],
+    kept: keptReverse.reverse(),
     dropped,
     tokens,
     truncated,
@@ -973,16 +992,31 @@ export function renderStateForModel(state: ConversationState): string {
   return JSON.stringify(payload, null, 0);
 }
 
-export function renderSummaryForModel(summary: ConversationSummary): string | null {
+export function renderSummaryForModel(
+  summary: ConversationSummary,
+  state?: ConversationState,
+): string | null {
+  // confirmed_data é enviado em uma camada própria. Remover do resumo as
+  // cópias exatas evita repetir fatos sem perder memória: fatos antigos que
+  // não estão no estado atual continuam no resumo.
+  const currentFacts = new Set(
+    Object.entries(state?.confirmed_data ?? {}).map(([field, value]) => `${field}=${value}`),
+  );
+  const compactSummary = currentFacts.size
+    ? {
+        ...summary,
+        known_facts: summary.known_facts.filter((fact) => !currentFacts.has(fact)),
+      }
+    : summary;
   const hasContent =
-    summary.user_goal ||
-    summary.current_topic ||
-    summary.known_facts.length ||
-    summary.confirmed_decisions.length ||
-    summary.rejected_options.length ||
-    summary.important_entities.length;
+    compactSummary.user_goal ||
+    compactSummary.current_topic ||
+    compactSummary.known_facts.length ||
+    compactSummary.confirmed_decisions.length ||
+    compactSummary.rejected_options.length ||
+    compactSummary.important_entities.length;
   if (!hasContent) return null;
-  return JSON.stringify(summary, null, 0);
+  return JSON.stringify(compactSummary, null, 0);
 }
 
 /**
