@@ -10,6 +10,14 @@
   # Mantém o handler SSR/server do TanStack Start gerado pelo Nitro para Netlify.
   NITRO_PRESET = "netlify"
   NODE_VERSION = "22"
+  # Tarifas de referência em USD por 1 milhão de tokens.
+  # São valores públicos de configuração; chaves de API continuam no painel da Netlify.
+  OPENAI_TPEC_LUNA_INPUT_USD_PER_1M = "0.20"
+  OPENAI_TPEC_LUNA_OUTPUT_USD_PER_1M = "1.20"
+  OPENAI_TPEC_TERRA_INPUT_USD_PER_1M = "2"
+  OPENAI_TPEC_TERRA_OUTPUT_USD_PER_1M = "12"
+  OPENAI_TPEC_SOL_INPUT_USD_PER_1M = "5"
+  OPENAI_TPEC_SOL_OUTPUT_USD_PER_1M = "30"
   # Estas três variáveis são deliberadamente públicas e entram no bundle Vite.
   # Sem a exceção, o detector de segredos pode bloquear o deploy ao encontrá-las.
   SECRETS_SCAN_OMIT_KEYS = "VITE_SUPABASE_URL,VITE_SUPABASE_PUBLISHABLE_KEY,VITE_SUPABASE_PROJECT_ID"
