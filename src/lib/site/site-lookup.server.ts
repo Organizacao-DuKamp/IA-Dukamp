@@ -256,7 +256,9 @@ const snapshotBySlug = new Map(
 const snapshotByName = new Map(
   snapshotProducts.map((product) => [normalizeName(product.name), product]),
 );
-const snapshotSellerById = new Map(snapshotSellers.map((seller) => [seller.id, seller]));
+const snapshotSellerById = new Map<string, (typeof snapshotSellers)[number]>(
+  snapshotSellers.map((seller) => [String(seller.id), seller]),
+);
 
 function snapshotToSiteProduct(product: (typeof snapshotProducts)[number]): SiteProduct {
   return {
