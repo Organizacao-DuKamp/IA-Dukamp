@@ -24,9 +24,9 @@ import { Route as ApiInternalWhatsappControlRouteImport } from './routes/api/int
 import { Route as ApiInternalWhatsappChatRouteImport } from './routes/api/internal/whatsapp-chat'
 import { Route as ApiInternalChatRouteImport } from './routes/api/internal/chat'
 import { Route as AuthenticatedAdminProdutosRouteImport } from './routes/_authenticated/admin.produtos'
+import { Route as AuthenticatedAdminIaRouteImport } from './routes/_authenticated/admin.ia'
 import { Route as AuthenticatedAdminCotacoesRouteImport } from './routes/_authenticated/admin.cotacoes'
 import { Route as AuthenticatedAdminBaseConhecimentoRouteImport } from './routes/_authenticated/admin.base-conhecimento'
-import { Route as AuthenticatedAdminIaRouteImport } from './routes/_authenticated/admin.ia'
 
 const TermosDeUsoRoute = TermosDeUsoRouteImport.update({
   id: '/termos-de-uso',
@@ -104,6 +104,11 @@ const AuthenticatedAdminProdutosRoute =
     path: '/admin/produtos',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminIaRoute = AuthenticatedAdminIaRouteImport.update({
+  id: '/admin/ia',
+  path: '/admin/ia',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAdminCotacoesRoute =
   AuthenticatedAdminCotacoesRouteImport.update({
     id: '/admin/cotacoes',
@@ -116,11 +121,6 @@ const AuthenticatedAdminBaseConhecimentoRoute =
     path: '/admin/base-conhecimento',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedAdminIaRoute = AuthenticatedAdminIaRouteImport.update({
-  id: '/admin/ia',
-  path: '/admin/ia',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -129,8 +129,8 @@ export interface FileRoutesByFullPath {
   '/politica-de-privacidade': typeof PoliticaDePrivacidadeRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/admin/base-conhecimento': typeof AuthenticatedAdminBaseConhecimentoRoute
-  '/admin/ia': typeof AuthenticatedAdminIaRoute
   '/admin/cotacoes': typeof AuthenticatedAdminCotacoesRoute
+  '/admin/ia': typeof AuthenticatedAdminIaRoute
   '/admin/produtos': typeof AuthenticatedAdminProdutosRoute
   '/api/internal/chat': typeof ApiInternalChatRoute
   '/api/internal/whatsapp-chat': typeof ApiInternalWhatsappChatRoute
@@ -148,8 +148,8 @@ export interface FileRoutesByTo {
   '/politica-de-privacidade': typeof PoliticaDePrivacidadeRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/admin/base-conhecimento': typeof AuthenticatedAdminBaseConhecimentoRoute
-  '/admin/ia': typeof AuthenticatedAdminIaRoute
   '/admin/cotacoes': typeof AuthenticatedAdminCotacoesRoute
+  '/admin/ia': typeof AuthenticatedAdminIaRoute
   '/admin/produtos': typeof AuthenticatedAdminProdutosRoute
   '/api/internal/chat': typeof ApiInternalChatRoute
   '/api/internal/whatsapp-chat': typeof ApiInternalWhatsappChatRoute
@@ -169,8 +169,8 @@ export interface FileRoutesById {
   '/politica-de-privacidade': typeof PoliticaDePrivacidadeRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/_authenticated/admin/base-conhecimento': typeof AuthenticatedAdminBaseConhecimentoRoute
-  '/_authenticated/admin/ia': typeof AuthenticatedAdminIaRoute
   '/_authenticated/admin/cotacoes': typeof AuthenticatedAdminCotacoesRoute
+  '/_authenticated/admin/ia': typeof AuthenticatedAdminIaRoute
   '/_authenticated/admin/produtos': typeof AuthenticatedAdminProdutosRoute
   '/api/internal/chat': typeof ApiInternalChatRoute
   '/api/internal/whatsapp-chat': typeof ApiInternalWhatsappChatRoute
@@ -190,8 +190,8 @@ export interface FileRouteTypes {
     | '/politica-de-privacidade'
     | '/termos-de-uso'
     | '/admin/base-conhecimento'
-    | '/admin/ia'
     | '/admin/cotacoes'
+    | '/admin/ia'
     | '/admin/produtos'
     | '/api/internal/chat'
     | '/api/internal/whatsapp-chat'
@@ -209,8 +209,8 @@ export interface FileRouteTypes {
     | '/politica-de-privacidade'
     | '/termos-de-uso'
     | '/admin/base-conhecimento'
-    | '/admin/ia'
     | '/admin/cotacoes'
+    | '/admin/ia'
     | '/admin/produtos'
     | '/api/internal/chat'
     | '/api/internal/whatsapp-chat'
@@ -229,8 +229,8 @@ export interface FileRouteTypes {
     | '/politica-de-privacidade'
     | '/termos-de-uso'
     | '/_authenticated/admin/base-conhecimento'
-    | '/_authenticated/admin/ia'
     | '/_authenticated/admin/cotacoes'
+    | '/_authenticated/admin/ia'
     | '/_authenticated/admin/produtos'
     | '/api/internal/chat'
     | '/api/internal/whatsapp-chat'
@@ -366,6 +366,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminProdutosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/ia': {
+      id: '/_authenticated/admin/ia'
+      path: '/admin/ia'
+      fullPath: '/admin/ia'
+      preLoaderRoute: typeof AuthenticatedAdminIaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/cotacoes': {
       id: '/_authenticated/admin/cotacoes'
       path: '/admin/cotacoes'
@@ -380,28 +387,21 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminBaseConhecimentoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin/ia': {
-      id: '/_authenticated/admin/ia'
-      path: '/admin/ia'
-      fullPath: '/admin/ia'
-      preLoaderRoute: typeof AuthenticatedAdminIaRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminBaseConhecimentoRoute: typeof AuthenticatedAdminBaseConhecimentoRoute
-  AuthenticatedAdminIaRoute: typeof AuthenticatedAdminIaRoute
   AuthenticatedAdminCotacoesRoute: typeof AuthenticatedAdminCotacoesRoute
+  AuthenticatedAdminIaRoute: typeof AuthenticatedAdminIaRoute
   AuthenticatedAdminProdutosRoute: typeof AuthenticatedAdminProdutosRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminBaseConhecimentoRoute:
     AuthenticatedAdminBaseConhecimentoRoute,
-  AuthenticatedAdminIaRoute: AuthenticatedAdminIaRoute,
   AuthenticatedAdminCotacoesRoute: AuthenticatedAdminCotacoesRoute,
+  AuthenticatedAdminIaRoute: AuthenticatedAdminIaRoute,
   AuthenticatedAdminProdutosRoute: AuthenticatedAdminProdutosRoute,
 }
 
