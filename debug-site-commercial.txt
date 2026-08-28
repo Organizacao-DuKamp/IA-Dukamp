@@ -11,7 +11,7 @@ TAP version 13
 #   operation: 'products lookup',
 #   status: 'snapshot',
 #   error_code: 'live_catalog_fallback',
-#   duration_ms: 49,
+#   duration_ms: 53,
 #   result_count: 8
 # }
 # [dukamp-site] products lookup {
@@ -39,7 +39,7 @@ TAP version 13
 #   operation: 'products lookup',
 #   status: 'ok',
 #   error_code: null,
-#   duration_ms: 1,
+#   duration_ms: 0,
 #   result_count: 1
 # }
 # [dukamp-site] sellers lookup {
@@ -74,7 +74,7 @@ TAP version 13
 #   operation: 'products lookup',
 #   status: 'internal_error',
 #   error_code: 'ECONNRESET',
-#   duration_ms: 0,
+#   duration_ms: 1,
 #   result_count: 8
 # }
 # [dukamp-site] products lookup {
@@ -88,7 +88,7 @@ TAP version 13
 #   operation: 'products lookup',
 #   status: 'ok',
 #   error_code: null,
-#   duration_ms: 1,
+#   duration_ms: 0,
 #   result_count: 1
 # }
 # [dukamp-site] products recommendation lookup {
@@ -123,14 +123,14 @@ TAP version 13
 #   operation: 'products lookup',
 #   status: 'ok',
 #   error_code: null,
-#   duration_ms: 0,
+#   duration_ms: 1,
 #   result_count: 1
 # }
 # [dukamp-site] sellers lookup {
 #   operation: 'sellers lookup',
 #   status: 'ok',
 #   error_code: null,
-#   duration_ms: 0,
+#   duration_ms: 1,
 #   result_count: 2
 # }
 # [dukamp-site] categories lookup {
@@ -144,7 +144,7 @@ TAP version 13
 #   operation: 'site settings lookup',
 #   status: 'ok',
 #   error_code: null,
-#   duration_ms: 1,
+#   duration_ms: 0,
 #   result_count: 1
 # }
 # [dukamp-site] products lookup {
@@ -171,19 +171,19 @@ TAP version 13
 # Subtest: variáveis ausentes produzem health check seguro
 ok 1 - variáveis ausentes produzem health check seguro
   ---
-  duration_ms: 1.245583
+  duration_ms: 1.137092
   type: 'test'
   ...
 # Subtest: produto encontrado vem do cliente Supabase
 ok 2 - produto encontrado vem do cliente Supabase
   ---
-  duration_ms: 2.806065
+  duration_ms: 2.639475
   type: 'test'
   ...
 # Subtest: produto não encontrado é empty_result
 not ok 3 - produto não encontrado é empty_result
   ---
-  duration_ms: 51.573501
+  duration_ms: 54.962424
   type: 'test'
   location: '/home/runner/work/IA-Dukamp/IA-Dukamp/tests/site-commercial.test.ts:139:1'
   failureType: 'testCodeFailure'
@@ -207,115 +207,115 @@ not ok 3 - produto não encontrado é empty_result
 # Subtest: pequeno erro de digitação usa fallback e encontra nome oficial
 ok 4 - pequeno erro de digitação usa fallback e encontra nome oficial
   ---
-  duration_ms: 0.496149
+  duration_ms: 0.519853
   type: 'test'
   ...
 # Subtest: erro de RLS é unauthorized e não vira lista vazia silenciosa
 ok 5 - erro de RLS é unauthorized e não vira lista vazia silenciosa
   ---
-  duration_ms: 0.674904
+  duration_ms: 0.698501
   type: 'test'
   ...
 # Subtest: chave inválida é diferenciada de bloqueio RLS
 ok 6 - chave inválida é diferenciada de bloqueio RLS
   ---
-  duration_ms: 0.449402
+  duration_ms: 0.401184
   type: 'test'
   ...
 # Subtest: coluna opcional inexistente refaz produtos com colunas comerciais essenciais
 ok 7 - coluna opcional inexistente refaz produtos com colunas comerciais essenciais
   ---
-  duration_ms: 1.011444
+  duration_ms: 0.993486
   type: 'test'
   ...
 # Subtest: lista de vendedores consulta colunas reais e retorna ativos
 ok 8 - lista de vendedores consulta colunas reais e retorna ativos
   ---
-  duration_ms: 1.146718
+  duration_ms: 0.945073
   type: 'test'
   ...
 # Subtest: vendedor por região é filtrado depois da consulta real
 ok 9 - vendedor por região é filtrado depois da consulta real
   ---
-  duration_ms: 1.118215
+  duration_ms: 1.035189
   type: 'test'
   ...
 # Subtest: display_order ausente usa ordenação por nome
 ok 10 - display_order ausente usa ordenação por nome
   ---
-  duration_ms: 1.192964
+  duration_ms: 1.15552
   type: 'test'
   ...
 # Subtest: lista vazia verdadeira é empty_result
 ok 11 - lista vazia verdadeira é empty_result
   ---
-  duration_ms: 0.487021
+  duration_ms: 0.445511
   type: 'test'
   ...
 # Subtest: erro de conexão é internal_error
 ok 12 - erro de conexão é internal_error
   ---
-  duration_ms: 0.559749
+  duration_ms: 0.568215
   type: 'test'
   ...
 # Subtest: timeout é diferenciado de erro interno
 ok 13 - timeout é diferenciado de erro interno
   ---
-  duration_ms: 0.305432
+  duration_ms: 0.291659
   type: 'test'
   ...
 # Subtest: intenção executa products no Supabase: quais produtos a DuKamp tem?
 ok 14 - intenção executa products no Supabase: quais produtos a DuKamp tem?
   ---
-  duration_ms: 9.180454
+  duration_ms: 9.132049
   type: 'test'
   ...
 # Subtest: intenção executa products no Supabase: tem produto para bezerro?
 ok 15 - intenção executa products no Supabase: tem produto para bezerro?
   ---
-  duration_ms: 4.357381
+  duration_ms: 4.110679
   type: 'test'
   ...
 # Subtest: product_recommendation executa products no Supabase
 ok 16 - product_recommendation executa products no Supabase
   ---
-  duration_ms: 1.172977
+  duration_ms: 0.930632
   type: 'test'
   ...
 # Subtest: seller_contact executa sellers no Supabase: me passe a lista de vendedores
 ok 17 - seller_contact executa sellers no Supabase: me passe a lista de vendedores
   ---
-  duration_ms: 0.49646
+  duration_ms: 0.357569
   type: 'test'
   ...
 # Subtest: seller_contact executa sellers no Supabase: quero o contato dos vendedores
 ok 18 - seller_contact executa sellers no Supabase: quero o contato dos vendedores
   ---
-  duration_ms: 0.529582
+  duration_ms: 0.343227
   type: 'test'
   ...
 # Subtest: health check consulta quatro tabelas sem retornar registros
 ok 19 - health check consulta quatro tabelas sem retornar registros
   ---
-  duration_ms: 1.253898
+  duration_ms: 0.78376
   type: 'test'
   ...
 # Subtest: busca textual usa descrição oficial para encontrar produto
 ok 20 - busca textual usa descrição oficial para encontrar produto
   ---
-  duration_ms: 0.61382
+  duration_ms: 0.378921
   type: 'test'
   ...
 # Subtest: consulta rica de vendedores inclui mídias oficiais
 ok 21 - consulta rica de vendedores inclui mídias oficiais
   ---
-  duration_ms: 0.408666
+  duration_ms: 0.290928
   type: 'test'
   ...
 # Subtest: pedido de descrição específica dispara consulta comercial de produto
 ok 22 - pedido de descrição específica dispara consulta comercial de produto
   ---
-  duration_ms: 2.468854
+  duration_ms: 1.324053
   type: 'test'
   ...
 1..22
@@ -326,4 +326,4 @@ ok 22 - pedido de descrição específica dispara consulta comercial de produto
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 631.603815
+# duration_ms 600.754495
