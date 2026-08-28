@@ -91,6 +91,11 @@ const product = {
   stock: 4,
   featured: true,
   description: "Suplemento mineral indicado para bezerros e recria.",
+  images: [
+    "https://pioyrbcdprnplhcoyzam.supabase.co/storage/v1/object/public/produtos/dukamp-60.webp",
+  ],
+  brand: "DuKamp",
+  weight: 20,
 };
 const sellers = [
   {
@@ -102,6 +107,10 @@ const sellers = [
     whatsapp: "5517999991111",
     active: true,
     display_order: 1,
+    slug: "ana-souza",
+    photo_url: "https://pioyrbcdprnplhcoyzam.supabase.co/storage/v1/object/public/sellers/ana.webp",
+    cutout_url: null,
+    banner_url: null,
   },
   {
     id: "s2",
@@ -290,4 +299,31 @@ test("health check consulta quatro tabelas sem retornar registros", async () => 
   assert.equal(health.configured, true);
   assert.deepEqual(client.calls.sort(), ["categories", "products", "sellers", "site_settings"]);
   assert.equal("data" in health.products_query, false);
+});
+
+test("busca textual usa descrição oficial para encontrar produto", async () => {
+  const client = new MockSupabase({ products: [{ data: [] }, { data: [product] }] });
+  const result = await querySiteProducts("indicado para bezerros", 8, deps(client));
+  assert.equal(result.data[0]?.name, "DuKamp 60");
+  assert.match(result.data[0]?.description ?? "", /bezerros/i);
+});
+
+test("consulta rica de vendedores inclui mídias oficiais", async () => {
+  const client = new MockSupabase({ sellers: { data: sellers } });
+  const result = await querySiteSellers("Ana Souza", 30, deps(client));
+  assert.match(client.selects[0]!.columns, /photo_url/);
+  assert.match(client.selects[0]!.columns, /banner_url/);
+  assert.match(result.data[0]?.photo_url ?? "", /supabase\.co/);
+});
+
+test("pedido de descrição específica dispara consulta comercial de produto", async () => {
+  const question = "me passe a descrição do DuKamp 60";
+  const client = new MockSupabase({ products: { data: [product] } });
+  const execution = await executeCommercialLookup(
+    classifyDomainIntent(question, true),
+    question,
+    deps(client),
+  );
+  assert.ok(client.calls.includes("products"));
+  assert.equal(execution.lookup.products?.[0]?.name, "DuKamp 60");
 });
