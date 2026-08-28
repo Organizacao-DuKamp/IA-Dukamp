@@ -818,11 +818,12 @@ function chatTelemetryFlags(retrieved: string[]) {
       [...new Set(chatEvents.map((event) => event.modelTier).filter(Boolean))].join(", ") || null,
     route_reason:
       [...new Set(chatEvents.map((event) => event.routeReason).filter(Boolean))].join(", ") || null,
-    response_mode:
-      modes.length > 1
-        ? "mixed"
-        : ((modes[0] as "standard" | "quick" | "knowledge" | "deep_research" | undefined) ??
-          "standard"),
+    response_mode: (modes.length > 1 ? "mixed" : (modes[0] ?? "standard")) as
+      | "standard"
+      | "quick"
+      | "knowledge"
+      | "deep_research"
+      | "mixed",
   };
 }
 
