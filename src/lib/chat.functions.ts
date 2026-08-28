@@ -8,7 +8,7 @@ export const sendChatMessage = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => ChatInputSchema.parse(data))
   .handler(async ({ data }) => {
     try {
-      // A decisão local/proxy ocorre antes de qualquer import do core privilegiado.
+      // O backend privilegiado é executado diretamente no runtime server-side da Netlify.
       const { dispatchChat } = await import("./chat/backend.server");
       const result = await dispatchChat(data);
       if (result.status < 200 || result.status >= 300) {
