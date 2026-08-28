@@ -39,11 +39,11 @@ Também existe uma matriz de avaliações em `tests/evals/pecuaria-specialist-ca
 
 Preço, estoque, vendedores, cotações, legislação e situação sanitária não devem ser congelados em texto estático.
 
-## Como ativar no Lovable/Supabase
+## Como ativar no Netlify/Supabase
 
 Os arquivos `.txt` são incorporados ao bundle pelo `seed-loader.server.ts`, mas precisam ser registrados e processados no Supabase principal.
 
-Depois que a versão da `main` estiver publicada no Lovable:
+Depois que a versão da `main` estiver publicada no Netlify:
 
 1. Entrar no painel administrativo.
 2. Abrir **Base de conhecimento**.
