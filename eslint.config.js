@@ -11,6 +11,9 @@ export default tseslint.config(
       "dist",
       ".output",
       ".vinxi",
+      ".netlify",
+      ".tanstack",
+      ".wrangler",
       // Arquivo regenerado pelo Supabase; não deve criar centenas de falhas de
       // formatação sempre que a tipagem remota é atualizada.
       "src/integrations/supabase/types.ts",
