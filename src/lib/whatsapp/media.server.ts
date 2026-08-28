@@ -6,6 +6,7 @@ import {
   safeErrorSnippet,
 } from "../chat/diagnostics.server.ts";
 import { sanitizeRetrievedContent } from "../chat/security.ts";
+import { parseOpenAIUsage, recordAIUsageEvent } from "../chat/usage.server.ts";
 import type { WhatsAppChatInput, WhatsAppMedia } from "./types.ts";
 
 type EnvLike = Record<string, string | undefined>;
@@ -67,6 +68,7 @@ interface MetaMediaMetadata {
 interface ResponsesPayload {
   output_text?: string;
   output?: Array<{ content?: Array<{ type?: string; text?: string }> }>;
+  usage?: unknown;
 }
 
 export interface WhatsAppMediaDependencies {
@@ -404,7 +406,10 @@ async function analyzeImageOrDocument(
     OPENAI_RESPONSES_URL,
     {
       method: "POST",
-      headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
+      headers: {
+        authorization: `Bearer ${apiKey}`,
+        "content-type": "application/json",
+      },
       body: JSON.stringify(body),
     },
     timeoutMs(env),
@@ -445,6 +450,16 @@ async function analyzeImageOrDocument(
       "empty_whatsapp_media_analysis",
     );
   }
+  recordAIUsageEvent({
+    provider: "openai",
+    operation: "media_analysis",
+    model,
+    modelTier: "media",
+    routeReason: media.type,
+    durationMs: Date.now() - started,
+    ...parseOpenAIUsage(data.usage),
+  });
+
   logDiagnostic("info", "whatsapp.media.analysis.success", {
     provider: "openai",
     model,
@@ -478,7 +493,11 @@ async function transcribeAudioOrVideo(
   const response = await fetchWithTimeout(
     dependencies.fetchImpl ?? fetch,
     OPENAI_TRANSCRIPTIONS_URL,
-    { method: "POST", headers: { authorization: `Bearer ${apiKey}` }, body: form },
+    {
+      method: "POST",
+      headers: { authorization: `Bearer ${apiKey}` },
+      body: form,
+    },
     timeoutMs(env),
   );
   const raw = await response.text().catch(() => "");
@@ -500,12 +519,33 @@ async function transcribeAudioOrVideo(
   }
 
   let transcript = "";
+  let transcriptionUsage: unknown;
+  let audioSeconds: number | undefined;
   try {
-    const data = JSON.parse(raw) as { text?: unknown };
+    const data = JSON.parse(raw) as {
+      text?: unknown;
+      usage?: unknown;
+      duration?: unknown;
+      duration_seconds?: unknown;
+    };
     transcript = typeof data.text === "string" ? data.text.trim() : "";
+    transcriptionUsage = data.usage;
+    const duration = Number(data.duration ?? data.duration_seconds);
+    if (Number.isFinite(duration) && duration >= 0) audioSeconds = duration;
   } catch {
     transcript = raw.trim();
   }
+  recordAIUsageEvent({
+    provider: "openai",
+    operation: "transcription",
+    model,
+    modelTier: "transcription",
+    routeReason: media.type,
+    durationMs: Date.now() - started,
+    audioSeconds,
+    ...parseOpenAIUsage(transcriptionUsage),
+  });
+
   logDiagnostic("info", "whatsapp.media.transcription.success", {
     provider: "openai",
     model,

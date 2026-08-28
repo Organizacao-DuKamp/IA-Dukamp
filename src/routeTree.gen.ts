@@ -26,6 +26,7 @@ import { Route as ApiInternalChatRouteImport } from './routes/api/internal/chat'
 import { Route as AuthenticatedAdminProdutosRouteImport } from './routes/_authenticated/admin.produtos'
 import { Route as AuthenticatedAdminCotacoesRouteImport } from './routes/_authenticated/admin.cotacoes'
 import { Route as AuthenticatedAdminBaseConhecimentoRouteImport } from './routes/_authenticated/admin.base-conhecimento'
+import { Route as AuthenticatedAdminIaRouteImport } from './routes/_authenticated/admin.ia'
 
 const TermosDeUsoRoute = TermosDeUsoRouteImport.update({
   id: '/termos-de-uso',
@@ -115,6 +116,11 @@ const AuthenticatedAdminBaseConhecimentoRoute =
     path: '/admin/base-conhecimento',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminIaRoute = AuthenticatedAdminIaRouteImport.update({
+  id: '/admin/ia',
+  path: '/admin/ia',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -123,6 +129,7 @@ export interface FileRoutesByFullPath {
   '/politica-de-privacidade': typeof PoliticaDePrivacidadeRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/admin/base-conhecimento': typeof AuthenticatedAdminBaseConhecimentoRoute
+  '/admin/ia': typeof AuthenticatedAdminIaRoute
   '/admin/cotacoes': typeof AuthenticatedAdminCotacoesRoute
   '/admin/produtos': typeof AuthenticatedAdminProdutosRoute
   '/api/internal/chat': typeof ApiInternalChatRoute
@@ -141,6 +148,7 @@ export interface FileRoutesByTo {
   '/politica-de-privacidade': typeof PoliticaDePrivacidadeRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/admin/base-conhecimento': typeof AuthenticatedAdminBaseConhecimentoRoute
+  '/admin/ia': typeof AuthenticatedAdminIaRoute
   '/admin/cotacoes': typeof AuthenticatedAdminCotacoesRoute
   '/admin/produtos': typeof AuthenticatedAdminProdutosRoute
   '/api/internal/chat': typeof ApiInternalChatRoute
@@ -161,6 +169,7 @@ export interface FileRoutesById {
   '/politica-de-privacidade': typeof PoliticaDePrivacidadeRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/_authenticated/admin/base-conhecimento': typeof AuthenticatedAdminBaseConhecimentoRoute
+  '/_authenticated/admin/ia': typeof AuthenticatedAdminIaRoute
   '/_authenticated/admin/cotacoes': typeof AuthenticatedAdminCotacoesRoute
   '/_authenticated/admin/produtos': typeof AuthenticatedAdminProdutosRoute
   '/api/internal/chat': typeof ApiInternalChatRoute
@@ -181,6 +190,7 @@ export interface FileRouteTypes {
     | '/politica-de-privacidade'
     | '/termos-de-uso'
     | '/admin/base-conhecimento'
+    | '/admin/ia'
     | '/admin/cotacoes'
     | '/admin/produtos'
     | '/api/internal/chat'
@@ -199,6 +209,7 @@ export interface FileRouteTypes {
     | '/politica-de-privacidade'
     | '/termos-de-uso'
     | '/admin/base-conhecimento'
+    | '/admin/ia'
     | '/admin/cotacoes'
     | '/admin/produtos'
     | '/api/internal/chat'
@@ -218,6 +229,7 @@ export interface FileRouteTypes {
     | '/politica-de-privacidade'
     | '/termos-de-uso'
     | '/_authenticated/admin/base-conhecimento'
+    | '/_authenticated/admin/ia'
     | '/_authenticated/admin/cotacoes'
     | '/_authenticated/admin/produtos'
     | '/api/internal/chat'
@@ -368,11 +380,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminBaseConhecimentoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/ia': {
+      id: '/_authenticated/admin/ia'
+      path: '/admin/ia'
+      fullPath: '/admin/ia'
+      preLoaderRoute: typeof AuthenticatedAdminIaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminBaseConhecimentoRoute: typeof AuthenticatedAdminBaseConhecimentoRoute
+  AuthenticatedAdminIaRoute: typeof AuthenticatedAdminIaRoute
   AuthenticatedAdminCotacoesRoute: typeof AuthenticatedAdminCotacoesRoute
   AuthenticatedAdminProdutosRoute: typeof AuthenticatedAdminProdutosRoute
 }
@@ -380,6 +400,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminBaseConhecimentoRoute:
     AuthenticatedAdminBaseConhecimentoRoute,
+  AuthenticatedAdminIaRoute: AuthenticatedAdminIaRoute,
   AuthenticatedAdminCotacoesRoute: AuthenticatedAdminCotacoesRoute,
   AuthenticatedAdminProdutosRoute: AuthenticatedAdminProdutosRoute,
 }

@@ -1,3 +1,5 @@
+import { recordAIChatTurn } from "../chat/analytics.server.ts";
+import { withAIUsageContext } from "../chat/usage.server.ts";
 import { ChatCoreResultSchema, type ChatInput } from "../chat/input.ts";
 import { executeLocalChat } from "../chat/backend.server.ts";
 import type { ChatMessage } from "../chat/types.ts";
@@ -127,7 +129,11 @@ async function memoryClaimMessage(messageId: string, phone: string): Promise<Wha
   }
 
   memoryMessages.delete(messageId);
-  memoryMessages.set(messageId, { phone, status: "processing", updatedAt: now });
+  memoryMessages.set(messageId, {
+    phone,
+    status: "processing",
+    updatedAt: now,
+  });
   trimOldest(memoryMessages, MAX_MEMORY_MESSAGES);
   return { kind: "claimed" };
 }
@@ -203,7 +209,10 @@ async function memorySaveConversation(
   snapshot: WhatsAppConversationSnapshot,
 ): Promise<void> {
   memoryConversations.delete(phone);
-  memoryConversations.set(phone, { snapshot: cloneSnapshot(snapshot), updatedAt: Date.now() });
+  memoryConversations.set(phone, {
+    snapshot: cloneSnapshot(snapshot),
+    updatedAt: Date.now(),
+  });
   trimOldest(memoryConversations, MAX_MEMORY_CONVERSATIONS);
 }
 
@@ -378,60 +387,115 @@ export async function processClaimedWhatsAppChat(
   input: WhatsAppChatInput,
   dependencies: WhatsAppConversationDependencies = {},
 ): Promise<WhatsAppChatResult> {
-  const deps = depsWithDefaults(dependencies);
-  // O download/transcrição da mídia não depende do histórico. Iniciar os dois
-  // juntos elimina uma ida ao banco do caminho crítico de áudio, imagem e arquivo.
-  const [previous, userText] = await Promise.all([
-    deps.loadConversation(input.phone),
-    deps.resolveUserText(input),
-  ]);
-  const conversationId = previous?.conversationId ?? `wa:${input.phone}`;
-  const casualGreeting = greetingReply(userText, Boolean(previous?.history.length));
+  const startedAt = new Date().toISOString();
+  const startedMs = Date.now();
 
-  if (casualGreeting) {
-    const nextHistory = appendTurn(previous?.history ?? [], userText, casualGreeting);
-    await deps.saveConversation(input.phone, {
-      conversationId,
-      state: previous?.state,
-      history: nextHistory,
-    });
-    await deps.completeMessage(input.messageId, casualGreeting);
-    return { reply: casualGreeting, duplicate: false, shouldSend: true };
-  }
+  return withAIUsageContext(async (usageEvents) => {
+    const deps = depsWithDefaults(dependencies);
+    let userText = input.text;
+    let conversationId = `wa:${input.phone}`;
+    let chatInvoked = false;
+    let telemetryRecorded = false;
 
-  const chatInput: ChatInput = {
-    sessionId: `wa:${input.phone}`,
-    conversationId,
-    clientMessageId: input.messageId,
-    channel: "whatsapp",
-    text: userText,
-    history: previous?.history ?? [],
-    state: previous?.state,
-  };
+    try {
+      // O download/transcrição da mídia não depende do histórico. Iniciar os dois
+      // juntos elimina uma ida ao banco do caminho crítico de áudio, imagem e arquivo.
+      const [previous, resolvedUserText] = await Promise.all([
+        deps.loadConversation(input.phone),
+        deps.resolveUserText(input),
+      ]);
+      userText = resolvedUserText;
+      conversationId = previous?.conversationId ?? `wa:${input.phone}`;
+      const casualGreeting = greetingReply(userText, Boolean(previous?.history.length));
 
-  const result = await deps.executeChat(chatInput);
-  if (result.status < 200 || result.status >= 300) {
-    const message =
-      result.body && typeof result.body === "object" && "error" in result.body
-        ? String((result.body as { error?: unknown }).error ?? "chat_failed")
-        : "chat_failed";
-    const error = new Error(message) as Error & { status?: number };
-    error.status = result.status;
-    throw error;
-  }
+      if (casualGreeting) {
+        const nextHistory = appendTurn(previous?.history ?? [], userText, casualGreeting);
+        await recordAIChatTurn({
+          channel: "whatsapp",
+          sessionId: `wa:${input.phone}`,
+          conversationId,
+          clientMessageId: input.messageId,
+          userText,
+          assistantText: casualGreeting,
+          status: "completed",
+          diagnostics: {
+            conversation_id: conversationId,
+            retrieved_blocks: ["quick:greeting"],
+            research_depth: "none",
+            used_deep_research: false,
+            used_knowledge_base: false,
+            knowledge_match_count: 0,
+            used_quick_response: true,
+            web_search_enabled: false,
+            web_search_calls: 0,
+            response_mode: "quick",
+          },
+          usageEvents: [...usageEvents],
+          startedAt,
+          durationMs: Date.now() - startedMs,
+        });
+        telemetryRecorded = true;
+        await deps.saveConversation(input.phone, {
+          conversationId,
+          state: previous?.state,
+          history: nextHistory,
+        });
+        await deps.completeMessage(input.messageId, casualGreeting);
+        return { reply: casualGreeting, duplicate: false, shouldSend: true };
+      }
 
-  const core = ChatCoreResultSchema.parse(result.body);
-  if (!core.reply.trim()) throw new Error("empty_chat_reply");
-  const nextHistory = appendTurn(previous?.history ?? [], userText, core.reply);
+      const chatInput: ChatInput = {
+        sessionId: `wa:${input.phone}`,
+        conversationId,
+        clientMessageId: input.messageId,
+        channel: "whatsapp",
+        text: userText,
+        history: previous?.history ?? [],
+        state: previous?.state,
+      };
 
-  await deps.saveConversation(input.phone, {
-    conversationId: core.conversationId,
-    state: core.state,
-    history: nextHistory,
+      chatInvoked = true;
+      const result = await deps.executeChat(chatInput);
+      if (result.status < 200 || result.status >= 300) {
+        const message =
+          result.body && typeof result.body === "object" && "error" in result.body
+            ? String((result.body as { error?: unknown }).error ?? "chat_failed")
+            : "chat_failed";
+        const error = new Error(message) as Error & { status?: number };
+        error.status = result.status;
+        throw error;
+      }
+
+      const core = ChatCoreResultSchema.parse(result.body);
+      if (!core.reply.trim()) throw new Error("empty_chat_reply");
+      const nextHistory = appendTurn(previous?.history ?? [], userText, core.reply);
+
+      await deps.saveConversation(input.phone, {
+        conversationId: core.conversationId,
+        state: core.state,
+        history: nextHistory,
+      });
+      await deps.completeMessage(input.messageId, core.reply);
+
+      return { reply: core.reply, duplicate: false, shouldSend: true };
+    } catch (error) {
+      if (!chatInvoked && !telemetryRecorded) {
+        await recordAIChatTurn({
+          channel: "whatsapp",
+          sessionId: `wa:${input.phone}`,
+          conversationId,
+          clientMessageId: input.messageId,
+          userText,
+          status: "error",
+          error,
+          usageEvents: [...usageEvents],
+          startedAt,
+          durationMs: Date.now() - startedMs,
+        });
+      }
+      throw error;
+    }
   });
-  await deps.completeMessage(input.messageId, core.reply);
-
-  return { reply: core.reply, duplicate: false, shouldSend: true };
 }
 
 export async function processWhatsAppChat(

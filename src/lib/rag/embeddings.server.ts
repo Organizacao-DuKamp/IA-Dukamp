@@ -6,6 +6,7 @@ import {
   logDiagnostic,
   safeErrorSnippet,
 } from "../chat/diagnostics.server.ts";
+import { parseOpenAIUsage, recordAIUsageEvent } from "../chat/usage.server.ts";
 
 const OPENAI_EMBEDDINGS_URL = "https://api.openai.com/v1/embeddings";
 const DEFAULT_MODEL = "text-embedding-3-large";
@@ -218,6 +219,16 @@ async function embedBatch(
 
       const out: number[][] = new Array(inputs.length);
       for (const d of data.data) out[d.index] = d.embedding;
+      recordAIUsageEvent({
+        provider: "openai",
+        operation: "embedding",
+        model: embeddingModel(),
+        modelTier: "embedding",
+        routeReason: options.purpose,
+        durationMs: Date.now() - started,
+        ...parseOpenAIUsage(data.usage),
+      });
+
       logDiagnostic("info", "embeddings.response.success", {
         provider: "openai",
         model: embeddingModel(),

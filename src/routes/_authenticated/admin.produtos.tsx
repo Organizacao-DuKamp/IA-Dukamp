@@ -16,7 +16,10 @@ export const Route = createFileRoute("/_authenticated/admin/produtos")({
   head: () => ({
     meta: [
       { title: "Produtos · TPEC-IA" },
-      { name: "description", content: "Gestão estruturada do catálogo de produtos da Dukamp." },
+      {
+        name: "description",
+        content: "Gestão estruturada do catálogo de produtos da Dukamp.",
+      },
       { property: "og:title", content: "Produtos · TPEC-IA" },
       {
         property: "og:description",
@@ -48,7 +51,12 @@ type Product = {
   is_duplicate: boolean;
 };
 
-type Alias = { id: string; alias: string; alias_normalized: string; origin: string };
+type Alias = {
+  id: string;
+  alias: string;
+  alias_normalized: string;
+  origin: string;
+};
 type ReviewRow = {
   id: string;
   product_id: string | null;
@@ -107,7 +115,10 @@ function AdminProducts() {
     try {
       setBusy(`save:${String(field)}`);
       await update({
-        data: { id: selected.id, patch: { [field]: value } as Record<string, unknown> as never },
+        data: {
+          id: selected.id,
+          patch: { [field]: value } as Record<string, unknown> as never,
+        },
       });
       setSelected({ ...selected, [field]: value } as Product);
       await refresh();
@@ -122,7 +133,9 @@ function AdminProducts() {
     if (!selected || !newAlias.trim()) return;
     try {
       setBusy("alias:add");
-      await addAlias({ data: { product_id: selected.id, alias: newAlias.trim() } });
+      await addAlias({
+        data: { product_id: selected.id, alias: newAlias.trim() },
+      });
       setNewAlias("");
       const rows = await listAliases({ data: { product_id: selected.id } });
       setAliases(rows as Alias[]);
@@ -212,6 +225,12 @@ function AdminProducts() {
               className="rounded-md border border-border px-3 py-1.5 hover:bg-accent"
             >
               Base de conhecimento
+            </Link>
+            <Link
+              to="/admin/ia"
+              className="rounded-md border border-border px-3 py-1.5 hover:bg-accent"
+            >
+              Análise da IA
             </Link>
             <Link to="/" className="rounded-md border border-border px-3 py-1.5 hover:bg-accent">
               Chat

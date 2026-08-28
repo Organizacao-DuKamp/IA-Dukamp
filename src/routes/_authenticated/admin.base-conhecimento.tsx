@@ -15,9 +15,15 @@ export const Route = createFileRoute("/_authenticated/admin/base-conhecimento")(
   head: () => ({
     meta: [
       { title: "Base de conhecimento · TPEC-IA" },
-      { name: "description", content: "Gestão da base de conhecimento RAG da TPEC-IA." },
+      {
+        name: "description",
+        content: "Gestão da base de conhecimento RAG da TPEC-IA.",
+      },
       { property: "og:title", content: "Base de conhecimento · TPEC-IA" },
-      { property: "og:description", content: "Gestão da base de conhecimento RAG da TPEC-IA." },
+      {
+        property: "og:description",
+        content: "Gestão da base de conhecimento RAG da TPEC-IA.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -37,7 +43,13 @@ type Doc = {
   updated_at: string;
 };
 type Stats = {
-  docs: { aguardando: number; processando: number; concluido: number; erro: number; total: number };
+  docs: {
+    aguardando: number;
+    processando: number;
+    concluido: number;
+    erro: number;
+    total: number;
+  };
   chunks: number;
 };
 
@@ -149,7 +161,13 @@ function AdminKnowledgeBase() {
 
         const r = (await processOne()) as
           | { done: true }
-          | { done: false; id: string; title: string; chunks?: number; error?: string };
+          | {
+              done: false;
+              id: string;
+              title: string;
+              chunks?: number;
+              error?: string;
+            };
 
         if (r.done) {
           setLog((l) => ["✅ Todos os pendentes foram processados.", ...l]);
@@ -260,6 +278,10 @@ function AdminKnowledgeBase() {
               </Link>
               <Link to="/admin/produtos" className="underline">
                 Produtos
+              </Link>{" "}
+              ·{" "}
+              <Link to="/admin/ia" className="underline">
+                Análise da IA
               </Link>{" "}
               ·{" "}
               <Link to="/" className="underline">

@@ -10,6 +10,7 @@ import {
   type AdaptiveModelTier,
   type AdaptiveReasoningEffort,
 } from "./model-router.ts";
+import { parseOpenAIUsage, recordAIUsageEvent, type AIUsageEvent } from "./usage.server.ts";
 
 const ENDPOINT = "https://api.openai.com/v1/responses";
 const DEFAULT_TIMEOUT_MS = 45_000;
@@ -52,6 +53,7 @@ export interface OpenAIOptions {
   reasoningEffort?: ReasoningEffort;
   researchDepth?: ResearchDepth;
   maxToolCalls?: number;
+  onUsage?: (event: AIUsageEvent) => void;
 }
 
 export interface ResearchPlan {
@@ -163,6 +165,10 @@ function extractResponseText(data: ResponsesPayload): string | undefined {
       .find((content) => content.type === "output_text")
       ?.text?.trim()
   );
+}
+
+function countWebSearchCalls(data: ResponsesPayload): number {
+  return data.output?.filter((item) => item.type === "web_search_call").length ?? 0;
 }
 
 function supportsReasoningConfig(model: string): boolean {
@@ -311,7 +317,9 @@ export async function askOpenAI(
       max_output_tokens: maxOutputTokens,
       store: false,
       prompt_cache_key: promptCacheKey,
-      text: { verbosity: whatsappStyle && modelTier !== "sol" ? "low" : "medium" },
+      text: {
+        verbosity: whatsappStyle && modelTier !== "sol" ? "low" : "medium",
+      },
     };
 
     if (supportsReasoningConfig(model)) {
@@ -408,6 +416,21 @@ export async function askOpenAI(
         });
         throw new OpenAIError("A IA retornou uma resposta inválida.", 502);
       }
+
+      const usageEvent: AIUsageEvent = {
+        provider: "openai",
+        operation: "chat",
+        model,
+        modelTier,
+        routeReason: adaptiveRoute.reason,
+        researchDepth: plan.enabled ? plan.depth : "none",
+        webSearchEnabled: plan.enabled,
+        webSearchCalls: countWebSearchCalls(data),
+        durationMs,
+        ...parseOpenAIUsage(data.usage),
+      };
+      options.onUsage?.(usageEvent);
+      recordAIUsageEvent(usageEvent);
 
       logDiagnostic("info", "openai.response.received", {
         provider: "openai",

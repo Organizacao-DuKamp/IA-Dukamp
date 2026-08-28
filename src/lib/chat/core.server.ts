@@ -5,7 +5,9 @@
 // sempre redigida pelo GPT. Respostas determinísticas ficam restritas a
 // degradação técnica/segurança quando o modelo ou a validação falham.
 
+import { recordAIChatTurn } from "./analytics.server";
 import { askOpenAI, chatModelKindForChannel, OpenAIError, openAIModel } from "./openai.server";
+import { aggregateAIUsage, getAIUsageEvents, withAIUsageContext } from "./usage.server";
 import { researchChatGPT } from "./perplexity.server";
 import { checkRateLimit } from "./rate-limit.server";
 import { productContextBlock, routeQuery } from "./query-router.server";
@@ -129,6 +131,16 @@ export interface ChatResult {
     retrieved_blocks: string[];
     truncation_reason: string | null;
     state_changed: boolean;
+    research_depth: "none" | "medium" | "high";
+    used_deep_research: boolean;
+    used_knowledge_base: boolean;
+    knowledge_match_count: number;
+    used_quick_response: boolean;
+    web_search_enabled: boolean;
+    web_search_calls: number;
+    model_tier: string | null;
+    route_reason: string | null;
+    response_mode: "standard" | "quick" | "knowledge" | "deep_research" | "mixed";
   };
 }
 
@@ -177,8 +189,43 @@ export async function handleIncoming(input: IncomingMessage): Promise<ChatResult
   }
   inFlight.set(conversationId, Date.now());
 
+  const startedAt = new Date().toISOString();
+  const startedMs = Date.now();
+
   try {
-    const result = await runTurn(input, text, conversationId);
+    const result = await withAIUsageContext(async (usageEvents) => {
+      try {
+        const answer = await runTurn(input, text, conversationId);
+        await recordAIChatTurn({
+          channel: input.channel,
+          sessionId: input.sessionId,
+          conversationId,
+          clientMessageId: input.clientMessageId,
+          userText: text,
+          assistantText: answer.reply,
+          status: "completed",
+          diagnostics: answer.diagnostics,
+          usageEvents: [...usageEvents],
+          startedAt,
+          durationMs: Date.now() - startedMs,
+        });
+        return answer;
+      } catch (error) {
+        await recordAIChatTurn({
+          channel: input.channel,
+          sessionId: input.sessionId,
+          conversationId,
+          clientMessageId: input.clientMessageId,
+          userText: text,
+          status: "error",
+          error,
+          usageEvents: [...usageEvents],
+          startedAt,
+          durationMs: Date.now() - startedMs,
+        });
+        throw error;
+      }
+    });
     if (idemKey) idempotency.set(idemKey, { at: Date.now(), result });
     return result;
   } finally {
@@ -193,7 +240,10 @@ async function runTurn(
 ): Promise<ChatResult> {
   const rawHistory: ChatMessage[] = (input.history ?? [])
     .filter((m) => m && typeof m.content === "string" && m.content.length > 0)
-    .map((m) => ({ role: m.role, content: sanitize(m.content).slice(0, 8000) }));
+    .map((m) => ({
+      role: m.role,
+      content: sanitize(m.content).slice(0, 8000),
+    }));
 
   const windowed = buildHistoryWindow(rawHistory, HISTORY_TOKEN_BUDGET, MAX_HISTORY_TURNS);
   const history = windowed.kept;
@@ -744,6 +794,38 @@ function resolveLookupText(
   return text;
 }
 
+function chatTelemetryFlags(retrieved: string[]) {
+  const chatEvents = getAIUsageEvents().filter((event) => event.operation === "chat");
+  const aggregate = aggregateAIUsage(chatEvents);
+  const usedKnowledgeBase = retrieved.some((value) => value.startsWith("rag:"));
+  const modes: string[] = [];
+  if (aggregate.usedDeepResearch) modes.push("deep_research");
+  if (usedKnowledgeBase) modes.push("knowledge");
+  if (aggregate.usedQuickResponse) modes.push("quick");
+
+  return {
+    research_depth: aggregate.researchDepth,
+    used_deep_research: aggregate.usedDeepResearch,
+    used_knowledge_base: usedKnowledgeBase,
+    knowledge_match_count: retrieved.reduce((count, value) => {
+      const match = value.match(/^rag:(\d+)$/);
+      return match ? Math.max(count, Number(match[1])) : count;
+    }, 0),
+    used_quick_response: aggregate.usedQuickResponse,
+    web_search_enabled: aggregate.webSearchEnabled,
+    web_search_calls: aggregate.webSearchCalls,
+    model_tier:
+      [...new Set(chatEvents.map((event) => event.modelTier).filter(Boolean))].join(", ") || null,
+    route_reason:
+      [...new Set(chatEvents.map((event) => event.routeReason).filter(Boolean))].join(", ") || null,
+    response_mode:
+      modes.length > 1
+        ? "mixed"
+        : ((modes[0] as "standard" | "quick" | "knowledge" | "deep_research" | undefined) ??
+          "standard"),
+  };
+}
+
 function diag(
   conversationId: string,
   messages: ChatMessage[],
@@ -766,5 +848,6 @@ function diag(
     retrieved_blocks: retrieved,
     truncation_reason: windowed.reason,
     state_changed: true,
+    ...chatTelemetryFlags(retrieved),
   };
 }

@@ -10,7 +10,7 @@ function PrivacyPolicyPage() {
       <div className="mx-auto max-w-3xl px-6 py-12 sm:py-16">
         <h1 className="text-3xl font-bold tracking-tight">Política de Privacidade — TPEC-IA</h1>
         <p className="mt-3 text-sm text-muted-foreground">
-          Última atualização: 12 de agosto de 2026.
+          Última atualização: 28 de agosto de 2026.
         </p>
 
         <div className="mt-8 space-y-7 leading-7 text-sm sm:text-base">
@@ -37,7 +37,9 @@ function PrivacyPolicyPage() {
             <p className="mt-2">
               Os dados são utilizados para prestar e melhorar o serviço, manter o contexto das
               conversas, responder dúvidas, oferecer suporte, prevenir abuso e falhas técnicas,
-              cumprir obrigações legais e manter a segurança da plataforma.
+              cumprir obrigações legais e manter a segurança da plataforma. Quando aplicável, também
+              registramos, em área administrativa restrita, o desempenho do atendimento, a origem
+              estimada das respostas, o consumo de tokens e o custo estimado da IA.
             </p>
           </section>
 
@@ -55,9 +57,10 @@ function PrivacyPolicyPage() {
             <h2 className="text-xl font-semibold">5. Retenção e segurança</h2>
             <p className="mt-2">
               Mantemos dados pelo período necessário às finalidades descritas nesta política ou para
-              cumprimento de obrigações legais. Adotamos medidas técnicas e administrativas
-              razoáveis para proteger as informações contra acesso, alteração, perda ou divulgação
-              indevida.
+              cumprimento de obrigações legais. Os históricos e métricas da área administrativa são
+              protegidos por autenticação e autorização de administrador. Adotamos medidas técnicas
+              e administrativas razoáveis para proteger as informações contra acesso, alteração,
+              perda ou divulgação indevida.
             </p>
           </section>
 

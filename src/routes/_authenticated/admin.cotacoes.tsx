@@ -195,6 +195,12 @@ function AdminMarket() {
             >
               Base de conhecimento
             </Link>
+            <Link
+              to="/admin/ia"
+              className="rounded-md border border-border px-3 py-1.5 hover:bg-accent"
+            >
+              Análise da IA
+            </Link>
             <Link to="/" className="rounded-md border border-border px-3 py-1.5 hover:bg-accent">
               Chat
             </Link>
@@ -429,7 +435,9 @@ function AdminMarket() {
                           <div className="text-xs text-muted-foreground">{q.source_name}</div>
                         </td>
                         <td className="p-2 whitespace-nowrap">
-                          {Number(q.price).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}{" "}
+                          {Number(q.price).toLocaleString("pt-BR", {
+                            minimumFractionDigits: 2,
+                          })}{" "}
                           <span className="text-xs text-muted-foreground">{q.unit}</span>
                         </td>
                         <td className="p-2 text-xs">
