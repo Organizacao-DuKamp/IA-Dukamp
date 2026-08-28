@@ -1,5 +1,5 @@
 import type { ChatChannel, ChatMessage } from "./types";
-import { TPEC_SYSTEM_PROMPT } from "./system-prompt.ts";
+import { TPEC_LIGHT_SYSTEM_PROMPT, TPEC_SYSTEM_PROMPT } from "./system-prompt.ts";
 import {
   diagnosticResponseHeaders,
   logDiagnostic,
@@ -130,7 +130,9 @@ interface InstructionMetrics {
 }
 
 function buildInstructions(options: OpenAIOptions): InstructionMetrics {
-  const layers = [TPEC_SYSTEM_PROMPT];
+  const isCasualConversation = /^CONVERSA CASUAL\b/i.test(options.sourcePolicy?.trim() ?? "");
+  const systemPrompt = isCasualConversation ? TPEC_LIGHT_SYSTEM_PROMPT : TPEC_SYSTEM_PROMPT;
+  const layers = [systemPrompt];
   let channelInstructionChars = 0;
   let summaryChars = 0;
   let stateChars = 0;
@@ -181,7 +183,7 @@ function buildInstructions(options: OpenAIOptions): InstructionMetrics {
   const text = layers.join("\n\n");
   return {
     text,
-    systemPromptChars: TPEC_SYSTEM_PROMPT.length,
+    systemPromptChars: systemPrompt.length,
     channelInstructionChars,
     summaryChars,
     stateChars,

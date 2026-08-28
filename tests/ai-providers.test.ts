@@ -135,6 +135,7 @@ test("conversa casual usa Luna low sem pesquisa", async () => {
     assert.deepEqual(requestBody.reasoning, { effort: "low" });
     assert.equal("tools" in requestBody, false);
     assert.equal(requestBody.max_output_tokens, 1_800);
+    assert.ok(String(requestBody.instructions).length < 4_000);
   } finally {
     if (previousKey === undefined) delete process.env.OPENAI_API_KEY;
     else process.env.OPENAI_API_KEY = previousKey;
