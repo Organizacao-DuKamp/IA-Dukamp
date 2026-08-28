@@ -1,0 +1,401 @@
+npm warn exec The following package was not found and will be installed: tsx@4.23.12
+TAP version 13
+# [dukamp-site] products lookup {
+#   operation: 'products lookup',
+#   status: 'ok',
+#   error_code: null,
+#   duration_ms: 0,
+#   result_count: 1
+# }
+# [dukamp-site] products lookup {
+#   operation: 'products lookup',
+#   status: 'snapshot',
+#   error_code: 'live_catalog_fallback',
+#   duration_ms: 36,
+#   result_count: 8
+# }
+# [dukamp-site] products lookup {
+#   operation: 'products lookup',
+#   status: 'ok',
+#   error_code: null,
+#   duration_ms: 0,
+#   result_count: 1
+# }
+# [dukamp-site] products lookup {
+#   operation: 'products lookup',
+#   status: 'snapshot',
+#   error_code: 'live_catalog_fallback',
+#   duration_ms: 0,
+#   result_count: 8
+# }
+# [dukamp-site] products lookup {
+#   operation: 'products lookup',
+#   status: 'snapshot',
+#   error_code: 'live_catalog_fallback',
+#   duration_ms: 0,
+#   result_count: 8
+# }
+# [dukamp-site] products lookup {
+#   operation: 'products lookup',
+#   status: 'ok',
+#   error_code: null,
+#   duration_ms: 0,
+#   result_count: 1
+# }
+# [dukamp-site] sellers lookup {
+#   operation: 'sellers lookup',
+#   status: 'ok',
+#   error_code: null,
+#   duration_ms: 1,
+#   result_count: 2
+# }
+# [dukamp-site] sellers lookup {
+#   operation: 'sellers lookup',
+#   status: 'ok',
+#   error_code: null,
+#   duration_ms: 0,
+#   result_count: 1
+# }
+# [dukamp-site] sellers lookup {
+#   operation: 'sellers lookup',
+#   status: 'ok',
+#   error_code: null,
+#   duration_ms: 0,
+#   result_count: 2
+# }
+# [dukamp-site] sellers lookup {
+#   operation: 'sellers lookup',
+#   status: 'empty_result',
+#   error_code: null,
+#   duration_ms: 0,
+#   result_count: 0
+# }
+# [dukamp-site] products lookup {
+#   operation: 'products lookup',
+#   status: 'snapshot',
+#   error_code: 'live_catalog_fallback',
+#   duration_ms: 0,
+#   result_count: 8
+# }
+# [dukamp-site] products lookup {
+#   operation: 'products lookup',
+#   status: 'snapshot',
+#   error_code: 'live_catalog_fallback',
+#   duration_ms: 0,
+#   result_count: 8
+# }
+# [dukamp-site] products lookup {
+#   operation: 'products lookup',
+#   status: 'ok',
+#   error_code: null,
+#   duration_ms: 0,
+#   result_count: 1
+# }
+# [dukamp-site] products recommendation lookup {
+#   operation: 'products recommendation lookup',
+#   status: 'ok',
+#   error_code: null,
+#   duration_ms: 1,
+#   result_count: 1
+# }
+# [dukamp-site] products recommendation lookup {
+#   operation: 'products recommendation lookup',
+#   status: 'ok',
+#   error_code: null,
+#   duration_ms: 0,
+#   result_count: 1
+# }
+# [dukamp-site] sellers lookup {
+#   operation: 'sellers lookup',
+#   status: 'ok',
+#   error_code: null,
+#   duration_ms: 0,
+#   result_count: 2
+# }
+# [dukamp-site] sellers lookup {
+#   operation: 'sellers lookup',
+#   status: 'ok',
+#   error_code: null,
+#   duration_ms: 0,
+#   result_count: 2
+# }
+# [dukamp-site] products lookup {
+#   operation: 'products lookup',
+#   status: 'ok',
+#   error_code: null,
+#   duration_ms: 0,
+#   result_count: 1
+# }
+# [dukamp-site] sellers lookup {
+#   operation: 'sellers lookup',
+#   status: 'ok',
+#   error_code: null,
+#   duration_ms: 0,
+#   result_count: 2
+# }
+# [dukamp-site] categories lookup {
+#   operation: 'categories lookup',
+#   status: 'ok',
+#   error_code: null,
+#   duration_ms: 0,
+#   result_count: 1
+# }
+# [dukamp-site] site settings lookup {
+#   operation: 'site settings lookup',
+#   status: 'ok',
+#   error_code: null,
+#   duration_ms: 0,
+#   result_count: 1
+# }
+# [dukamp-site] products lookup {
+#   operation: 'products lookup',
+#   status: 'ok',
+#   error_code: null,
+#   duration_ms: 0,
+#   result_count: 1
+# }
+# [dukamp-site] sellers lookup {
+#   operation: 'sellers lookup',
+#   status: 'ok',
+#   error_code: null,
+#   duration_ms: 0,
+#   result_count: 1
+# }
+# [dukamp-site] products lookup {
+#   operation: 'products lookup',
+#   status: 'ok',
+#   error_code: null,
+#   duration_ms: 0,
+#   result_count: 1
+# }
+# Subtest: variáveis ausentes produzem health check seguro
+ok 1 - variáveis ausentes produzem health check seguro
+  ---
+  duration_ms: 0.745195
+  type: 'test'
+  ...
+# Subtest: produto encontrado vem do cliente Supabase
+ok 2 - produto encontrado vem do cliente Supabase
+  ---
+  duration_ms: 1.621101
+  type: 'test'
+  ...
+# Subtest: produto não encontrado é empty_result
+not ok 3 - produto não encontrado é empty_result
+  ---
+  duration_ms: 37.124664
+  type: 'test'
+  location: '/home/runner/work/IA-Dukamp/IA-Dukamp/tests/site-commercial.test.ts:139:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'snapshot'
+    - 'empty_result'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'empty_result'
+  actual: 'snapshot'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/runner/work/IA-Dukamp/IA-Dukamp/tests/site-commercial.test.ts:145:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: pequeno erro de digitação usa fallback e encontra nome oficial
+ok 4 - pequeno erro de digitação usa fallback e encontra nome oficial
+  ---
+  duration_ms: 0.369686
+  type: 'test'
+  ...
+# Subtest: erro de RLS é unauthorized e não vira lista vazia silenciosa
+not ok 5 - erro de RLS é unauthorized e não vira lista vazia silenciosa
+  ---
+  duration_ms: 0.399044
+  type: 'test'
+  location: '/home/runner/work/IA-Dukamp/IA-Dukamp/tests/site-commercial.test.ts:157:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'snapshot'
+    - 'unauthorized'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'unauthorized'
+  actual: 'snapshot'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/runner/work/IA-Dukamp/IA-Dukamp/tests/site-commercial.test.ts:163:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: chave inválida é diferenciada de bloqueio RLS
+not ok 6 - chave inválida é diferenciada de bloqueio RLS
+  ---
+  duration_ms: 0.29199
+  type: 'test'
+  location: '/home/runner/work/IA-Dukamp/IA-Dukamp/tests/site-commercial.test.ts:166:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'snapshot'
+    - 'unauthorized'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'unauthorized'
+  actual: 'snapshot'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/runner/work/IA-Dukamp/IA-Dukamp/tests/site-commercial.test.ts:172:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: coluna opcional inexistente refaz produtos com colunas comerciais essenciais
+ok 7 - coluna opcional inexistente refaz produtos com colunas comerciais essenciais
+  ---
+  duration_ms: 0.414944
+  type: 'test'
+  ...
+# Subtest: lista de vendedores consulta colunas reais e retorna ativos
+ok 8 - lista de vendedores consulta colunas reais e retorna ativos
+  ---
+  duration_ms: 0.52096
+  type: 'test'
+  ...
+# Subtest: vendedor por região é filtrado depois da consulta real
+ok 9 - vendedor por região é filtrado depois da consulta real
+  ---
+  duration_ms: 0.543825
+  type: 'test'
+  ...
+# Subtest: display_order ausente usa ordenação por nome
+ok 10 - display_order ausente usa ordenação por nome
+  ---
+  duration_ms: 0.603435
+  type: 'test'
+  ...
+# Subtest: lista vazia verdadeira é empty_result
+ok 11 - lista vazia verdadeira é empty_result
+  ---
+  duration_ms: 0.20718
+  type: 'test'
+  ...
+# Subtest: erro de conexão é internal_error
+not ok 12 - erro de conexão é internal_error
+  ---
+  duration_ms: 0.342387
+  type: 'test'
+  location: '/home/runner/work/IA-Dukamp/IA-Dukamp/tests/site-commercial.test.ts:240:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'snapshot'
+    - 'internal_error'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'internal_error'
+  actual: 'snapshot'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/runner/work/IA-Dukamp/IA-Dukamp/tests/site-commercial.test.ts:252:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: timeout é diferenciado de erro interno
+not ok 13 - timeout é diferenciado de erro interno
+  ---
+  duration_ms: 0.193368
+  type: 'test'
+  location: '/home/runner/work/IA-Dukamp/IA-Dukamp/tests/site-commercial.test.ts:255:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'snapshot'
+    - 'timeout'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'timeout'
+  actual: 'snapshot'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/home/runner/work/IA-Dukamp/IA-Dukamp/tests/site-commercial.test.ts:261:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: intenção executa products no Supabase: quais produtos a DuKamp tem?
+ok 14 - intenção executa products no Supabase: quais produtos a DuKamp tem?
+  ---
+  duration_ms: 6.869126
+  type: 'test'
+  ...
+# Subtest: intenção executa products no Supabase: tem produto para bezerro?
+ok 15 - intenção executa products no Supabase: tem produto para bezerro?
+  ---
+  duration_ms: 3.019033
+  type: 'test'
+  ...
+# Subtest: product_recommendation executa products no Supabase
+ok 16 - product_recommendation executa products no Supabase
+  ---
+  duration_ms: 0.579615
+  type: 'test'
+  ...
+# Subtest: seller_contact executa sellers no Supabase: me passe a lista de vendedores
+ok 17 - seller_contact executa sellers no Supabase: me passe a lista de vendedores
+  ---
+  duration_ms: 0.256343
+  type: 'test'
+  ...
+# Subtest: seller_contact executa sellers no Supabase: quero o contato dos vendedores
+ok 18 - seller_contact executa sellers no Supabase: quero o contato dos vendedores
+  ---
+  duration_ms: 0.229968
+  type: 'test'
+  ...
+# Subtest: health check consulta quatro tabelas sem retornar registros
+ok 19 - health check consulta quatro tabelas sem retornar registros
+  ---
+  duration_ms: 0.574146
+  type: 'test'
+  ...
+# Subtest: busca textual usa descrição oficial para encontrar produto
+ok 20 - busca textual usa descrição oficial para encontrar produto
+  ---
+  duration_ms: 0.258268
+  type: 'test'
+  ...
+# Subtest: consulta rica de vendedores inclui mídias oficiais
+ok 21 - consulta rica de vendedores inclui mídias oficiais
+  ---
+  duration_ms: 0.186017
+  type: 'test'
+  ...
+# Subtest: pedido de descrição específica dispara consulta comercial de produto
+ok 22 - pedido de descrição específica dispara consulta comercial de produto
+  ---
+  duration_ms: 1.051822
+  type: 'test'
+  ...
+1..22
+# tests 22
+# suites 0
+# pass 17
+# fail 5
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 409.216761
