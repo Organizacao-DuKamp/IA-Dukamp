@@ -1,6 +1,6 @@
 # Checklist de validação em produção
 
-- [ ] Deploy da `main` concluído no Lovable.
+- [ ] Deploy da `main` concluído no Netlify.
 - [ ] Seed embutido registrado no painel administrativo.
 - [ ] Documentos de curadoria pecuária processados sem erro.
 - [ ] Política de prioridade DuKamp verificada.
