@@ -9,8 +9,7 @@ Assistente de IA especialista em pecuária brasileira, com vitrine institucional
 - Netlify como frontend e backend server-side
 - Supabase TPEC-IA para RAG e dados internos
 - Supabase secundário DuKamp para produtos e vendedores públicos
-- OpenAI para raciocínio, resposta final e embeddings do RAG
-- Perplexity exclusivamente para pesquisa externa atual
+- OpenAI para raciocínio, Web Search, resposta final e embeddings do RAG
 
 ## Desenvolvimento local
 
@@ -32,7 +31,7 @@ Navegador
 Meta WhatsApp
   -> POST /api/public/whatsapp na Netlify
   -> handleIncoming no próprio runtime da Netlify
-  -> Supabase TPEC-IA + RAG OpenAI + pesquisa atual + resposta OpenAI
+  -> Supabase TPEC-IA + RAG OpenAI + Web Search OpenAI + resposta OpenAI
 ```
 
 O backend completo é carregado no servidor da Netlify e recebe como secrets:
@@ -49,13 +48,12 @@ Modelos podem ser definidos sem alterar código:
 OPENAI_CAPABLE_MODEL=gpt-5
 OPENAI_FAST_MODEL=gpt-5-mini
 OPENAI_EMBEDDING_MODEL=text-embedding-3-large
-PERPLEXITY_MODEL=sonar
 ```
 
 O fluxo por mensagem é: bancos internos e RAG recuperam evidências; quando a
-pergunta exige informação atual, a Perplexity pesquisa a web; por fim, a OpenAI
-recebe histórico, estado, RAG e pesquisa para raciocinar e produzir a única
-resposta enviada ao usuário.
+pergunta exige informação atual, o Web Search nativo da OpenAI pesquisa a web;
+por fim, o mesmo fluxo da OpenAI recebe histórico, estado, RAG e pesquisa para
+raciocinar e produzir a única resposta enviada ao usuário.
 
 ## Previsão do tempo aplicada à pecuária
 
@@ -64,8 +62,8 @@ usam uma intenção própria. Sem localização confirmada, a TPEC-IA pergunta c
 e UF e aguarda a resposta. A localização fica no estado da conversa para
 continuações como “e amanhã?”, mas é substituída quando o usuário informar outra.
 
-Com a região confirmada, a Perplexity usa contexto de busca alto e prioriza
-fontes meteorológicas oficiais e regionais. A resposta final precisa identificar
+Com a região confirmada, o Web Search da OpenAI usa contexto de busca alto e
+prioriza fontes meteorológicas oficiais e regionais. A resposta final precisa identificar
 local, data, hora/fuso e fontes, sintetizar agora/24 horas/7 dias quando houver
 dados e relacionar a previsão a decisões pecuárias como conforto térmico, água,
 sombra, manejo, transporte, pastagem, alimentos, lama, geada, raios e fogo.
@@ -86,9 +84,7 @@ OPENAI_API_KEY=<chave-da-OpenAI>
 ```
 
 As variáveis `SUPABASE_SERVICE_ROLE_KEY` e `OPENAI_API_KEY` são server-only e
-não aparecem no bundle do navegador. Se a pesquisa legada da Perplexity ainda
-estiver configurada, ela pode ser removida do ambiente; o fluxo atual usa a
-pesquisa Web nativa da OpenAI.
+não aparecem no bundle do navegador. O fluxo usa o Web Search nativo da OpenAI.
 
 Depois de cadastrar as variáveis:
 
