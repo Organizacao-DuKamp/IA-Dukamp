@@ -43,7 +43,7 @@ jobs:
       - name: Preserve live source status with snapshot fallback
         run: node scripts/finalize-dukamp-full-catalog-v2.mjs
       - name: Format changed files
-        run: npx prettier --write src/lib/site/site-lookup.server.ts src/lib/site/dukamp-catalog.snapshot.ts src/lib/chat/core.server.ts src/lib/chat/intent.ts src/lib/chat/system-prompt.ts tests/site-commercial.test.ts scripts/snapshot-dukamp-public-catalog.mjs
+        run: npx prettier --write src/lib/site/site-lookup.server.ts src/lib/site/dukamp-catalog.snapshot.ts src/lib/chat/core.server.ts src/lib/chat/intent.ts src/lib/chat/system-prompt.ts tests/site-commercial.test.ts scripts/snapshot-dukamp-public-catalog.mjs scripts/apply-dukamp-full-catalog.mjs scripts/fix-apply-dukamp-full-catalog.mjs scripts/fix-apply-dukamp-full-catalog-v2.mjs scripts/finalize-dukamp-full-catalog.mjs scripts/finalize-dukamp-full-catalog-v2.mjs
       - name: Audit privileged imports
         run: npm run audit:privileged
       - name: Diagnose commercial tests
