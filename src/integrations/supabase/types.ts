@@ -14,6 +14,117 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_chat_turns: {
+        Row: {
+          assistant_text: string | null
+          cached_input_tokens: number
+          channel: string
+          client_message_id: string | null
+          completed_at: string | null
+          conversation_id: string
+          created_at: string
+          duration_ms: number | null
+          error_code: string | null
+          error_message: string | null
+          estimated_cost_usd: number
+          id: string
+          input_tokens: number
+          knowledge_match_count: number
+          metadata: Json
+          model: string | null
+          model_tier: string | null
+          output_tokens: number
+          phone_number: string | null
+          pricing_configured: boolean
+          pricing_source: string | null
+          reasoning_tokens: number
+          research_depth: string
+          response_mode: string
+          route_reason: string | null
+          status: string
+          total_tokens: number
+          used_deep_research: boolean
+          used_knowledge_base: boolean
+          used_quick_response: boolean
+          user_key: string
+          user_text: string
+          web_search_calls: number
+          web_search_enabled: boolean
+        }
+        Insert: {
+          assistant_text?: string | null
+          cached_input_tokens?: number
+          channel: string
+          client_message_id?: string | null
+          completed_at?: string | null
+          conversation_id: string
+          created_at?: string
+          duration_ms?: number | null
+          error_code?: string | null
+          error_message?: string | null
+          estimated_cost_usd?: number
+          id?: string
+          input_tokens?: number
+          knowledge_match_count?: number
+          metadata?: Json
+          model?: string | null
+          model_tier?: string | null
+          output_tokens?: number
+          phone_number?: string | null
+          pricing_configured?: boolean
+          pricing_source?: string | null
+          reasoning_tokens?: number
+          research_depth?: string
+          response_mode?: string
+          route_reason?: string | null
+          status?: string
+          total_tokens?: number
+          used_deep_research?: boolean
+          used_knowledge_base?: boolean
+          used_quick_response?: boolean
+          user_key: string
+          user_text: string
+          web_search_calls?: number
+          web_search_enabled?: boolean
+        }
+        Update: {
+          assistant_text?: string | null
+          cached_input_tokens?: number
+          channel?: string
+          client_message_id?: string | null
+          completed_at?: string | null
+          conversation_id?: string
+          created_at?: string
+          duration_ms?: number | null
+          error_code?: string | null
+          error_message?: string | null
+          estimated_cost_usd?: number
+          id?: string
+          input_tokens?: number
+          knowledge_match_count?: number
+          metadata?: Json
+          model?: string | null
+          model_tier?: string | null
+          output_tokens?: number
+          phone_number?: string | null
+          pricing_configured?: boolean
+          pricing_source?: string | null
+          reasoning_tokens?: number
+          research_depth?: string
+          response_mode?: string
+          route_reason?: string | null
+          status?: string
+          total_tokens?: number
+          used_deep_research?: boolean
+          used_knowledge_base?: boolean
+          used_quick_response?: boolean
+          user_key?: string
+          user_text?: string
+          web_search_calls?: number
+          web_search_enabled?: boolean
+        }
+        Relationships: []
+      }
       cotacoes_pecuarias: {
         Row: {
           abrangencia: string
@@ -792,6 +903,46 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_ai_chat_overview: {
+        Args: { p_from?: string; p_to?: string }
+        Returns: {
+          completed_turns: number
+          conversations: number
+          deep_research_pct: number
+          failed_turns: number
+          input_tokens: number
+          knowledge_base_pct: number
+          output_tokens: number
+          pricing_configured: boolean
+          quick_response_pct: number
+          total_cost_usd: number
+          total_tokens: number
+          total_turns: number
+          unique_users: number
+          whatsapp_numbers: number
+        }[]
+      }
+      admin_ai_chat_users: {
+        Args: {
+          p_from?: string
+          p_limit?: number
+          p_offset?: number
+          p_to?: string
+        }
+        Returns: {
+          channel: string
+          completed_turns: number
+          conversation_count: number
+          deep_research_pct: number
+          knowledge_base_pct: number
+          last_message_at: string
+          phone_number: string
+          quick_response_pct: number
+          total_cost_usd: number
+          turn_count: number
+          user_key: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
