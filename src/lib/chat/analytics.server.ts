@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { supabaseAdmin } from "../../integrations/supabase/client.server";
+import { supabaseAdmin } from "../../integrations/supabase/client.server.ts";
 import { logDiagnostic } from "./diagnostics.server.ts";
 import {
   aggregateAIUsage,
