@@ -358,7 +358,10 @@ async function runTurn(
       }
       if (domainIntent.intent === "product_recommendation") {
         const liveMatch =
-          lookup.products?.some((product) => product.stock == null || product.stock > 0) ?? false;
+          lookup.products?.some(
+            (product) =>
+              product.source !== "snapshot" && (product.stock == null || product.stock > 0),
+          ) ?? false;
         const productStatus = commercial.statuses.find((status) =>
           status.startsWith("site-products:"),
         );

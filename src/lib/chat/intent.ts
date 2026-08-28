@@ -132,7 +132,7 @@ export function classifyDomainIntent(text: string, hasHistory = false): IntentCl
   const normalized = text.trim();
   const productImageFollowUp =
     hasHistory &&
-    /^(?:(?:manda|mande|mostra|mostre|quero|tem)\s+)?(?:a\s+)?(?:foto|imagem)(?:\s+(?:dele|dela|desse|dessa|do produto))?\s*[?.!]*$/i.test(
+    /^(?:(?:manda|mande|mostra|mostre|quero|tem)\s+)?(?:a\s+)?(?:foto|imagem|descri[cç][aã]o|detalhes?)(?:\s+(?:dele|dela|desse|dessa|do produto))?\s*[?.!]*$/i.test(
       normalized,
     );
   const hit = isWeatherRequest(normalized)

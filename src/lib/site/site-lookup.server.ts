@@ -6,6 +6,7 @@ import { normalizeName } from "../products/normalize.ts";
 import { matchSellerRequest } from "./seller-domain.ts";
 import type { IntentClassification } from "../chat/intent.ts";
 import { rankDuKampProductsForNeed } from "./dukamp-product-ranking.ts";
+import { DUKAMP_CATALOG_SNAPSHOT } from "./dukamp-catalog.snapshot.ts";
 
 export type SiteQueryStatus =
   | "ok"
@@ -14,7 +15,8 @@ export type SiteQueryStatus =
   | "schema_error"
   | "timeout"
   | "internal_error"
-  | "empty_result";
+  | "empty_result"
+  | "snapshot";
 export interface SiteQueryResult<T> {
   status: SiteQueryStatus;
   data: T;
@@ -44,6 +46,15 @@ export interface SiteProduct {
   on_sale?: boolean | null;
   sale_consumer_price?: number | null;
   sale_consumer_pix_price?: number | null;
+  category_id?: string | null;
+  catalog_id?: string | null;
+  weight?: number | null;
+  peso?: number | null;
+  altura?: number | null;
+  largura?: number | null;
+  comprimento?: number | null;
+  updated_at?: string | null;
+  source?: "live" | "live+snapshot" | "snapshot";
 }
 export interface SiteSeller {
   id: string;
@@ -54,6 +65,12 @@ export interface SiteSeller {
   whatsapp: string | null;
   active?: boolean | null;
   display_order?: number | null;
+  slug?: string | null;
+  show_on_team?: boolean | null;
+  photo_url?: string | null;
+  cutout_url?: string | null;
+  banner_url?: string | null;
+  source?: "live" | "live+snapshot" | "snapshot";
 }
 export interface SiteLookup {
   products?: SiteProduct[];
@@ -72,6 +89,8 @@ const SELLER_RE =
 const CATEGORY_RE = /\b(categorias?|linhas?\s+de\s+produtos?|cat[aá]logos?)\b/i;
 const PRODUCT_RE =
   /\b(produtos?|suplementos?|ra[cç][aã]o|mineral|proteinado|dukamp|bezerro|recria|seca)\b/i;
+const PRODUCT_ASSET_RE =
+  /\b(foto|imagem|descri[cç][aã]o|detalhes?|ficha\s+t[eé]cnica|bula)\b.{0,40}\b(do|da|de|desse|dessa|sobre)\b.{1,100}/i;
 const LIST_RE = /\b(quais|liste|lista|todos|todas|cat[aá]logo|voc[eê]s\s+t[eê]m)\b/i;
 const PURPOSE_RE =
   /\b(bezerros?|recria|seca|[áa]guas|engorda|lacta[cç][aã]o|suplemento|ra[cç][aã]o|mineral|proteinado)\b/i;
@@ -102,10 +121,25 @@ const PRODUCT_SEARCH_STOPWORDS = new Set([
   "liste",
   "lista",
   "todos",
+  "manda",
+  "mande",
+  "mostra",
+  "mostre",
+  "imagem",
+  "foto",
+  "descricao",
+  "detalhes",
+  "ficha",
+  "tecnica",
+  "bula",
+  "dele",
+  "dela",
+  "desse",
+  "dessa",
 ]);
 
 const PRODUCT_SELECT =
-  "id,name,code,slug,price,active,stock,featured,description,images,brand,consumer_price,consumer_pix_price,producer_price,producer_pix_price,reseller_price,reseller_pix_price,installments,on_sale,sale_consumer_price,sale_consumer_pix_price";
+  "id,name,code,slug,price,active,stock,featured,description,images,brand,consumer_price,consumer_pix_price,producer_price,producer_pix_price,reseller_price,reseller_pix_price,installments,on_sale,sale_consumer_price,sale_consumer_pix_price,category_id,catalog_id,weight,peso,altura,largura,comprimento,updated_at";
 const PRODUCT_FALLBACK_SELECT = "id,name,code,slug,price,active,stock,featured";
 
 export function siteIntentHints(text: string) {
@@ -113,7 +147,8 @@ export function siteIntentHints(text: string) {
     price: PRICE_RE.test(text),
     seller: SELLER_RE.test(text),
     category: CATEGORY_RE.test(text),
-    product: PRODUCT_RE.test(text),
+    product: PRODUCT_RE.test(text) || PRODUCT_ASSET_RE.test(text),
+    productAsset: PRODUCT_ASSET_RE.test(text),
     listProducts: PRODUCT_RE.test(text) && LIST_RE.test(text),
   };
 }
@@ -203,6 +238,164 @@ function fuzzyTokenHit(token: string, words: string[]): boolean {
   );
 }
 
+const snapshotProducts = DUKAMP_CATALOG_SNAPSHOT.products;
+const snapshotSellers = DUKAMP_CATALOG_SNAPSHOT.sellers;
+const snapshotById = new Map(snapshotProducts.map((product) => [product.id, product]));
+const snapshotByCode = new Map(
+  snapshotProducts
+    .filter((product) => product.code)
+    .map((product) => [normalizeName(product.code ?? ""), product]),
+);
+const snapshotBySlug = new Map(
+  snapshotProducts
+    .filter((product) => product.slug)
+    .map((product) => [normalizeName(product.slug ?? ""), product]),
+);
+const snapshotByName = new Map(
+  snapshotProducts.map((product) => [normalizeName(product.name), product]),
+);
+const snapshotSellerById = new Map(snapshotSellers.map((seller) => [seller.id, seller]));
+
+function snapshotToSiteProduct(product: (typeof snapshotProducts)[number]): SiteProduct {
+  return {
+    id: product.id,
+    name: product.name,
+    code: product.code ?? null,
+    slug: product.slug ?? null,
+    price: null,
+    active: product.active ?? true,
+    stock: null,
+    description: product.description ?? null,
+    images: [...(product.images ?? [])],
+    brand: product.brand ?? null,
+    category_id: product.category_id ?? null,
+    catalog_id: product.catalog_id ?? null,
+    weight: product.weight ?? null,
+    peso: product.peso ?? null,
+    altura: product.altura ?? null,
+    largura: product.largura ?? null,
+    comprimento: product.comprimento ?? null,
+    updated_at: product.updated_at ?? null,
+    source: "snapshot",
+  };
+}
+
+function snapshotForProduct(product: SiteProduct) {
+  return (
+    snapshotById.get(product.id) ??
+    (product.code ? snapshotByCode.get(normalizeName(product.code)) : undefined) ??
+    (product.slug ? snapshotBySlug.get(normalizeName(product.slug)) : undefined) ??
+    snapshotByName.get(normalizeName(product.name))
+  );
+}
+
+function enrichProductFromSnapshot(product: SiteProduct): SiteProduct {
+  const snapshot = snapshotForProduct(product);
+  if (!snapshot) return { ...product, source: "live" };
+  const liveDescription = product.description?.trim() ?? "";
+  const snapshotDescription = snapshot.description?.trim() ?? "";
+  const description =
+    snapshotDescription.length > liveDescription.length
+      ? snapshotDescription
+      : liveDescription || null;
+  const images = [
+    ...new Set([...(product.images ?? []), ...(snapshot.images ?? [])].filter(Boolean)),
+  ];
+  const supplemented =
+    description !== (product.description?.trim() || null) ||
+    images.length !== (product.images ?? []).length;
+  return {
+    ...product,
+    description,
+    images,
+    brand: product.brand ?? snapshot.brand ?? null,
+    category_id: product.category_id ?? snapshot.category_id ?? null,
+    catalog_id: product.catalog_id ?? snapshot.catalog_id ?? null,
+    weight: product.weight ?? snapshot.weight ?? null,
+    peso: product.peso ?? snapshot.peso ?? null,
+    altura: product.altura ?? snapshot.altura ?? null,
+    largura: product.largura ?? snapshot.largura ?? null,
+    comprimento: product.comprimento ?? snapshot.comprimento ?? null,
+    updated_at: product.updated_at ?? snapshot.updated_at ?? null,
+    source: supplemented ? "live+snapshot" : "live",
+  };
+}
+
+function queryTokens(query: string): string[] {
+  return normalizeName(query)
+    .replace(/[^a-z0-9\s/]/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter((token) => token.length >= 2 && !PRODUCT_SEARCH_STOPWORDS.has(token))
+    .slice(0, 10);
+}
+
+function searchSnapshotProducts(query: string, limit: number, listAll = false): SiteProduct[] {
+  if (listAll) return snapshotProducts.slice(0, limit).map(snapshotToSiteProduct);
+  const tokens = queryTokens(query);
+  if (!tokens.length) return snapshotProducts.slice(0, limit).map(snapshotToSiteProduct);
+  const normalizedQuery = normalizeName(query);
+  return snapshotProducts
+    .map((product) => {
+      const name = normalizeName(product.name);
+      const code = normalizeName(product.code ?? "");
+      const slug = normalizeName(product.slug ?? "");
+      const brand = normalizeName(product.brand ?? "");
+      const description = normalizeName(stripHtml(product.description ?? "").slice(0, 12000));
+      const coreWords = `${name} ${code} ${slug} ${brand}`.split(/\s+/).filter(Boolean);
+      const descriptionWords = new Set(description.split(/\s+/).filter(Boolean));
+      const allowDescriptionOnly = tokens.length > 1 || PURPOSE_RE.test(query);
+      const strongCoreHit = (token: string) =>
+        coreWords.some((word) => {
+          if (!word) return false;
+          if (word === token) return true;
+          if (word.length < 3 || token.length < 3) return false;
+          if (
+            word.length >= 4 &&
+            token.length >= 4 &&
+            (word.includes(token) || token.includes(word))
+          )
+            return true;
+          return (
+            token.length >= 4 &&
+            word.length >= 4 &&
+            Math.abs(word.length - token.length) <= 2 &&
+            editDistance(token, word) <= 2
+          );
+        });
+      const hits = tokens.filter(
+        (token) =>
+          strongCoreHit(token) ||
+          (allowDescriptionOnly &&
+            (descriptionWords.has(token) || (token.length >= 5 && description.includes(token)))),
+      ).length;
+      let score = hits / tokens.length;
+      if (name && normalizedQuery.includes(name)) score += 2;
+      if (code && normalizedQuery.includes(code)) score += 2;
+      return { product, score };
+    })
+    .filter(({ score }) => score >= 0.34)
+    .sort((a, b) => b.score - a.score || a.product.name.localeCompare(b.product.name, "pt-BR"))
+    .slice(0, limit)
+    .map(({ product }) => snapshotToSiteProduct(product));
+}
+
+function finishSnapshot(
+  operation: string,
+  started: number,
+  data: SiteProduct[],
+): SiteQueryResult<SiteProduct[]> {
+  const result: SiteQueryResult<SiteProduct[]> = {
+    status: data.length ? "snapshot" : "empty_result",
+    data,
+    errorCode: data.length ? "live_catalog_fallback" : null,
+    durationMs: Date.now() - started,
+    count: data.length,
+  };
+  logQuery(operation, result);
+  return result;
+}
+
 export async function querySiteProducts(
   query: string,
   limit = 8,
@@ -214,13 +407,7 @@ export async function querySiteProducts(
   const started = Date.now();
   try {
     const client = clientFor(deps);
-    const normalized = normalizeName(query)
-      .replace(/[^a-z0-9\s/]/g, " ")
-      .trim();
-    const tokens = normalized
-      .split(/\s+/)
-      .filter((token) => token.length >= 2 && !PRODUCT_SEARCH_STOPWORDS.has(token))
-      .slice(0, 8);
+    const tokens = queryTokens(query);
     let request = client.from("products").select(PRODUCT_SELECT).eq("active", true);
     if (!listAll && tokens.length)
       request = request.or(
@@ -238,48 +425,67 @@ export async function querySiteProducts(
       response = await fallback.limit(Math.min(Math.max(limit * 5, 20), 100));
     }
     if (!response.error && !listAll && tokens.length && (response.data?.length ?? 0) === 0) {
-      response = await client.from("products").select(PRODUCT_SELECT).eq("active", true).limit(100);
+      response = await client.from("products").select(PRODUCT_SELECT).eq("active", true).limit(500);
       if (response.error && classifyError(response.error).status === "schema_error")
         response = await client
           .from("products")
           .select(PRODUCT_FALLBACK_SELECT)
           .eq("active", true)
-          .limit(100);
+          .limit(500);
     }
-    if (response.error) return finish(operation, started, [], response.error);
+    if (response.error) {
+      const snapshot = searchSnapshotProducts(query, limit, listAll);
+      return finish(operation, started, snapshot, response.error);
+    }
     const products = (
       (response.data ?? []) as Array<Partial<SiteProduct> & { id: string; name: string }>
-    ).map((p) => ({
-      id: p.id,
-      name: p.name,
-      code: p.code ?? null,
-      slug: p.slug ?? null,
-      price: p.price ?? null,
-      active: p.active ?? true,
-      stock: p.stock ?? null,
-      featured: p.featured ?? null,
-      description: p.description ?? null,
-      images: Array.isArray(p.images)
-        ? p.images.filter((item): item is string => typeof item === "string")
-        : [],
-      brand: p.brand ?? null,
-      consumer_price: p.consumer_price ?? null,
-      consumer_pix_price: p.consumer_pix_price ?? null,
-      producer_price: p.producer_price ?? null,
-      producer_pix_price: p.producer_pix_price ?? null,
-      reseller_price: p.reseller_price ?? null,
-      reseller_pix_price: p.reseller_pix_price ?? null,
-      installments: p.installments ?? null,
-      on_sale: p.on_sale ?? null,
-      sale_consumer_price: p.sale_consumer_price ?? null,
-      sale_consumer_pix_price: p.sale_consumer_pix_price ?? null,
-    }));
+    )
+      .map((p) => ({
+        id: p.id,
+        name: p.name,
+        code: p.code ?? null,
+        slug: p.slug ?? null,
+        price: p.price ?? null,
+        active: p.active ?? true,
+        stock: p.stock ?? null,
+        featured: p.featured ?? null,
+        description: p.description ?? null,
+        images: Array.isArray(p.images)
+          ? p.images.filter((item): item is string => typeof item === "string")
+          : [],
+        brand: p.brand ?? null,
+        consumer_price: p.consumer_price ?? null,
+        consumer_pix_price: p.consumer_pix_price ?? null,
+        producer_price: p.producer_price ?? null,
+        producer_pix_price: p.producer_pix_price ?? null,
+        reseller_price: p.reseller_price ?? null,
+        reseller_pix_price: p.reseller_pix_price ?? null,
+        installments: p.installments ?? null,
+        on_sale: p.on_sale ?? null,
+        sale_consumer_price: p.sale_consumer_price ?? null,
+        sale_consumer_pix_price: p.sale_consumer_pix_price ?? null,
+        category_id: p.category_id ?? null,
+        catalog_id: p.catalog_id ?? null,
+        weight: p.weight ?? null,
+        peso: p.peso ?? null,
+        altura: p.altura ?? null,
+        largura: p.largura ?? null,
+        comprimento: p.comprimento ?? null,
+        updated_at: p.updated_at ?? null,
+        source: "live" as const,
+      }))
+      .map(enrichProductFromSnapshot);
     if (listAll || !tokens.length) return finish(operation, started, products.slice(0, limit));
     const ranked = products
       .map((product) => {
         const name = normalizeName(product.name);
         const code = normalizeName(product.code ?? "");
-        const words = `${name} ${code}`.split(/\s+/).filter(Boolean);
+        const slug = normalizeName(product.slug ?? "");
+        const brand = normalizeName(product.brand ?? "");
+        const description = normalizeName(stripHtml(product.description ?? "").slice(0, 12000));
+        const words = `${name} ${code} ${slug} ${brand} ${description}`
+          .split(/\s+/)
+          .filter(Boolean);
         const distanceHits = tokens.filter((token) => fuzzyTokenHit(token, words)).length;
         return { product, score: distanceHits / tokens.length };
       })
@@ -287,9 +493,11 @@ export async function querySiteProducts(
       .sort((a, b) => b.score - a.score || a.product.name.localeCompare(b.product.name, "pt-BR"))
       .slice(0, limit)
       .map(({ product }) => product);
-    return finish(operation, started, ranked);
+    if (ranked.length) return finish(operation, started, ranked);
+    return finishSnapshot(operation, started, searchSnapshotProducts(query, limit));
   } catch (error) {
-    return finish(operation, started, [], error);
+    const snapshot = searchSnapshotProducts(query, limit);
+    return finish(operation, started, snapshot, error);
   }
 }
 
@@ -315,38 +523,69 @@ export async function queryRecommendedSiteProducts(
         .eq("active", true)
         .limit(500);
     }
-    if (response.error) return finish(operation, started, [], response.error);
+    if (response.error) {
+      const snapshot = rankDuKampProductsForNeed(
+        snapshotProducts.map(snapshotToSiteProduct),
+        query,
+        limit,
+      );
+      return finish(operation, started, snapshot, response.error);
+    }
     const products = (
       (response.data ?? []) as Array<Partial<SiteProduct> & { id: string; name: string }>
-    ).map((p) => ({
-      id: p.id,
-      name: p.name,
-      code: p.code ?? null,
-      slug: p.slug ?? null,
-      price: p.price ?? null,
-      active: p.active ?? true,
-      stock: p.stock ?? null,
-      featured: p.featured ?? null,
-      description: p.description ?? null,
-      images: Array.isArray(p.images)
-        ? p.images.filter((item): item is string => typeof item === "string")
-        : [],
-      brand: p.brand ?? null,
-      consumer_price: p.consumer_price ?? null,
-      consumer_pix_price: p.consumer_pix_price ?? null,
-      producer_price: p.producer_price ?? null,
-      producer_pix_price: p.producer_pix_price ?? null,
-      reseller_price: p.reseller_price ?? null,
-      reseller_pix_price: p.reseller_pix_price ?? null,
-      installments: p.installments ?? null,
-      on_sale: p.on_sale ?? null,
-      sale_consumer_price: p.sale_consumer_price ?? null,
-      sale_consumer_pix_price: p.sale_consumer_pix_price ?? null,
-    }));
+    )
+      .map((p) => ({
+        id: p.id,
+        name: p.name,
+        code: p.code ?? null,
+        slug: p.slug ?? null,
+        price: p.price ?? null,
+        active: p.active ?? true,
+        stock: p.stock ?? null,
+        featured: p.featured ?? null,
+        description: p.description ?? null,
+        images: Array.isArray(p.images)
+          ? p.images.filter((item): item is string => typeof item === "string")
+          : [],
+        brand: p.brand ?? null,
+        consumer_price: p.consumer_price ?? null,
+        consumer_pix_price: p.consumer_pix_price ?? null,
+        producer_price: p.producer_price ?? null,
+        producer_pix_price: p.producer_pix_price ?? null,
+        reseller_price: p.reseller_price ?? null,
+        reseller_pix_price: p.reseller_pix_price ?? null,
+        installments: p.installments ?? null,
+        on_sale: p.on_sale ?? null,
+        sale_consumer_price: p.sale_consumer_price ?? null,
+        sale_consumer_pix_price: p.sale_consumer_pix_price ?? null,
+        category_id: p.category_id ?? null,
+        catalog_id: p.catalog_id ?? null,
+        weight: p.weight ?? null,
+        peso: p.peso ?? null,
+        altura: p.altura ?? null,
+        largura: p.largura ?? null,
+        comprimento: p.comprimento ?? null,
+        updated_at: p.updated_at ?? null,
+        source: "live" as const,
+      }))
+      .map(enrichProductFromSnapshot);
     const ranked = rankDuKampProductsForNeed(products, query, limit);
-    return finish(operation, started, ranked);
+    if (ranked.length) return finish(operation, started, ranked);
+    const snapshot = rankDuKampProductsForNeed(
+      snapshotProducts.map(snapshotToSiteProduct),
+      query,
+      limit,
+    );
+    return snapshot.length
+      ? finishSnapshot(operation, started, snapshot)
+      : finish(operation, started, []);
   } catch (error) {
-    return finish(operation, started, [], error);
+    const snapshot = rankDuKampProductsForNeed(
+      snapshotProducts.map(snapshotToSiteProduct),
+      query,
+      limit,
+    );
+    return finish(operation, started, snapshot, error);
   }
 }
 
@@ -362,7 +601,9 @@ export async function querySiteSellers(
     const client = clientFor(deps);
     let response: { data: unknown[] | null; error: unknown } = await client
       .from("sellers")
-      .select("id,name,role,region,phone,whatsapp,active,display_order")
+      .select(
+        "id,slug,show_on_team,name,role,region,phone,whatsapp,photo_url,cutout_url,banner_url,active,display_order",
+      )
       .eq("active", true)
       .order("display_order", { ascending: true })
       .order("name", { ascending: true })
@@ -370,18 +611,53 @@ export async function querySiteSellers(
     if (response.error && classifyError(response.error).status === "schema_error")
       response = await client
         .from("sellers")
-        .select("id,name,role,region,phone,whatsapp,active")
+        .select(
+          "id,slug,name,role,region,phone,whatsapp,photo_url,cutout_url,banner_url,active,display_order",
+        )
         .eq("active", true)
         .order("name", { ascending: true })
         .limit(limit);
-    if (response.error) return finish(operation, started, [], response.error);
-    const sellers = (response.data ?? []) as SiteSeller[];
+    const snapshotFallback = (): SiteSeller[] =>
+      snapshotSellers
+        .filter((seller) => !String(seller.slug ?? "").startsWith("conta-"))
+        .map((seller) => ({ ...seller, source: "snapshot" as const }));
+    if (response.error) {
+      const sellers = snapshotFallback();
+      const match = text.trim()
+        ? matchSellerRequest(text, sellers)
+        : { kind: "all" as const, sellers, label: null };
+      return finish(operation, started, match.sellers as SiteSeller[], response.error);
+    }
+    const sellers = ((response.data ?? []) as SiteSeller[])
+      .filter((seller) => !String(seller.slug ?? "").startsWith("conta-"))
+      .map((seller) => {
+        const snapshot = snapshotSellerById.get(seller.id);
+        if (!snapshot) return { ...seller, source: "live" as const };
+        const media = {
+          photo_url: seller.photo_url ?? snapshot.photo_url ?? null,
+          cutout_url: seller.cutout_url ?? snapshot.cutout_url ?? null,
+          banner_url: seller.banner_url ?? snapshot.banner_url ?? null,
+        };
+        const supplemented =
+          Object.values(media).some(Boolean) &&
+          (!seller.photo_url || !seller.cutout_url || !seller.banner_url);
+        return {
+          ...seller,
+          ...media,
+          slug: seller.slug ?? snapshot.slug ?? null,
+          source: supplemented ? ("live+snapshot" as const) : ("live" as const),
+        };
+      });
     const match = text.trim()
       ? matchSellerRequest(text, sellers)
       : { kind: "all" as const, sellers, label: null };
     return finish(operation, started, match.sellers as SiteSeller[]);
   } catch (error) {
-    return finish(operation, started, [], error);
+    const sellers = snapshotSellers.map((seller) => ({ ...seller, source: "snapshot" as const }));
+    const match = text.trim()
+      ? matchSellerRequest(text, sellers)
+      : { kind: "all" as const, sellers, label: null };
+    return finish(operation, started, match.sellers as SiteSeller[], error);
   }
 }
 
@@ -456,7 +732,10 @@ export async function executeCommercialLookup(
   const hints = siteIntentHints(text);
   const lookup: SiteLookup = {};
   const statuses: string[] = [];
-  if (["product", "product_recommendation", "internal_price"].includes(intent.intent)) {
+  if (
+    ["product", "product_recommendation", "internal_price"].includes(intent.intent) ||
+    hints.productAsset
+  ) {
     const products =
       intent.intent === "product_recommendation" || PURPOSE_RE.test(text)
         ? await queryRecommendedSiteProducts(text, 8, deps)
@@ -506,21 +785,34 @@ export function siteBlock(look: SiteLookup): string {
         publicPix != null ? `Pix público: ${fmtPrice(publicPix)}` : null,
         p.installments && p.installments > 1 ? `até ${p.installments}x` : null,
         p.stock != null ? `estoque: ${p.stock}` : null,
+        p.weight != null ? `peso: ${p.weight} kg` : p.peso != null ? `peso: ${p.peso} kg` : null,
       ].filter(Boolean);
-      const description = p.description?.trim()
-        ? `\n  descrição oficial: ${p.description.trim().slice(0, 700)}`
+      const descriptionLimit = look.products!.length <= 2 ? 12000 : 1800;
+      const officialDescription = stripHtml(p.description?.trim() ?? "");
+      const description = officialDescription
+        ? `\n  descrição oficial: ${officialDescription.slice(0, descriptionLimit)}`
         : "";
-      const images = (p.images ?? []).filter(Boolean).slice(0, 3);
+      const images = (p.images ?? []).filter(Boolean).slice(0, look.products!.length <= 2 ? 10 : 3);
       const imageLine = images.length ? `\n  imagens oficiais: ${images.join(" | ")}` : "";
       return `- ${p.name}${details.length ? ` — ${details.join("; ")}` : ""}${description}${imageLine}`;
     });
-    parts.push(`DADOS OFICIAIS E ATUAIS DA DUKAMP — PRODUTOS COMERCIAIS:\n${lines.join("\n")}`);
+    const snapshotNote = look.products.some((product) => product.source === "snapshot")
+      ? "\nOBS.: itens marcados pelo snapshot servem para descrição, identificação e imagens; preço e estoque só devem ser afirmados quando vierem do catálogo vivo neste turno."
+      : "";
+    parts.push(
+      `DADOS OFICIAIS DA DUKAMP — PRODUTOS COMERCIAIS${snapshotNote}:\n${lines.join("\n")}`,
+    );
   }
   if (look.sellers && look.sellers.length > 0) {
     const lines = look.sellers.map((s) => {
+      const role = s.role ? ` — ${s.role}` : "";
       const region = s.region ? ` — ${s.region}` : "";
       const wpp = s.whatsapp ? ` — WhatsApp: ${s.whatsapp}` : s.phone ? ` — Tel: ${s.phone}` : "";
-      return `- ${s.name}${region}${wpp}`;
+      const media = [s.photo_url, s.cutout_url, s.banner_url].filter(Boolean);
+      const mediaLine = media.length
+        ? `\n  imagens oficiais do vendedor: ${media.join(" | ")}`
+        : "";
+      return `- ${s.name}${role}${region}${wpp}${mediaLine}`;
     });
     parts.push(`DADOS DO SITE DUKAMP — VENDEDORES:\n${lines.join("\n")}`);
   }

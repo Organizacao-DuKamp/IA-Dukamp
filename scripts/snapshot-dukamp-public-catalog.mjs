@@ -6,7 +6,8 @@ const SITE_URL = "https://pioyrbcdprnplhcoyzam.supabase.co";
 const SITE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpb3lyYmNkcHJucGxoY295emFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1MTk2NDYsImV4cCI6MjEwMDA5NTY0Nn0.wIPY4KZUEnP1ziR2lGQBF0sIj-b2p_SIZjTMEZe4WWk";
 const OUTPUT = "src/lib/site/dukamp-catalog.snapshot.ts";
-const SITE_REPO_RAW = "https://raw.githubusercontent.com/Organizacao-DuKamp/site-oficial-dukamp/main";
+const SITE_REPO_RAW =
+  "https://raw.githubusercontent.com/Organizacao-DuKamp/site-oficial-dukamp/main";
 
 const client = createClient(SITE_URL, SITE_ANON_KEY, {
   auth: { persistSession: false, autoRefreshToken: false, storage: undefined },
@@ -43,10 +44,11 @@ function parseProdWeb(text) {
 
 function parseNewProducts(text) {
   const byCode = new Map();
-  const re = /<p>Produto:\s*([^<(]+?)\s*\(([0-9]{4,})\)<\/p>([\s\S]*?)(?=\n\s*<!--\s*(?:={3,}|PRODUTO\s+\d+)|$)/gi;
+  const re =
+    /<p>Produto:\s*([^<(]+?)\s*\(([0-9]{4,})\)<\/p>([\s\S]*?)(?=\n\s*<!--\s*(?:={3,}|PRODUTO\s+\d+)|$)/gi;
   for (const match of text.matchAll(re)) {
     const code = match[2]?.trim();
-    const html = (`<p>Produto: ${match[1]?.trim()} (${code})</p>${match[3] ?? ""}`).trim();
+    const html = `<p>Produto: ${match[1]?.trim()} (${code})</p>${match[3] ?? ""}`.trim();
     if (code && html) byCode.set(code, { html, source: "novosprodutodukamp.txt" });
   }
   return byCode;
@@ -54,10 +56,11 @@ function parseNewProducts(text) {
 
 function parseUpdatedDescriptions(text) {
   const byName = new Map();
-  const re = /<p>Produto:\s*([^<]+)<\/p>([\s\S]*?)(?=\n\s*(?:<!--\s*FIM DO PRODUTO\s*-->|<p>Produto:)|$)/gi;
+  const re =
+    /<p>Produto:\s*([^<]+)<\/p>([\s\S]*?)(?=\n\s*(?:<!--\s*FIM DO PRODUTO\s*-->|<p>Produto:)|$)/gi;
   for (const match of text.matchAll(re)) {
     const name = match[1]?.trim();
-    const html = (`<p>Produto: ${name}</p>${match[2] ?? ""}`).trim();
+    const html = `<p>Produto: ${name}</p>${match[2] ?? ""}`.trim();
     if (name && html) byName.set(normalize(name), { html, source: "descricaoatt.txt" });
   }
   return byName;
@@ -126,13 +129,16 @@ async function fetchAllSellers() {
   if (response.error) {
     response = await client
       .from("sellers")
-      .select("id,slug,name,role,region,phone,whatsapp,photo_url,cutout_url,banner_url,active,display_order")
+      .select(
+        "id,slug,name,role,region,phone,whatsapp,photo_url,cutout_url,banner_url,active,display_order",
+      )
       .eq("active", true)
       .order("display_order", { ascending: true })
       .order("name", { ascending: true })
       .limit(1000);
   }
-  if (response.error) throw new Error(`sellers_snapshot_failed:${response.error.code ?? response.error.message}`);
+  if (response.error)
+    throw new Error(`sellers_snapshot_failed:${response.error.code ?? response.error.message}`);
   return (response.data ?? []).filter((seller) => !String(seller.slug ?? "").startsWith("conta-"));
 }
 
@@ -190,7 +196,9 @@ const snapshot = {
 };
 
 await mkdir(dirname(OUTPUT), { recursive: true });
-const serialized = JSON.stringify(snapshot, null, 2).replaceAll(" ", "\\u2028").replaceAll(" ", "\\u2029");
+const serialized = JSON.stringify(snapshot, null, 2)
+  .replaceAll(" ", "\\u2028")
+  .replaceAll(" ", "\\u2029");
 await writeFile(
   OUTPUT,
   `// Arquivo gerado por scripts/snapshot-dukamp-public-catalog.mjs. Não editar manualmente.\nexport const DUKAMP_CATALOG_SNAPSHOT = ${serialized} as const;\n`,
