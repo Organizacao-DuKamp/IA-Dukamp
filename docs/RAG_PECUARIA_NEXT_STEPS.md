@@ -1,6 +1,6 @@
 # Próximos passos da RAG pecuária
 
-1. Publicar a `main` no Lovable.
+1. Publicar a `main` no Netlify.
 2. Registrar e processar o seed no Supabase principal.
 3. Executar os testes automatizados e a matriz de perguntas.
 4. Revisar respostas com médico-veterinário e zootecnista.
