@@ -12,7 +12,6 @@ import type {
 
 const appSecret = "meta-app-secret-for-presence-tests";
 const env = {
-  TPEC_BACKEND_MODE: "proxy",
   WHATSAPP_VERIFY_TOKEN: "verify-token-presence",
   WHATSAPP_APP_SECRET: appSecret,
   WHATSAPP_ACCESS_TOKEN: "test-access-token",
