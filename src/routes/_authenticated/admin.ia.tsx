@@ -363,7 +363,7 @@ function AdminAIAnalytics() {
                 label="Apoio na base"
                 value={overview.knowledge_base_pct}
                 color="bg-emerald-600"
-                description="Respostas com trechos fortes recuperados da base interna RAG."
+                description="Respostas apoiadas por RAG, catálogo, mercado ou site oficial interno."
               />
               <UsageMetric
                 label="Resposta rápida"
