@@ -481,8 +481,7 @@ export async function handleEnhancedWhatsAppWebhookRequest(
   const fetchImpl = dependencies.fetchImpl ?? fetch;
   const control =
     dependencies.controlMessage ??
-    ((controlRequest: WhatsAppControlRequest) =>
-      controlWhatsAppMessage(controlRequest, { env, fetchImpl: dependencies.fetchImpl }));
+    ((controlRequest: WhatsAppControlRequest) => controlWhatsAppMessage(controlRequest));
   const dispatch =
     dependencies.dispatchChat ??
     ((input: WhatsAppChatInput) =>
