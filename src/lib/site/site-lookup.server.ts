@@ -240,7 +240,9 @@ function fuzzyTokenHit(token: string, words: string[]): boolean {
 
 const snapshotProducts = DUKAMP_CATALOG_SNAPSHOT.products;
 const snapshotSellers = DUKAMP_CATALOG_SNAPSHOT.sellers;
-const snapshotById = new Map(snapshotProducts.map((product) => [product.id, product]));
+const snapshotById = new Map<string, (typeof snapshotProducts)[number]>(
+  snapshotProducts.map((product) => [String(product.id), product]),
+);
 const snapshotByCode = new Map(
   snapshotProducts
     .filter((product) => product.code)
@@ -254,7 +256,9 @@ const snapshotBySlug = new Map(
 const snapshotByName = new Map(
   snapshotProducts.map((product) => [normalizeName(product.name), product]),
 );
-const snapshotSellerById = new Map(snapshotSellers.map((seller) => [seller.id, seller]));
+const snapshotSellerById = new Map<string, (typeof snapshotSellers)[number]>(
+  snapshotSellers.map((seller) => [String(seller.id), seller]),
+);
 
 function snapshotToSiteProduct(product: (typeof snapshotProducts)[number]): SiteProduct {
   return {
