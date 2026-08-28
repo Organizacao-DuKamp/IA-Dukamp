@@ -3,16 +3,11 @@ import { createHmac } from "node:crypto";
 import test from "node:test";
 
 import { processWhatsAppChat } from "../src/lib/whatsapp/conversation.server.ts";
-import {
-  handleInternalWhatsAppChatRequest,
-  handleWhatsAppWebhookRequest,
-} from "../src/lib/whatsapp/http.server.ts";
+import { handleWhatsAppWebhookRequest } from "../src/lib/whatsapp/http.server.ts";
 import type { ChatCoreResult, ChatInput } from "../src/lib/chat/input.ts";
 
 const appSecret = "meta-app-secret-for-tests";
-const proxySecret = "tpec-test-secret-" + "x".repeat(40);
 const env = {
-  TPEC_BACKEND_MODE: "proxy",
   WHATSAPP_VERIFY_TOKEN: "verify-token-123456789",
   WHATSAPP_APP_SECRET: appSecret,
   WHATSAPP_ACCESS_TOKEN: "test-access-token",
@@ -338,49 +333,4 @@ test("mensagem já concluída reutiliza resposta sem chamar o modelo", async () 
   );
   assert.equal(executed, false);
   assert.deepEqual(result, { reply: "Resposta já pronta", duplicate: true, shouldSend: true });
-});
-
-test("endpoint interno exige segredo e só funciona no backend local", async () => {
-  const body = JSON.stringify({
-    phone: "5517999999999",
-    messageId: "wamid.internal",
-    text: "Olá",
-  });
-  const localEnv = { TPEC_BACKEND_MODE: "local", TPEC_PROXY_SECRET: proxySecret };
-
-  const unauthorized = await handleInternalWhatsAppChatRequest(
-    new Request("https://lovable.example/api/internal/whatsapp-chat", {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-tpec-proxy-hop": "1" },
-      body,
-    }),
-    { env: localEnv },
-  );
-  assert.equal(unauthorized.status, 401);
-
-  const authorized = await handleInternalWhatsAppChatRequest(
-    new Request("https://lovable.example/api/internal/whatsapp-chat", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-tpec-proxy-hop": "1",
-        "x-tpec-proxy-secret": proxySecret,
-      },
-      body,
-    }),
-    {
-      env: localEnv,
-      processLocal: async () => ({
-        reply: "Olá pelo WhatsApp",
-        duplicate: false,
-        shouldSend: true,
-      }),
-    },
-  );
-  assert.equal(authorized.status, 200);
-  assert.deepEqual(await authorized.json(), {
-    reply: "Olá pelo WhatsApp",
-    duplicate: false,
-    shouldSend: true,
-  });
 });

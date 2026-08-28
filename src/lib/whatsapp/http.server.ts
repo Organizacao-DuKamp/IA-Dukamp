@@ -1,6 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-import { resolveTpecBackendMode } from "../chat/backend.server.ts";
 import { dispatchWhatsAppChat } from "./backend.server.ts";
 import {
   WhatsAppChatInputSchema,
@@ -17,7 +16,6 @@ export interface WhatsAppHttpDependencies {
   env?: EnvLike;
   fetchImpl?: typeof fetch;
   dispatchChat?: (input: WhatsAppChatInput) => Promise<WhatsAppChatResult>;
-  processLocal?: (input: WhatsAppChatInput) => Promise<WhatsAppChatResult>;
 }
 
 interface IncomingTextMessage {
@@ -313,17 +311,8 @@ export async function handleWhatsAppWebhookRequest(
     return json({ received: true });
   }
 
-  let backendMode = "invalid";
-  try {
-    backendMode = resolveTpecBackendMode(env);
-    console.info(`[whatsapp] backend_mode=${backendMode}`);
-  } catch (error) {
-    console.error(`[whatsapp] backend mode error ${errorDetails(error)}`);
-    return json({ error: "whatsapp_processing_failed" }, 500);
-  }
-
   console.info(
-    `[whatsapp] env access_token_configured=${Boolean(env.WHATSAPP_ACCESS_TOKEN?.trim())} proxy_url_configured=${Boolean(env.LOVABLE_BACKEND_URL?.trim())} proxy_secret_configured=${Boolean(env.TPEC_PROXY_SECRET?.trim())}`,
+    `[whatsapp] backend=netlify access_token_configured=${Boolean(env.WHATSAPP_ACCESS_TOKEN?.trim())}`,
   );
 
   const fetchImpl = dependencies.fetchImpl ?? fetch;
@@ -364,66 +353,5 @@ export async function handleWhatsAppWebhookRequest(
   }
 }
 
-export async function handleInternalWhatsAppChatRequest(
-  request: Request,
-  dependencies: WhatsAppHttpDependencies = {},
-): Promise<Response> {
-  if (request.method !== "POST") return json({ error: "not_found" }, 404);
-  const env = envOf(dependencies);
-
-  console.info("[whatsapp-internal] request received");
-
-  let mode;
-  try {
-    mode = resolveTpecBackendMode(env);
-    console.info(`[whatsapp-internal] backend_mode=${mode}`);
-  } catch (error) {
-    console.error(`[whatsapp-internal] invalid backend mode ${errorDetails(error)}`);
-    return json({ error: "invalid_backend_mode" }, 500);
-  }
-  if (mode !== "local") {
-    console.error("[whatsapp-internal] rejected because backend is not local");
-    return json({ error: "not_found" }, 404);
-  }
-
-  const expected = env.TPEC_PROXY_SECRET?.trim() ?? "";
-  const provided = request.headers.get("x-tpec-proxy-secret")?.trim() ?? "";
-  const hop = request.headers.get("x-tpec-proxy-hop") ?? "";
-  const proxyAuthorized =
-    expected.length >= 32 && Boolean(provided) && safeEqual(expected, provided);
-  console.info(
-    `[whatsapp-internal] proxy_secret_configured=${expected.length >= 32} proxy_authorized=${proxyAuthorized} proxy_hop=${hop || "missing"}`,
-  );
-  if (!proxyAuthorized) return json({ error: "unauthorized" }, 401);
-  if (hop !== "1") return json({ error: "invalid_proxy_hop" }, 400);
-
-  let value: unknown;
-  try {
-    value = JSON.parse(await readLimitedBody(request));
-  } catch (error) {
-    console.error(`[whatsapp-internal] invalid request body ${errorDetails(error)}`);
-    return json({ error: "invalid_json" }, 400);
-  }
-  const parsed = WhatsAppChatInputSchema.safeParse(value);
-  if (!parsed.success) {
-    console.error("[whatsapp-internal] invalid WhatsApp chat input");
-    return json({ error: "invalid_request" }, 400);
-  }
-
-  try {
-    console.info(
-      `[whatsapp-internal] processing text_chars=${Array.from(parsed.data.text).length}`,
-    );
-    const started = Date.now();
-    const processLocal =
-      dependencies.processLocal ?? (await import("./conversation.server.ts")).processWhatsAppChat;
-    const result = await processLocal(parsed.data);
-    console.info(
-      `[whatsapp-internal] completed duration_ms=${Date.now() - started} should_send=${result.shouldSend} has_reply=${Boolean(result.reply)}`,
-    );
-    return json(result, 200);
-  } catch (error) {
-    console.error(`[whatsapp-internal] chat processing failed ${errorDetails(error)}`);
-    return json({ error: "whatsapp_chat_failed" }, 500);
-  }
-}
+// The former cross-platform internal endpoint was removed. All WhatsApp work
+// now runs in this Netlify runtime through handleWhatsAppWebhookRequest.

@@ -6,9 +6,8 @@ Assistente de IA especialista em pecuária brasileira, com vitrine institucional
 
 - TanStack Start + React 19
 - Nitro para SSR/server handlers
-- Netlify como frontend e proxy seguro
-- Lovable Cloud como backend privilegiado
-- Supabase principal para RAG e dados internos
+- Netlify como frontend e backend server-side
+- Supabase TPEC-IA para RAG e dados internos
 - Supabase secundário DuKamp para produtos e vendedores públicos
 - OpenAI para raciocínio, resposta final e embeddings do RAG
 - Perplexity exclusivamente para pesquisa externa atual
@@ -20,9 +19,9 @@ npm install
 npm run dev
 ```
 
-Use `.env.example` como referência. Sem `TPEC_BACKEND_MODE`, o projeto usa `local` para preservar o funcionamento existente.
+Use `.env.example` como referência. O backend roda diretamente no runtime server-side da Netlify.
 
-## Arquitetura híbrida de deploy
+## Arquitetura de deploy independente
 
 ```text
 Navegador
@@ -32,29 +31,16 @@ Navegador
 
 Meta WhatsApp
   -> POST /api/public/whatsapp na Netlify
-  -> POST /api/internal/whatsapp-chat no Lovable, autenticado por segredo
-  -> handleIncoming
-  -> Supabase principal + RAG OpenAI + pesquisa Perplexity + resposta OpenAI
+  -> handleIncoming no próprio runtime da Netlify
+  -> Supabase TPEC-IA + RAG OpenAI + pesquisa atual + resposta OpenAI
 ```
 
-A decisão ocorre no servidor:
-
-- `TPEC_BACKEND_MODE=local`: importa e executa `handleIncoming` no runtime atual.
-- `TPEC_BACKEND_MODE=proxy`: não importa o núcleo privilegiado; encaminha ao Lovable.
-
-### Lovable Cloud
+O backend completo é carregado no servidor da Netlify e recebe como secrets:
 
 ```env
-TPEC_BACKEND_MODE=local
-TPEC_PROXY_SECRET=<segredo-grande-e-aleatorio>
-```
-
-O backend local no Lovable deve receber como segredos:
-
-```env
+SUPABASE_URL=https://cawgzodelwchccilqeqr.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=...
 OPENAI_API_KEY=...
-PERPLEXITY_API_KEY=...
 ```
 
 Modelos podem ser definidos sem alterar código:
@@ -94,13 +80,15 @@ gradualmente no novo espaço vetorial.
 ### Netlify
 
 ```env
-TPEC_BACKEND_MODE=proxy
-LOVABLE_BACKEND_URL=https://URL-REAL-DA-APLICACAO-LOVABLE
-TPEC_PROXY_SECRET=<mesmo-segredo-do-Lovable>
+SUPABASE_URL=https://cawgzodelwchccilqeqr.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<secret-do-TPEC-IA>
+OPENAI_API_KEY=<chave-da-OpenAI>
 ```
 
-A Netlify não precisa receber `SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY`
-nem `PERPLEXITY_API_KEY`.
+As variáveis `SUPABASE_SERVICE_ROLE_KEY` e `OPENAI_API_KEY` são server-only e
+não aparecem no bundle do navegador. Se a pesquisa legada da Perplexity ainda
+estiver configurada, ela pode ser removida do ambiente; o fluxo atual usa a
+pesquisa Web nativa da OpenAI.
 
 Depois de cadastrar as variáveis:
 
@@ -108,7 +96,8 @@ Depois de cadastrar as variáveis:
 Netlify -> Deploys -> Trigger deploy -> Clear cache and deploy site
 ```
 
-A documentação completa está em [`docs/netlify-lovable-proxy.md`](docs/netlify-lovable-proxy.md).
+A configuração do deploy está em `netlify.toml`; o preset do Nitro gera o
+handler server da Netlify junto com o frontend.
 
 ## Mídia recebida pelo WhatsApp
 
@@ -119,12 +108,11 @@ seguro e só então chama o núcleo da TPEC-IA com o histórico existente.
 
 - Áudios são transcritos; imagens e documentos são analisados pelo modelo multimodal.
 - Vídeos usam a legenda e a transcrição da faixa de áudio; o arquivo visual completo não é enviado ao modelo.
-- Cada arquivo pode ter até 25 MB. O conteúdo bruto não é salvo no histórico nem encaminhado pelo proxy.
+- Cada arquivo pode ter até 25 MB. O conteúdo bruto não é salvo no histórico.
 - São aceitas imagens JPG, PNG, WebP e GIF; áudios/vídeos AAC, FLAC, M4A, MP3, MP4, MPEG, OGG, WAV e WebM; e documentos comuns como PDF, Word, Excel, PowerPoint, CSV e texto.
 
-No modo `proxy`, `WHATSAPP_ACCESS_TOKEN` precisa existir como segredo
-server-only tanto na Netlify (receber/enviar) quanto no Lovable (baixar a
-mídia). `OPENAI_API_KEY` continua somente no Lovable. Os modelos opcionais são
+`WHATSAPP_ACCESS_TOKEN` precisa existir como segredo server-only na Netlify para
+receber, baixar e enviar mídias. Os modelos opcionais são
 `OPENAI_MEDIA_MODEL` (padrão `gpt-4o-mini`) e `OPENAI_TRANSCRIPTION_MODEL`
 (padrão `gpt-4o-mini-transcribe`). `OPENAI_MEDIA_IMAGE_DETAIL` aceita `low`,
 `high` ou `auto`; sem configuração, fotos comuns usam `low` e pedidos de leitura
@@ -151,8 +139,7 @@ A tabela pública `sellers` fornece os vendedores ativos e a tabela `products` f
 src/routes/api/public/whatsapp.ts
   -> src/lib/whatsapp/enhanced-http.server.ts
   -> src/lib/whatsapp/backend.server.ts
-       local -> src/lib/whatsapp/conversation.server.ts
-       proxy -> Lovable /api/internal/whatsapp-chat
+       -> src/lib/whatsapp/conversation.server.ts
   -> src/lib/chat/core.server.ts
 ```
 
@@ -160,10 +147,8 @@ A rota `/` não carrega cliente de chat nem formulário de mensagens. Ela aprese
 
 ## Segurança
 
-- O navegador nunca recebe `TPEC_PROXY_SECRET` ou chaves privadas.
-- O proxy não encaminha cookies, `Authorization` ou headers do navegador.
-- O endpoint interno aceita somente POST, exige segredo e só funciona em modo local.
-- O proxy usa HTTPS em produção, timeout, limite de tamanho e `redirect: "error"`.
+- O navegador nunca recebe chaves server-only.
+- O backend privilegiado roda somente no handler server-side da Netlify.
 - O build verifica que identificadores de segredos server-only não aparecem no bundle do cliente.
 - Logs não incluem segredos nem o corpo completo das conversas.
 

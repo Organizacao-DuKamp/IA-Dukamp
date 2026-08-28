@@ -50,9 +50,6 @@ jobs:
       - name: Build Netlify preset
         env:
           NITRO_PRESET: netlify
-          TPEC_BACKEND_MODE: proxy
-          LOVABLE_BACKEND_URL: https://example.lovable.app
-          TPEC_PROXY_SECRET: ci-only-secret-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
         run: npm run build
 
       - name: Commit refreshed snapshot

@@ -24,7 +24,7 @@ export interface ResolvedSiteConfiguration {
 }
 
 /**
- * Netlify/Lovable may expose public Supabase credentials under server names or
+ * Netlify may expose public Supabase credentials under server names or
  * Vite aliases. Supporting both prevents a valid deployment configuration from
  * being treated as missing. The public fallback keeps the read-only commercial
  * directory available on deployments that do not inherit the secondary env.

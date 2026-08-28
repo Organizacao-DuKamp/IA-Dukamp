@@ -2,10 +2,8 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import test from "node:test";
 
-import { TpecBackendError } from "../src/lib/chat/backend.server.ts";
 import { dispatchClaimedWhatsAppChat } from "../src/lib/whatsapp/backend.server.ts";
 import { resolveWhatsAppUserText, WhatsAppMediaError } from "../src/lib/whatsapp/media.server.ts";
-import { friendlyWhatsAppError } from "../src/lib/whatsapp/presence.ts";
 import type { WhatsAppChatInput, WhatsAppMedia } from "../src/lib/whatsapp/types.ts";
 
 const mediaUrl = "https://lookaside.fbsbx.com/whatsapp_business/attachments/test-media";
@@ -230,41 +228,4 @@ test("arquivo acima de 25 MB é recusado antes do download", async () => {
       error.code === "whatsapp_media_too_large",
   );
   assert.equal(mocked.calls.length, 1);
-});
-
-test("proxy preserva o código da falha de mídia para responder com orientação útil", async () => {
-  const proxyEnv = {
-    TPEC_BACKEND_MODE: "proxy",
-    LOVABLE_BACKEND_URL: "https://tpec-lovable.example",
-    TPEC_PROXY_SECRET: `media-proxy-test-${"x".repeat(40)}`,
-  };
-  let captured: unknown;
-
-  try {
-    await dispatchClaimedWhatsAppChat(
-      inputFor({
-        id: "large-document",
-        type: "document",
-        mimeType: "application/pdf",
-        filename: "grande.pdf",
-      }),
-      {
-        env: proxyEnv,
-        fetchImpl: (async () =>
-          new Response(
-            JSON.stringify({
-              error: "A mídia enviada é maior que o limite de 25 MB.",
-              code: "whatsapp_media_too_large",
-            }),
-            { status: 413, headers: { "content-type": "application/json" } },
-          )) as typeof fetch,
-      },
-    );
-  } catch (error) {
-    captured = error;
-  }
-
-  assert.ok(captured instanceof TpecBackendError);
-  assert.equal(captured.code, "whatsapp_media_too_large");
-  assert.match(friendlyWhatsAppError(captured), /limite de 25 MB/i);
 });

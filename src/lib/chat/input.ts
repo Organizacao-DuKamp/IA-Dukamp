@@ -8,7 +8,7 @@ export const ChatMessageSchema = z.object({
   content: z.string().min(1).max(8000),
 });
 
-/** Payload compartilhado pelos transportes web, proxy e endpoint interno. */
+/** Payload compartilhado pelos transportes web e WhatsApp. */
 export const ChatInputSchema = z.object({
   sessionId: z.string().min(1).max(128),
   conversationId: z.string().min(1).max(128).optional(),
@@ -31,5 +31,5 @@ export const ChatCoreResultSchema = z.object({
 
 export type ChatCoreResult = z.infer<typeof ChatCoreResultSchema>;
 
-export const MAX_CHAT_PROXY_BODY_BYTES = 256 * 1024;
-export const MAX_CHAT_PROXY_RESPONSE_BYTES = 1024 * 1024;
+export const MAX_CHAT_BODY_BYTES = 256 * 1024;
+export const MAX_CHAT_RESPONSE_BYTES = 1024 * 1024;

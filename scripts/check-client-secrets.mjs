@@ -6,9 +6,7 @@ import { join } from "node:path";
 // configurado em netlify.toml; `.netlify/static` cobre a saída nativa do adapter.
 const candidateRoots = ["dist/client", "dist", ".output/public", ".netlify/static", "build/client"];
 const forbidden = [
-  "TPEC_PROXY_SECRET",
   "SUPABASE_SERVICE_ROLE_KEY",
-  "LOVABLE_API_KEY",
   "OPENAI_API_KEY",
   "PERPLEXITY_API_KEY",
   "WHATSAPP_ACCESS_TOKEN",

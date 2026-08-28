@@ -5,9 +5,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 const CHECKED_VARS = [
-  "TPEC_BACKEND_MODE",
-  "LOVABLE_BACKEND_URL",
-  "TPEC_PROXY_SECRET",
   "OPENAI_API_KEY",
   "OPENAI_TPEC_MODEL",
   "OPENAI_EMBEDDING_MODEL",
@@ -50,8 +47,7 @@ function handle(request: Request): Response {
     env[name] = process.env[name]?.trim() ? "configurada" : "ausente";
   }
 
-  const mode = process.env.TPEC_BACKEND_MODE?.trim().toLowerCase() || "local (padrão)";
-  return json({ backend_mode: mode, env });
+  return json({ backend_mode: "netlify-standalone", env });
 }
 
 export const Route = createFileRoute("/api/public/diag")({

@@ -4,7 +4,7 @@ UPDATE public.knowledge_chunks
 SET metadata = jsonb_set(
   coalesce(metadata, '{}'::jsonb),
   '{embedding_provider}',
-  '"lovable:google/gemini-embedding-001:3072"'::jsonb,
+  '"legacy:google/gemini-embedding-001:3072"'::jsonb,
   true
 )
 WHERE coalesce(metadata->>'embedding_provider', '') = '';

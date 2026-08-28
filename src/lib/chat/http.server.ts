@@ -1,13 +1,5 @@
-import { ChatInputSchema, MAX_CHAT_PROXY_BODY_BYTES, type ChatInput } from "./input.ts";
-import {
-  TpecBackendError,
-  dispatchChat,
-  executeLocalChat,
-  resolveTpecBackendMode,
-  type TpecBackendDependencies,
-} from "./backend.server.ts";
-
-type EnvLike = Record<string, string | undefined>;
+import { ChatInputSchema, MAX_CHAT_BODY_BYTES, type ChatInput } from "./input.ts";
+import { TpecBackendError, dispatchChat, type TpecBackendDependencies } from "./backend.server.ts";
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -17,15 +9,6 @@ function json(body: unknown, status = 200): Response {
       "cache-control": "no-store",
     },
   });
-}
-
-function safeEqual(a: string, b: string): boolean {
-  const length = Math.max(a.length, b.length);
-  let diff = a.length ^ b.length;
-  for (let i = 0; i < length; i += 1) {
-    diff |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
-  }
-  return diff === 0;
 }
 
 function providerLabelFromDiagnostics(diagnostics: unknown): string | undefined {
@@ -49,11 +32,11 @@ function providerLabelFromDiagnostics(diagnostics: unknown): string | undefined 
 
 async function parseInput(request: Request): Promise<ChatInput> {
   const declared = Number(request.headers.get("content-length") ?? 0);
-  if (declared > MAX_CHAT_PROXY_BODY_BYTES) {
+  if (declared > MAX_CHAT_BODY_BYTES) {
     throw new TpecBackendError("Requisição excedeu o limite permitido.", 413, "request_too_large");
   }
   const raw = await request.text();
-  if (new TextEncoder().encode(raw).byteLength > MAX_CHAT_PROXY_BODY_BYTES) {
+  if (new TextEncoder().encode(raw).byteLength > MAX_CHAT_BODY_BYTES) {
     throw new TpecBackendError("Requisição excedeu o limite permitido.", 413, "request_too_large");
   }
   let value: unknown;
@@ -82,9 +65,6 @@ export async function handlePublicChatRequest(
   deps: TpecBackendDependencies = {},
 ): Promise<Response> {
   if (request.method !== "POST") return json({ error: "method_not_allowed" }, 405);
-  if (request.headers.has("x-tpec-proxy-hop")) {
-    return json({ error: "proxy_loop_rejected" }, 508);
-  }
   try {
     const input = await parseInput(request);
     const result = await dispatchChat(input, deps);
@@ -105,37 +85,6 @@ export async function handlePublicChatRequest(
         result.status,
       );
     }
-    return json(result.body, result.status);
-  } catch (error) {
-    return errorResponse(error);
-  }
-}
-
-export async function handleInternalChatRequest(
-  request: Request,
-  deps: TpecBackendDependencies = {},
-): Promise<Response> {
-  if (request.method !== "POST") return json({ error: "not_found" }, 404);
-  const env: EnvLike = deps.env ?? process.env;
-  let mode;
-  try {
-    mode = resolveTpecBackendMode(env);
-  } catch (error) {
-    return errorResponse(error);
-  }
-  if (mode !== "local") return json({ error: "not_found" }, 404);
-
-  const expected = env.TPEC_PROXY_SECRET?.trim() ?? "";
-  const provided = request.headers.get("x-tpec-proxy-secret")?.trim() ?? "";
-  const hop = request.headers.get("x-tpec-proxy-hop") ?? "";
-  if (!expected || expected.length < 32 || !provided || !safeEqual(expected, provided)) {
-    return json({ error: "unauthorized" }, 401);
-  }
-  if (hop !== "1") return json({ error: "invalid_proxy_hop" }, 400);
-
-  try {
-    const input = await parseInput(request);
-    const result = await executeLocalChat(input, deps);
     return json(result.body, result.status);
   } catch (error) {
     return errorResponse(error);
