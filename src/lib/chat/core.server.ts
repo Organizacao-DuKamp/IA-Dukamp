@@ -7,7 +7,13 @@
 
 import { recordAIChatTurn } from "./analytics.server";
 import { askOpenAI, chatModelKindForChannel, OpenAIError, openAIModel } from "./openai.server";
-import { aggregateAIUsage, getAIUsageEvents, withAIUsageContext } from "./usage.server";
+import {
+  aggregateAIUsage,
+  getAIUsageEvents,
+  hasInternalKnowledgeSupport,
+  internalKnowledgeMatchCount,
+  withAIUsageContext,
+} from "./usage.server";
 import { researchChatGPT } from "./perplexity.server";
 import { checkRateLimit } from "./rate-limit.server";
 import { productContextBlock, routeQuery } from "./query-router.server";
@@ -377,7 +383,7 @@ async function runTurn(
     contextParts.push(
       `DADOS ESTRUTURADOS DO CATÁLOGO (use se ajudar o pedido atual):\n${routed.text}`,
     );
-    retrieved.push("sql:context");
+    if (!weatherTurn.isWeatherTurn) retrieved.push("sql:context");
     hasCatalogEvidence = true;
   }
   if (routed.kind !== "structural" && routed.marketContext) {
@@ -797,7 +803,7 @@ function resolveLookupText(
 function chatTelemetryFlags(retrieved: string[]) {
   const chatEvents = getAIUsageEvents().filter((event) => event.operation === "chat");
   const aggregate = aggregateAIUsage(chatEvents);
-  const usedKnowledgeBase = retrieved.some((value) => value.startsWith("rag:"));
+  const usedKnowledgeBase = hasInternalKnowledgeSupport(retrieved);
   const modes: string[] = [];
   if (aggregate.usedDeepResearch) modes.push("deep_research");
   if (usedKnowledgeBase) modes.push("knowledge");
@@ -807,10 +813,7 @@ function chatTelemetryFlags(retrieved: string[]) {
     research_depth: aggregate.researchDepth,
     used_deep_research: aggregate.usedDeepResearch,
     used_knowledge_base: usedKnowledgeBase,
-    knowledge_match_count: retrieved.reduce((count, value) => {
-      const match = value.match(/^rag:(\d+)$/);
-      return match ? Math.max(count, Number(match[1])) : count;
-    }, 0),
+    knowledge_match_count: internalKnowledgeMatchCount(retrieved),
     used_quick_response: aggregate.usedQuickResponse,
     web_search_enabled: aggregate.webSearchEnabled,
     web_search_calls: aggregate.webSearchCalls,
