@@ -819,11 +819,7 @@ function chatTelemetryFlags(retrieved: string[]) {
     route_reason:
       [...new Set(chatEvents.map((event) => event.routeReason).filter(Boolean))].join(", ") || null,
     response_mode: (modes.length > 1 ? "mixed" : (modes[0] ?? "standard")) as
-      | "standard"
-      | "quick"
-      | "knowledge"
-      | "deep_research"
-      | "mixed",
+      "standard" | "quick" | "knowledge" | "deep_research" | "mixed",
   };
 }
 
