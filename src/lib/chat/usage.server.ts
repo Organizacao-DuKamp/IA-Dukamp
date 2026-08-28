@@ -99,6 +99,36 @@ export function getAIUsageEvents(): AIUsageEvent[] {
   return [...(usageContext.getStore()?.events ?? [])];
 }
 
+/**
+ * Identifica fontes internas que sustentaram a resposta, incluindo RAG,
+ * catálogo, mercado e o site oficial. Isso evita classificar como "standard"
+ * uma resposta que usou dados internos, mas não encontrou um trecho RAG.
+ */
+export function isInternalKnowledgeSupportBlock(value: string): boolean {
+  return /^(?:rag:\d+|sql:context|site(?:[-:].*)?|produto|mercado|dukamp:)/i.test(value);
+}
+
+export function hasInternalKnowledgeSupport(values: string[]): boolean {
+  const hasWeatherEvidence = values.some(
+    (value) => /^weather:/i.test(value) || value === "chatgpt:web-weather",
+  );
+  return values.some(
+    (value) =>
+      isInternalKnowledgeSupportBlock(value) &&
+      (!hasWeatherEvidence || !/^sql:context$/i.test(value)),
+  );
+}
+
+export function internalKnowledgeMatchCount(values: string[]): number {
+  let count = 0;
+  for (const value of values) {
+    const rag = value.match(/^rag:(\d+)$/i);
+    if (rag) count = Math.max(count, Number(rag[1]));
+    else if (hasInternalKnowledgeSupport([value])) count = Math.max(count, 1);
+  }
+  return count;
+}
+
 function depthRank(depth: AIUsageDepth): number {
   return depth === "high" ? 2 : depth === "medium" ? 1 : 0;
 }
