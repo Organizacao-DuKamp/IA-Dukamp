@@ -4,7 +4,7 @@ Data: 5 de agosto de 2026
 
 A curadoria pecuária especializada foi adicionada diretamente à `main`.
 
-Antes de considerar o conteúdo ativo no chatbot, publique a versão no Lovable e execute no painel administrativo:
+Antes de considerar o conteúdo ativo no chatbot, publique a versão no Netlify e execute no painel administrativo:
 
 1. Registrar seed embutido.
 2. Processar pendentes.
