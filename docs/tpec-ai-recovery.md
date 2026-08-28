@@ -10,7 +10,7 @@ Antes de alterar código foi criado `tpec-ia-backup-completo.bundle` com `git bu
 
 ## Merge 239c298
 
-Contra o primeiro pai, o merge alterou sete arquivos: atualizou desnecessariamente `@lovable.dev/vite-tanstack-config`, removeu incorretamente a tipagem da RPC lexical, e incorporou melhorias relacionadas em roteamento, prompt, busca híbrida e vendedores. A migração `20260803120000_hybrid_knowledge_search.sql` cria a RPC lexical; por isso sua remoção dos tipos era inconsistente. Esta entrega reverte a atualização de dependência não relacionada e restaura a tipagem, preservando as melhorias funcionais atuais.
+Contra o primeiro pai, o merge alterou sete arquivos: atualizou desnecessariamente uma dependência do ambiente anterior, removeu incorretamente a tipagem da RPC lexical, e incorporou melhorias relacionadas em roteamento, prompt, busca híbrida e vendedores. A migração `20260803120000_hybrid_knowledge_search.sql` cria a RPC lexical; por isso sua remoção dos tipos era inconsistente. Esta entrega reverte a atualização de dependência não relacionada e restaura a tipagem, preservando as melhorias funcionais atuais.
 
 ## Matriz de comprovação real
 
