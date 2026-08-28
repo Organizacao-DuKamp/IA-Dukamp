@@ -11,7 +11,7 @@ function replaceOnce(before, after, label) {
 
 replaceOnce(
   `      const words = \`${"${name} ${code} ${slug} ${brand} ${description}"}\`.split(/\\s+/).filter(Boolean);\n      const hits = tokens.filter((token) => fuzzyTokenHit(token, words)).length;`,
-  `      const coreWords = \`${"${name} ${code} ${slug} ${brand}"}\`.split(/\\s+/).filter(Boolean);\n      const descriptionWords = new Set(description.split(/\\s+/).filter(Boolean));\n      const hits = tokens.filter(\n        (token) =>\n          fuzzyTokenHit(token, coreWords) ||\n          descriptionWords.has(token) ||\n          (token.length >= 5 && description.includes(token)),\n      ).length;`,
+  `      const coreWords = \`${"${name} ${code} ${slug} ${brand}"}\`.split(/\\s+/).filter(Boolean);\n      const descriptionWords = new Set(description.split(/\\s+/).filter(Boolean));\n      const allowDescriptionOnly = tokens.length > 1 || PURPOSE_RE.test(query);\n      const hits = tokens.filter(\n        (token) =>\n          fuzzyTokenHit(token, coreWords) ||\n          (allowDescriptionOnly &&\n            (descriptionWords.has(token) || (token.length >= 5 && description.includes(token)))),\n      ).length;`,
   "snapshot scoring sem falso positivo na descrição",
 );
 
