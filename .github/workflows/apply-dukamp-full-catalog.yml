@@ -6,6 +6,7 @@ on:
     paths:
       - .github/workflows/apply-dukamp-full-catalog.yml
       - scripts/apply-dukamp-full-catalog.mjs
+      - scripts/fix-apply-dukamp-full-catalog.mjs
       - scripts/snapshot-dukamp-public-catalog.mjs
   workflow_dispatch:
 
@@ -28,6 +29,8 @@ jobs:
         run: npm install
       - name: Download public DuKamp catalog snapshot
         run: node scripts/snapshot-dukamp-public-catalog.mjs
+      - name: Fix temporary integration validator
+        run: node scripts/fix-apply-dukamp-full-catalog.mjs
       - name: Apply catalog intelligence changes
         run: node scripts/apply-dukamp-full-catalog.mjs
       - name: Format changed files
