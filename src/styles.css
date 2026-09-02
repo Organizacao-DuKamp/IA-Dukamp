@@ -128,7 +128,7 @@
   --sidebar: oklch(0.208 0.042 265.755);
   --sidebar-foreground: oklch(0.984 0.003 247.858);
   --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-primary-foreground: oklch(0.984 0 0);
   --sidebar-accent: oklch(0.279 0.041 260.031);
   --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
   --sidebar-border: oklch(1 0 0 / 10%);
@@ -143,5 +143,224 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+  }
+}
+
+/* Landing page contrast tuning.
+ * Keep the official black/gold logo intact, but prevent the large black/gold
+ * brand artwork from dominating the new sage/green visual system.
+ */
+.tpec-landing .hero {
+  background: #e8efe5;
+  color: #16231b;
+}
+
+.tpec-landing .hero-art {
+  opacity: 0.58;
+  width: 62%;
+}
+
+.tpec-landing .hero-art img {
+  filter: grayscale(0.5) sepia(0.08) hue-rotate(55deg) saturate(0.55) brightness(1.22) contrast(0.78);
+}
+
+.tpec-landing .hero-overlay {
+  background:
+    linear-gradient(90deg, #eef3eb 0%, #eef3eb 36%, rgba(238, 243, 235, 0.96) 49%, rgba(224, 234, 222, 0.82) 68%, rgba(214, 227, 213, 0.56) 100%),
+    linear-gradient(0deg, rgba(232, 239, 229, 0.93) 0%, rgba(232, 239, 229, 0.2) 34%);
+}
+
+.tpec-landing .hero::after {
+  background: linear-gradient(90deg, transparent, rgba(103, 128, 105, 0.46), transparent);
+}
+
+.tpec-landing .hero .eyebrow.light {
+  color: #60735e;
+}
+
+.tpec-landing .hero h1 {
+  color: #142219;
+}
+
+.tpec-landing .hero h1 em {
+  color: #8e7130;
+}
+
+.tpec-landing .hero-content > p {
+  color: #566159;
+}
+
+.tpec-landing .hero .ghost-button {
+  border-color: rgba(28, 54, 39, 0.2);
+  color: #1f3c2b;
+}
+
+.tpec-landing .hero .ghost-button:hover,
+.tpec-landing .hero .ghost-button:focus-visible {
+  background: rgba(37, 74, 56, 0.08);
+}
+
+.tpec-landing .hero-proof span {
+  background: rgba(255, 255, 255, 0.58);
+  border-color: rgba(44, 71, 52, 0.12);
+  color: #59645b;
+}
+
+.tpec-landing .phone-demo {
+  background: #f4f7f1;
+  border-color: rgba(95, 123, 99, 0.4);
+  box-shadow: 0 30px 70px rgba(42, 66, 49, 0.17);
+  color: #17241b;
+}
+
+.tpec-landing .phone-topbar {
+  background: #dfe9dc;
+  border-bottom: 1px solid rgba(47, 80, 58, 0.1);
+}
+
+.tpec-landing .phone-topbar strong {
+  color: #173126;
+}
+
+.tpec-landing .phone-topbar small {
+  color: #6a786d;
+}
+
+.tpec-landing .phone-chat {
+  background:
+    radial-gradient(circle at 16% 18%, rgba(122, 150, 124, 0.12), transparent 24%),
+    #edf3e9;
+}
+
+.tpec-landing .photo-message {
+  background: #c6dcca;
+  color: #193123;
+}
+
+.tpec-landing .photo-message img,
+.tpec-landing .mini-photo img {
+  filter: grayscale(0.48) sepia(0.06) hue-rotate(55deg) saturate(0.58) brightness(1.18) contrast(0.82);
+}
+
+.tpec-landing .photo-message time,
+.tpec-landing .ai-message time {
+  color: #738077;
+}
+
+.tpec-landing .ai-message {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(47, 80, 58, 0.1);
+  color: #25342a;
+}
+
+.tpec-landing .ai-label {
+  color: #6a805f;
+}
+
+.tpec-landing .phone-input {
+  background: #f8faf6;
+  border-top-color: rgba(47, 80, 58, 0.1);
+  color: #7b887f;
+}
+
+.tpec-landing .visual-section {
+  background: #dce8d9;
+  color: #16241b;
+}
+
+.tpec-landing .visual-media {
+  background: #cfddcc;
+}
+
+.tpec-landing .visual-media::before {
+  background: rgba(131, 157, 132, 0.28);
+  content: "";
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+  z-index: 1;
+}
+
+.tpec-landing .visual-media::after {
+  background: linear-gradient(90deg, rgba(220, 232, 217, 0.04) 48%, #dce8d9 100%);
+  z-index: 1;
+}
+
+.tpec-landing .visual-media img {
+  filter: grayscale(0.48) sepia(0.07) hue-rotate(55deg) saturate(0.56) brightness(1.2) contrast(0.8);
+}
+
+.tpec-landing .scan-frame {
+  border-color: rgba(55, 93, 66, 0.75);
+  z-index: 3;
+}
+
+.tpec-landing .scan-frame > span {
+  background: rgba(235, 242, 232, 0.9);
+  color: #315a40;
+}
+
+.tpec-landing .corner {
+  border-color: #426e50;
+}
+
+.tpec-landing .visual-copy .eyebrow.light {
+  color: #60755f;
+}
+
+.tpec-landing .visual-copy > p {
+  color: #5e6b60;
+}
+
+.tpec-landing .visual-points {
+  border-top-color: rgba(34, 64, 45, 0.14);
+}
+
+.tpec-landing .visual-points span {
+  border-bottom-color: rgba(34, 64, 45, 0.14);
+}
+
+.tpec-landing .visual-points svg {
+  color: #6d7d51;
+}
+
+.tpec-landing .visual-copy > small {
+  color: #77827a;
+}
+
+.tpec-landing .light-link {
+  color: #315d41;
+}
+
+.tpec-landing .final-cta {
+  background:
+    radial-gradient(circle at 82% 50%, rgba(201, 167, 85, 0.12), transparent 28%),
+    linear-gradient(115deg, #173126, #254a38);
+}
+
+@media (max-width: 900px) {
+  .tpec-landing .visual-media::after {
+    background: linear-gradient(0deg, #dce8d9 0%, rgba(220, 232, 217, 0.1) 30%);
+  }
+}
+
+@media (max-width: 700px) {
+  .tpec-landing .hero-art {
+    opacity: 0.5;
+    width: 100%;
+  }
+
+  .tpec-landing .hero-art img {
+    filter: grayscale(0.52) sepia(0.06) hue-rotate(55deg) saturate(0.52) brightness(1.18) contrast(0.8);
+  }
+
+  .tpec-landing .hero-overlay {
+    background:
+      linear-gradient(0deg, #e8efe5 5%, rgba(232, 239, 229, 0.9) 44%, rgba(232, 239, 229, 0.6) 77%),
+      linear-gradient(90deg, rgba(232, 239, 229, 0.88), rgba(232, 239, 229, 0.42));
+  }
+
+  .tpec-landing .visual-media::after {
+    background: linear-gradient(0deg, #dce8d9 0%, rgba(220, 232, 217, 0.08) 34%);
   }
 }
