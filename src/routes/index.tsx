@@ -1,8 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import "../landing.css";
+import "../landing-contrast.css";
 
 const whatsappUrl =
   "https://wa.me/5516992256069?text=Ol%C3%A1%2C%20quero%20conhecer%20a%20TPEC-IA%2C%20a%20IA%20do%20Boi.";
+
+const heroPhoto =
+  "https://images.pexels.com/photos/33206150/pexels-photo-33206150/free-photo-of-herd-of-cattle-grazing-in-brazilian-pasture.png?auto=compress&cs=tinysrgb&w=1800";
+const analysisPhoto =
+  "https://images.pexels.com/photos/31026900/pexels-photo-31026900/free-photo-of-close-up-of-nelore-cattle-in-sao-paulo-pasture.jpeg?auto=compress&cs=tinysrgb&w=900";
+const aerialPhoto =
+  "https://images.pexels.com/photos/10251994/pexels-photo-10251994.jpeg?auto=compress&cs=tinysrgb&w=1600";
 
 const features = [
   {
@@ -167,8 +175,7 @@ function LandingPage() {
 
       <section className="hero" id="inicio">
         <picture className="hero-art" aria-hidden="true">
-          <source media="(max-width: 720px)" srcSet="/tpec-mobile.png" />
-          <img src="/tpec-hero.png" alt="" />
+          <img src={heroPhoto} alt="" fetchPriority="high" />
         </picture>
         <div className="hero-overlay" aria-hidden="true" />
 
@@ -213,7 +220,11 @@ function LandingPage() {
             </div>
             <div className="phone-chat">
               <div className="photo-message">
-                <img src="/tpec-mobile.png" alt="Exemplo visual de rebanho" />
+                <img
+                  src={analysisPhoto}
+                  alt="Nelore em pastagem usado como exemplo de análise visual"
+                  loading="lazy"
+                />
                 <p>O que você observa nessa condição corporal?</p>
                 <time>09:41</time>
               </div>
@@ -280,7 +291,7 @@ function LandingPage() {
 
       <section className="visual-section">
         <div className="visual-media">
-          <img src="/tpec-hero.png" alt="Gado no campo" />
+          <img src={aerialPhoto} alt="Rebanho visto de cima em área de pastagem" loading="lazy" />
           <div className="scan-frame" aria-hidden="true">
             <span>ANÁLISE VISUAL</span>
             <i className="corner one" />
@@ -353,7 +364,7 @@ function LandingPage() {
           </article>
           <article className="conversation-card featured-conversation">
             <span className="conversation-type">Foto</span>
-            <div className="mini-photo"><img src="/tpec-mobile.png" alt="Exemplo de imagem enviada para análise" /></div>
+            <div className="mini-photo"><img src={analysisPhoto} alt="Nelore em pastagem" loading="lazy" /></div>
             <div className="bubble user-bubble">Você consegue me ajudar a avaliar esse lote?</div>
             <div className="bubble bot-bubble">Sim. Posso organizar uma avaliação visual e te dizer quais informações adicionais ajudariam a interpretar melhor a situação.</div>
           </article>
