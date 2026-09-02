@@ -1,0 +1,315 @@
+/* Visual correction layer for the premium landing.
+ * Imported after landing.css so we can keep the base layout untouched while
+ * removing the old dark/gold artwork feel and improving text readability.
+ */
+
+.tpec-landing .site-header {
+  background: rgba(9, 28, 20, 0.92);
+  border-bottom-color: rgba(255, 255, 255, 0.14);
+}
+
+.tpec-landing nav a {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.tpec-landing .header-button {
+  background: rgba(255, 255, 255, 0.035);
+  border-color: rgba(226, 196, 110, 0.85);
+  color: #fff;
+}
+
+.tpec-landing .hero {
+  background: #0b2419;
+}
+
+.tpec-landing .hero-art {
+  width: 61%;
+}
+
+.tpec-landing .hero-art img {
+  filter: saturate(0.92) contrast(0.96) brightness(1.03);
+  object-position: 50% center;
+}
+
+.tpec-landing .hero-overlay {
+  background:
+    linear-gradient(
+      90deg,
+      #0b2419 0%,
+      #0b2419 34%,
+      rgba(11, 36, 25, 0.96) 43%,
+      rgba(11, 36, 25, 0.76) 57%,
+      rgba(11, 36, 25, 0.22) 83%,
+      rgba(11, 36, 25, 0.08) 100%
+    ),
+    linear-gradient(0deg, rgba(11, 36, 25, 0.62) 0%, transparent 34%);
+}
+
+.tpec-landing .hero-content {
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.14);
+}
+
+.tpec-landing .hero .eyebrow.light {
+  color: #e3d296;
+  opacity: 1;
+}
+
+.tpec-landing .hero h1 {
+  color: #ffffff;
+  text-shadow: 0 3px 24px rgba(0, 0, 0, 0.22);
+}
+
+.tpec-landing .hero h1 em {
+  color: #e1bd5c;
+  text-shadow: none;
+}
+
+.tpec-landing .hero-content > p {
+  color: #edf3ef;
+  font-weight: 450;
+}
+
+.tpec-landing .ghost-button {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.34);
+  color: #ffffff;
+}
+
+.tpec-landing .hero-proof span {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #e6eee8;
+}
+
+/* The mockup is intentionally light now so the black/gold logo is only a
+ * small brand accent instead of controlling the whole visual hierarchy. */
+.tpec-landing .phone-demo {
+  background: #f6f8f3;
+  border-color: rgba(96, 122, 92, 0.5);
+  box-shadow: 0 30px 80px rgba(4, 24, 15, 0.24);
+  color: #16251c;
+}
+
+.tpec-landing .phone-topbar {
+  background: #dfeadb;
+  border-bottom: 1px solid rgba(31, 63, 45, 0.12);
+}
+
+.tpec-landing .phone-topbar strong {
+  color: #173126;
+  font-weight: 600;
+}
+
+.tpec-landing .phone-topbar small {
+  color: #536b5c;
+  font-weight: 600;
+}
+
+.tpec-landing .phone-chat {
+  background:
+    radial-gradient(circle at 16% 18%, rgba(112, 143, 105, 0.12), transparent 26%),
+    #edf3e9;
+}
+
+.tpec-landing .photo-message {
+  background: #d1e3d3;
+  color: #14251a;
+}
+
+.tpec-landing .photo-message img {
+  filter: none;
+  height: 168px;
+}
+
+.tpec-landing .photo-message p {
+  color: #14251a;
+  font-weight: 600;
+}
+
+.tpec-landing .ai-message {
+  background: #ffffff;
+  border-color: rgba(23, 49, 38, 0.12);
+  color: #26362c;
+  box-shadow: 0 8px 24px rgba(26, 58, 40, 0.08);
+}
+
+.tpec-landing .ai-message p {
+  color: #26362c;
+}
+
+.tpec-landing .ai-label {
+  color: #65704f;
+}
+
+.tpec-landing .photo-message time,
+.tpec-landing .ai-message time {
+  color: #657168;
+}
+
+.tpec-landing .phone-input {
+  background: #ffffff;
+  border-top-color: rgba(23, 49, 38, 0.1);
+  color: #667269;
+}
+
+/* General copy contrast */
+.tpec-landing .section-heading > p,
+.tpec-landing .split-heading > p,
+.tpec-landing .feature-card p,
+.tpec-landing .difference-grid p,
+.tpec-landing .faq-list details p,
+.tpec-landing .steps p {
+  color: #566158;
+}
+
+.tpec-landing .comparison-card li {
+  color: #566158;
+}
+
+.tpec-landing .tpec-card li {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+/* Analysis section: lighter, cleaner and photo-led. */
+.tpec-landing .visual-section {
+  background: #e6eee2;
+  color: #15271d;
+}
+
+.tpec-landing .visual-media {
+  background: #cbdcc8;
+}
+
+.tpec-landing .visual-media::after {
+  background: linear-gradient(90deg, transparent 64%, #e6eee2 100%);
+}
+
+.tpec-landing .visual-media img {
+  filter: saturate(0.9) contrast(0.98) brightness(1.05);
+  object-position: center;
+}
+
+.tpec-landing .visual-copy .eyebrow.light {
+  color: #707956;
+}
+
+.tpec-landing .visual-copy > p {
+  color: #4e6154;
+}
+
+.tpec-landing .visual-points {
+  border-top-color: rgba(21, 39, 29, 0.13);
+}
+
+.tpec-landing .visual-points span {
+  border-bottom-color: rgba(21, 39, 29, 0.13);
+  color: #26392d;
+}
+
+.tpec-landing .visual-points svg {
+  color: #7b7a46;
+}
+
+.tpec-landing .visual-copy > small {
+  color: #657268;
+}
+
+.tpec-landing .light-link {
+  color: #315a43;
+}
+
+.tpec-landing .scan-frame {
+  background: rgba(236, 244, 232, 0.08);
+  border-color: rgba(244, 229, 171, 0.92);
+  box-shadow: 0 0 0 999px rgba(12, 43, 29, 0.08);
+}
+
+.tpec-landing .scan-frame > span {
+  background: rgba(240, 246, 237, 0.94);
+  color: #3e583f;
+}
+
+/* Conversation photo should look like a real producer upload, not a promo art. */
+.tpec-landing .mini-photo {
+  background: #ffffff;
+  border: 1px solid rgba(23, 49, 38, 0.12);
+  box-shadow: 0 10px 25px rgba(23, 49, 38, 0.08);
+}
+
+.tpec-landing .mini-photo img {
+  filter: none;
+  height: 160px;
+  object-position: center 38%;
+}
+
+/* Dark sections stay dark, but supporting copy is no longer washed out. */
+.tpec-landing .modules-copy > p {
+  color: #d1ddd4;
+}
+
+.tpec-landing .module-list span {
+  color: #f5f8f5;
+}
+
+.tpec-landing .final-cta {
+  background:
+    radial-gradient(circle at 84% 50%, rgba(203, 178, 96, 0.16), transparent 26%),
+    linear-gradient(120deg, #102d20, #1a4430);
+}
+
+.tpec-landing .final-cta h2 {
+  color: #ffffff;
+}
+
+.tpec-landing .final-cta > div > p {
+  color: #e1ebe4;
+}
+
+.tpec-landing .final-cta .eyebrow.light {
+  color: #e7cf84;
+}
+
+.tpec-landing .footer-top > p,
+.tpec-landing .footer-bottom > p,
+.tpec-landing .footer-links a {
+  color: #acb9b0;
+}
+
+@media (max-width: 900px) {
+  .tpec-landing .hero-art {
+    width: 100%;
+  }
+
+  .tpec-landing .hero-art img {
+    object-position: 62% center;
+  }
+
+  .tpec-landing .hero-overlay {
+    background:
+      linear-gradient(0deg, #0b2419 4%, rgba(11, 36, 25, 0.88) 42%, rgba(11, 36, 25, 0.35) 78%),
+      linear-gradient(90deg, rgba(11, 36, 25, 0.74), rgba(11, 36, 25, 0.12));
+  }
+
+  .tpec-landing .visual-media::after {
+    background: linear-gradient(0deg, #e6eee2 0%, transparent 26%);
+  }
+}
+
+@media (max-width: 700px) {
+  .tpec-landing .hero-art img {
+    filter: saturate(0.9) contrast(0.98) brightness(0.9);
+    object-position: 58% center;
+  }
+
+  .tpec-landing .hero h1 {
+    color: #ffffff;
+  }
+
+  .tpec-landing .hero-content > p {
+    color: #f0f5f1;
+  }
+
+  .tpec-landing .visual-copy {
+    background: #e6eee2;
+  }
+}
