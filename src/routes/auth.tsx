@@ -5,12 +5,14 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Entrar · TPEC-IA" },
-      { name: "description", content: "Acesso restrito ao painel administrativo da TPEC-IA." },
-      { property: "og:title", content: "Entrar · TPEC-IA" },
+      { title: "Entrar · IA do Boi" },
+      { name: "description", content: "Acesso restrito ao painel administrativo da IA do Boi (TPEC-IA)." },
+      { name: "robots", content: "noindex, nofollow, noarchive" },
+      { name: "googlebot", content: "noindex, nofollow, noarchive" },
+      { property: "og:title", content: "Entrar · IA do Boi" },
       {
         property: "og:description",
-        content: "Acesso restrito ao painel administrativo da TPEC-IA.",
+        content: "Acesso restrito ao painel administrativo da IA do Boi (TPEC-IA).",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
