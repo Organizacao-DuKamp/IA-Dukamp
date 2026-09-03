@@ -76,29 +76,33 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "TPEC-IA — IA do Boi" },
-      { property: "og:title", content: "TPEC-IA — IA do Boi" },
-      { name: "twitter:title", content: "TPEC-IA — IA do Boi" },
+      { title: "IA do Boi — Inteligência Artificial para Pecuária" },
+      { property: "og:title", content: "IA do Boi — Inteligência Artificial para Pecuária" },
+      { name: "twitter:title", content: "IA do Boi — Inteligência Artificial para Pecuária" },
       {
         name: "description",
         content:
-          "A inteligência artificial especialista em pecuária: manejo, nutrição, pastagens, reprodução, sanidade, gestão e mercado direto no WhatsApp.",
+          "IA do Boi é uma inteligência artificial para pecuária e gado, com apoio prático sobre manejo, nutrição, pastagens e rotina do campo pelo WhatsApp.",
       },
       {
         property: "og:description",
-        content: "Inteligência artificial para o dia a dia da pecuária, direto no WhatsApp.",
+        content:
+          "Inteligência artificial para pecuária e gado, com respostas práticas e análise por foto direto no WhatsApp.",
       },
       {
         name: "twitter:description",
-        content: "Inteligência artificial para o dia a dia da pecuária, direto no WhatsApp.",
+        content:
+          "Inteligência artificial para pecuária e gado, com respostas práticas e análise por foto direto no WhatsApp.",
       },
+      { property: "og:site_name", content: "IA do Boi" },
+      { property: "og:locale", content: "pt_BR" },
       {
         property: "og:image",
-        content: "/og.png",
+        content: "https://iadoboi.com.br/og.png",
       },
       {
         name: "twitter:image",
-        content: "/og.png",
+        content: "https://iadoboi.com.br/og.png",
       },
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:type", content: "website" },
@@ -109,6 +113,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: appCss,
       },
       { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+      { rel: "alternate icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "apple-touch-icon", href: "/tpec-logo.png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
