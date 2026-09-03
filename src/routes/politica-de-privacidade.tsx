@@ -1,6 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/politica-de-privacidade")({
+  head: () => ({
+    meta: [
+      { title: "Política de Privacidade | IA do Boi" },
+      { name: "description", content: "Política de Privacidade da IA do Boi (TPEC-IA), com informações sobre tratamento de dados no site, WhatsApp e serviços integrados." },
+      { name: "robots", content: "index, follow" },
+      { property: "og:title", content: "Política de Privacidade | IA do Boi" },
+      { property: "og:description", content: "Informações sobre privacidade e tratamento de dados na IA do Boi (TPEC-IA)." },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://iadoboi.com.br/politica-de-privacidade" },
+      { property: "og:site_name", content: "IA do Boi" },
+    ],
+    links: [{ rel: "canonical", href: "https://iadoboi.com.br/politica-de-privacidade" }],
+  }),
   component: PrivacyPolicyPage,
 });
 
