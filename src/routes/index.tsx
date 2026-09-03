@@ -5,6 +5,7 @@ const whatsappUrl =
   "https://wa.me/5516992256069?text=Ol%C3%A1%2C%20quero%20conhecer%20a%20TPEC-IA%2C%20a%20IA%20do%20Boi.";
 
 const whatsappReferenceImage = "/tpec-whatsapp-reference.webp";
+const heroBullPhoto = "/tpec-hero-bull.webp";
 
 const cattlePhoto =
   "https://images.pexels.com/photos/31026900/pexels-photo-31026900/free-photo-of-close-up-of-nelore-cattle-in-sao-paulo-pasture.jpeg?auto=compress&cs=tinysrgb&w=900";
@@ -191,7 +192,7 @@ function LandingPage() {
           </div>
         </div>
         <div className="hero-photo reference-photo">
-          <img src={cattleWide} alt="Bovino em pastagem" fetchPriority="high" />
+          <img src={heroBullPhoto} alt="Touro Nelore forte em pastagem" fetchPriority="high" />
           <div className="photo-fade" aria-hidden="true" />
           <BrandSeal />
           <span className="scan-label scan-a"><i /> MANEJO</span><span className="scan-label scan-b"><i /> NUTRIÇÃO</span><span className="scan-label scan-c"><i /> CONDIÇÃO</span>

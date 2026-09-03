@@ -154,7 +154,7 @@
 .tpec-landing .hero-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 .tpec-landing .outline-button { background: rgba(255,255,255,.72); border: 1px solid rgba(151,109,35,.52); color: var(--forest); }
 .tpec-landing .hero-photo { min-height: 690px; }
-.tpec-landing .hero-photo > img { object-position: center 48%; }
+.tpec-landing .hero-photo > img { object-position: 65% 50%; }
 .tpec-landing .hero-photo .brand-seal { left: 16%; position: absolute; top: 52%; transform: translate(-50%, -50%); z-index: 5; }
 .tpec-landing .scan-label { align-items: center; background: rgba(252,250,242,.88); border: 1px solid rgba(22,63,43,.2); border-radius: 8px; color: var(--forest); display: flex; font-size: 9px; font-weight: 850; gap: 7px; letter-spacing: .08em; padding: 8px 11px; position: absolute; text-transform: uppercase; z-index: 5; }
 .tpec-landing .scan-label i { border: 2px solid #d6a53c; border-radius: 50%; height: 8px; width: 8px; }
