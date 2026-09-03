@@ -1,6 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/termos-de-uso")({
+  head: () => ({
+    meta: [
+      { title: "Termos de Uso | IA do Boi" },
+      { name: "description", content: "Termos de Uso da IA do Boi (TPEC-IA), com regras de uso, limites do serviço e responsabilidades relacionadas ao assistente de inteligência artificial." },
+      { name: "robots", content: "index, follow" },
+      { property: "og:title", content: "Termos de Uso | IA do Boi" },
+      { property: "og:description", content: "Regras e condições de uso da IA do Boi (TPEC-IA)." },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://iadoboi.com.br/termos-de-uso" },
+      { property: "og:site_name", content: "IA do Boi" },
+    ],
+    links: [{ rel: "canonical", href: "https://iadoboi.com.br/termos-de-uso" }],
+  }),
   component: TermsPage,
 });
 
