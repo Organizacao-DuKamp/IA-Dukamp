@@ -1,0 +1,615 @@
+.tpec-landing .analysis-row span { display: flex; flex-direction: column; }
+
+.tpec-landing .analysis-row b { font-size: 10px; }
+
+.tpec-landing .analysis-row small { color: #505650; font-size: 8px; line-height: 1.35; margin-top: 2px; }
+
+.tpec-landing .analysis-disclaimer { color: #5e625d; font-size: 7px; line-height: 1.4; margin: 8px 5px 1px; text-align: center; }
+
+.tpec-landing .analysis-copy {
+  align-self: center;
+  padding: 44px 54px 62px 22px;
+}
+
+.tpec-landing .analysis-copy .brand-seal {
+  margin: 0 auto 10px;
+}
+
+.tpec-landing .analysis-copy .gold-title {
+  display: block;
+  font-size: clamp(54px, 5vw, 76px);
+  text-align: center;
+}
+
+.tpec-landing .analysis-copy h2 {
+  color: var(--forest);
+  font-size: clamp(24px, 2.2vw, 34px);
+  line-height: 1.12;
+  margin: 15px 0;
+}
+
+.tpec-landing .analysis-copy > p {
+  color: #323a34;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0 0 22px;
+}
+
+.tpec-landing .analysis-features {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+}
+
+.tpec-landing .analysis-features > span {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}
+
+.tpec-landing .analysis-features > span > i {
+  align-items: center;
+  border: 2px solid #344d3c;
+  border-radius: 50%;
+  color: var(--forest);
+  display: flex;
+  height: 44px;
+  justify-content: center;
+  margin-bottom: 7px;
+  width: 44px;
+}
+
+.tpec-landing .analysis-features svg { height: 23px; width: 23px; }
+
+.tpec-landing .analysis-features b { color: var(--forest); font-size: 9px; text-transform: uppercase; }
+
+.tpec-landing .analysis-features small { color: #4f5750; font-size: 8px; line-height: 1.3; margin-top: 4px; }
+
+.tpec-landing .poster-how {
+  display: grid;
+  grid-template-columns: 59% 41%;
+  min-height: 720px;
+}
+
+.tpec-landing .how-copy {
+  align-self: center;
+  padding: 54px 24px 88px clamp(38px, 4.2vw, 72px);
+}
+
+.tpec-landing .how-copy > .gold-title {
+  display: block;
+  font-size: clamp(57px, 5.5vw, 86px);
+}
+
+.tpec-landing .how-copy > h2 {
+  color: var(--forest);
+  font-size: clamp(25px, 2.2vw, 36px);
+  margin: 12px 0 6px;
+}
+
+.tpec-landing .how-copy .gold-divider {
+  margin-left: 0;
+  max-width: 720px;
+  width: 86%;
+}
+
+.tpec-landing .reference-steps {
+  align-items: stretch;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr 26px 1fr 26px 1fr 26px 1fr;
+  margin-top: 24px;
+}
+
+.tpec-landing .reference-steps article {
+  background: rgba(255,255,255,.7);
+  border: 1px solid rgba(185,136,48,.28);
+  border-radius: 15px;
+  min-height: 230px;
+  padding: 18px 14px;
+}
+
+.tpec-landing .reference-steps article > span {
+  align-items: center;
+  border: 1px solid rgba(177,128,41,.3);
+  border-radius: 12px;
+  color: var(--forest);
+  display: flex;
+  height: 68px;
+  justify-content: center;
+  margin-bottom: 18px;
+  width: 68px;
+}
+
+.tpec-landing .reference-steps svg { height: 40px; width: 40px; }
+
+.tpec-landing .reference-steps b { color: var(--forest); display: block; font-size: 13px; line-height: 1.2; }
+
+.tpec-landing .reference-steps p { color: #313a33; font-size: 11px; line-height: 1.5; margin: 8px 0 0; }
+
+.tpec-landing .step-arrow { align-self: center; color: #b57a1f; font-size: 33px; font-style: normal; justify-self: center; }
+
+.tpec-landing .how-banner {
+  align-items: center;
+  background: linear-gradient(145deg, #194a34, #0d3525);
+  border: 1px solid #d3a844;
+  border-radius: 14px;
+  color: #fff;
+  display: flex;
+  gap: 16px;
+  margin: 24px 0 0 17%;
+  max-width: 500px;
+  padding: 14px 18px;
+}
+
+.tpec-landing .how-banner > svg { color: #efc059; height: 36px; width: 36px; }
+
+.tpec-landing .how-banner span { display: flex; flex-direction: column; }
+
+.tpec-landing .how-banner b { color: #e9c36e; font-size: 13px; }
+
+.tpec-landing .how-banner small { font-size: 10px; line-height: 1.4; margin-top: 3px; }
+
+.tpec-landing .how-field {
+  min-height: 720px;
+}
+
+.tpec-landing .how-field img { object-position: center; }
+
+.tpec-landing .scan-board {
+  background: rgba(15, 59, 42, .88);
+  border: 1px solid rgba(230,190,96,.35);
+  border-radius: 8px;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  position: absolute;
+  z-index: 8;
+}
+
+.tpec-landing .scan-board b {
+  border-bottom: 1px solid rgba(238,206,124,.4);
+  color: #f0d17a;
+  font-size: 9px;
+  letter-spacing: .08em;
+  padding-bottom: 7px;
+  text-align: center;
+}
+
+.tpec-landing .scan-board span { font-size: 8px; }
+
+.tpec-landing .scan-board span i { background: #bad05d; display: inline-block; height: 5px; margin-left: 6px; vertical-align: middle; }
+
+.tpec-landing .board-one { right: 8%; top: 15%; width: 180px; }
+
+.tpec-landing .board-two { bottom: 24%; left: 5%; width: 150px; }
+
+.tpec-landing .how-field .brand-seal { bottom: 6%; position: absolute; right: 6%; z-index: 9; }
+
+.tpec-landing .poster-benefits {
+  min-height: 680px;
+  padding: 48px 68px 110px;
+}
+
+.tpec-landing .poster-benefits > .brand-seal {
+  left: 38px;
+  position: absolute;
+  top: 30px;
+}
+
+.tpec-landing .benefits-head {
+  margin: 0 auto;
+  max-width: 1050px;
+  text-align: center;
+}
+
+.tpec-landing .benefits-head .gold-title {
+  display: block;
+  font-size: clamp(62px, 6vw, 96px);
+}
+
+.tpec-landing .benefits-head h2 {
+  color: var(--forest);
+  font-size: clamp(24px, 2.6vw, 39px);
+  margin: 3px 0 28px;
+}
+
+.tpec-landing .reference-benefits-grid {
+  display: grid;
+  gap: 26px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 16px auto 0;
+  max-width: 1280px;
+  position: relative;
+  z-index: 6;
+}
+
+.tpec-landing .reference-benefits-grid article {
+  align-items: center;
+  background: rgba(255,255,255,.8);
+  border: 1px solid rgba(191,143,55,.37);
+  border-radius: 20px;
+  box-shadow: 0 10px 24px rgba(40,43,34,.08);
+  display: flex;
+  flex-direction: column;
+  min-height: 300px;
+  padding: 30px 20px 25px;
+  text-align: center;
+}
+
+.tpec-landing .benefit-round-icon {
+  align-items: center;
+  border: 1px solid #d6a84b;
+  border-radius: 50%;
+  color: var(--forest);
+  display: flex;
+  height: 96px;
+  justify-content: center;
+  width: 96px;
+}
+
+.tpec-landing .benefit-round-icon svg { height: 52px; width: 52px; }
+
+.tpec-landing .card-divider { background: #b98630; height: 1px; margin: 20px 0 18px; width: 76%; }
+
+.tpec-landing .reference-benefits-grid h3 { color: var(--forest); font-size: 16px; margin: 0; text-transform: uppercase; }
+
+.tpec-landing .reference-benefits-grid p { color: #354037; font-size: 12px; line-height: 1.5; margin: 11px 0 0; }
+
+.tpec-landing .benefits-landscape {
+  bottom: -60px;
+  height: 220px;
+  left: 0;
+  opacity: .28;
+  overflow: hidden;
+  position: absolute;
+  right: 0;
+  z-index: 0;
+}
+
+.tpec-landing .benefits-landscape img { filter: saturate(.8); height: 100%; object-fit: cover; object-position: 50% 65%; width: 100%; }
+
+.tpec-landing .benefits-landscape::after { background: linear-gradient(180deg, var(--cream) 0%, transparent 45%); content: ""; inset: 0; position: absolute; }
+
+.tpec-landing .poster-areas {
+  min-height: 710px;
+  padding: 42px 46px 105px;
+}
+
+.tpec-landing .poster-areas > .brand-seal {
+  left: 30px;
+  position: absolute;
+  top: 28px;
+}
+
+.tpec-landing .areas-head,
+.tpec-landing .examples-head {
+  margin: 0 auto 26px;
+  max-width: 1000px;
+  text-align: center;
+}
+
+.tpec-landing .areas-head .gold-title,
+.tpec-landing .examples-head .gold-title {
+  display: block;
+  font-size: clamp(52px, 5.1vw, 79px);
+}
+
+.tpec-landing .areas-head h2,
+.tpec-landing .examples-head h2 {
+  color: var(--forest);
+  font-size: clamp(18px, 1.8vw, 28px);
+  margin: 2px 0 5px;
+}
+
+.tpec-landing .areas-head p {
+  color: #3a493d;
+  font-size: 12px;
+  margin: 0;
+}
+
+.tpec-landing .reference-areas-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(7, minmax(0,1fr));
+  margin: 10px auto 0;
+  max-width: 1380px;
+  position: relative;
+  z-index: 7;
+}
+
+.tpec-landing .reference-areas-grid article {
+  align-items: center;
+  background: rgba(255,255,255,.78);
+  border: 1px solid rgba(185,135,45,.42);
+  border-radius: 15px;
+  box-shadow: 0 8px 18px rgba(38,44,34,.08);
+  display: flex;
+  flex-direction: column;
+  min-height: 420px;
+  overflow: hidden;
+  padding: 8px 10px 18px;
+  text-align: center;
+}
+
+.tpec-landing .area-photo {
+  border-radius: 12px;
+  height: 215px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.tpec-landing .area-photo img { height: 100%; object-fit: cover; width: 100%; }
+
+.tpec-landing .area-icon { align-items: center; color: var(--forest); display: flex; height: 34px; justify-content: center; margin-top: 8px; width: 34px; }
+
+.tpec-landing .area-icon svg { height: 27px; width: 27px; }
+
+.tpec-landing .reference-areas-grid h3 { color: var(--forest); font-size: 14px; line-height: 1.1; margin: 3px 0 8px; text-transform: uppercase; }
+
+.tpec-landing .reference-areas-grid p { color: #4b554c; font-size: 10px; line-height: 1.4; margin: 0; }
+
+.tpec-landing .poster-examples {
+  min-height: 700px;
+  padding: 48px 58px 100px;
+}
+
+.tpec-landing .poster-examples > .brand-seal {
+  position: absolute;
+  right: 34px;
+  top: 28px;
+}
+
+.tpec-landing .reference-use-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  margin: 28px auto 0;
+  max-width: 1320px;
+  position: relative;
+  z-index: 6;
+}
+
+.tpec-landing .reference-use-grid > article {
+  background: rgba(255,255,255,.8);
+  border: 1px solid rgba(185,135,45,.38);
+  border-radius: 16px;
+  box-shadow: 0 9px 22px rgba(39,44,35,.08);
+  min-height: 390px;
+  overflow: hidden;
+  position: relative;
+}
+
+.tpec-landing .use-photo {
+  height: 245px;
+  overflow: hidden;
+}
+
+.tpec-landing .use-photo img { height: 100%; object-fit: cover; width: 100%; }
+
+.tpec-landing .mini-phone {
+  background: #f4f5f0;
+  border: 4px solid #232623;
+  border-radius: 19px;
+  box-shadow: 0 7px 18px rgba(0,0,0,.18);
+  display: flex;
+  flex-direction: column;
+  height: 214px;
+  left: 16px;
+  padding: 11px 8px;
+  position: absolute;
+  top: 20px;
+  width: 112px;
+}
+
+.tpec-landing .mini-phone-top { border-bottom: 1px solid #d2d5cd; color: var(--forest); font-size: 8px; font-weight: 800; padding-bottom: 6px; }
+
+.tpec-landing .mini-phone-top small { color: #4f7d5e; display: block; font-size: 6px; }
+
+.tpec-landing .mini-phone > span { color: var(--forest); margin: 10px 0 4px; }
+
+.tpec-landing .mini-phone > span svg { height: 24px; width: 24px; }
+
+.tpec-landing .mini-phone b { color: var(--forest); font-size: 8px; }
+
+.tpec-landing .mini-phone p { color: #525852; font-size: 6px; line-height: 1.35; }
+
+.tpec-landing .reference-use-grid footer {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  min-height: 92px;
+  padding: 14px 16px;
+}
+
+.tpec-landing .reference-use-grid footer i {
+  align-items: center;
+  background: #eef1e2;
+  border-radius: 50%;
+  color: var(--forest);
+  display: flex;
+  flex: 0 0 auto;
+  height: 44px;
+  justify-content: center;
+  width: 44px;
+}
+
+.tpec-landing .reference-use-grid footer svg { height: 25px; width: 25px; }
+
+.tpec-landing .reference-use-grid footer strong { color: var(--forest); font-size: 14px; line-height: 1.2; }
+
+.tpec-landing .poster-responsibility {
+  display: grid;
+  grid-template-columns: 53% 47%;
+  min-height: 700px;
+}
+
+.tpec-landing .responsibility-copy {
+  align-self: center;
+  padding: 48px 30px 80px clamp(38px, 4vw, 70px);
+}
+
+.tpec-landing .responsibility-copy > .brand-seal { margin-bottom: 10px; }
+
+.tpec-landing .responsibility-copy > .reference-kicker { margin-bottom: 34px; }
+
+.tpec-landing .responsibility-copy > h2 {
+  align-items: center;
+  color: var(--forest);
+  display: flex;
+  font-size: clamp(35px, 3.7vw, 58px);
+  gap: 18px;
+  line-height: 1.03;
+  margin: 0 0 28px;
+}
+
+.tpec-landing .responsibility-copy > h2 > i {
+  align-items: center;
+  color: #c7942e;
+  display: flex;
+  flex: 0 0 auto;
+  height: 80px;
+  justify-content: center;
+  width: 80px;
+}
+
+.tpec-landing .responsibility-copy > h2 svg { height: 76px; width: 76px; }
+
+.tpec-landing .responsibility-points {
+  display: grid;
+  gap: 18px 24px;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+}
+
+.tpec-landing .responsibility-points > span {
+  display: grid;
+  gap: 4px 11px;
+  grid-template-columns: 46px 1fr;
+  grid-template-rows: auto auto;
+}
+
+.tpec-landing .responsibility-points > span > i {
+  align-items: center;
+  background: #e9eddd;
+  border-radius: 50%;
+  color: var(--forest);
+  display: flex;
+  grid-row: 1 / span 2;
+  height: 46px;
+  justify-content: center;
+  width: 46px;
+}
+
+.tpec-landing .responsibility-points svg { height: 25px; width: 25px; }
+
+.tpec-landing .responsibility-points b { color: var(--forest); font-size: 12px; line-height: 1.2; }
+
+.tpec-landing .responsibility-points small { color: #4c554d; font-size: 9px; line-height: 1.35; }
+
+.tpec-landing .responsibility-field { min-height: 700px; }
+
+.tpec-landing .responsibility-field img { object-position: 48% center; }
+
+.tpec-landing .faq-section {
+  background: #f8f4e9;
+  border: 1px solid rgba(119,89,40,.12);
+  border-radius: 28px;
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 65px;
+  grid-template-columns: .85fr 1.15fr;
+  margin: 30px auto;
+  max-width: 1500px;
+  padding: 72px clamp(34px, 5vw, 80px);
+  width: calc(100% - 36px);
+}
+
+.tpec-landing .faq-heading h2 {
+  color: var(--forest);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(36px, 4vw, 58px);
+  line-height: 1.03;
+  margin: 18px 0 16px;
+}
+
+.tpec-landing .faq-heading p {
+  color: #59635a;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 470px;
+}
+
+.tpec-landing .faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tpec-landing .faq-list details {
+  background: rgba(255,255,255,.76);
+  border: 1px solid rgba(164,119,42,.2);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.tpec-landing .faq-list summary {
+  align-items: center;
+  color: var(--forest);
+  cursor: pointer;
+  display: flex;
+  font-size: 15px;
+  font-weight: 800;
+  justify-content: space-between;
+  list-style: none;
+  padding: 18px 20px;
+}
+
+.tpec-landing .faq-list summary::-webkit-details-marker { display: none; }
+
+.tpec-landing .faq-list summary span { color: #a77627; font-size: 25px; font-weight: 400; }
+
+.tpec-landing .faq-list details[open] summary span { transform: rotate(45deg); }
+
+.tpec-landing .faq-list details p { color: #566058; font-size: 13px; line-height: 1.6; margin: 0; padding: 0 20px 18px; }
+
+.tpec-landing .final-cta {
+  align-items: center;
+  background: linear-gradient(120deg, #0e3727 0%, #174b35 70%, #214f3b 100%);
+  border: 1px solid #c99c45;
+  border-radius: 25px;
+  box-shadow: 0 25px 60px rgba(15,48,34,.25);
+  color: white;
+  display: grid;
+  gap: 34px;
+  grid-template-columns: auto 1fr auto;
+  margin: 30px auto;
+  max-width: 1500px;
+  overflow: hidden;
+  padding: 36px clamp(34px, 5vw, 72px);
+  position: relative;
+  width: calc(100% - 36px);
+}
+
+.tpec-landing .final-cta::after {
+  border: 1px solid rgba(221,181,91,.25);
+  border-radius: 50%;
+  content: "";
+  height: 360px;
+  position: absolute;
+  right: -90px;
+  top: -150px;
+  width: 600px;
+}
+
+.tpec-landing .final-cta .brand-seal { height: 110px; width: 110px; }
+
+.tpec-landing .final-cta .reference-kicker { color: #e7c46d; }
+
+.tpec-landing .final-cta h2 { font-family: Georgia, "Times New Roman", serif; font-size: clamp(30px, 3vw, 46px); margin: 8px 0 5px; }
+
+.tpec-landing .final-cta p { color: #d9e4dc; font-size: 13px; line-height: 1.5; margin: 0; }
+
+.tpec-landing .final-cta .reference-button { background: #f6f1e5; color: var(--forest); position: relative; z-index: 3; }
