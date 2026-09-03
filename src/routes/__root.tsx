@@ -112,9 +112,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/tpec-logo.png?v=20260903-5", type: "image/png" },
-      { rel: "shortcut icon", href: "/tpec-logo.png?v=20260903-5", type: "image/png" },
-      { rel: "apple-touch-icon", href: "/tpec-logo.png?v=20260903-5" },
+      { rel: "icon", href: "/tpec-logo-v2.png?v=20260903-6", type: "image/png" },
+      { rel: "shortcut icon", href: "/tpec-logo-v2.png?v=20260903-6", type: "image/png" },
+      { rel: "apple-touch-icon", href: "/tpec-logo-v2.png?v=20260903-6" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
