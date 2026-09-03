@@ -1,0 +1,439 @@
+/* Final visual polish: logo-faithful gold + stronger desktop/mobile responsiveness. */
+
+.tpec-landing {
+  --gold: #e79a16;
+  --gold-light: #f6c54e;
+  --gold-dark: #b9630a;
+  --line: rgba(207, 132, 24, 0.30);
+}
+
+/* Gold sampled from the current TPEC-IA logo: lighter, warmer and more orange. */
+.tpec-landing .gold-title,
+.tpec-landing .poster-hero h1 {
+  background: linear-gradient(
+    180deg,
+    #fff0ad 0%,
+    #f6c54d 17%,
+    #e99a16 38%,
+    #ffd15c 56%,
+    #d97d0d 76%,
+    #f0b238 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 1px 1px rgba(117, 60, 4, .16));
+}
+
+.tpec-landing .gold-divider::before,
+.tpec-landing .gold-divider::after {
+  background: linear-gradient(90deg, transparent, #e59a18, transparent);
+}
+
+.tpec-landing .gold-divider i { background: #e59a18; }
+
+.tpec-landing .poster-swoosh::after { border-top-color: rgba(231, 154, 22, .88); }
+
+.tpec-landing .poster,
+.tpec-landing .poster > *,
+.tpec-landing .reference-copy,
+.tpec-landing .reference-photo,
+.tpec-landing .reference-areas-grid,
+.tpec-landing .reference-benefits-grid,
+.tpec-landing .reference-use-grid {
+  min-width: 0;
+}
+
+.tpec-landing .gold-title,
+.tpec-landing .poster-hero h1,
+.tpec-landing .reference-copy h2,
+.tpec-landing .areas-head h2,
+.tpec-landing .examples-head h2,
+.tpec-landing .benefits-head h2 {
+  overflow-wrap: anywhere;
+}
+
+.tpec-landing .poster {
+  max-width: 1580px;
+  width: min(calc(100% - 32px), 1580px);
+}
+
+.tpec-landing .site-header {
+  width: 100%;
+}
+
+/* Large desktop: preserve the poster-like composition without oversized empty areas. */
+@media (min-width: 1500px) {
+  .tpec-landing .poster { max-width: 1640px; }
+  .tpec-landing .hero-copy { padding-left: clamp(58px, 5vw, 96px); }
+  .tpec-landing .reference-areas-grid { max-width: 1460px; gap: 12px; }
+  .tpec-landing .reference-use-grid { max-width: 1400px; }
+}
+
+/* Common notebooks and 1366/1440px desktops. */
+@media (max-width: 1440px) {
+  .tpec-landing .site-header {
+    gap: 18px;
+    min-height: 72px;
+    padding-left: 28px;
+    padding-right: 28px;
+  }
+
+  .tpec-landing .brand > img { height: 50px; width: 50px; }
+  .tpec-landing .site-header nav { gap: clamp(12px, 1.55vw, 22px); }
+  .tpec-landing .site-header nav a { font-size: 11px; white-space: nowrap; }
+  .tpec-landing .header-cta { font-size: 10px; padding-left: 14px; padding-right: 14px; white-space: nowrap; }
+
+  .tpec-landing .poster {
+    margin: 22px auto;
+    width: calc(100% - 28px);
+  }
+
+  .tpec-landing .areas-head,
+  .tpec-landing .examples-head { max-width: 900px; }
+
+  .tpec-landing .areas-head .gold-title,
+  .tpec-landing .examples-head .gold-title {
+    font-size: clamp(52px, 4.7vw, 68px);
+  }
+
+  .tpec-landing .poster-areas > .brand-seal,
+  .tpec-landing .poster-examples > .brand-seal {
+    height: 112px;
+    width: 112px;
+  }
+
+  .tpec-landing .reference-areas-grid { gap: 9px; }
+  .tpec-landing .reference-areas-grid article { min-height: 390px; }
+  .tpec-landing .area-photo { height: 205px; }
+}
+
+/* Medium desktop / landscape tablet: stop squeezing 7 cards into narrow columns. */
+@media (max-width: 1280px) {
+  .tpec-landing .site-header nav { gap: 12px; }
+  .tpec-landing .site-header nav a { font-size: 10px; }
+
+  .tpec-landing .reference-areas-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    max-width: 980px;
+  }
+  .tpec-landing .poster-areas { min-height: 980px; }
+  .tpec-landing .reference-areas-grid article { min-height: 340px; }
+  .tpec-landing .area-photo { height: 180px; }
+
+  .tpec-landing .reference-benefits-grid { gap: 16px; }
+  .tpec-landing .reference-benefits-grid article { min-height: 280px; }
+
+  .tpec-landing .poster-whatsapp { grid-template-columns: 37% 27% 36%; }
+  .tpec-landing .whatsapp-phone { width: min(285px, 92%); }
+}
+
+@media (max-width: 1080px) {
+  .tpec-landing .site-header nav { display: none; }
+  .tpec-landing .site-header { grid-template-columns: minmax(0, 1fr) auto; }
+
+  .tpec-landing .poster-hero,
+  .tpec-landing .poster-whatsapp,
+  .tpec-landing .poster-analysis,
+  .tpec-landing .poster-how,
+  .tpec-landing .poster-responsibility {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .tpec-landing .hero-copy,
+  .tpec-landing .whatsapp-copy,
+  .tpec-landing .analysis-copy,
+  .tpec-landing .how-copy,
+  .tpec-landing .responsibility-copy {
+    padding: 52px 42px 58px;
+  }
+
+  .tpec-landing .hero-copy,
+  .tpec-landing .whatsapp-copy,
+  .tpec-landing .analysis-copy,
+  .tpec-landing .how-copy { text-align: center; }
+
+  .tpec-landing .hero-copy p,
+  .tpec-landing .whatsapp-copy p,
+  .tpec-landing .analysis-copy > p {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .tpec-landing .hero-mini-grid,
+  .tpec-landing .hero-actions,
+  .tpec-landing .how-copy .gold-divider,
+  .tpec-landing .whatsapp-copy .brand-seal,
+  .tpec-landing .analysis-copy .brand-seal {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .tpec-landing .hero-actions { justify-content: center; }
+  .tpec-landing .hero-photo { min-height: 500px; order: 2; }
+
+  .tpec-landing .whatsapp-copy { order: 1; }
+  .tpec-landing .whatsapp-phone {
+    height: 590px;
+    margin: 0 auto 26px;
+    order: 2;
+    width: min(310px, 82vw);
+  }
+  .tpec-landing .whatsapp-field { min-height: 440px; order: 3; }
+
+  .tpec-landing .analysis-field { min-height: 450px; order: 1; }
+  .tpec-landing .analysis-phone {
+    margin: -105px auto 10px;
+    order: 2;
+    width: min(330px, 84vw);
+  }
+  .tpec-landing .analysis-copy { order: 3; }
+  .tpec-landing .analysis-features {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 620px;
+  }
+
+  .tpec-landing .how-copy { order: 1; }
+  .tpec-landing .reference-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .tpec-landing .reference-steps .step-arrow { display: none; }
+  .tpec-landing .reference-steps article { min-height: 190px; text-align: left; }
+  .tpec-landing .how-banner { margin: 22px auto 0; text-align: left; }
+  .tpec-landing .how-field { min-height: 470px; order: 2; }
+
+  .tpec-landing .poster-benefits,
+  .tpec-landing .poster-areas,
+  .tpec-landing .poster-examples { min-height: 0; }
+
+  .tpec-landing .poster-benefits > .brand-seal,
+  .tpec-landing .poster-areas > .brand-seal,
+  .tpec-landing .poster-examples > .brand-seal {
+    height: 102px;
+    left: auto;
+    margin: 0 auto 10px;
+    position: relative;
+    right: auto;
+    top: auto;
+    width: 102px;
+  }
+
+  .tpec-landing .poster-benefits { padding: 48px 28px 92px; }
+  .tpec-landing .reference-benefits-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 760px;
+  }
+
+  .tpec-landing .poster-areas { padding: 46px 26px 92px; }
+  .tpec-landing .reference-areas-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 740px;
+  }
+  .tpec-landing .reference-areas-grid article { min-height: 370px; }
+  .tpec-landing .area-photo { height: 225px; }
+
+  .tpec-landing .poster-examples { padding: 46px 26px 92px; }
+  .tpec-landing .reference-use-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 760px;
+  }
+
+  .tpec-landing .responsibility-copy { order: 1; }
+  .tpec-landing .responsibility-field { min-height: 450px; order: 2; }
+}
+
+/* Phones and narrow tablets. */
+@media (max-width: 720px) {
+  .tpec-landing .site-header {
+    gap: 10px;
+    min-height: 64px;
+    padding: 7px 12px;
+  }
+  .tpec-landing .brand { gap: 8px; min-width: 0; }
+  .tpec-landing .brand > img { height: 42px; width: 42px; }
+  .tpec-landing .brand strong { font-size: 15px; }
+  .tpec-landing .brand small { display: none; }
+  .tpec-landing .header-cta {
+    font-size: 9px;
+    min-height: 38px;
+    padding: 0 10px;
+  }
+  .tpec-landing .header-cta svg { display: none; }
+
+  .tpec-landing .poster {
+    border-radius: 17px;
+    margin: 12px auto;
+    width: calc(100% - 12px);
+  }
+
+  .tpec-landing .hero-copy,
+  .tpec-landing .whatsapp-copy,
+  .tpec-landing .analysis-copy,
+  .tpec-landing .how-copy,
+  .tpec-landing .responsibility-copy {
+    padding: 38px 20px 48px;
+  }
+
+  .tpec-landing .poster-hero h1 {
+    font-size: clamp(46px, 14vw, 68px);
+    line-height: .92;
+  }
+  .tpec-landing .poster-hero h2 { font-size: clamp(24px, 7vw, 30px); }
+  .tpec-landing .poster-hero p { font-size: 14px; }
+  .tpec-landing .hero-mini-grid {
+    gap: 8px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+  .tpec-landing .hero-mini-grid > span { min-height: 86px; }
+  .tpec-landing .hero-actions { flex-direction: column; width: 100%; }
+  .tpec-landing .hero-actions a { width: 100%; }
+  .tpec-landing .hero-photo { min-height: 390px; }
+
+  .tpec-landing .whatsapp-copy .gold-title,
+  .tpec-landing .analysis-copy .gold-title,
+  .tpec-landing .how-copy > .gold-title,
+  .tpec-landing .benefits-head .gold-title,
+  .tpec-landing .areas-head .gold-title,
+  .tpec-landing .examples-head .gold-title {
+    font-size: clamp(38px, 11.5vw, 56px);
+    line-height: .94;
+  }
+
+  .tpec-landing .whatsapp-copy h2,
+  .tpec-landing .analysis-copy h2,
+  .tpec-landing .how-copy > h2 { font-size: clamp(23px, 6.3vw, 28px); }
+
+  .tpec-landing .whatsapp-phone {
+    height: 550px;
+    margin: -8px auto 18px;
+    max-width: calc(100% - 32px);
+    width: 300px;
+  }
+  .tpec-landing .whatsapp-field { min-height: 360px; }
+
+  .tpec-landing .analysis-field { min-height: 360px; }
+  .tpec-landing .analysis-phone {
+    margin-top: -78px;
+    max-width: calc(100% - 28px);
+    width: 320px;
+  }
+  .tpec-landing .analysis-features { gap: 18px 10px; }
+
+  .tpec-landing .reference-steps { grid-template-columns: 1fr; }
+  .tpec-landing .reference-steps article {
+    display: grid;
+    gap: 5px 14px;
+    grid-template-columns: 64px minmax(0, 1fr);
+    min-height: 0;
+    padding: 14px;
+  }
+  .tpec-landing .reference-steps article > span {
+    grid-row: 1 / span 2;
+    height: 58px;
+    margin: 0;
+    width: 58px;
+  }
+  .tpec-landing .how-field { min-height: 390px; }
+
+  .tpec-landing .poster-benefits { padding: 38px 14px 84px; }
+  .tpec-landing .reference-benefits-grid { grid-template-columns: 1fr; max-width: 430px; }
+  .tpec-landing .reference-benefits-grid article { min-height: 225px; }
+
+  .tpec-landing .poster-areas,
+  .tpec-landing .poster-examples { padding: 38px 12px 84px; }
+  .tpec-landing .areas-head,
+  .tpec-landing .examples-head { margin-bottom: 20px; }
+  .tpec-landing .areas-head h2,
+  .tpec-landing .examples-head h2 { font-size: 20px; }
+
+  .tpec-landing .reference-areas-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .tpec-landing .reference-areas-grid article {
+    min-height: 0;
+    padding: 6px 7px 14px;
+  }
+  .tpec-landing .area-photo {
+    aspect-ratio: 4 / 3;
+    height: auto;
+  }
+  .tpec-landing .reference-areas-grid h3 { font-size: 11px; }
+  .tpec-landing .reference-areas-grid p { font-size: 8px; }
+
+  .tpec-landing .reference-use-grid { grid-template-columns: 1fr; max-width: 430px; }
+  .tpec-landing .reference-use-grid > article { min-height: 350px; }
+
+  .tpec-landing .responsibility-points { grid-template-columns: 1fr; }
+  .tpec-landing .responsibility-field { min-height: 360px; }
+
+  .tpec-landing .faq-section {
+    margin: 12px auto;
+    padding: 38px 20px;
+    width: calc(100% - 12px);
+  }
+
+  .tpec-landing .final-cta {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin: 12px auto;
+    padding: 30px 20px;
+    text-align: center;
+    width: calc(100% - 12px);
+  }
+  .tpec-landing .final-cta .reference-button { justify-self: auto; width: 100%; }
+
+  .tpec-landing .site-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 24px 18px;
+    text-align: center;
+  }
+  .tpec-landing .site-footer nav { justify-content: center; }
+}
+
+@media (max-width: 480px) {
+  .tpec-landing .brand > img { height: 38px; width: 38px; }
+  .tpec-landing .brand strong { font-size: 14px; }
+  .tpec-landing .header-cta { font-size: 8.5px; padding: 0 8px; }
+
+  .tpec-landing .poster-hero h1 { font-size: clamp(42px, 14vw, 58px); }
+  .tpec-landing .reference-kicker { font-size: 9px; letter-spacing: .12em; }
+
+  .tpec-landing .whatsapp-copy .gold-title,
+  .tpec-landing .analysis-copy .gold-title,
+  .tpec-landing .how-copy > .gold-title,
+  .tpec-landing .benefits-head .gold-title,
+  .tpec-landing .areas-head .gold-title,
+  .tpec-landing .examples-head .gold-title {
+    font-size: clamp(34px, 10.8vw, 46px);
+  }
+
+  .tpec-landing .analysis-features { grid-template-columns: 1fr 1fr; }
+
+  .tpec-landing .reference-areas-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 360px;
+  }
+  .tpec-landing .reference-areas-grid article { padding: 8px 8px 18px; }
+  .tpec-landing .area-photo { aspect-ratio: 16 / 10; }
+  .tpec-landing .reference-areas-grid h3 { font-size: 13px; }
+  .tpec-landing .reference-areas-grid p { font-size: 10px; }
+
+  .tpec-landing .scan-board { max-width: 44vw; }
+  .tpec-landing .board-one { right: 2%; }
+  .tpec-landing .board-two { left: 2%; }
+}
