@@ -1,0 +1,110 @@
+/* Final override for TPEC-IA metallic titles.
+   Intentionally loaded last to win over legacy landing rules. */
+
+.tpec-landing .gold-title,
+.tpec-landing .poster-hero h1 {
+  background: linear-gradient(
+    180deg,
+    #ffd36a 0%,
+    #f7a30a 20%,
+    #e47a00 43%,
+    #ffae18 62%,
+    #d96600 82%,
+    #f28b00 100%
+  ) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+  font-family: "Cinzel", Georgia, "Times New Roman", serif !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.018em !important;
+  line-height: .94 !important;
+  -webkit-text-stroke: .75px rgba(31, 18, 5, .82) !important;
+  text-shadow:
+    0 1px 0 rgba(255, 218, 112, .50),
+    0 2px 2px rgba(38, 20, 4, .28),
+    0 5px 10px rgba(90, 42, 0, .10) !important;
+  overflow-wrap: normal !important;
+  word-break: keep-all !important;
+  hyphens: none !important;
+}
+
+/* Hero: preserve only the explicit <br>, never split INTELIGÊNCIA. */
+.tpec-landing .poster-hero h1 {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  white-space: nowrap !important;
+  font-size: clamp(44px, 4.15vw, 66px) !important;
+}
+
+/* Other poster titles use the same metal, slightly more compact. */
+.tpec-landing .whatsapp-copy .gold-title,
+.tpec-landing .analysis-copy .gold-title,
+.tpec-landing .how-copy > .gold-title,
+.tpec-landing .benefits-head .gold-title,
+.tpec-landing .areas-head .gold-title,
+.tpec-landing .examples-head .gold-title {
+  display: block !important;
+  font-size: clamp(42px, 4vw, 64px) !important;
+  max-width: 100% !important;
+}
+
+/* 1366/1440 notebooks: this is where the previous title overflowed. */
+@media (min-width: 1081px) and (max-width: 1440px) {
+  .tpec-landing .poster-hero h1 {
+    font-size: clamp(46px, 3.82vw, 55px) !important;
+    letter-spacing: -0.025em !important;
+  }
+
+  .tpec-landing .whatsapp-copy .gold-title,
+  .tpec-landing .analysis-copy .gold-title,
+  .tpec-landing .how-copy > .gold-title,
+  .tpec-landing .benefits-head .gold-title,
+  .tpec-landing .areas-head .gold-title,
+  .tpec-landing .examples-head .gold-title {
+    font-size: clamp(44px, 3.8vw, 56px) !important;
+  }
+}
+
+@media (max-width: 1080px) {
+  .tpec-landing .poster-hero h1 {
+    font-size: clamp(46px, 7.2vw, 68px) !important;
+    text-align: center;
+  }
+
+  .tpec-landing .whatsapp-copy .gold-title,
+  .tpec-landing .analysis-copy .gold-title,
+  .tpec-landing .how-copy > .gold-title,
+  .tpec-landing .benefits-head .gold-title,
+  .tpec-landing .areas-head .gold-title,
+  .tpec-landing .examples-head .gold-title {
+    font-size: clamp(42px, 6.4vw, 62px) !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .tpec-landing .poster-hero h1 {
+    font-size: clamp(30px, 9.4vw, 45px) !important;
+    letter-spacing: -0.03em !important;
+    -webkit-text-stroke-width: .5px !important;
+  }
+
+  .tpec-landing .whatsapp-copy .gold-title,
+  .tpec-landing .analysis-copy .gold-title,
+  .tpec-landing .how-copy > .gold-title,
+  .tpec-landing .benefits-head .gold-title,
+  .tpec-landing .areas-head .gold-title,
+  .tpec-landing .examples-head .gold-title {
+    font-size: clamp(32px, 9.2vw, 46px) !important;
+    letter-spacing: -.02em !important;
+    -webkit-text-stroke-width: .5px !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .tpec-landing .poster-hero h1 {
+    font-size: clamp(28px, 8.9vw, 35px) !important;
+  }
+}
