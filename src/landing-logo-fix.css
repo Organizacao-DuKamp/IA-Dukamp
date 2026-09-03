@@ -1,0 +1,7 @@
+/* Force all visible TPEC-IA logo instances to use the validated versioned asset. */
+.tpec-landing .brand > img,
+.tpec-landing .brand-seal img,
+.tpec-landing .phone-header img,
+.tpec-landing .footer-brand img {
+  content: url('/tpec-logo-v2.png');
+}
