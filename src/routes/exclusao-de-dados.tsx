@@ -1,6 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/exclusao-de-dados")({
+  head: () => ({
+    meta: [
+      { title: "Exclusão de Dados | IA do Boi" },
+      { name: "description", content: "Instruções para solicitar a exclusão de dados associados ao uso da IA do Boi (TPEC-IA)." },
+      { name: "robots", content: "noindex, follow" },
+      { name: "googlebot", content: "noindex, follow" },
+    ],
+    links: [{ rel: "canonical", href: "https://iadoboi.com.br/exclusao-de-dados" }],
+  }),
   component: DataDeletionPage,
 });
 
