@@ -4,90 +4,65 @@ import "../landing.css";
 const whatsappUrl =
   "https://wa.me/5516992256069?text=Ol%C3%A1%2C%20quero%20conhecer%20a%20TPEC-IA%2C%20a%20IA%20do%20Boi.";
 
-const heroPhoto =
+const cattlePhoto =
+  "https://images.pexels.com/photos/31026900/pexels-photo-31026900/free-photo-of-close-up-of-nelore-cattle-in-sao-paulo-pasture.jpeg?auto=compress&cs=tinysrgb&w=900";
+const dairyPhoto =
+  "https://images.pexels.com/photos/13419352/pexels-photo-13419352.jpeg?auto=compress&cs=tinysrgb&w=900";
+const horsePhoto =
+  "https://images.pexels.com/photos/19575508/pexels-photo-19575508.jpeg?auto=compress&cs=tinysrgb&w=900";
+const sheepPhoto =
+  "https://images.pexels.com/photos/33950400/pexels-photo-33950400.jpeg?auto=compress&cs=tinysrgb&w=900";
+const pigPhoto =
+  "https://images.pexels.com/photos/15509113/pexels-photo-15509113.jpeg?auto=compress&cs=tinysrgb&w=900";
+const chickenPhoto =
+  "https://images.pexels.com/photos/35641002/pexels-photo-35641002.jpeg?auto=compress&cs=tinysrgb&w=900";
+const fishPhoto =
+  "https://images.pexels.com/photos/15059730/pexels-photo-15059730.jpeg?auto=compress&cs=tinysrgb&w=900";
+const cattleWide =
   "https://images.pexels.com/photos/31026900/pexels-photo-31026900/free-photo-of-close-up-of-nelore-cattle-in-sao-paulo-pasture.jpeg?auto=compress&cs=tinysrgb&w=1400";
-const fieldPhoto =
-  "https://images.pexels.com/photos/33206150/pexels-photo-33206150/free-photo-of-herd-of-cattle-grazing-in-brazilian-pasture.png?auto=compress&cs=tinysrgb&w=1600";
-const aerialPhoto =
+const herdWide =
+  "https://images.pexels.com/photos/33206150/pexels-photo-33206150/free-photo-of-herd-of-cattle-grazing-in-brazilian-pasture.png?auto=compress&cs=tinysrgb&w=1400";
+const aerialWide =
   "https://images.pexels.com/photos/10251994/pexels-photo-10251994.jpeg?auto=compress&cs=tinysrgb&w=1400";
 
 const benefits = [
-  {
-    icon: "camera",
-    title: "Análise por foto",
-    text: "Envie imagens de animais, pasto, cocho ou situações de campo e use a foto como parte da conversa.",
-  },
-  {
-    icon: "bolt",
-    title: "Respostas rápidas",
-    text: "Pergunte do seu jeito e receba explicações organizadas, objetivas e fáceis de continuar.",
-  },
-  {
-    icon: "shield",
-    title: "Decisões mais seguras",
-    text: "Organize sinais, contexto e próximos passos antes de agir ou chamar um profissional habilitado.",
-  },
-  {
-    icon: "chart",
-    title: "Tecnologia no campo",
-    text: "IA aplicada à rotina da fazenda sem complicação, direto no WhatsApp que você já usa.",
-  },
+  { icon: "camera", title: "Análise por foto", text: "Envie fotos e use a imagem como parte da análise da TPEC-IA." },
+  { icon: "clock", title: "Respostas rápidas", text: "Informações organizadas para você entender o cenário com agilidade." },
+  { icon: "shield", title: "Decisões mais seguras", text: "Mais contexto e pontos de atenção para apoiar a tomada de decisão." },
+  { icon: "chart", title: "Tecnologia no campo", text: "Inteligência artificial aplicada à rotina da fazenda, sem complicação." },
 ];
 
 const areas = [
-  { title: "Bovinos de corte", short: "CORTE", text: "Manejo, ganho de peso, pastagens e suplementação." },
-  { title: "Bovinos de leite", short: "LEITE", text: "Rotina do rebanho, alimentação e produtividade." },
-  { title: "Equinos", short: "EQUINOS", text: "Manejo, condição corporal, dieta e cuidados gerais." },
-  { title: "Ovinos e caprinos", short: "OV/CAP", text: "Nutrição, lotes, reprodução e rotina de manejo." },
-  { title: "Suínos", short: "SUÍNOS", text: "Ambiente, alimentação, desempenho e organização." },
-  { title: "Aves", short: "AVES", text: "Manejo, ambiência, consumo e acompanhamento." },
-  { title: "Piscicultura", short: "PEIXES", text: "Qualidade da água, manejo, alimentação e produção." },
+  { title: "Bovinos de corte", image: cattlePhoto, text: "Manejo, pasto, ganho de peso e suplementação." },
+  { title: "Bovinos de leite", image: dairyPhoto, text: "Alimentação, rotina do rebanho e produtividade." },
+  { title: "Equinos", image: horsePhoto, text: "Condição corporal, manejo e cuidados gerais." },
+  { title: "Ovinos e caprinos", image: sheepPhoto, text: "Nutrição, reprodução e rotina de manejo." },
+  { title: "Suínos", image: pigPhoto, text: "Ambiência, alimentação e desempenho." },
+  { title: "Aves", image: chickenPhoto, text: "Manejo, sanidade, consumo e ambiência." },
+  { title: "Piscicultura", image: fishPhoto, text: "Qualidade da água, manejo e alimentação." },
 ];
 
 const useCases = [
-  "Analise esta condição corporal",
-  "Como está a condição deste pasto?",
-  "Esta dieta está adequada ao objetivo?",
-  "O que devo observar neste lote?",
+  { title: "Analise este animal.", icon: "cow", image: cattlePhoto },
+  { title: "Como está a condição deste pasto?", icon: "leaf", image: cattleWide },
+  { title: "Esta dieta está adequada?", icon: "feed", image: dairyPhoto },
+  { title: "O que devo observar neste caso?", icon: "eye", image: cattleWide },
 ];
 
 const faqs = [
-  {
-    question: "Precisa instalar aplicativo?",
-    answer:
-      "Não. A experiência principal da TPEC-IA funciona pelo WhatsApp, sem exigir um aplicativo novo para começar.",
-  },
-  {
-    question: "Posso mandar foto e áudio?",
-    answer:
-      "Sim. Você pode conversar por texto, áudio e foto, além de enviar documentos quando precisar dar mais contexto.",
-  },
-  {
-    question: "Serve apenas para bovinos?",
-    answer:
-      "O foco principal é a pecuária bovina, mas a TPEC-IA também apoia dúvidas sobre equinos, ovinos, caprinos, suínos, aves e piscicultura.",
-  },
-  {
-    question: "A TPEC-IA substitui veterinário, zootecnista ou agrônomo?",
-    answer:
-      "Não. A TPEC-IA é uma ferramenta de apoio. Situações clínicas, emergenciais ou que dependam de diagnóstico precisam de avaliação profissional.",
-  },
+  { question: "Precisa instalar aplicativo?", answer: "Não. A experiência principal da TPEC-IA funciona pelo WhatsApp, sem exigir um aplicativo novo para começar." },
+  { question: "Posso mandar foto e áudio?", answer: "Sim. Você pode conversar por texto, áudio e foto, além de enviar documentos quando precisar dar mais contexto." },
+  { question: "Serve apenas para bovinos?", answer: "O foco principal é a pecuária bovina, mas a TPEC-IA também apoia dúvidas sobre equinos, ovinos, caprinos, suínos, aves e piscicultura." },
+  { question: "A TPEC-IA substitui veterinário, zootecnista ou agrônomo?", answer: "Não. A TPEC-IA é uma ferramenta de apoio. Situações clínicas, emergenciais ou que dependam de diagnóstico precisam de avaliação profissional." },
 ];
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "TPEC-IA — Inteligência artificial da pecuária" },
-      {
-        name: "description",
-        content:
-          "Inteligência artificial para a pecuária, direto no WhatsApp. Tire dúvidas, envie fotos, áudios e documentos e receba apoio prático para o campo.",
-      },
+      { name: "description", content: "Inteligência artificial para a pecuária, direto no WhatsApp. Tire dúvidas, envie fotos, áudios e documentos e receba apoio prático para o campo." },
       { property: "og:title", content: "TPEC-IA — Inteligência artificial da pecuária" },
-      {
-        property: "og:description",
-        content: "Campo + inteligência: respostas claras, análise por foto e apoio para o dia a dia da pecuária.",
-      },
+      { property: "og:description", content: "Campo + inteligência: respostas claras, análise por foto e apoio para o dia a dia da pecuária." },
       { property: "og:type", content: "website" },
       { property: "og:image", content: "/og.png" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -99,11 +74,7 @@ export const Route = createFileRoute("/")({
 });
 
 function ArrowIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24">
-      <path d="M5 12h13M13 6l6 6-6 6" />
-    </svg>
-  );
+  return <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6" /></svg>;
 }
 
 function WhatsappIcon() {
@@ -116,53 +87,29 @@ function WhatsappIcon() {
 }
 
 function SparkIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24">
-      <path d="m12 3 1.2 4.1L17 8.5l-3.8 1.4L12 14l-1.2-4.1L7 8.5l3.8-1.4zM18.5 14l.8 2.6 2.7.9-2.7.9-.8 2.6-.8-2.6-2.7-.9 2.7-.9z" />
-    </svg>
-  );
+  return <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m12 3 1.2 4.1L17 8.5l-3.8 1.4L12 14l-1.2-4.1L7 8.5l3.8-1.4zM18.5 14l.8 2.6 2.7.9-2.7.9-.8 2.6-.8-2.6-2.7-.9 2.7-.9z" /></svg>;
 }
 
 function CheckIcon() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24">
-      <path d="m5 12 4 4L19 6" />
-    </svg>
-  );
+  return <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6" /></svg>;
 }
 
 function FeatureIcon({ name }: { name: string }) {
-  if (name === "camera") {
-    return (
-      <svg aria-hidden="true" viewBox="0 0 24 24">
-        <path d="M4 8h3l1.5-2h7L17 8h3v11H4z" />
-        <circle cx="12" cy="13.5" r="3.2" />
-      </svg>
-    );
-  }
+  if (name === "camera") return <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z" /><circle cx="12" cy="13.5" r="3.2" /></svg>;
+  if (name === "clock") return <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" /><path d="M12 7v5l3 2M3 8H1M4 5 2.5 3.5M3 12H1" /></svg>;
+  if (name === "shield") return <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.6 2.7 8 7 10 4.3-2 7-5.4 7-10V6z" /><path d="m8.5 12 2.2 2.2 4.8-5" /></svg>;
+  return <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 19V9M10 19V5M15 19v-7M20 19V3" /></svg>;
+}
 
-  if (name === "bolt") {
-    return (
-      <svg aria-hidden="true" viewBox="0 0 24 24">
-        <path d="M13.5 2 5 13h6l-.5 9L19 11h-6z" />
-      </svg>
-    );
-  }
+function UseIcon({ name }: { name: string }) {
+  if (name === "leaf") return <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 4C11 4 5 8 5 15c0 3 2 5 5 5 7 0 10-8 10-16Z" /><path d="M5 20c2-5 6-8 11-11" /></svg>;
+  if (name === "feed") return <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 9h16l-2 10H6zM7 9l2-4h6l2 4" /><path d="M9 13h6" /></svg>;
+  if (name === "eye") return <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 12s3.5-5 9-5 9 5 9 5-3.5 5-9 5-9-5-9-5Z" /><circle cx="12" cy="12" r="2.5" /></svg>;
+  return <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 10c0-4 3-6 7-6s7 2 7 6v6c0 2-1.5 4-4 4h-6c-2.5 0-4-2-4-4z" /><path d="M8 9h.01M16 9h.01M9 15c2 1 4 1 6 0" /></svg>;
+}
 
-  if (name === "shield") {
-    return (
-      <svg aria-hidden="true" viewBox="0 0 24 24">
-        <path d="M12 3 5 6v5c0 4.6 2.7 8 7 10 4.3-2 7-5.4 7-10V6z" />
-        <path d="m8.5 12 2.2 2.2 4.8-5" />
-      </svg>
-    );
-  }
-
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24">
-      <path d="M5 19V9M10 19V5M15 19v-7M20 19V3" />
-    </svg>
-  );
+function BrandSeal({ small = false }: { small?: boolean }) {
+  return <span className={small ? "brand-seal brand-seal-small" : "brand-seal"} aria-hidden="true"><img src="/tpec-logo.png" alt="" /></span>;
 }
 
 function LandingPage() {
@@ -171,314 +118,166 @@ function LandingPage() {
       <header className="site-header">
         <a className="brand" href="#inicio" aria-label="TPEC-IA — início">
           <img src="/tpec-logo.png" alt="" />
-          <span>
-            <strong>TPEC-IA</strong>
-            <small>INTELIGÊNCIA ARTIFICIAL DA PECUÁRIA</small>
-          </span>
+          <span><strong>TPEC-IA</strong><small>INTELIGÊNCIA ARTIFICIAL DA PECUÁRIA</small></span>
         </a>
-
         <nav aria-label="Navegação principal">
-          <a href="#analise">Análise por foto</a>
-          <a href="#como-funciona">Como funciona</a>
-          <a href="#beneficios">Benefícios</a>
-          <a href="#areas">Áreas</a>
+          <a href="#whatsapp">WhatsApp</a><a href="#analise">Análise por foto</a><a href="#como-funciona">Como funciona</a><a href="#beneficios">Benefícios</a><a href="#areas">Áreas</a>
         </nav>
-
-        <a className="header-cta" href={whatsappUrl} target="_blank" rel="noreferrer">
-          Testar no WhatsApp
-          <ArrowIcon />
-        </a>
+        <a className="header-cta" href={whatsappUrl} target="_blank" rel="noreferrer">Testar no WhatsApp <ArrowIcon /></a>
       </header>
 
-      <section className="editorial-hero" id="inicio">
-        <div className="hero-ribbon" aria-hidden="true" />
-        <div className="hero-shell">
-          <div className="hero-copy">
-            <span className="kicker">CAMPO + INTELIGÊNCIA</span>
-            <h1>
-              A inteligência que entende
-              <em>o dia a dia da pecuária.</em>
-            </h1>
-            <p>
-              Pergunte sobre manejo, nutrição, pastagens, clima, mercado e muito mais. Envie texto,
-              áudio, foto ou documento e converse com uma IA criada para transformar informação em
-              decisão prática.
-            </p>
-
-            <div className="hero-actions">
-              <a className="primary-cta" href={whatsappUrl} target="_blank" rel="noreferrer">
-                <WhatsappIcon />
-                Conversar com a TPEC-IA
-                <ArrowIcon />
-              </a>
-              <a className="secondary-cta" href="#como-funciona">
-                Veja como funciona
-                <ArrowIcon />
-              </a>
-            </div>
-
-            <div className="hero-facts" aria-label="Diferenciais rápidos">
-              <span><CheckIcon /> Sem novo aplicativo</span>
-              <span><CheckIcon /> Foto, áudio e texto</span>
-              <span><CheckIcon /> Direto no WhatsApp</span>
-            </div>
+      <section className="poster poster-hero" id="inicio">
+        <div className="poster-swoosh" aria-hidden="true" />
+        <div className="hero-copy reference-copy">
+          <span className="reference-kicker">TPEC-IA • IA DA PECUÁRIA</span>
+          <h1>CAMPO +<br />INTELIGÊNCIA</h1>
+          <span className="gold-divider" aria-hidden="true"><i /></span>
+          <h2>Tecnologia criada para quem está na lida.</h2>
+          <p>A inteligência artificial transforma informações em decisões mais claras, práticas e estratégicas para o dia a dia da pecuária.</p>
+          <div className="hero-mini-grid">
+            {benefits.map((item) => <span key={item.title}><i><FeatureIcon name={item.icon} /></i><b>{item.title}</b></span>)}
           </div>
-
-          <div className="hero-stage" aria-label="TPEC-IA aplicada ao campo">
-            <div className="hero-photo-wrap">
-              <img src={heroPhoto} alt="Bovino Nelore em pastagem" fetchPriority="high" />
-              <span className="field-chip chip-one"><i /> manejo</span>
-              <span className="field-chip chip-two"><i /> nutrição</span>
-              <span className="field-chip chip-three"><i /> sanidade</span>
-              <span className="field-chip chip-four"><i /> pastagem</span>
-            </div>
-
-            <aside className="analysis-float">
-              <span className="analysis-icon"><SparkIcon /></span>
-              <div>
-                <small>ANÁLISE TPEC-IA</small>
-                <strong>Condição corporal</strong>
-                <p>Observe cobertura de costelas, linha de dorso e uniformidade do lote.</p>
-              </div>
-            </aside>
-
-            <div className="hero-seal">
-              <img src="/tpec-logo.png" alt="" />
-            </div>
+          <div className="hero-actions">
+            <a className="reference-button" href={whatsappUrl} target="_blank" rel="noreferrer"><WhatsappIcon /> CONVERSAR COM A TPEC-IA</a>
+            <a className="outline-button" href="#como-funciona">VER COMO FUNCIONA <ArrowIcon /></a>
           </div>
+        </div>
+        <div className="hero-photo reference-photo">
+          <img src={cattleWide} alt="Bovino em pastagem" fetchPriority="high" />
+          <div className="photo-fade" aria-hidden="true" />
+          <BrandSeal />
+          <span className="scan-label scan-a"><i /> MANEJO</span><span className="scan-label scan-b"><i /> NUTRIÇÃO</span><span className="scan-label scan-c"><i /> CONDIÇÃO</span>
         </div>
       </section>
 
-      <section className="editorial-strip" aria-label="Resumo da solução">
-        <span>TECNOLOGIA</span>
-        <i />
-        <span>CONFIANÇA</span>
-        <i />
-        <span>AGILIDADE</span>
-        <i />
-        <span>RESULTADO</span>
+      <section className="poster poster-whatsapp" id="whatsapp">
+        <div className="poster-swoosh" aria-hidden="true" />
+        <div className="whatsapp-copy reference-copy">
+          <BrandSeal small />
+          <span className="gold-title">WHATSAPP<br />DA TPEC-IA</span>
+          <h2>A TPEC-IA vai com você para o campo.</h2>
+          <p>Tire dúvidas, envie fotos e receba orientações diretamente pelo WhatsApp. Prático, rápido e feito para a rotina do pecuarista.</p>
+          <a className="reference-button whatsapp-big" href={whatsappUrl} target="_blank" rel="noreferrer"><WhatsappIcon /> CONVERSAR COM A TPEC-IA</a>
+        </div>
+        <div className="whatsapp-phone" aria-label="Exemplo de conversa no WhatsApp">
+          <div className="phone-notch" />
+          <div className="phone-header"><img src="/tpec-logo.png" alt="" /><span><strong>TPEC-IA</strong><small>online</small></span></div>
+          <div className="phone-body">
+            <div className="bubble incoming"><b>Produtor</b><p>Estou com uma dúvida sobre meu gado. Posso mandar uma foto?</p><time>11:28</time></div>
+            <div className="bubble outgoing"><b>TPEC-IA</b><p>Claro. Envie a foto e me conte o que você observou.</p><time>11:29 ✓✓</time></div>
+            <div className="phone-photo"><img src={cattlePhoto} alt="" /></div>
+            <div className="bubble outgoing compact-bubble"><b>TPEC-IA</b><p>Obrigado pela foto. Vou organizar os principais pontos de atenção.</p><time>11:31 ✓✓</time></div>
+          </div>
+          <div className="phone-composer"><span>Mensagem</span><i>●</i></div>
+        </div>
+        <div className="whatsapp-field reference-photo"><img src={herdWide} alt="Rebanho no campo" loading="lazy" /><div className="photo-fade left-fade" aria-hidden="true" /></div>
       </section>
 
-      <section className="photo-analysis section-paper" id="analise">
-        <div className="section-shell split-shell">
-          <div className="analysis-visual">
-            <div className="analysis-photo-card">
-              <img src={fieldPhoto} alt="Rebanho em pastagem usado como exemplo de análise visual" loading="lazy" />
-              <span className="focus-corner corner-a" />
-              <span className="focus-corner corner-b" />
-              <span className="focus-corner corner-c" />
-              <span className="focus-corner corner-d" />
-            </div>
-
-            <div className="phone-card" aria-label="Exemplo de conversa com análise por foto">
-              <div className="phone-head">
-                <img src="/tpec-logo.png" alt="" />
-                <span><strong>TPEC-IA</strong><small>online</small></span>
-              </div>
-              <div className="chat-photo">
-                <img src={heroPhoto} alt="" />
-                <p>O que você observa neste animal?</p>
-              </div>
-              <div className="chat-answer">
-                <span><SparkIcon /> ANÁLISE VISUAL</span>
-                <p>Posso te ajudar a avaliar condição corporal, aprumos e sinais visíveis por etapas.</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="section-copy">
-            <span className="section-label">ANÁLISE POR FOTO</span>
-            <h2>Mostre o que está acontecendo.</h2>
-            <p className="lead">
-              A TPEC-IA ajuda a transformar uma imagem em uma conversa mais útil. Fotografe o que
-              chamou sua atenção e acrescente o contexto do campo.
-            </p>
-
-            <div className="number-list">
-              <div><b>01</b><span><strong>Envie a imagem</strong><small>Animal, lote, pasto, cocho ou situação de campo.</small></span></div>
-              <div><b>02</b><span><strong>Conte o contexto</strong><small>Idade, objetivo, manejo, região e o que você quer entender.</small></span></div>
-              <div><b>03</b><span><strong>Receba pontos de atenção</strong><small>Informações organizadas e perguntas complementares.</small></span></div>
-              <div><b>04</b><span><strong>Continue a conversa</strong><small>Aprofunde a dúvida até chegar aos próximos passos.</small></span></div>
-            </div>
+      <section className="poster poster-analysis" id="analise">
+        <div className="analysis-field reference-photo"><img src={herdWide} alt="Bovinos em pastagem" loading="lazy" /><div className="photo-fade right-fade" aria-hidden="true" /></div>
+        <div className="analysis-phone" aria-label="Painel de análise por foto">
+          <div className="analysis-top"><SparkIcon /> <span>Analisando imagem...</span></div>
+          <div className="analysis-cow-photo"><img src={cattlePhoto} alt="Bovino analisado pela TPEC-IA" loading="lazy" /><i className="focus top-left" /><i className="focus top-right" /><i className="focus bottom-left" /><i className="focus bottom-right" /></div>
+          <div className="analysis-row"><i><FeatureIcon name="chart" /></i><span><b>Condição corporal</b><small>Boa cobertura aparente. Avaliar no contexto do lote.</small></span></div>
+          <div className="analysis-row"><i><UseIcon name="eye" /></i><span><b>Sinais observados</b><small>Sem alterações visíveis relevantes na imagem.</small></span></div>
+          <div className="analysis-row"><i><FeatureIcon name="shield" /></i><span><b>Pontos de atenção</b><small>Acompanhar evolução e manejo nutricional.</small></span></div>
+          <div className="analysis-row"><i><SparkIcon /></i><span><b>Orientação</b><small>Acrescente idade, objetivo e histórico para aprofundar.</small></span></div>
+          <p className="analysis-disclaimer">Análise por IA como apoio à decisão. Não substitui avaliação técnica presencial.</p>
+        </div>
+        <div className="analysis-copy reference-copy">
+          <BrandSeal small />
+          <span className="gold-title">ANÁLISE<br />POR FOTO</span>
+          <h2>Mostre o que está acontecendo.<br />A TPEC-IA ajuda você a entender.</h2>
+          <p>Envie uma foto do animal, do pasto, do cocho ou de qualquer situação no campo. A TPEC-IA organiza observações práticas para apoiar suas decisões.</p>
+          <div className="analysis-features">
+            <span><i><FeatureIcon name="camera" /></i><b>Envie sua foto</b><small>Animal, pasto, cocho ou situação de campo.</small></span>
+            <span><i><SparkIcon /></i><b>IA que analisa</b><small>Identifica informações visuais e organiza o contexto.</small></span>
+            <span><i><FeatureIcon name="chart" /></i><b>Informações úteis</b><small>Observações e pontos de atenção apresentados com clareza.</small></span>
+            <span><i><UseIcon name="eye" /></i><b>Apoio para decidir</b><small>Continue a conversa e aprofunde o cenário.</small></span>
           </div>
         </div>
+        <div className="poster-swoosh swoosh-right" aria-hidden="true" />
       </section>
 
-      <section className="how-section" id="como-funciona">
-        <div className="section-shell">
-          <div className="section-heading centered">
-            <span className="section-label">COMO FUNCIONA</span>
-            <h2>Simples como conversar. Inteligente como precisa ser.</h2>
-            <p>Quatro passos para sair da dúvida e chegar a uma resposta útil para a rotina do campo.</p>
+      <section className="poster poster-how" id="como-funciona">
+        <div className="how-copy reference-copy">
+          <span className="gold-title">COMO FUNCIONA</span>
+          <h2>Simples como conversar. Inteligente como precisa ser.</h2>
+          <span className="gold-divider wide" aria-hidden="true"><i /></span>
+          <div className="reference-steps">
+            <article><span><FeatureIcon name="camera" /></span><b>1. FOTOGRAFE</b><p>Tire uma foto do animal, pasto, cocho ou situação que chamou sua atenção.</p></article><i className="step-arrow">→</i>
+            <article><span><WhatsappIcon /></span><b>2. PERGUNTE</b><p>Conte o que deseja saber ou descreva sua dúvida como em uma conversa.</p></article><i className="step-arrow">→</i>
+            <article><span><SparkIcon /></span><b>3. A IA ANALISA</b><p>A TPEC-IA cruza a imagem e o contexto para organizar uma resposta clara.</p></article><i className="step-arrow">→</i>
+            <article><span><CheckIcon /></span><b>4. RECEBA ORIENTAÇÃO</b><p>Use a resposta como apoio para entender o cenário e definir próximos passos.</p></article>
           </div>
+          <div className="how-banner"><FeatureIcon name="shield" /><span><b>Tecnologia que entende o campo</b><small>Conhecimento técnico com uma linguagem simples para a rotina do pecuarista.</small></span></div>
+        </div>
+        <div className="how-field reference-photo">
+          <img src={cattleWide} alt="Bovino com apoio de tecnologia" loading="lazy" /><div className="photo-fade left-fade" aria-hidden="true" />
+          <div className="scan-board board-one"><b>ANÁLISE CORPORAL</b><span>Musculatura <i style={{ width: "78%" }} /></span><span>Condição <i style={{ width: "68%" }} /></span><span>Estrutura <i style={{ width: "82%" }} /></span></div>
+          <div className="scan-board board-two"><b>DESTAQUES</b><span>✓ Potencial do lote</span><span>✓ Conformação</span><span>✓ Rendimento</span></div><BrandSeal />
+        </div>
+        <div className="poster-swoosh" aria-hidden="true" />
+      </section>
 
-          <div className="steps-grid">
-            <article>
-              <b>1</b>
-              <span className="step-icon"><WhatsappIcon /></span>
-              <h3>Converse</h3>
-              <p>Abra o WhatsApp e mande sua pergunta como você explicaria para outra pessoa.</p>
+      <section className="poster poster-benefits" id="beneficios">
+        <div className="benefits-landscape" aria-hidden="true"><img src={cattleWide} alt="" /></div><BrandSeal />
+        <div className="benefits-head"><span className="gold-title">BENEFÍCIOS</span><span className="gold-divider wide" aria-hidden="true"><i /></span><h2>Tecnologia simples para o dia a dia da pecuária.</h2></div>
+        <div className="reference-benefits-grid">{benefits.map((item) => <article key={item.title}><span className="benefit-round-icon"><FeatureIcon name={item.icon} /></span><i className="card-divider" /><h3>{item.title}</h3><p>{item.text}</p></article>)}</div>
+        <div className="poster-swoosh" aria-hidden="true" />
+      </section>
+
+      <section className="poster poster-areas" id="areas">
+        <BrandSeal />
+        <div className="areas-head"><span className="gold-title">ÁREAS DA PECUÁRIA</span><span className="gold-divider wide" aria-hidden="true"><i /></span><h2>Soluções inteligentes para cada atividade de campo.</h2><p>Mais contexto para diferentes espécies, rotinas e sistemas de produção.</p></div>
+        <div className="reference-areas-grid">{areas.map((area) => <article key={area.title}><div className="area-photo"><img src={area.image} alt={area.title} loading="lazy" /></div><span className="area-icon"><UseIcon name={area.title.includes("Pisc") ? "eye" : "cow"} /></span><h3>{area.title}</h3><p>{area.text}</p></article>)}</div>
+        <div className="poster-swoosh" aria-hidden="true" />
+      </section>
+
+      <section className="poster poster-examples">
+        <BrandSeal />
+        <div className="examples-head"><span className="gold-title">EXEMPLOS DE USO</span><span className="gold-divider wide" aria-hidden="true"><i /></span><h2>Perguntas reais do dia a dia que a TPEC-IA ajuda a responder no campo.</h2></div>
+        <div className="reference-use-grid">
+          {useCases.map((item, index) => (
+            <article key={item.title}>
+              <div className="use-photo"><img src={item.image} alt="" loading="lazy" /></div>
+              <div className="mini-phone"><div className="mini-phone-top">TPEC-IA <small>analisando</small></div><span><SparkIcon /></span><b>{index === 0 ? "Condição corporal" : index === 1 ? "Condição do pasto" : index === 2 ? "Análise da dieta" : "Pontos de atenção"}</b><p>{index === 0 ? "Avalie cobertura, estrutura e uniformidade." : index === 1 ? "Observe cobertura, vigor e disponibilidade." : index === 2 ? "Compare objetivo, consumo e composição." : "Organize sinais e contexto antes de agir."}</p></div>
+              <footer><i><UseIcon name={item.icon} /></i><strong>{item.title}</strong></footer>
             </article>
-            <article>
-              <b>2</b>
-              <span className="step-icon"><SparkIcon /></span>
-              <h3>Pergunte</h3>
-              <p>Texto, áudio, foto e documentos entram na mesma conversa para dar contexto.</p>
-            </article>
-            <article>
-              <b>3</b>
-              <span className="step-icon"><FeatureIcon name="chart" /></span>
-              <h3>A IA analisa</h3>
-              <p>A TPEC-IA organiza as informações e estrutura uma resposta clara e prática.</p>
-            </article>
-            <article>
-              <b>4</b>
-              <span className="step-icon"><CheckIcon /></span>
-              <h3>Decida com clareza</h3>
-              <p>Use a resposta como apoio para entender o cenário e planejar os próximos passos.</p>
-            </article>
-          </div>
+          ))}
         </div>
+        <div className="poster-swoosh" aria-hidden="true" />
       </section>
 
-      <section className="benefits-section section-paper" id="beneficios">
-        <div className="section-shell">
-          <div className="section-heading horizontal-heading">
-            <div>
-              <span className="section-label">BENEFÍCIOS</span>
-              <h2>Tecnologia simples para o dia a dia da pecuária.</h2>
-            </div>
-            <p>Informação útil, visual e organizada para reduzir ruído e acelerar entendimento.</p>
-          </div>
-
-          <div className="benefits-grid">
-            {benefits.map((item) => (
-              <article className="benefit-card" key={item.title}>
-                <span className="benefit-icon"><FeatureIcon name={item.icon} /></span>
-                <h3>{item.title}</h3>
-                <p>{item.text}</p>
-              </article>
-            ))}
+      <section className="poster poster-responsibility">
+        <div className="responsibility-copy reference-copy">
+          <BrandSeal small /><span className="reference-kicker">SEGURANÇA E RESPONSABILIDADE</span>
+          <h2><i><FeatureIcon name="shield" /></i>Tecnologia<br />com responsabilidade.</h2>
+          <div className="responsibility-points">
+            <span><i><FeatureIcon name="chart" /></i><b>Apoio à decisão</b><small>Informações confiáveis para escolhas mais assertivas no campo.</small></span>
+            <span><i><SparkIcon /></i><b>Situações críticas exigem avaliação profissional</b><small>A IA orienta, mas a decisão final é sempre sua e do profissional responsável.</small></span>
+            <span><i><UseIcon name="cow" /></i><b>Bem-estar em primeiro lugar</b><small>Manejo responsável para animais saudáveis e produtivos.</small></span>
+            <span><i><FeatureIcon name="shield" /></i><b>Segurança da informação</b><small>Seus dados são tratados com privacidade e responsabilidade.</small></span>
           </div>
         </div>
+        <div className="responsibility-field reference-photo"><img src={aerialWide} alt="Rebanho em área de produção" loading="lazy" /><div className="photo-fade left-fade" aria-hidden="true" /></div>
+        <div className="poster-swoosh" aria-hidden="true" />
       </section>
 
-      <section className="areas-section" id="areas">
-        <div className="section-shell">
-          <div className="section-heading centered compact-heading">
-            <span className="section-label">ÁREAS DA PECUÁRIA</span>
-            <h2>Soluções inteligentes para atividades de campo.</h2>
-            <p>Mais contexto para diferentes rotinas, espécies e sistemas de produção.</p>
-          </div>
-
-          <div className="areas-grid">
-            {areas.map((area, index) => (
-              <article className="area-card" key={area.title}>
-                <span className="area-number">0{index + 1}</span>
-                <div className="area-monogram">{area.short}</div>
-                <h3>{area.title}</h3>
-                <p>{area.text}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="examples-section section-paper">
-        <div className="section-shell">
-          <div className="examples-layout">
-            <div className="examples-copy">
-              <span className="section-label">EXEMPLOS DE USO</span>
-              <h2>Perguntas reais do dia a dia que nossa plataforma ajuda a organizar.</h2>
-              <p>
-                A conversa pode começar por uma frase, uma foto ou um áudio. O importante é explicar
-                o objetivo e continuar acrescentando contexto.
-              </p>
-              <a className="text-link" href={whatsappUrl} target="_blank" rel="noreferrer">
-                Experimentar agora <ArrowIcon />
-              </a>
-            </div>
-
-            <div className="usecase-grid">
-              {useCases.map((item, index) => (
-                <article className="usecase-card" key={item}>
-                  <span>0{index + 1}</span>
-                  <div className="usecase-screen">
-                    <small>Você</small>
-                    <p>{item}</p>
-                    <i>09:{41 + index}</i>
-                  </div>
-                  <div className="usecase-answer">
-                    <SparkIcon />
-                    <span>TPEC-IA pronta para analisar o contexto.</span>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="responsibility-section">
-        <div className="responsibility-photo">
-          <img src={aerialPhoto} alt="Rebanho em área de produção pecuária" loading="lazy" />
-        </div>
-        <div className="responsibility-copy">
-          <span className="section-label light-label">SEGURANÇA E RESPONSABILIDADE</span>
-          <h2>Tecnologia com responsabilidade.</h2>
-          <p>
-            A TPEC-IA foi criada para apoiar entendimento e organização de informações. Ela não
-            substitui diagnóstico, prescrição ou atendimento de profissionais habilitados.
-          </p>
-          <div className="responsibility-grid">
-            <span><FeatureIcon name="chart" /><b>Apoio à decisão</b><small>Informação organizada para compreender melhor o cenário.</small></span>
-            <span><FeatureIcon name="shield" /><b>Situações críticas</b><small>Emergências devem ser encaminhadas para atendimento profissional.</small></span>
-            <span><CheckIcon /><b>Mais contexto</b><small>Fotos, áudios e dados ajudam a tornar a conversa mais útil.</small></span>
-            <span><SparkIcon /><b>IA como apoio</b><small>Uma ferramenta para complementar — não substituir — o conhecimento técnico.</small></span>
-          </div>
-        </div>
-      </section>
-
-      <section className="faq-section section-paper" id="duvidas">
-        <div className="section-shell faq-layout">
-          <div className="faq-heading">
-            <span className="section-label">DÚVIDAS FREQUENTES</span>
-            <h2>O que você precisa saber antes de começar.</h2>
-            <p>Se ainda tiver uma pergunta, fale com a TPEC-IA pelo WhatsApp e teste a experiência.</p>
-          </div>
-          <div className="faq-list">
-            {faqs.map((faq) => (
-              <details key={faq.question}>
-                <summary>{faq.question}<span>+</span></summary>
-                <p>{faq.answer}</p>
-              </details>
-            ))}
-          </div>
-        </div>
+      <section className="faq-section" id="duvidas">
+        <div className="faq-heading"><span className="reference-kicker">DÚVIDAS FREQUENTES</span><h2>O que você precisa saber antes de começar.</h2><p>Se ainda tiver uma pergunta, fale com a TPEC-IA pelo WhatsApp e teste a experiência.</p></div>
+        <div className="faq-list">{faqs.map((faq) => <details key={faq.question}><summary>{faq.question}<span>+</span></summary><p>{faq.answer}</p></details>)}</div>
       </section>
 
       <section className="final-cta">
-        <div className="final-cta-seal"><img src="/tpec-logo.png" alt="" /></div>
-        <div>
-          <span>CAMPO + INTELIGÊNCIA</span>
-          <h2>Leve a TPEC-IA para a sua rotina.</h2>
-          <p>Comece uma conversa agora e descubra como a inteligência artificial pode apoiar o seu dia no campo.</p>
-        </div>
-        <a className="final-button" href={whatsappUrl} target="_blank" rel="noreferrer">
-          <WhatsappIcon /> Conversar no WhatsApp <ArrowIcon />
-        </a>
+        <BrandSeal /><div><span className="reference-kicker">CAMPO + INTELIGÊNCIA</span><h2>Leve a TPEC-IA para a sua rotina.</h2><p>Comece uma conversa agora e descubra como a inteligência artificial pode apoiar o seu dia no campo.</p></div>
+        <a className="reference-button" href={whatsappUrl} target="_blank" rel="noreferrer"><WhatsappIcon /> CONVERSAR NO WHATSAPP <ArrowIcon /></a>
       </section>
 
       <footer className="site-footer">
-        <a className="footer-brand" href="#inicio">
-          <img src="/tpec-logo.png" alt="" />
-          <span><strong>TPEC-IA</strong><small>INTELIGÊNCIA ARTIFICIAL DA PECUÁRIA</small></span>
-        </a>
+        <a className="footer-brand" href="#inicio"><img src="/tpec-logo.png" alt="" /><span><strong>TPEC-IA</strong><small>INTELIGÊNCIA ARTIFICIAL DA PECUÁRIA</small></span></a>
         <p>Informação para apoiar decisões no campo. Use com responsabilidade.</p>
-        <nav aria-label="Links legais">
-          <a href="/politica-de-privacidade">Privacidade</a>
-          <a href="/termos-de-uso">Termos de uso</a>
-        </nav>
+        <nav aria-label="Links legais"><a href="/politica-de-privacidade">Privacidade</a><a href="/termos-de-uso">Termos de uso</a></nav>
       </footer>
     </main>
   );
