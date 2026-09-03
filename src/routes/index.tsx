@@ -4,6 +4,8 @@ import "../landing.css";
 const whatsappUrl =
   "https://wa.me/5516992256069?text=Ol%C3%A1%2C%20quero%20conhecer%20a%20TPEC-IA%2C%20a%20IA%20do%20Boi.";
 
+const whatsappReferenceImage = "/tpec-whatsapp-reference.webp";
+
 const cattlePhoto =
   "https://images.pexels.com/photos/31026900/pexels-photo-31026900/free-photo-of-close-up-of-nelore-cattle-in-sao-paulo-pasture.jpeg?auto=compress&cs=tinysrgb&w=900";
 const dairyPhoto =
@@ -196,27 +198,45 @@ function LandingPage() {
         </div>
       </section>
 
-      <section className="poster poster-whatsapp" id="whatsapp">
-        <div className="poster-swoosh" aria-hidden="true" />
-        <div className="whatsapp-copy reference-copy">
-          <BrandSeal small />
-          <span className="gold-title">WHATSAPP<br />DA TPEC-IA</span>
-          <h2>A TPEC-IA vai com você para o campo.</h2>
-          <p>Tire dúvidas, envie fotos e receba orientações diretamente pelo WhatsApp. Prático, rápido e feito para a rotina do pecuarista.</p>
-          <a className="reference-button whatsapp-big" href={whatsappUrl} target="_blank" rel="noreferrer"><WhatsappIcon /> CONVERSAR COM A TPEC-IA</a>
+      <section className="poster poster-whatsapp poster-whatsapp-reference" id="whatsapp">
+        <div className="whatsapp-reference-description">
+          <h2>WhatsApp da TPEC-IA</h2>
+          <p>A TPEC-IA vai com você para o campo. Tire dúvidas, envie fotos e receba orientações técnicas diretamente pelo WhatsApp.</p>
         </div>
-        <div className="whatsapp-phone" aria-label="Exemplo de conversa no WhatsApp">
-          <div className="phone-notch" />
-          <div className="phone-header"><img src="/tpec-logo.png" alt="" /><span><strong>TPEC-IA</strong><small>online</small></span></div>
-          <div className="phone-body">
-            <div className="bubble incoming"><b>Produtor</b><p>Estou com uma dúvida sobre meu gado. Posso mandar uma foto?</p><time>11:28</time></div>
-            <div className="bubble outgoing"><b>TPEC-IA</b><p>Claro. Envie a foto e me conte o que você observou.</p><time>11:29 ✓✓</time></div>
-            <div className="phone-photo"><img src={cattlePhoto} alt="" /></div>
-            <div className="bubble outgoing compact-bubble"><b>TPEC-IA</b><p>Obrigado pela foto. Vou organizar os principais pontos de atenção.</p><time>11:31 ✓✓</time></div>
-          </div>
-          <div className="phone-composer"><span>Mensagem</span><i>●</i></div>
+
+        <div className="whatsapp-reference-desktop">
+          <img
+            src={whatsappReferenceImage}
+            alt="WhatsApp da TPEC-IA: conversa com análise de um bovino e apoio ao pecuarista no campo"
+            loading="lazy"
+          />
+          <a
+            className="whatsapp-reference-hotspot"
+            href={whatsappUrl}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Conversar com a TPEC-IA pelo WhatsApp"
+          />
         </div>
-        <div className="whatsapp-field reference-photo"><img src={herdWide} alt="Rebanho no campo" loading="lazy" /><div className="photo-fade left-fade" aria-hidden="true" /></div>
+
+        <div className="whatsapp-reference-mobile">
+          <figure className="whatsapp-reference-panel whatsapp-reference-copy-panel">
+            <img src={whatsappReferenceImage} alt="" loading="lazy" />
+            <a
+              className="whatsapp-reference-mobile-hotspot"
+              href={whatsappUrl}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Conversar com a TPEC-IA pelo WhatsApp"
+            />
+          </figure>
+          <figure className="whatsapp-reference-panel whatsapp-reference-phone-panel">
+            <img src={whatsappReferenceImage} alt="" loading="lazy" />
+          </figure>
+          <figure className="whatsapp-reference-panel whatsapp-reference-field-panel">
+            <img src={whatsappReferenceImage} alt="" loading="lazy" />
+          </figure>
+        </div>
       </section>
 
       <section className="poster poster-analysis" id="analise">

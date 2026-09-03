@@ -1,0 +1,140 @@
+/* The WhatsApp poster uses the approved campaign artwork as its source of truth. */
+.tpec-landing .poster-whatsapp.poster-whatsapp-reference {
+  background: #f3f0e7;
+  display: block;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.tpec-landing .whatsapp-reference-description {
+  border: 0;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+.tpec-landing .whatsapp-reference-desktop {
+  aspect-ratio: 16 / 9;
+  display: block;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+.tpec-landing .whatsapp-reference-desktop > img {
+  display: block;
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+/* Clickable area precisely follows the button already drawn into the artwork. */
+.tpec-landing .whatsapp-reference-hotspot {
+  border-radius: 15px;
+  bottom: 10.6%;
+  height: 9.2%;
+  left: 8.6%;
+  position: absolute;
+  width: 24.7%;
+  z-index: 3;
+}
+
+.tpec-landing .whatsapp-reference-hotspot:hover {
+  box-shadow: 0 0 0 3px rgba(248, 196, 72, .48), 0 12px 28px rgba(15, 72, 42, .24);
+}
+
+.tpec-landing .whatsapp-reference-hotspot:focus-visible {
+  box-shadow: 0 0 0 4px #fff, 0 0 0 7px #d99017;
+  outline: none;
+}
+
+.tpec-landing .whatsapp-reference-mobile {
+  display: none;
+}
+
+@media (max-width: 680px) {
+  .tpec-landing .poster-whatsapp.poster-whatsapp-reference {
+    background: #f4f0e7;
+  }
+
+  .tpec-landing .whatsapp-reference-desktop {
+    display: none;
+  }
+
+  .tpec-landing .whatsapp-reference-mobile {
+    display: grid;
+    gap: 0;
+    width: 100%;
+  }
+
+  .tpec-landing .whatsapp-reference-panel {
+    margin: 0;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+  }
+
+  .tpec-landing .whatsapp-reference-panel > img {
+    display: block;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+    position: absolute;
+    top: 0;
+  }
+
+  .tpec-landing .whatsapp-reference-copy-panel {
+    aspect-ratio: 900 / 1152;
+  }
+
+  .tpec-landing .whatsapp-reference-copy-panel > img {
+    left: 0;
+    object-position: left center;
+    width: 227.56%;
+  }
+
+  .tpec-landing .whatsapp-reference-mobile-hotspot {
+    border-radius: 12px;
+    bottom: 11.9%;
+    height: 9%;
+    left: 19.5%;
+    position: absolute;
+    width: 56.5%;
+    z-index: 3;
+  }
+
+  .tpec-landing .whatsapp-reference-phone-panel {
+    aspect-ratio: 610 / 1152;
+    background: #f4f0e7;
+  }
+
+  .tpec-landing .whatsapp-reference-phone-panel > img {
+    left: 50%;
+    object-position: center center;
+    transform: translateX(-59.4%);
+    width: 335.74%;
+  }
+
+  .tpec-landing .whatsapp-reference-field-panel {
+    aspect-ratio: 640 / 1152;
+  }
+
+  .tpec-landing .whatsapp-reference-field-panel > img {
+    object-position: right center;
+    right: 0;
+    width: 320%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tpec-landing .whatsapp-reference-hotspot {
+    transition: none;
+  }
+}

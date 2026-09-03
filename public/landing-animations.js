@@ -10,6 +10,11 @@
       stagger: 0,
     },
     {
+      selector: ".whatsapp-reference-desktop, .whatsapp-reference-mobile > .whatsapp-reference-panel",
+      className: "tpec-reveal-up",
+      stagger: 110,
+    },
+    {
       selector: ".whatsapp-copy, .analysis-field, .responsibility-copy",
       className: "tpec-reveal-left",
       stagger: 0,
