@@ -1,0 +1,209 @@
+.tpec-landing {
+  --cream: #f6f1e5;
+  --cream-2: #fffdf7;
+  --paper: #f2ecdf;
+  --forest: #0f432f;
+  --forest-2: #173c2b;
+  --forest-3: #2f5a42;
+  --gold: #b98124;
+  --gold-light: #f3d37b;
+  --gold-dark: #7b4b12;
+  --ink: #1c251f;
+  --muted: #687067;
+  --line: rgba(153, 111, 40, 0.28);
+  --shadow: 0 25px 80px rgba(26, 43, 31, 0.14);
+  background: #e9e4d9;
+  color: var(--ink);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.tpec-landing *,
+.tpec-landing *::before,
+.tpec-landing *::after {
+  box-sizing: border-box;
+}
+
+.tpec-landing a { color: inherit; text-decoration: none; }
+.tpec-landing img { display: block; max-width: 100%; }
+.tpec-landing svg { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
+.tpec-landing button,
+.tpec-landing a { -webkit-tap-highlight-color: transparent; }
+
+.tpec-landing .site-header {
+  align-items: center;
+  backdrop-filter: blur(18px);
+  background: rgba(250, 247, 239, 0.94);
+  border-bottom: 1px solid rgba(103, 84, 50, 0.13);
+  display: grid;
+  gap: 24px;
+  grid-template-columns: auto 1fr auto;
+  min-height: 78px;
+  padding: 10px clamp(18px, 4vw, 68px);
+  position: sticky;
+  top: 0;
+  z-index: 80;
+}
+
+.tpec-landing .brand,
+.tpec-landing .footer-brand { align-items: center; display: inline-flex; gap: 12px; min-width: max-content; }
+.tpec-landing .brand > img { height: 54px; object-fit: contain; width: 54px; }
+.tpec-landing .brand > span,
+.tpec-landing .footer-brand > span { display: flex; flex-direction: column; line-height: 1; }
+.tpec-landing .brand strong,
+.tpec-landing .footer-brand strong { color: var(--forest); font-family: Georgia, "Times New Roman", serif; font-size: 19px; letter-spacing: 0.08em; }
+.tpec-landing .brand small,
+.tpec-landing .footer-brand small { color: #846327; font-size: 7px; font-weight: 800; letter-spacing: 0.11em; margin-top: 5px; }
+.tpec-landing .site-header nav { align-items: center; display: flex; gap: clamp(16px, 2.2vw, 34px); justify-content: center; }
+.tpec-landing .site-header nav a { color: #425045; font-size: 13px; font-weight: 750; transition: color 0.2s ease; }
+.tpec-landing .site-header nav a:hover,
+.tpec-landing .site-header nav a:focus-visible { color: var(--gold-dark); }
+
+.tpec-landing .header-cta,
+.tpec-landing .reference-button,
+.tpec-landing .outline-button {
+  align-items: center;
+  border-radius: 11px;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 850;
+  gap: 9px;
+  justify-content: center;
+  letter-spacing: 0.035em;
+  min-height: 46px;
+  padding: 0 18px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+.tpec-landing .header-cta,
+.tpec-landing .reference-button { background: linear-gradient(180deg, #184e37, #0b3524); border: 1px solid #d0a44b; box-shadow: 0 8px 20px rgba(21, 68, 47, 0.18), inset 0 0 0 1px rgba(255,255,255,.08); color: #fff; }
+.tpec-landing .header-cta svg,
+.tpec-landing .reference-button svg,
+.tpec-landing .outline-button svg { height: 17px; width: 17px; }
+.tpec-landing .header-cta:hover,
+.tpec-landing .header-cta:focus-visible,
+.tpec-landing .reference-button:hover,
+.tpec-landing .reference-button:focus-visible,
+.tpec-landing .outline-button:hover,
+.tpec-landing .outline-button:focus-visible { box-shadow: 0 13px 28px rgba(21, 68, 47, 0.2); transform: translateY(-2px); }
+
+.tpec-landing .poster {
+  background: radial-gradient(circle at 20% 10%, rgba(255,255,255,.75), transparent 33%), linear-gradient(135deg, #faf7ef 0%, #f5f0e5 58%, #ede6d6 100%);
+  border: 1px solid rgba(120, 91, 43, 0.12);
+  border-radius: 28px;
+  box-shadow: var(--shadow);
+  isolation: isolate;
+  margin: 30px auto;
+  max-width: 1500px;
+  min-height: 680px;
+  overflow: hidden;
+  position: relative;
+  width: calc(100% - 36px);
+}
+.tpec-landing .poster::before { background: radial-gradient(circle at 14% 16%, transparent 0 32%, rgba(191, 146, 65, .08) 32.2% 32.5%, transparent 32.7%), linear-gradient(110deg, transparent 0 60%, rgba(255,255,255,.45)); content: ""; inset: 0; pointer-events: none; position: absolute; z-index: 0; }
+.tpec-landing .poster > * { position: relative; z-index: 2; }
+.tpec-landing .poster-swoosh { bottom: -155px; height: 300px; left: -14%; pointer-events: none; position: absolute; transform: rotate(-5deg); width: 86%; z-index: 6; }
+.tpec-landing .poster-swoosh::before,
+.tpec-landing .poster-swoosh::after { border-radius: 50%; content: ""; inset: 0; position: absolute; }
+.tpec-landing .poster-swoosh::before { border-top: 62px solid rgba(63, 101, 50, 0.34); box-shadow: inset 0 14px 0 rgba(255,255,255,.33); }
+.tpec-landing .poster-swoosh::after { border-top: 2px solid rgba(205, 153, 50, 0.9); inset: 32px 0 0 1%; }
+.tpec-landing .poster-swoosh.swoosh-right { left: auto; right: -13%; transform: rotate(6deg); }
+.tpec-landing .reference-copy { position: relative; z-index: 5; }
+.tpec-landing .reference-kicker { color: var(--forest); display: inline-flex; font-size: 12px; font-weight: 900; letter-spacing: 0.16em; text-transform: uppercase; }
+
+.tpec-landing .gold-title,
+.tpec-landing .poster-hero h1 {
+  background: linear-gradient(180deg, #ffe9a5 0%, #b0741f 27%, #7c4812 48%, #f0bf55 70%, #845015 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 1px rgba(80, 43, 6, .18));
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 500;
+  letter-spacing: 0.025em;
+  line-height: .92;
+  text-transform: uppercase;
+}
+.tpec-landing .gold-divider { align-items: center; display: flex; gap: 10px; margin: 18px 0 20px; max-width: 280px; }
+.tpec-landing .gold-divider::before,
+.tpec-landing .gold-divider::after { background: linear-gradient(90deg, transparent, #b77c22, transparent); content: ""; height: 1px; flex: 1; }
+.tpec-landing .gold-divider i { background: #b77c22; height: 8px; transform: rotate(45deg); width: 8px; }
+.tpec-landing .gold-divider.wide { margin-left: auto; margin-right: auto; max-width: 440px; width: min(70%, 440px); }
+
+.tpec-landing .brand-seal { align-items: center; background: #070707; border: 2px solid #d9a334; border-radius: 50%; box-shadow: 0 8px 24px rgba(46, 30, 7, .22), inset 0 0 0 3px rgba(226, 174, 63, .25); display: flex; height: 134px; justify-content: center; overflow: hidden; padding: 3px; width: 134px; }
+.tpec-landing .brand-seal img { height: 100%; object-fit: contain; width: 100%; }
+.tpec-landing .brand-seal-small { height: 94px; width: 94px; }
+
+.tpec-landing .reference-photo { height: 100%; min-height: 360px; overflow: hidden; position: relative; }
+.tpec-landing .reference-photo > img { height: 100%; object-fit: cover; width: 100%; }
+.tpec-landing .photo-fade { background: linear-gradient(90deg, var(--cream) 0%, rgba(246,241,229,.82) 12%, rgba(246,241,229,.22) 32%, transparent 48%); inset: 0; pointer-events: none; position: absolute; }
+.tpec-landing .photo-fade.left-fade { background: linear-gradient(90deg, var(--cream) 0%, rgba(246,241,229,.75) 13%, transparent 42%); }
+.tpec-landing .photo-fade.right-fade { background: linear-gradient(270deg, var(--cream) 0%, rgba(246,241,229,.72) 11%, transparent 40%); }
+
+.tpec-landing .poster-hero { display: grid; grid-template-columns: 49% 51%; min-height: 690px; }
+.tpec-landing .hero-copy { align-self: center; padding: 66px 38px 72px clamp(38px, 5vw, 90px); }
+.tpec-landing .poster-hero h1 { font-size: clamp(57px, 6vw, 94px); margin: 16px 0 0; }
+.tpec-landing .poster-hero .gold-divider { max-width: 250px; }
+.tpec-landing .poster-hero h2 { color: var(--forest); font-family: Georgia, "Times New Roman", serif; font-size: clamp(24px, 2.35vw, 38px); line-height: 1.08; margin: 0 0 18px; }
+.tpec-landing .poster-hero p { color: #3d493f; font-size: 15px; line-height: 1.65; margin: 0; max-width: 620px; }
+.tpec-landing .hero-mini-grid { display: grid; gap: 10px; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 28px 0 24px; max-width: 680px; }
+.tpec-landing .hero-mini-grid > span { align-items: center; background: rgba(255,255,255,.68); border: 1px solid rgba(179, 131, 44, .28); border-radius: 12px; display: flex; flex-direction: column; gap: 8px; min-height: 100px; padding: 13px 8px; text-align: center; }
+.tpec-landing .hero-mini-grid i { align-items: center; border: 1px solid rgba(180, 134, 47, .42); border-radius: 50%; color: var(--forest); display: flex; height: 38px; justify-content: center; width: 38px; }
+.tpec-landing .hero-mini-grid svg { height: 21px; width: 21px; }
+.tpec-landing .hero-mini-grid b { color: var(--forest); font-size: 9px; line-height: 1.2; text-transform: uppercase; }
+.tpec-landing .hero-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.tpec-landing .outline-button { background: rgba(255,255,255,.72); border: 1px solid rgba(151,109,35,.52); color: var(--forest); }
+.tpec-landing .hero-photo { min-height: 690px; }
+.tpec-landing .hero-photo > img { object-position: center 48%; }
+.tpec-landing .hero-photo .brand-seal { left: 16%; position: absolute; top: 52%; transform: translate(-50%, -50%); z-index: 5; }
+.tpec-landing .scan-label { align-items: center; background: rgba(252,250,242,.88); border: 1px solid rgba(22,63,43,.2); border-radius: 8px; color: var(--forest); display: flex; font-size: 9px; font-weight: 850; gap: 7px; letter-spacing: .08em; padding: 8px 11px; position: absolute; text-transform: uppercase; z-index: 5; }
+.tpec-landing .scan-label i { border: 2px solid #d6a53c; border-radius: 50%; height: 8px; width: 8px; }
+.tpec-landing .scan-a { right: 28%; top: 19%; }
+.tpec-landing .scan-b { right: 18%; top: 31%; }
+.tpec-landing .scan-c { right: 36%; top: 43%; }
+
+.tpec-landing .poster-whatsapp { display: grid; grid-template-columns: 35% 30% 35%; min-height: 700px; }
+.tpec-landing .whatsapp-copy { align-self: center; padding: 54px 0 80px clamp(42px, 4vw, 78px); z-index: 5; }
+.tpec-landing .whatsapp-copy .brand-seal { margin-bottom: 18px; }
+.tpec-landing .whatsapp-copy .gold-title { display: block; font-size: clamp(54px, 5.1vw, 78px); line-height: .88; }
+.tpec-landing .whatsapp-copy h2 { color: var(--forest); font-size: clamp(27px, 2.5vw, 40px); line-height: 1.1; margin: 20px 0 16px; }
+.tpec-landing .whatsapp-copy p { color: #354037; font-size: 16px; line-height: 1.6; margin: 0 0 24px; max-width: 460px; }
+.tpec-landing .whatsapp-big { min-height: 52px; padding-left: 24px; padding-right: 24px; }
+.tpec-landing .whatsapp-phone { align-self: center; background: #eee9dd; border: 7px solid #222; border-radius: 42px; box-shadow: 0 22px 40px rgba(30,36,30,.22); height: 610px; justify-self: center; margin: 36px 0; overflow: hidden; padding-top: 24px; position: relative; width: min(310px, 92%); z-index: 12; }
+.tpec-landing .phone-notch { background: #101010; border-radius: 0 0 14px 14px; height: 20px; left: 50%; position: absolute; top: 0; transform: translateX(-50%); width: 100px; }
+.tpec-landing .phone-header { align-items: center; background: #f7f6f1; border-bottom: 1px solid #d4d0c5; display: flex; gap: 8px; height: 54px; padding: 7px 12px; }
+.tpec-landing .phone-header img { border-radius: 50%; height: 36px; object-fit: cover; width: 36px; }
+.tpec-landing .phone-header span { display: flex; flex-direction: column; }
+.tpec-landing .phone-header strong { font-size: 12px; }
+.tpec-landing .phone-header small { color: #438d5c; font-size: 9px; font-weight: 700; }
+.tpec-landing .phone-body { background: radial-gradient(circle at 10px 10px, rgba(153,145,124,.08) 1px, transparent 1px), #e8e0cf; background-size: 17px 17px; height: 485px; overflow: hidden; padding: 10px; }
+.tpec-landing .bubble { border-radius: 9px; box-shadow: 0 1px 2px rgba(0,0,0,.08); font-size: 10px; line-height: 1.35; margin-bottom: 8px; max-width: 86%; padding: 8px 9px 5px; }
+.tpec-landing .bubble b { color: var(--forest); display: block; font-size: 9px; margin-bottom: 3px; }
+.tpec-landing .bubble p { margin: 0; }
+.tpec-landing .bubble time { color: #7f817a; display: block; font-size: 7px; margin-top: 3px; text-align: right; }
+.tpec-landing .bubble.incoming { background: #fff; }
+.tpec-landing .bubble.outgoing { background: #d8f5c5; margin-left: auto; }
+.tpec-landing .compact-bubble { font-size: 9px; }
+.tpec-landing .phone-photo { border-radius: 8px; height: 140px; margin: 8px 0 8px auto; overflow: hidden; width: 76%; }
+.tpec-landing .phone-photo img { height: 100%; object-fit: cover; width: 100%; }
+.tpec-landing .phone-composer { align-items: center; background: #f7f6f1; color: #98978f; display: flex; font-size: 10px; height: 40px; justify-content: space-between; padding: 0 14px; }
+.tpec-landing .phone-composer i { color: #36a45f; font-style: normal; }
+.tpec-landing .whatsapp-field { min-height: 700px; }
+.tpec-landing .whatsapp-field img { object-position: 45% center; }
+
+.tpec-landing .poster-analysis { display: grid; grid-template-columns: 35% 27% 38%; min-height: 720px; }
+.tpec-landing .analysis-field { min-height: 720px; }
+.tpec-landing .analysis-field img { object-position: center; }
+.tpec-landing .analysis-phone { align-self: center; background: #f8f5ed; border: 1px solid #b9b0a1; border-radius: 27px; box-shadow: 0 24px 40px rgba(46,50,42,.2); justify-self: center; margin: 32px -15px 32px -30px; overflow: hidden; padding: 13px; width: min(330px, 94%); z-index: 11; }
+.tpec-landing .analysis-top { align-items: center; color: #414b42; display: flex; font-size: 12px; gap: 7px; padding: 5px 5px 12px; }
+.tpec-landing .analysis-top svg { height: 15px; width: 15px; }
+.tpec-landing .analysis-cow-photo { border-radius: 17px; height: 245px; overflow: hidden; position: relative; }
+.tpec-landing .analysis-cow-photo > img { height: 100%; object-fit: cover; object-position: center 24%; width: 100%; }
+.tpec-landing .focus { border-color: white; border-style: solid; height: 28px; position: absolute; width: 28px; }
+.tpec-landing .focus.top-left { border-width: 3px 0 0 3px; left: 14px; top: 14px; }
+.tpec-landing .focus.top-right { border-width: 3px 3px 0 0; right: 14px; top: 14px; }
+.tpec-landing .focus.bottom-left { border-width: 0 0 3px 3px; bottom: 14px; left: 14px; }
+.tpec-landing .focus.bottom-right { border-width: 0 3px 3px 0; bottom: 14px; right: 14px; }
+.tpec-landing .analysis-row { align-items: flex-start; background: #e8e5dd; border-radius: 10px; display: grid; gap: 10px; grid-template-columns: 36px 1fr; margin-top: 7px; padding: 8px; }
+.tpec-landing .analysis-row > i { align-items: center; border: 1px solid #8d8c83; border-radius: 9px; color: #232b24; display: flex; height: 34px; justify-content: center; width: 34px; }
+.tpec-landing .analysis-row svg { height: 20px; width: 20px; }
