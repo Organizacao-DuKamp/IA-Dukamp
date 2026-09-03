@@ -198,44 +198,38 @@ function LandingPage() {
         </div>
       </section>
 
-      <section className="poster poster-whatsapp poster-whatsapp-reference" id="whatsapp">
-        <div className="whatsapp-reference-description">
-          <h2>WhatsApp da TPEC-IA</h2>
-          <p>A TPEC-IA vai com você para o campo. Tire dúvidas, envie fotos e receba orientações técnicas diretamente pelo WhatsApp.</p>
+      <section className="poster poster-whatsapp poster-whatsapp-adapted" id="whatsapp">
+        <div className="poster-swoosh" aria-hidden="true" />
+        <div className="whatsapp-copy reference-copy">
+          <BrandSeal small />
+          <span className="gold-title">WHATSAPP<br />DA TPEC-IA</span>
+          <h2>A TPEC-IA vai com<br />você para o campo.</h2>
+          <p>Tire dúvidas, envie fotos e receba orientações técnicas direto pelo WhatsApp. Prático, rápido e feito para o pecuarista.</p>
+          <a className="reference-button whatsapp-big" href={whatsappUrl} target="_blank" rel="noreferrer"><WhatsappIcon /> CONVERSAR COM A TPEC-IA</a>
         </div>
 
-        <div className="whatsapp-reference-desktop">
-          <img
-            src={whatsappReferenceImage}
-            alt="WhatsApp da TPEC-IA: conversa com análise de um bovino e apoio ao pecuarista no campo"
-            loading="lazy"
-          />
-          <a
-            className="whatsapp-reference-hotspot"
-            href={whatsappUrl}
-            target="_blank"
-            rel="noreferrer"
-            aria-label="Conversar com a TPEC-IA pelo WhatsApp"
-          />
+        <div className="whatsapp-phone" aria-label="Exemplo de conversa com a TPEC-IA no WhatsApp">
+          <div className="phone-status" aria-hidden="true">
+            <span>11:30</span><i /><span className="phone-signals">▮ ▰ ●</span>
+          </div>
+          <div className="phone-header">
+            <span className="phone-back" aria-hidden="true">‹</span>
+            <img src="/tpec-logo.png" alt="" />
+            <span className="phone-contact"><strong>TPEC IA</strong><small>online</small></span>
+            <span className="phone-actions" aria-hidden="true">⌕ ⋮</span>
+          </div>
+          <div className="phone-body">
+            <div className="bubble incoming"><b>Produtor</b><p>Estou com uma dúvida sobre meu gado. Posso mandar uma foto?</p><time>11:28</time></div>
+            <div className="bubble outgoing"><b>TPEC IA</b><p>Claro. Envie a foto e me conte o que você observou.</p><time>11:29 ✓✓</time></div>
+            <div className="phone-photo phone-reference-crop"><img src={whatsappReferenceImage} alt="Bovino enviado para análise" loading="lazy" /></div>
+            <div className="bubble outgoing compact-bubble phone-guidance"><b>TPEC IA</b><p>Obrigado pela foto. Pelo que foi observado, recomendamos:</p><ul><li>Verificar o manejo nutricional;</li><li>Observar presença de carrapatos;</li><li>Acompanhar a condição corporal.</li></ul><p>Qualquer mudança, me avise!</p><time>11:31 ✓✓</time></div>
+          </div>
+          <div className="phone-composer" aria-hidden="true"><span>☺&nbsp;&nbsp; Mensagem</span><i>⌕ ◉ ●</i></div>
         </div>
 
-        <div className="whatsapp-reference-mobile">
-          <figure className="whatsapp-reference-panel whatsapp-reference-copy-panel">
-            <img src={whatsappReferenceImage} alt="" loading="lazy" />
-            <a
-              className="whatsapp-reference-mobile-hotspot"
-              href={whatsappUrl}
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Conversar com a TPEC-IA pelo WhatsApp"
-            />
-          </figure>
-          <figure className="whatsapp-reference-panel whatsapp-reference-phone-panel">
-            <img src={whatsappReferenceImage} alt="" loading="lazy" />
-          </figure>
-          <figure className="whatsapp-reference-panel whatsapp-reference-field-panel">
-            <img src={whatsappReferenceImage} alt="" loading="lazy" />
-          </figure>
+        <div className="whatsapp-field reference-photo">
+          <img className="whatsapp-field-reference" src={whatsappReferenceImage} alt="Pecuarista usando o celular ao lado de um bovino no campo" loading="lazy" />
+          <div className="photo-fade left-fade" aria-hidden="true" />
         </div>
       </section>
 

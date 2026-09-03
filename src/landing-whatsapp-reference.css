@@ -1,140 +1,414 @@
-/* The WhatsApp poster uses the approved campaign artwork as its source of truth. */
-.tpec-landing .poster-whatsapp.poster-whatsapp-reference {
-  background: #f3f0e7;
-  display: block;
-  min-height: 0;
+/* WhatsApp campaign component rebuilt in HTML/CSS from the approved visual. */
+.tpec-landing .poster-whatsapp.poster-whatsapp-adapted {
+  background:
+    radial-gradient(circle at 22% 30%, rgba(255, 255, 255, .95), transparent 34%),
+    #f4f0e7;
+  display: grid;
+  grid-template-columns: 43% 28% 29%;
+  min-height: clamp(650px, 56.25vw, 900px);
   overflow: hidden;
-  position: relative;
 }
 
-.tpec-landing .whatsapp-reference-description {
-  border: 0;
-  clip: rect(0 0 0 0);
-  clip-path: inset(50%);
-  height: 1px;
-  margin: -1px;
+.tpec-landing .poster-whatsapp-adapted .poster-swoosh {
+  right: 54%;
+}
+
+.tpec-landing .poster-whatsapp-adapted .whatsapp-copy {
+  align-self: center;
+  padding: 52px 18px 92px clamp(66px, 7.4vw, 122px);
+  z-index: 6;
+}
+
+.tpec-landing .poster-whatsapp-adapted .whatsapp-copy .brand-seal-small {
+  height: clamp(132px, 11.2vw, 180px);
+  margin-bottom: clamp(18px, 2vw, 30px);
+  width: clamp(132px, 11.2vw, 180px);
+}
+
+.tpec-landing .poster-whatsapp-adapted .whatsapp-copy .gold-title {
+  font-size: clamp(52px, 4.9vw, 78px) !important;
+  letter-spacing: -.035em !important;
+  line-height: .9 !important;
+  max-width: 620px !important;
+}
+
+.tpec-landing .poster-whatsapp-adapted .whatsapp-copy h2 {
+  color: #0b5538;
+  font-size: clamp(29px, 2.55vw, 42px);
+  font-weight: 750;
+  letter-spacing: -.025em;
+  line-height: 1.13;
+  margin: clamp(25px, 2.2vw, 36px) 0 20px;
+  max-width: 520px;
+}
+
+.tpec-landing .poster-whatsapp-adapted .whatsapp-copy p {
+  color: #28362e;
+  font-size: clamp(16px, 1.18vw, 19px);
+  line-height: 1.55;
+  margin: 0 0 30px;
+  max-width: 475px;
+}
+
+.tpec-landing .poster-whatsapp-adapted .whatsapp-big {
+  border: 1px solid #d79a2a;
+  border-radius: 14px;
+  box-shadow: 0 10px 24px rgba(13, 74, 45, .15);
+  font-size: clamp(12px, .93vw, 15px);
+  min-height: 64px;
+  padding: 0 26px;
+}
+
+.tpec-landing .poster-whatsapp-adapted .whatsapp-big svg {
+  height: 26px;
+  width: 26px;
+}
+
+.tpec-landing .poster-whatsapp-adapted .whatsapp-phone {
+  align-self: center;
+  aspect-ratio: 360 / 700;
+  background: #f7f5ee;
+  border: 7px solid #171717;
+  border-radius: 52px;
+  box-shadow: 0 30px 60px rgba(28, 32, 28, .25);
+  height: clamp(620px, 50vw, 740px);
+  justify-self: center;
+  margin: 24px -5px;
   overflow: hidden;
   padding: 0;
-  position: absolute;
-  white-space: nowrap;
-  width: 1px;
+  width: auto;
+  z-index: 12;
 }
 
-.tpec-landing .whatsapp-reference-desktop {
-  aspect-ratio: 16 / 9;
-  display: block;
+.tpec-landing .poster-whatsapp-adapted .phone-status {
+  align-items: center;
+  background: #faf9f5;
+  color: #171717;
+  display: flex;
+  font-size: 12px;
+  font-weight: 800;
+  height: 31px;
+  justify-content: space-between;
+  padding: 0 18px;
+  position: relative;
+}
+
+.tpec-landing .poster-whatsapp-adapted .phone-status > i {
+  background: #050505;
+  border-radius: 16px;
+  height: 22px;
+  left: 50%;
+  position: absolute;
+  top: 5px;
+  transform: translateX(-50%);
+  width: 92px;
+}
+
+.tpec-landing .poster-whatsapp-adapted .phone-signals {
+  font-size: 9px;
+  letter-spacing: 2px;
+}
+
+.tpec-landing .poster-whatsapp-adapted .phone-header {
+  align-items: center;
+  background: #f8f7f2;
+  border-bottom: 1px solid #d7d3c9;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 18px 38px 1fr auto;
+  height: 61px;
+  padding: 7px 13px;
+}
+
+.tpec-landing .poster-whatsapp-adapted .phone-back {
+  color: #1e2722;
+  font-size: 31px;
+  font-weight: 350;
+  line-height: 1;
+}
+
+.tpec-landing .poster-whatsapp-adapted .phone-header > img {
+  border-radius: 50%;
+  height: 38px;
+  object-fit: cover;
+  width: 38px;
+}
+
+.tpec-landing .poster-whatsapp-adapted .phone-contact {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.tpec-landing .poster-whatsapp-adapted .phone-contact strong {
+  color: #1d211e;
+  font-size: 13px;
+  line-height: 1.1;
+}
+
+.tpec-landing .poster-whatsapp-adapted .phone-contact small {
+  color: #318753;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.tpec-landing .poster-whatsapp-adapted .phone-actions {
+  color: #17221c;
+  font-size: 22px;
+  letter-spacing: 7px;
+  white-space: nowrap;
+}
+
+.tpec-landing .poster-whatsapp-adapted .phone-body {
+  background:
+    radial-gradient(circle at 9px 9px, rgba(118, 108, 88, .08) 1px, transparent 1px),
+    #e9e0cf;
+  background-size: 18px 18px;
+  display: flex;
+  flex-direction: column;
+  height: calc(100% - 137px);
+  overflow: hidden;
+  padding: 13px;
+}
+
+.tpec-landing .poster-whatsapp-adapted .bubble {
+  border-radius: 10px;
+  font-size: clamp(10px, .78vw, 12px);
+  line-height: 1.35;
+  margin-bottom: 9px;
+  padding: 9px 10px 6px;
+}
+
+.tpec-landing .poster-whatsapp-adapted .bubble b {
+  font-size: .9em;
+}
+
+.tpec-landing .poster-whatsapp-adapted .bubble time {
+  font-size: 7px;
+}
+
+.tpec-landing .poster-whatsapp-adapted .phone-reference-crop {
+  aspect-ratio: 1.22;
+  background: #d6d3c5;
+  border: 4px solid #f8f7f2;
+  border-radius: 10px;
+  flex: 0 0 auto;
+  height: auto;
+  margin: 1px 0 9px auto;
   overflow: hidden;
   position: relative;
-  width: 100%;
+  width: 72%;
 }
 
-.tpec-landing .whatsapp-reference-desktop > img {
-  display: block;
-  height: 100%;
-  object-fit: cover;
-  width: 100%;
-}
-
-/* Clickable area precisely follows the button already drawn into the artwork. */
-.tpec-landing .whatsapp-reference-hotspot {
-  border-radius: 15px;
-  bottom: 10.6%;
-  height: 9.2%;
-  left: 8.6%;
+/* Exact bovine photo from the supplied campaign art, isolated inside the chat. */
+.tpec-landing .poster-whatsapp-adapted .phone-reference-crop > img {
+  height: auto;
+  left: -318%;
+  max-width: none;
+  object-fit: initial;
   position: absolute;
-  width: 24.7%;
-  z-index: 3;
+  top: -196%;
+  width: 660%;
 }
 
-.tpec-landing .whatsapp-reference-hotspot:hover {
-  box-shadow: 0 0 0 3px rgba(248, 196, 72, .48), 0 12px 28px rgba(15, 72, 42, .24);
+.tpec-landing .poster-whatsapp-adapted .phone-guidance {
+  font-size: clamp(8px, .67vw, 10px);
+  line-height: 1.26;
+  margin-bottom: 0;
+  padding-bottom: 5px;
 }
 
-.tpec-landing .whatsapp-reference-hotspot:focus-visible {
-  box-shadow: 0 0 0 4px #fff, 0 0 0 7px #d99017;
-  outline: none;
+.tpec-landing .poster-whatsapp-adapted .phone-guidance p {
+  margin: 0;
 }
 
-.tpec-landing .whatsapp-reference-mobile {
-  display: none;
+.tpec-landing .poster-whatsapp-adapted .phone-guidance ul {
+  margin: 5px 0;
+  padding-left: 14px;
 }
 
-@media (max-width: 680px) {
-  .tpec-landing .poster-whatsapp.poster-whatsapp-reference {
-    background: #f4f0e7;
+.tpec-landing .poster-whatsapp-adapted .phone-guidance li {
+  margin: 2px 0;
+}
+
+.tpec-landing .poster-whatsapp-adapted .phone-composer {
+  align-items: center;
+  background: #f8f7f2;
+  color: #94968f;
+  display: flex;
+  font-size: 11px;
+  height: 45px;
+  justify-content: space-between;
+  padding: 0 14px;
+}
+
+.tpec-landing .poster-whatsapp-adapted .phone-composer i {
+  color: #188d4d;
+  font-size: 15px;
+  letter-spacing: 5px;
+}
+
+.tpec-landing .poster-whatsapp-adapted .whatsapp-field {
+  align-self: stretch;
+  min-height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Exact farmer-and-bull scene from the supplied art, without displaying the poster itself. */
+.tpec-landing .poster-whatsapp-adapted .whatsapp-field-reference {
+  bottom: 0;
+  height: 100%;
+  max-width: none;
+  object-fit: fill;
+  position: absolute;
+  right: 0;
+  width: 345%;
+}
+
+.tpec-landing .poster-whatsapp-adapted .whatsapp-field .left-fade {
+  background: linear-gradient(90deg, rgba(244, 240, 231, .66), transparent 19%);
+}
+
+@media (max-width: 1280px) and (min-width: 1081px) {
+  .tpec-landing .poster-whatsapp.poster-whatsapp-adapted {
+    grid-template-columns: 42% 29% 29%;
   }
 
-  .tpec-landing .whatsapp-reference-desktop {
-    display: none;
+  .tpec-landing .poster-whatsapp-adapted .whatsapp-copy {
+    padding-left: 52px;
   }
 
-  .tpec-landing .whatsapp-reference-mobile {
-    display: grid;
-    gap: 0;
-    width: 100%;
+  .tpec-landing .poster-whatsapp-adapted .whatsapp-copy .gold-title {
+    font-size: clamp(46px, 4.6vw, 59px) !important;
   }
 
-  .tpec-landing .whatsapp-reference-panel {
-    margin: 0;
-    overflow: hidden;
-    position: relative;
-    width: 100%;
+  .tpec-landing .poster-whatsapp-adapted .whatsapp-copy h2 {
+    font-size: clamp(27px, 2.5vw, 34px);
+  }
+}
+
+@media (max-width: 1080px) {
+  .tpec-landing .poster-whatsapp.poster-whatsapp-adapted {
+    align-items: stretch;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
   }
 
-  .tpec-landing .whatsapp-reference-panel > img {
-    display: block;
-    height: 100%;
-    max-width: none;
-    object-fit: cover;
-    position: absolute;
-    top: 0;
-  }
-
-  .tpec-landing .whatsapp-reference-copy-panel {
-    aspect-ratio: 900 / 1152;
-  }
-
-  .tpec-landing .whatsapp-reference-copy-panel > img {
-    left: 0;
-    object-position: left center;
-    width: 227.56%;
-  }
-
-  .tpec-landing .whatsapp-reference-mobile-hotspot {
-    border-radius: 12px;
-    bottom: 11.9%;
-    height: 9%;
-    left: 19.5%;
-    position: absolute;
-    width: 56.5%;
-    z-index: 3;
-  }
-
-  .tpec-landing .whatsapp-reference-phone-panel {
-    aspect-ratio: 610 / 1152;
-    background: #f4f0e7;
-  }
-
-  .tpec-landing .whatsapp-reference-phone-panel > img {
-    left: 50%;
-    object-position: center center;
-    transform: translateX(-59.4%);
-    width: 335.74%;
-  }
-
-  .tpec-landing .whatsapp-reference-field-panel {
-    aspect-ratio: 640 / 1152;
-  }
-
-  .tpec-landing .whatsapp-reference-field-panel > img {
-    object-position: right center;
+  .tpec-landing .poster-whatsapp-adapted .poster-swoosh {
     right: 0;
+  }
+
+  .tpec-landing .poster-whatsapp-adapted .whatsapp-copy {
+    order: 1;
+    padding: 56px 36px 68px;
+    text-align: center;
+  }
+
+  .tpec-landing .poster-whatsapp-adapted .whatsapp-copy .brand-seal-small,
+  .tpec-landing .poster-whatsapp-adapted .whatsapp-copy p {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .tpec-landing .poster-whatsapp-adapted .whatsapp-copy .gold-title {
+    font-size: clamp(52px, 8vw, 70px) !important;
+  }
+
+  .tpec-landing .poster-whatsapp-adapted .whatsapp-copy h2 {
+    font-size: clamp(30px, 4.4vw, 42px);
+  }
+
+  .tpec-landing .poster-whatsapp-adapted .whatsapp-phone {
+    height: 700px;
+    margin: -22px auto 40px;
+    order: 2;
+    width: 360px;
+  }
+
+  .tpec-landing .poster-whatsapp-adapted .whatsapp-field {
+    aspect-ratio: 640 / 1152;
+    align-self: center;
+    min-height: 0;
+    order: 3;
+    width: min(640px, 100%);
+  }
+
+  .tpec-landing .poster-whatsapp-adapted .whatsapp-field-reference {
     width: 320%;
   }
 }
 
+@media (max-width: 680px) {
+  .tpec-landing .poster-whatsapp-adapted .whatsapp-copy {
+    padding: 42px 22px 62px;
+  }
+
+  .tpec-landing .poster-whatsapp-adapted .whatsapp-copy .brand-seal-small {
+    height: 122px;
+    margin-bottom: 20px;
+    width: 122px;
+  }
+
+  .tpec-landing .poster-whatsapp-adapted .whatsapp-copy .gold-title {
+    font-size: clamp(39px, 12vw, 54px) !important;
+    line-height: .93 !important;
+  }
+
+  .tpec-landing .poster-whatsapp-adapted .whatsapp-copy h2 {
+    font-size: clamp(27px, 8vw, 34px);
+    margin-top: 25px;
+  }
+
+  .tpec-landing .poster-whatsapp-adapted .whatsapp-copy p {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  .tpec-landing .poster-whatsapp-adapted .whatsapp-big {
+    font-size: 12px;
+    justify-content: center;
+    max-width: 370px;
+    width: 100%;
+  }
+
+  .tpec-landing .poster-whatsapp-adapted .whatsapp-phone {
+    height: 690px;
+    margin: -18px auto 34px;
+    max-width: calc(100% - 28px);
+    transform: none;
+    width: 350px;
+  }
+
+  .tpec-landing .poster-whatsapp-adapted .bubble {
+    font-size: 10px;
+  }
+
+  .tpec-landing .poster-whatsapp-adapted .phone-guidance {
+    font-size: 8.5px;
+  }
+}
+
+@media (max-width: 390px) {
+  .tpec-landing .poster-whatsapp-adapted .whatsapp-phone {
+    border-width: 6px;
+    height: 660px;
+    width: calc(100% - 20px);
+  }
+
+  .tpec-landing .poster-whatsapp-adapted .phone-body {
+    padding: 10px;
+  }
+
+  .tpec-landing .poster-whatsapp-adapted .phone-actions {
+    letter-spacing: 3px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .tpec-landing .whatsapp-reference-hotspot {
+  .tpec-landing .poster-whatsapp-adapted .whatsapp-field-reference,
+  .tpec-landing .poster-whatsapp-adapted .phone-reference-crop > img {
     transition: none;
   }
 }
