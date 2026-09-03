@@ -1,0 +1,302 @@
+/* Scroll-driven motion for the TPEC landing page.
+   Uses CSS view timelines so the motion follows the user's scroll without JS. */
+
+@keyframes tpecRevealUp {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 54px, 0) scale(0.985);
+    filter: blur(6px);
+  }
+  55% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes tpecRevealSideLeft {
+  0% {
+    opacity: 0;
+    transform: translate3d(-72px, 16px, 0) scale(0.985);
+    filter: blur(7px);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes tpecRevealSideRight {
+  0% {
+    opacity: 0;
+    transform: translate3d(72px, 16px, 0) scale(0.985);
+    filter: blur(7px);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes tpecAnimalRise {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 92px, 0) scale(1.07);
+    filter: saturate(0.72) brightness(0.82) blur(2px);
+    clip-path: inset(42% 0 0 0 round 14px);
+  }
+  48% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: saturate(1) brightness(1) blur(0);
+    clip-path: inset(0 0 0 0 round 14px);
+  }
+}
+
+@keyframes tpecCardLift {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 42px, 0) rotateX(7deg) scale(0.96);
+    box-shadow: 0 4px 12px rgba(36, 53, 40, 0.03);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotateX(0) scale(1);
+    box-shadow: 0 18px 48px rgba(36, 53, 40, 0.11);
+  }
+}
+
+@keyframes tpecGoldDraw {
+  0% {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes tpecPhoneFloatIn {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 90px, 0) rotate(2.5deg) scale(0.92);
+  }
+  65% {
+    opacity: 1;
+    transform: translate3d(0, -8px, 0) rotate(-0.5deg) scale(1.01);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotate(0) scale(1);
+  }
+}
+
+@keyframes tpecScanBoardIn {
+  0% {
+    opacity: 0;
+    transform: translate3d(34px, 28px, 0) scale(0.9);
+    backdrop-filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    backdrop-filter: blur(10px);
+  }
+}
+
+@supports (animation-timeline: view()) {
+  .tpec-landing .gold-title,
+  .tpec-landing .reference-copy > h2,
+  .tpec-landing .benefits-head,
+  .tpec-landing .areas-head,
+  .tpec-landing .examples-head {
+    animation: tpecRevealUp linear both;
+    animation-timeline: view(block);
+    animation-range: entry 6% cover 31%;
+    will-change: transform, opacity, filter;
+  }
+
+  .tpec-landing .gold-divider {
+    transform-origin: left center;
+    animation: tpecGoldDraw linear both;
+    animation-timeline: view(block);
+    animation-range: entry 12% cover 34%;
+    will-change: transform, opacity;
+  }
+
+  .tpec-landing .whatsapp-copy,
+  .tpec-landing .analysis-field,
+  .tpec-landing .responsibility-copy {
+    animation: tpecRevealSideLeft linear both;
+    animation-timeline: view(block);
+    animation-range: entry 4% cover 35%;
+    will-change: transform, opacity, filter;
+  }
+
+  .tpec-landing .whatsapp-field,
+  .tpec-landing .analysis-copy,
+  .tpec-landing .how-field,
+  .tpec-landing .responsibility-photo {
+    animation: tpecRevealSideRight linear both;
+    animation-timeline: view(block);
+    animation-range: entry 4% cover 35%;
+    will-change: transform, opacity, filter;
+  }
+
+  .tpec-landing .whatsapp-phone,
+  .tpec-landing .analysis-phone {
+    animation: tpecPhoneFloatIn linear both;
+    animation-timeline: view(block);
+    animation-range: entry 4% cover 41%;
+    will-change: transform, opacity;
+  }
+
+  .tpec-landing .analysis-row,
+  .tpec-landing .analysis-features > span,
+  .tpec-landing .responsibility-points > span {
+    animation: tpecRevealUp linear both;
+    animation-timeline: view(block);
+    animation-range: entry 8% cover 32%;
+    will-change: transform, opacity;
+  }
+
+  .tpec-landing .reference-steps article,
+  .tpec-landing .reference-benefits-grid > article,
+  .tpec-landing .reference-use-grid > article,
+  .tpec-landing .hero-mini-grid > span {
+    animation: tpecCardLift linear both;
+    animation-timeline: view(block);
+    animation-range: entry 4% cover 34%;
+    transform-origin: center bottom;
+    will-change: transform, opacity, box-shadow;
+  }
+
+  /* Main requested effect: animals rise from inside their cards while entering the viewport. */
+  .tpec-landing .reference-areas-grid > article {
+    animation: tpecCardLift linear both;
+    animation-timeline: view(block);
+    animation-range: entry 0% cover 31%;
+    perspective: 900px;
+    transform-origin: center bottom;
+    will-change: transform, opacity, box-shadow;
+  }
+
+  .tpec-landing .reference-areas-grid .area-photo {
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .tpec-landing .reference-areas-grid .area-photo img {
+    animation: tpecAnimalRise linear both;
+    animation-timeline: view(block);
+    animation-range: entry 3% cover 36%;
+    transform-origin: 50% 100%;
+    will-change: transform, opacity, filter, clip-path;
+  }
+
+  /* Slightly stagger the perceived reveal by changing the scroll range per card. */
+  .tpec-landing .reference-areas-grid > article:nth-child(2),
+  .tpec-landing .reference-benefits-grid > article:nth-child(2),
+  .tpec-landing .reference-use-grid > article:nth-child(2) {
+    animation-range: entry 4% cover 35%;
+  }
+
+  .tpec-landing .reference-areas-grid > article:nth-child(3),
+  .tpec-landing .reference-benefits-grid > article:nth-child(3),
+  .tpec-landing .reference-use-grid > article:nth-child(3) {
+    animation-range: entry 8% cover 38%;
+  }
+
+  .tpec-landing .reference-areas-grid > article:nth-child(4),
+  .tpec-landing .reference-benefits-grid > article:nth-child(4),
+  .tpec-landing .reference-use-grid > article:nth-child(4) {
+    animation-range: entry 12% cover 41%;
+  }
+
+  .tpec-landing .reference-areas-grid > article:nth-child(5) {
+    animation-range: entry 16% cover 44%;
+  }
+
+  .tpec-landing .reference-areas-grid > article:nth-child(6) {
+    animation-range: entry 20% cover 47%;
+  }
+
+  .tpec-landing .reference-areas-grid > article:nth-child(7) {
+    animation-range: entry 24% cover 50%;
+  }
+
+  .tpec-landing .scan-board {
+    animation: tpecScanBoardIn linear both;
+    animation-timeline: view(block);
+    animation-range: entry 8% cover 38%;
+    will-change: transform, opacity, backdrop-filter;
+  }
+
+  .tpec-landing .poster-swoosh {
+    animation: tpecRevealUp linear both;
+    animation-timeline: view(block);
+    animation-range: entry -12% cover 38%;
+    will-change: transform, opacity;
+  }
+}
+
+/* Small interaction details after the reveal. */
+.tpec-landing .reference-areas-grid > article,
+.tpec-landing .reference-benefits-grid > article,
+.tpec-landing .reference-use-grid > article {
+  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+}
+
+.tpec-landing .reference-areas-grid > article:hover,
+.tpec-landing .reference-benefits-grid > article:hover,
+.tpec-landing .reference-use-grid > article:hover {
+  transform: translateY(-7px);
+  box-shadow: 0 24px 58px rgba(27, 54, 39, 0.15);
+}
+
+.tpec-landing .reference-areas-grid .area-photo img,
+.tpec-landing .reference-use-grid .use-photo img {
+  transition: transform 500ms cubic-bezier(.2,.7,.2,1), filter 500ms ease;
+}
+
+.tpec-landing .reference-areas-grid > article:hover .area-photo img,
+.tpec-landing .reference-use-grid > article:hover .use-photo img {
+  transform: scale(1.045);
+  filter: saturate(1.06) contrast(1.02);
+}
+
+@media (max-width: 980px) {
+  @supports (animation-timeline: view()) {
+    .tpec-landing .reference-areas-grid > article,
+    .tpec-landing .reference-benefits-grid > article,
+    .tpec-landing .reference-use-grid > article,
+    .tpec-landing .reference-steps article {
+      animation-range: entry 2% cover 28%;
+    }
+
+    .tpec-landing .reference-areas-grid .area-photo img {
+      animation-range: entry 0% cover 30%;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tpec-landing *,
+  .tpec-landing *::before,
+  .tpec-landing *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+}
