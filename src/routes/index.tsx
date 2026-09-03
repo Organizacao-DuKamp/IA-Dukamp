@@ -56,19 +56,64 @@ const faqs = [
   { question: "A TPEC-IA substitui veterinário, zootecnista ou agrônomo?", answer: "Não. A TPEC-IA é uma ferramenta de apoio. Situações clínicas, emergenciais ou que dependam de diagnóstico precisam de avaliação profissional." },
 ];
 
+const structuredData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://iadoboi.com.br/#organization",
+      name: "IA do Boi",
+      alternateName: "TPEC-IA",
+      url: "https://iadoboi.com.br/",
+      logo: {
+        "@type": "ImageObject",
+        url: "https://iadoboi.com.br/tpec-logo.png",
+      },
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://iadoboi.com.br/#website",
+      url: "https://iadoboi.com.br/",
+      name: "IA do Boi",
+      alternateName: "TPEC-IA",
+      inLanguage: "pt-BR",
+      publisher: { "@id": "https://iadoboi.com.br/#organization" },
+    },
+  ],
+};
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "TPEC-IA — Inteligência artificial da pecuária" },
-      { name: "description", content: "Inteligência artificial para a pecuária, direto no WhatsApp. Tire dúvidas, envie fotos, áudios e documentos e receba apoio prático para o campo." },
-      { property: "og:title", content: "TPEC-IA — Inteligência artificial da pecuária" },
-      { property: "og:description", content: "Campo + inteligência: respostas claras, análise por foto e apoio para o dia a dia da pecuária." },
+      { title: "IA do Boi — Inteligência Artificial para Pecuária" },
+      {
+        name: "description",
+        content:
+          "IA do Boi é uma inteligência artificial para pecuária e gado. Tire dúvidas, envie fotos e receba apoio sobre manejo, nutrição, pastagens e mais pelo WhatsApp.",
+      },
+      { name: "robots", content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" },
+      { name: "googlebot", content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" },
+      { property: "og:title", content: "IA do Boi — Inteligência Artificial para Pecuária" },
+      {
+        property: "og:description",
+        content:
+          "Inteligência artificial para pecuária e gado, com respostas práticas, análise por foto e apoio para a rotina do campo pelo WhatsApp.",
+      },
       { property: "og:type", content: "website" },
-      { property: "og:image", content: "/og.png" },
+      { property: "og:url", content: "https://iadoboi.com.br/" },
+      { property: "og:site_name", content: "IA do Boi" },
+      { property: "og:locale", content: "pt_BR" },
+      { property: "og:image", content: "https://iadoboi.com.br/og.png" },
+      { property: "og:image:alt", content: "IA do Boi — inteligência artificial para pecuária" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:image", content: "/og.png" },
+      { name: "twitter:title", content: "IA do Boi — Inteligência Artificial para Pecuária" },
+      {
+        name: "twitter:description",
+        content: "IA para pecuária e gado, com respostas e análise por foto direto no WhatsApp.",
+      },
+      { name: "twitter:image", content: "https://iadoboi.com.br/og.png" },
     ],
-    links: [{ rel: "canonical", href: "/" }],
+    links: [{ rel: "canonical", href: "https://iadoboi.com.br/" }],
   }),
   component: LandingPage,
 });
@@ -115,8 +160,9 @@ function BrandSeal({ small = false }: { small?: boolean }) {
 function LandingPage() {
   return (
     <main className="tpec-landing">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       <header className="site-header">
-        <a className="brand" href="#inicio" aria-label="TPEC-IA — início">
+        <a className="brand" href="#inicio" aria-label="IA do Boi — início">
           <img src="/tpec-logo.png" alt="" />
           <span><strong>TPEC-IA</strong><small>INTELIGÊNCIA ARTIFICIAL DA PECUÁRIA</small></span>
         </a>
@@ -129,11 +175,11 @@ function LandingPage() {
       <section className="poster poster-hero" id="inicio">
         <div className="poster-swoosh" aria-hidden="true" />
         <div className="hero-copy reference-copy">
-          <span className="reference-kicker">TPEC-IA • IA DA PECUÁRIA</span>
+          <span className="reference-kicker">IA DO BOI • INTELIGÊNCIA ARTIFICIAL PARA PECUÁRIA</span>
           <h1>CAMPO +<br />INTELIGÊNCIA</h1>
           <span className="gold-divider" aria-hidden="true"><i /></span>
           <h2>Tecnologia criada para quem está na lida.</h2>
-          <p>A inteligência artificial transforma informações em decisões mais claras, práticas e estratégicas para o dia a dia da pecuária.</p>
+          <p>A IA do Boi usa inteligência artificial para apoiar a rotina da pecuária e do gado, transformando informações em decisões mais claras, práticas e estratégicas no campo.</p>
           <div className="hero-mini-grid">
             {benefits.map((item) => <span key={item.title}><i><FeatureIcon name={item.icon} /></i><b>{item.title}</b></span>)}
           </div>
