@@ -156,6 +156,18 @@ function UseIcon({ name }: { name: string }) {
   return <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 10c0-4 3-6 7-6s7 2 7 6v6c0 2-1.5 4-4 4h-6c-2.5 0-4-2-4-4z" /><path d="M8 9h.01M16 9h.01M9 15c2 1 4 1 6 0" /></svg>;
 }
 
+function HeroScanIcon({ name }: { name: "management" | "nutrition" | "condition" }) {
+  if (name === "nutrition") {
+    return <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 4C11 4 5 8 5 15c0 3 2 5 5 5 7 0 10-8 10-16Z" /><path d="M5 20c2-5 6-8 11-11" /></svg>;
+  }
+
+  if (name === "condition") {
+    return <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20.8 5.8a5.2 5.2 0 0 0-7.4 0L12 7.2l-1.4-1.4a5.2 5.2 0 1 0-7.4 7.4L12 22l8.8-8.8a5.2 5.2 0 0 0 0-7.4Z" /><path d="M5.5 13h3l1.5-3 3 6 1.5-3h4" /></svg>;
+  }
+
+  return <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 20h16M6 17v-5M11 17V7M16 17V4" /><path d="m5 9 5-4 5 2 4-4" /></svg>;
+}
+
 function BrandSeal({ small = false }: { small?: boolean }) {
   return <span className={small ? "brand-seal brand-seal-small" : "brand-seal"} aria-hidden="true"><img src="/tpec-logo.png" alt="" /></span>;
 }
@@ -195,7 +207,15 @@ function LandingPage() {
           <img src={heroBullPhoto} alt="Touro Nelore forte em pastagem" fetchPriority="high" />
           <div className="photo-fade" aria-hidden="true" />
           <BrandSeal />
-          <span className="scan-label scan-a"><i /> MANEJO</span><span className="scan-label scan-b"><i /> NUTRIÇÃO</span><span className="scan-label scan-c"><i /> CONDIÇÃO</span>
+          <span className="scan-label scan-a">
+            <span className="scan-icon"><HeroScanIcon name="management" /></span><b>MANEJO</b><span className="scan-connector" aria-hidden="true" />
+          </span>
+          <span className="scan-label scan-b">
+            <span className="scan-icon"><HeroScanIcon name="nutrition" /></span><b>NUTRIÇÃO</b><span className="scan-connector" aria-hidden="true" />
+          </span>
+          <span className="scan-label scan-c">
+            <span className="scan-icon"><HeroScanIcon name="condition" /></span><b>CONDIÇÃO<br />CORPORAL</b><span className="scan-connector" aria-hidden="true" />
+          </span>
         </div>
       </section>
 

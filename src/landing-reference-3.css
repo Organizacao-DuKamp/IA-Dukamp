@@ -91,9 +91,12 @@
   .tpec-landing .poster-hero h1 { font-size: clamp(56px, 12vw, 90px); }
   .tpec-landing .hero-photo { min-height: 500px; order: 2; }
   .tpec-landing .hero-photo .brand-seal { left: 22%; top: 18%; }
-  .tpec-landing .scan-a { right: 12%; top: 18%; }
-  .tpec-landing .scan-b { right: 8%; top: 31%; }
-  .tpec-landing .scan-c { right: 18%; top: 45%; }
+  .tpec-landing .scan-a { right: 6%; top: 68%; }
+  .tpec-landing .scan-a .scan-connector { width: clamp(120px, 18vw, 175px); }
+  .tpec-landing .scan-b { right: 4%; top: 23%; }
+  .tpec-landing .scan-b .scan-connector { width: clamp(110px, 16vw, 155px); }
+  .tpec-landing .scan-c { left: 4%; right: auto; top: 43%; }
+  .tpec-landing .scan-c .scan-connector { width: clamp(150px, 27vw, 250px); }
 
   .tpec-landing .poster-whatsapp { align-items: stretch; }
   .tpec-landing .whatsapp-copy { order: 1; text-align: center; }
@@ -184,7 +187,15 @@
   .tpec-landing .hero-actions a { width: 100%; }
   .tpec-landing .hero-photo { min-height: 440px; }
   .tpec-landing .hero-photo .brand-seal { left: 23%; top: 15%; }
-  .tpec-landing .scan-label { font-size: 7px; padding: 6px 8px; }
+  .tpec-landing .scan-label .scan-icon { height: 28px; width: 28px; }
+  .tpec-landing .scan-label .scan-icon svg { height: 15px; width: 15px; }
+  .tpec-landing .scan-label b { font-size: 7px; padding: 5px 6px 5px 8px; }
+  .tpec-landing .scan-a { right: 3%; top: 70%; }
+  .tpec-landing .scan-a .scan-connector { width: clamp(76px, 24vw, 118px); }
+  .tpec-landing .scan-b { right: 2%; top: 23%; }
+  .tpec-landing .scan-b .scan-connector { width: clamp(72px, 21vw, 105px); }
+  .tpec-landing .scan-c { left: 2%; top: 42%; }
+  .tpec-landing .scan-c .scan-connector { width: clamp(80px, 27vw, 126px); }
 
   .tpec-landing .whatsapp-copy .gold-title,
   .tpec-landing .analysis-copy .gold-title,

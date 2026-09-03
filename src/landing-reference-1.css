@@ -156,11 +156,21 @@
 .tpec-landing .hero-photo { min-height: 690px; }
 .tpec-landing .hero-photo > img { object-position: 65% 50%; }
 .tpec-landing .hero-photo .brand-seal { left: 16%; position: absolute; top: 52%; transform: translate(-50%, -50%); z-index: 5; }
-.tpec-landing .scan-label { align-items: center; background: rgba(252,250,242,.88); border: 1px solid rgba(22,63,43,.2); border-radius: 8px; color: var(--forest); display: flex; font-size: 9px; font-weight: 850; gap: 7px; letter-spacing: .08em; padding: 8px 11px; position: absolute; text-transform: uppercase; z-index: 5; }
-.tpec-landing .scan-label i { border: 2px solid #d6a53c; border-radius: 50%; height: 8px; width: 8px; }
-.tpec-landing .scan-a { right: 28%; top: 19%; }
-.tpec-landing .scan-b { right: 18%; top: 31%; }
-.tpec-landing .scan-c { right: 36%; top: 43%; }
+.tpec-landing .scan-label { align-items: center; color: var(--forest); display: flex; position: absolute; text-transform: uppercase; z-index: 5; }
+.tpec-landing .scan-label .scan-icon { align-items: center; background: rgba(250,249,243,.94); border: 1px solid rgba(18,56,39,.48); border-radius: 6px; box-shadow: 0 4px 12px rgba(10,30,20,.14); display: flex; height: 32px; justify-content: center; position: relative; width: 32px; z-index: 2; }
+.tpec-landing .scan-label .scan-icon svg { fill: none; height: 18px; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.35; width: 18px; }
+.tpec-landing .scan-label b { background: rgba(250,249,243,.84); border: 1px solid rgba(18,56,39,.22); border-left: 0; border-radius: 0 5px 5px 0; box-shadow: 0 4px 12px rgba(10,30,20,.1); font-size: 9px; font-weight: 800; letter-spacing: .055em; line-height: 1.05; margin-left: -5px; padding: 6px 8px 6px 10px; position: relative; z-index: 1; }
+.tpec-landing .scan-connector { background: rgba(18,55,39,.8); display: block; height: 1px; position: absolute; z-index: 0; }
+.tpec-landing .scan-connector::after { background: rgba(250,249,243,.95); border: 1.5px solid #143b2a; border-radius: 50%; box-shadow: 0 0 0 2px rgba(202,151,48,.28); content: ""; height: 7px; position: absolute; top: -3px; width: 7px; }
+.tpec-landing .scan-a { right: 6%; top: 68%; }
+.tpec-landing .scan-a .scan-connector { right: calc(100% - 4px); top: 52%; transform: rotate(-32deg); transform-origin: right center; width: clamp(92px, 8.5vw, 128px); }
+.tpec-landing .scan-a .scan-connector::after,
+.tpec-landing .scan-b .scan-connector::after { left: -3px; }
+.tpec-landing .scan-b { right: 4%; top: 25%; }
+.tpec-landing .scan-b .scan-connector { right: calc(100% - 4px); top: 54%; transform: rotate(-22deg); transform-origin: right center; width: clamp(88px, 7.5vw, 115px); }
+.tpec-landing .scan-c { left: 3.5%; top: 32%; }
+.tpec-landing .scan-c .scan-connector { left: calc(100% - 4px); top: 53%; transform: rotate(13deg); transform-origin: left center; width: clamp(125px, 12vw, 180px); }
+.tpec-landing .scan-c .scan-connector::after { right: -3px; }
 
 .tpec-landing .poster-whatsapp { display: grid; grid-template-columns: 35% 30% 35%; min-height: 700px; }
 .tpec-landing .whatsapp-copy { align-self: center; padding: 54px 0 80px clamp(42px, 4vw, 78px); z-index: 5; }
