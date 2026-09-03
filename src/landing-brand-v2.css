@@ -17,14 +17,14 @@
   -webkit-text-fill-color: transparent !important;
   color: transparent !important;
   font-family: "Cinzel", Georgia, "Times New Roman", serif !important;
-  font-weight: 600 !important;
+  font-weight: 700 !important;
   letter-spacing: -0.018em !important;
   line-height: .94 !important;
-  -webkit-text-stroke: .75px rgba(31, 18, 5, .82) !important;
+  -webkit-text-stroke: .95px rgba(31, 18, 5, .88) !important;
   text-shadow:
-    0 1px 0 rgba(255, 218, 112, .50),
-    0 2px 2px rgba(38, 20, 4, .28),
-    0 5px 10px rgba(90, 42, 0, .10) !important;
+    0 1px 0 rgba(255, 218, 112, .55),
+    0 2px 2px rgba(38, 20, 4, .32),
+    0 5px 10px rgba(90, 42, 0, .12) !important;
   overflow-wrap: normal !important;
   word-break: keep-all !important;
   hyphens: none !important;
@@ -88,7 +88,7 @@
   .tpec-landing .poster-hero h1 {
     font-size: clamp(30px, 9.4vw, 45px) !important;
     letter-spacing: -0.03em !important;
-    -webkit-text-stroke-width: .5px !important;
+    -webkit-text-stroke-width: .62px !important;
   }
 
   .tpec-landing .whatsapp-copy .gold-title,
@@ -99,7 +99,7 @@
   .tpec-landing .examples-head .gold-title {
     font-size: clamp(32px, 9.2vw, 46px) !important;
     letter-spacing: -.02em !important;
-    -webkit-text-stroke-width: .5px !important;
+    -webkit-text-stroke-width: .62px !important;
   }
 }
 
