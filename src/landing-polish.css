@@ -437,3 +437,65 @@
   .tpec-landing .board-one { right: 2%; }
   .tpec-landing .board-two { left: 2%; }
 }
+
+/* Keep the complete opening poster inside short desktop viewports. */
+@media (min-width: 1081px) and (max-height: 820px) {
+  .tpec-landing .poster-hero {
+    height: clamp(520px, calc(100svh - 116px), 690px);
+    min-height: 0;
+  }
+
+  .tpec-landing .hero-copy {
+    padding: 44px 30px 18px clamp(40px, 5vw, 72px);
+  }
+
+  .tpec-landing .poster-hero .gold-divider {
+    margin-bottom: 14px;
+    margin-top: 12px;
+  }
+
+  .tpec-landing .poster-hero h2 {
+    font-size: clamp(25px, 2.05vw, 31px);
+    margin-bottom: 12px;
+  }
+
+  .tpec-landing .poster-hero p {
+    font-size: 12.5px;
+    line-height: 1.5;
+  }
+
+  .tpec-landing .hero-mini-grid {
+    margin-bottom: 14px;
+    margin-top: 18px;
+  }
+
+  .tpec-landing .hero-mini-grid > span {
+    gap: 6px;
+    min-height: 82px;
+    padding: 8px 6px;
+  }
+
+  .tpec-landing .hero-mini-grid i {
+    height: 32px;
+    width: 32px;
+  }
+
+  .tpec-landing .hero-mini-grid svg {
+    height: 18px;
+    width: 18px;
+  }
+
+  .tpec-landing .hero-actions a {
+    min-height: 42px;
+  }
+
+  .tpec-landing .hero-photo {
+    height: 100%;
+    min-height: 0;
+  }
+
+  .tpec-landing .hero-photo .brand-seal {
+    height: 116px;
+    width: 116px;
+  }
+}
