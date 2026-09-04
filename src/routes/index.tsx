@@ -169,7 +169,7 @@ function LandingPage() {
     <main className="tpec-landing">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       <header className="site-header">
-        <a className="brand" href="#inicio" aria-label="IA do Boi — início">
+        <a className="brand" href="#whatsapp" aria-label="IA do Boi — início">
           <img src="/tpec-logo.png" alt="" />
           <span><strong>TPEC-IA</strong><small>INTELIGÊNCIA ARTIFICIAL DA PECUÁRIA</small></span>
         </a>
@@ -178,38 +178,6 @@ function LandingPage() {
         </nav>
         <a className="header-cta" href={whatsappUrl} target="_blank" rel="noreferrer">Testar no WhatsApp <ArrowIcon /></a>
       </header>
-
-      <section className="poster poster-hero" id="inicio">
-        <div className="poster-swoosh" aria-hidden="true" />
-        <div className="hero-copy reference-copy">
-          <span className="reference-kicker">IA DO BOI • INTELIGÊNCIA ARTIFICIAL PARA PECUÁRIA</span>
-          <h1>CAMPO +<br />INTELIGÊNCIA</h1>
-          <span className="gold-divider" aria-hidden="true"><i /></span>
-          <h2>Tecnologia criada para quem está na lida.</h2>
-          <p>A IA do Boi usa inteligência artificial para apoiar a rotina da pecuária e do gado, transformando informações em decisões mais claras, práticas e estratégicas no campo.</p>
-          <div className="hero-mini-grid">
-            {benefits.map((item) => <span key={item.title}><i><FeatureIcon name={item.icon} /></i><b>{item.title}</b></span>)}
-          </div>
-          <div className="hero-actions">
-            <a className="reference-button" href={whatsappUrl} target="_blank" rel="noreferrer"><WhatsappIcon /> CONVERSAR COM A TPEC-IA</a>
-            <a className="outline-button" href="#como-funciona">VER COMO FUNCIONA <ArrowIcon /></a>
-          </div>
-        </div>
-        <div className="hero-photo reference-photo">
-          <img src={heroBullPhoto} alt="Touro Nelore forte em pastagem" fetchPriority="high" />
-          <div className="photo-fade" aria-hidden="true" />
-          <BrandSeal />
-          <span className="scan-label scan-a">
-            <span className="scan-icon"><HeroScanIcon name="management" /></span><b>MANEJO</b><span className="scan-connector" aria-hidden="true" />
-          </span>
-          <span className="scan-label scan-b">
-            <span className="scan-icon"><HeroScanIcon name="nutrition" /></span><b>NUTRIÇÃO</b><span className="scan-connector" aria-hidden="true" />
-          </span>
-          <span className="scan-label scan-c">
-            <span className="scan-icon"><HeroScanIcon name="condition" /></span><b>CONDIÇÃO<br />CORPORAL</b><span className="scan-connector" aria-hidden="true" />
-          </span>
-        </div>
-      </section>
 
       <section className="poster poster-whatsapp poster-whatsapp-adapted" id="whatsapp">
         <div className="poster-swoosh" aria-hidden="true" />
@@ -241,8 +209,40 @@ function LandingPage() {
         </div>
 
         <div className="whatsapp-field reference-photo">
-          <img className="whatsapp-field-reference" src={whatsappReferenceImage} alt="Pecuarista usando o celular ao lado de um bovino no campo" loading="lazy" />
+          <img className="whatsapp-field-reference" src={whatsappReferenceImage} alt="Pecuarista usando o celular ao lado de um bovino no campo" fetchPriority="high" />
           <div className="photo-fade left-fade" aria-hidden="true" />
+        </div>
+      </section>
+
+      <section className="poster poster-hero" id="inicio">
+        <div className="poster-swoosh" aria-hidden="true" />
+        <div className="hero-copy reference-copy">
+          <span className="reference-kicker">IA DO BOI • INTELIGÊNCIA ARTIFICIAL PARA PECUÁRIA</span>
+          <h1>CAMPO +<br />INTELIGÊNCIA</h1>
+          <span className="gold-divider" aria-hidden="true"><i /></span>
+          <h2>Tecnologia criada para quem está na lida.</h2>
+          <p>A IA do Boi usa inteligência artificial para apoiar a rotina da pecuária e do gado, transformando informações em decisões mais claras, práticas e estratégicas no campo.</p>
+          <div className="hero-mini-grid">
+            {benefits.map((item) => <span key={item.title}><i><FeatureIcon name={item.icon} /></i><b>{item.title}</b></span>)}
+          </div>
+          <div className="hero-actions">
+            <a className="reference-button" href={whatsappUrl} target="_blank" rel="noreferrer"><WhatsappIcon /> CONVERSAR COM A TPEC-IA</a>
+            <a className="outline-button" href="#como-funciona">VER COMO FUNCIONA <ArrowIcon /></a>
+          </div>
+        </div>
+        <div className="hero-photo reference-photo">
+          <img src={heroBullPhoto} alt="Touro Nelore forte em pastagem" loading="lazy" />
+          <div className="photo-fade" aria-hidden="true" />
+          <BrandSeal />
+          <span className="scan-label scan-a">
+            <span className="scan-icon"><HeroScanIcon name="management" /></span><b>MANEJO</b><span className="scan-connector" aria-hidden="true" />
+          </span>
+          <span className="scan-label scan-b">
+            <span className="scan-icon"><HeroScanIcon name="nutrition" /></span><b>NUTRIÇÃO</b><span className="scan-connector" aria-hidden="true" />
+          </span>
+          <span className="scan-label scan-c">
+            <span className="scan-icon"><HeroScanIcon name="condition" /></span><b>CONDIÇÃO<br />CORPORAL</b><span className="scan-connector" aria-hidden="true" />
+          </span>
         </div>
       </section>
 
@@ -348,7 +348,7 @@ function LandingPage() {
       </section>
 
       <footer className="site-footer">
-        <a className="footer-brand" href="#inicio"><img src="/tpec-logo.png" alt="" /><span><strong>TPEC-IA</strong><small>INTELIGÊNCIA ARTIFICIAL DA PECUÁRIA</small></span></a>
+        <a className="footer-brand" href="#whatsapp"><img src="/tpec-logo.png" alt="" /><span><strong>TPEC-IA</strong><small>INTELIGÊNCIA ARTIFICIAL DA PECUÁRIA</small></span></a>
         <p>Informação para apoiar decisões no campo. Use com responsabilidade.</p>
         <nav aria-label="Links legais"><a href="/politica-de-privacidade">Privacidade</a><a href="/termos-de-uso">Termos de uso</a></nav>
       </footer>
