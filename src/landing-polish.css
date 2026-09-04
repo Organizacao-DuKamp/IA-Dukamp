@@ -465,8 +465,10 @@
   }
 
   .tpec-landing .hero-mini-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     margin-bottom: 14px;
     margin-top: 18px;
+    max-width: 680px;
   }
 
   .tpec-landing .hero-mini-grid > span {
