@@ -62,7 +62,11 @@
   width: 100%;
 }
 
-/* The decorative curve stays behind the hero cards and action buttons. */
+/* Decorative curves are background accents and never cover poster content. */
+.tpec-landing .poster-swoosh {
+  z-index: 1;
+}
+
 .tpec-landing .poster-hero .hero-copy {
   z-index: 7;
 }
