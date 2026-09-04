@@ -62,6 +62,11 @@
   width: 100%;
 }
 
+/* The decorative curve stays behind the hero cards and action buttons. */
+.tpec-landing .poster-hero .hero-copy {
+  z-index: 7;
+}
+
 /* Large desktop: preserve the poster-like composition without oversized empty areas. */
 @media (min-width: 1500px) {
   .tpec-landing .poster { max-width: 1640px; }
