@@ -8,3 +8,16 @@
 @import "./landing-logo-fix.css";
 @import "./landing-whatsapp-reference.css";
 @import "./landing-first-fold.css";
+
+/* Conversa do mockup: produtor = verde à direita; TPEC-IA = branco à esquerda. */
+.tpec-landing .poster-whatsapp.poster-whatsapp-adapted .phone-body > .bubble.incoming {
+  background: #d8f5c5 !important;
+  margin-left: auto !important;
+  margin-right: 0 !important;
+}
+
+.tpec-landing .poster-whatsapp.poster-whatsapp-adapted .phone-body > .bubble.outgoing {
+  background: #ffffff !important;
+  margin-left: 0 !important;
+  margin-right: auto !important;
+}
