@@ -70,3 +70,15 @@
     margin-top: 6px;
   }
 }
+
+/* No mockup do WhatsApp, verde = produtor e branco = TPEC-IA. */
+.tpec-landing .poster-whatsapp-adapted .bubble.incoming {
+  background: #d8f5c5;
+  margin-left: auto;
+}
+
+.tpec-landing .poster-whatsapp-adapted .bubble.outgoing {
+  background: #fff;
+  margin-left: 0;
+  margin-right: auto;
+}
