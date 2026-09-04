@@ -1,36 +1,22 @@
-/* Final override for TPEC-IA titles, matching the antique gold logo finish.
+/* Final override for TPEC-IA titles with a clean, high-contrast black finish.
    Intentionally loaded last to win over legacy landing rules. */
 
 .tpec-landing .gold-title,
 .tpec-landing .poster-hero h1 {
-  background: linear-gradient(
-    180deg,
-    #fff0b2 0%,
-    #e8bd55 12%,
-    #b87916 28%,
-    #f3cf70 43%,
-    #9b5b0d 58%,
-    #d9a438 73%,
-    #744007 91%,
-    #c88d20 100%
-  ) !important;
-  -webkit-background-clip: text !important;
-  background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-  color: transparent !important;
+  background: none !important;
+  -webkit-background-clip: border-box !important;
+  background-clip: border-box !important;
+  -webkit-text-fill-color: #111 !important;
+  color: #111 !important;
   font-family: "Cinzel", Georgia, "Times New Roman", serif !important;
   font-feature-settings: "kern" 1 !important;
   font-kerning: normal !important;
   font-weight: 600 !important;
   letter-spacing: -0.012em !important;
   line-height: .94 !important;
-  paint-order: stroke fill !important;
-  -webkit-text-stroke: .9px rgba(76, 43, 5, .96) !important;
-  text-shadow:
-    0 1px 0 rgba(255, 242, 186, .82),
-    0 2px 0 rgba(103, 57, 6, .72),
-    0 3px 2px rgba(45, 24, 2, .5),
-    0 6px 11px rgba(90, 52, 8, .2) !important;
+  paint-order: normal !important;
+  -webkit-text-stroke: 0 transparent !important;
+  text-shadow: none !important;
   overflow-wrap: normal !important;
   word-break: keep-all !important;
   hyphens: none !important;
@@ -45,7 +31,7 @@
   font-size: clamp(44px, 4.15vw, 66px) !important;
 }
 
-/* Other poster titles use the same metal, slightly more compact. */
+/* Other poster titles use the same black serif treatment, slightly more compact. */
 .tpec-landing .whatsapp-copy .gold-title,
 .tpec-landing .analysis-copy .gold-title,
 .tpec-landing .how-copy > .gold-title,
@@ -94,7 +80,7 @@
   .tpec-landing .poster-hero h1 {
     font-size: clamp(30px, 9.4vw, 45px) !important;
     letter-spacing: -0.03em !important;
-    -webkit-text-stroke-width: .62px !important;
+    -webkit-text-stroke-width: 0 !important;
   }
 
   .tpec-landing .whatsapp-copy .gold-title,
@@ -105,7 +91,7 @@
   .tpec-landing .examples-head .gold-title {
     font-size: clamp(32px, 9.2vw, 46px) !important;
     letter-spacing: -.02em !important;
-    -webkit-text-stroke-width: .62px !important;
+    -webkit-text-stroke-width: 0 !important;
   }
 }
 
