@@ -35,7 +35,9 @@ const benefits = [
   { icon: "chart", title: "Tecnologia no campo", text: "Inteligência artificial aplicada à rotina da fazenda, sem complicação." },
 ];
 
-type Area = { title: string; image: string; text: string; imagePosition?: string };\n\nconst areas: Area[] = [
+type Area = { title: string; image: string; text: string; imagePosition?: string };
+
+const areas: Area[] = [
   { title: "Bovinos de corte", image: cattlePhoto, text: "Manejo, pasto, ganho de peso e suplementação.", imagePosition: "58% 50%" },
   { title: "Bovinos de leite", image: dairyPhoto, text: "Alimentação, rotina do rebanho e produtividade.", imagePosition: "50% 72%" },
   { title: "Equinos", image: horsePhoto, text: "Condição corporal, manejo e cuidados gerais." },
