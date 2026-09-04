@@ -11,16 +11,6 @@ const cattlePhoto =
   "https://images.pexels.com/photos/28410820/pexels-photo-28410820.jpeg?auto=compress&cs=tinysrgb&w=900";
 const dairyPhoto =
   "https://images.pexels.com/photos/30982514/pexels-photo-30982514/free-photo-of-holstein-cow-grazing-in-sunny-pasture.jpeg?auto=compress&cs=tinysrgb&w=900";
-const horsePhoto =
-  "https://images.pexels.com/photos/19575508/pexels-photo-19575508.jpeg?auto=compress&cs=tinysrgb&w=900";
-const sheepPhoto =
-  "https://images.pexels.com/photos/33950400/pexels-photo-33950400.jpeg?auto=compress&cs=tinysrgb&w=900";
-const pigPhoto =
-  "https://images.pexels.com/photos/110820/pexels-photo-110820.jpeg?auto=compress&cs=tinysrgb&w=900";
-const chickenPhoto =
-  "https://images.pexels.com/photos/35641002/pexels-photo-35641002.jpeg?auto=compress&cs=tinysrgb&w=900";
-const fishPhoto =
-  "https://images.pexels.com/photos/15059730/pexels-photo-15059730.jpeg?auto=compress&cs=tinysrgb&w=900";
 const cattleWide =
   "https://images.pexels.com/photos/31026900/pexels-photo-31026900/free-photo-of-close-up-of-nelore-cattle-in-sao-paulo-pasture.jpeg?auto=compress&cs=tinysrgb&w=1400";
 const herdWide =
@@ -35,16 +25,16 @@ const benefits = [
   { icon: "chart", title: "Tecnologia no campo", text: "Inteligência artificial aplicada à rotina da fazenda, sem complicação." },
 ];
 
-type Area = { title: string; image: string; text: string; imagePosition?: string };
+type Area = { title: string; text: string; crop: string };
 
 const areas: Area[] = [
-  { title: "Bovinos de corte", image: cattlePhoto, text: "Manejo, pasto, ganho de peso e suplementação.", imagePosition: "58% 50%" },
-  { title: "Bovinos de leite", image: dairyPhoto, text: "Alimentação, rotina do rebanho e produtividade.", imagePosition: "50% 72%" },
-  { title: "Equinos", image: horsePhoto, text: "Condição corporal, manejo e cuidados gerais." },
-  { title: "Ovinos e caprinos", image: sheepPhoto, text: "Nutrição, reprodução e rotina de manejo." },
-  { title: "Suínos", image: pigPhoto, text: "Ambiência, alimentação e desempenho.", imagePosition: "56% 50%" },
-  { title: "Aves", image: chickenPhoto, text: "Manejo, sanidade, consumo e ambiência." },
-  { title: "Piscicultura", image: fishPhoto, text: "Qualidade da água, manejo e alimentação." },
+  { title: "Bovinos de corte", text: "Manejo, pasto, ganho de peso e suplementação.", crop: "area-crop-beef" },
+  { title: "Bovinos de leite", text: "Alimentação, rotina do rebanho e produtividade.", crop: "area-crop-dairy" },
+  { title: "Equinos", text: "Condição corporal, manejo e cuidados gerais.", crop: "area-crop-horse" },
+  { title: "Ovinos e caprinos", text: "Nutrição, reprodução e rotina de manejo.", crop: "area-crop-sheep" },
+  { title: "Suínos", text: "Ambiência, alimentação e desempenho.", crop: "area-crop-pig" },
+  { title: "Aves", text: "Manejo, sanidade, consumo e ambiência.", crop: "area-crop-chicken" },
+  { title: "Piscicultura", text: "Qualidade da água, manejo e alimentação.", crop: "area-crop-fish" },
 ];
 
 const useCases = [
@@ -313,7 +303,7 @@ function LandingPage() {
       <section className="poster poster-areas" id="areas">
         <BrandSeal />
         <div className="areas-head"><span className="gold-title">ÁREAS DA PECUÁRIA</span><span className="gold-divider wide" aria-hidden="true"><i /></span><h2>Soluções inteligentes para cada atividade de campo.</h2><p>Mais contexto para diferentes espécies, rotinas e sistemas de produção.</p></div>
-        <div className="reference-areas-grid">{areas.map((area) => <article key={area.title}><div className="area-photo"><img src={area.image} alt={area.title} loading="lazy" style={{ objectPosition: area.imagePosition }} /></div><span className="area-icon"><UseIcon name={area.title.includes("Pisc") ? "eye" : "cow"} /></span><h3>{area.title}</h3><p>{area.text}</p></article>)}</div>
+        <div className="reference-areas-grid">{areas.map((area) => <article key={area.title}><div className={`area-photo area-photo-reference ${area.crop}`} role="img" aria-label={area.title} /><span className="area-icon"><UseIcon name={area.title.includes("Pisc") ? "eye" : "cow"} /></span><h3>{area.title}</h3><p>{area.text}</p></article>)}</div>
         <div className="poster-swoosh" aria-hidden="true" />
       </section>
 

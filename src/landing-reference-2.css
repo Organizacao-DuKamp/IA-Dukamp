@@ -344,6 +344,43 @@
 
 .tpec-landing .area-photo img { height: 100%; object-fit: cover; width: 100%; }
 
+.tpec-landing .area-photo-reference {
+  background: #e7e6dc;
+  position: relative;
+}
+
+.tpec-landing .area-photo-reference::before {
+  background-image: url("/tpec-areas-reference.jpg");
+  background-position-y: 52%;
+  background-repeat: no-repeat;
+  background-size: 822.5% auto;
+  content: "";
+  inset: 0;
+  position: absolute;
+  transition: filter 500ms ease, transform 500ms cubic-bezier(.16, 1, .3, 1);
+}
+
+.tpec-landing .area-crop-beef::before { background-position-x: 2.7%; }
+.tpec-landing .area-crop-dairy::before { background-position-x: 18.1%; }
+.tpec-landing .area-crop-horse::before { background-position-x: 33.5%; }
+.tpec-landing .area-crop-sheep::before { background-position-x: 48.7%; }
+.tpec-landing .area-crop-pig::before { background-position-x: 64.1%; }
+.tpec-landing .area-crop-chicken::before { background-position-x: 78.7%; }
+.tpec-landing .area-crop-fish::before { background-position-x: 94.2%; }
+
+.tpec-landing .reference-areas-grid > article.is-visible:hover .area-photo-reference::before {
+  filter: saturate(1.06) contrast(1.02);
+  transform: scale(1.045);
+}
+
+@media (max-width: 1220px) {
+  .tpec-landing .area-photo-reference::before { background-position-y: 47%; }
+}
+
+@media (max-width: 980px) {
+  .tpec-landing .area-photo-reference::before { background-position-y: 44%; }
+}
+
 .tpec-landing .area-icon { align-items: center; color: var(--forest); display: flex; height: 34px; justify-content: center; margin-top: 8px; width: 34px; }
 
 .tpec-landing .area-icon svg { height: 27px; width: 27px; }
