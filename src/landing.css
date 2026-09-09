@@ -150,28 +150,31 @@
   }
 }
 
-/* Exemplos de uso: mantém o mini celular no lugar, mas usa o print real. */
+/* Exemplos de uso: mantém o mini celular no lugar e usa o print real em alta resolução. */
 .tpec-landing .reference-use-grid .mini-phone {
-  background: #232623 !important;
+  background: transparent !important;
   border: 0 !important;
   border-radius: 19px !important;
   box-shadow: 0 7px 18px rgba(0,0,0,.18) !important;
+  height: 214px !important;
+  left: 16px !important;
   padding: 0 !important;
   overflow: hidden !important;
+  width: 120px !important;
   isolation: isolate;
 }
 
-/* O print ultrapassa a moldura de propósito para eliminar os cantos brancos da imagem original. */
+/* A proporção acompanha o print HD para preservar toda a moldura do celular sem cortar as bordas. */
 .tpec-landing .reference-use-grid .mini-phone::before {
   content: "";
   position: absolute;
-  inset: -5px;
+  inset: 0;
   z-index: 1;
   background-image: url("/tpec-whatsapp-real-example.webp");
   background-repeat: no-repeat;
   background-position: center top;
   background-size: cover;
-  border-radius: 23px;
+  border-radius: 19px;
 }
 
 .tpec-landing .reference-use-grid .mini-phone > * {
