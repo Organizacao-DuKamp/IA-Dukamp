@@ -150,14 +150,28 @@
   }
 }
 
-/* Exemplos de uso: substitui o mini-celular desenhado por HTML pelo print real enviado. */
+/* Exemplos de uso: mantém o mini celular no lugar, mas usa o print real. */
 .tpec-landing .reference-use-grid .mini-phone {
-  background: transparent url("/tpec-whatsapp-real-example.webp") center / contain no-repeat !important;
+  background: #232623 !important;
   border: 0 !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
+  border-radius: 19px !important;
+  box-shadow: 0 7px 18px rgba(0,0,0,.18) !important;
   padding: 0 !important;
-  overflow: visible !important;
+  overflow: hidden !important;
+  isolation: isolate;
+}
+
+/* O print ultrapassa a moldura de propósito para eliminar os cantos brancos da imagem original. */
+.tpec-landing .reference-use-grid .mini-phone::before {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  z-index: 1;
+  background-image: url("/tpec-whatsapp-real-example.webp");
+  background-repeat: no-repeat;
+  background-position: center top;
+  background-size: cover;
+  border-radius: 23px;
 }
 
 .tpec-landing .reference-use-grid .mini-phone > * {
