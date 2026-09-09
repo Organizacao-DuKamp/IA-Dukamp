@@ -68,6 +68,12 @@
   object-position: center 55% !important;
 }
 
+/* Troca o bovino do card "O que devo observar neste caso?" por um touro mais parrudo. */
+.tpec-landing .reference-use-grid > article:nth-child(4) .use-photo img {
+  content: url("https://images.pexels.com/photos/32388928/pexels-photo-32388928.jpeg?auto=compress&cs=tinysrgb&w=1200");
+  object-position: 58% 48% !important;
+}
+
 /* 7. FAQ abre ao passar o mouse, sem depender do clique no '+'. */
 .tpec-landing .faq-list details > p {
   display: block !important;
