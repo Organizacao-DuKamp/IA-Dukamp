@@ -149,3 +149,17 @@
     display: none;
   }
 }
+
+/* Exemplos de uso: substitui o mini-celular desenhado por HTML pelo print real enviado. */
+.tpec-landing .reference-use-grid .mini-phone {
+  background: transparent url("/tpec-whatsapp-real-example.webp") center / contain no-repeat !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+
+.tpec-landing .reference-use-grid .mini-phone > * {
+  display: none !important;
+}
