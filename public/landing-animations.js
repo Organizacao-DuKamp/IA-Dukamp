@@ -1,7 +1,11 @@
 (() => {
   const ROOT_SELECTOR = ".tpec-landing";
-  const LEGACY_CATTLE_IMAGE = "/tpec-nelore-grazing.webp";
-  const STRONG_CATTLE_IMAGE = "/tpec-nelore-elite.webp";
+  const WEAK_CATTLE_IMAGES = [
+    "/tpec-nelore-grazing.webp",
+    "/tpec-nelore-elite.webp",
+    "/tpec-nelore-elite-panel.webp",
+  ];
+  const STRONG_CATTLE_IMAGE = "/tpec-hero-bull.webp";
   const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)");
   let observer = null;
 
@@ -70,9 +74,10 @@
     },
   ];
 
-  function replaceLegacyCattleImages(root) {
-    root.querySelectorAll(`img[src$="${LEGACY_CATTLE_IMAGE}"]`).forEach((image) => {
-      if (image.getAttribute("src") !== STRONG_CATTLE_IMAGE) {
+  function replaceWeakCattleImages(root) {
+    root.querySelectorAll("img").forEach((image) => {
+      const src = image.getAttribute("src") || "";
+      if (WEAK_CATTLE_IMAGES.some((weakImage) => src.endsWith(weakImage))) {
         image.setAttribute("src", STRONG_CATTLE_IMAGE);
       }
     });
@@ -121,7 +126,7 @@
   function setupRoot(root) {
     if (!root) return;
 
-    replaceLegacyCattleImages(root);
+    replaceWeakCattleImages(root);
     if (root.dataset.tpecMotionReady === "1") return;
 
     root.dataset.tpecMotionReady = "1";
@@ -150,7 +155,7 @@
     const roots = document.querySelectorAll(ROOT_SELECTOR);
     if (!roots.length) return;
     roots.forEach((root) => {
-      replaceLegacyCattleImages(root);
+      replaceWeakCattleImages(root);
       if (root.dataset.tpecMotionReady !== "1") setupRoot(root);
     });
   });
