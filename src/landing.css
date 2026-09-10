@@ -131,3 +131,8 @@
     width:clamp(68px,21vw,88px)!important;
   }
 }
+
+/* Remove apenas a logo TPEC-IA do componente "Como funciona / Análise corporal". */
+.tpec-landing .poster-how .how-field > .brand-seal {
+  display:none!important;
+}
