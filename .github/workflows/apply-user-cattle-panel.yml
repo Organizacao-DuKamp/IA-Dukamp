@@ -1,0 +1,47 @@
+name: Apply user cattle panel
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/apply-user-cattle-panel.yml
+      - public/tpec-nelore-user.svg
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Decode embedded WebP into cattle panel asset
+        run: |
+          python - <<'PY'
+          import base64
+          import pathlib
+          import re
+
+          source = pathlib.Path('public/tpec-nelore-user.svg').read_text(encoding='utf-8')
+          match = re.search(r'data:image/webp;base64,([^"\']+)', source)
+          if not match:
+              raise SystemExit('Embedded WebP not found in public/tpec-nelore-user.svg')
+
+          data = base64.b64decode(match.group(1))
+          if not (data.startswith(b'RIFF') and data[8:12] == b'WEBP'):
+              raise SystemExit('Decoded payload is not a valid WebP')
+
+          pathlib.Path('public/tpec-nelore-elite-panel.webp').write_bytes(data)
+          PY
+      - name: Commit replacement if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/tpec-nelore-elite-panel.webp
+          if git diff --cached --quiet; then
+            echo "No changes needed"
+            exit 0
+          fi
+          git commit -m "feat: aplica novo Nelore no cattlePanel"
+          git push
