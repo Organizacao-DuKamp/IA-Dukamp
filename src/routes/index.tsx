@@ -7,12 +7,10 @@ const whatsappUrl =
 const whatsappReferenceImage = "/tpec-whatsapp-reference.webp";
 const heroBullPhoto = "/tpec-hero-bull.webp";
 
-const cattlePhoto =
-  "https://images.pexels.com/photos/28410820/pexels-photo-28410820.jpeg?auto=compress&cs=tinysrgb&w=900";
+const cattlePhoto = "/tpec-nelore-grazing.webp";
 const dairyPhoto =
   "https://images.pexels.com/photos/30982514/pexels-photo-30982514/free-photo-of-holstein-cow-grazing-in-sunny-pasture.jpeg?auto=compress&cs=tinysrgb&w=900";
-const cattleWide =
-  "https://images.pexels.com/photos/31026900/pexels-photo-31026900/free-photo-of-close-up-of-nelore-cattle-in-sao-paulo-pasture.jpeg?auto=compress&cs=tinysrgb&w=1400";
+const cattleWide = "/tpec-nelore-strong.webp";
 const herdWide =
   "https://images.pexels.com/photos/33206150/pexels-photo-33206150/free-photo-of-herd-of-cattle-grazing-in-brazilian-pasture.png?auto=compress&cs=tinysrgb&w=1400";
 const benefits = [
