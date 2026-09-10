@@ -154,3 +154,72 @@
     display: none !important;
   }
 }
+
+/* No celular, o painel de análise por foto ocupa praticamente a tela inteira. */
+@media (max-width: 680px) {
+  .tpec-landing .poster.poster-analysis {
+    align-items: stretch !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    min-height: 100svh !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  .tpec-landing .poster-analysis .analysis-field {
+    display: none !important;
+  }
+
+  .tpec-landing .poster-analysis .analysis-phone {
+    align-self: stretch !important;
+    border-radius: 26px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    height: calc(100svh - 16px) !important;
+    justify-self: stretch !important;
+    margin: 8px !important;
+    max-width: none !important;
+    min-height: 600px !important;
+    padding: 16px !important;
+    transform: none !important;
+    width: calc(100% - 16px) !important;
+  }
+
+  .tpec-landing .poster-analysis .analysis-top {
+    flex: 0 0 auto !important;
+    font-size: 13px !important;
+    padding: 4px 4px 14px !important;
+  }
+
+  .tpec-landing .poster-analysis .analysis-cow-photo {
+    flex: 0 0 42svh !important;
+    height: 42svh !important;
+    max-height: 420px !important;
+    min-height: 260px !important;
+    width: 100% !important;
+  }
+
+  .tpec-landing .poster-analysis .analysis-row {
+    flex: 1 1 0 !important;
+    min-height: 54px !important;
+    padding: 8px 10px !important;
+  }
+
+  .tpec-landing .poster-analysis .analysis-row b {
+    font-size: 11px !important;
+  }
+
+  .tpec-landing .poster-analysis .analysis-row small {
+    font-size: 8px !important;
+  }
+
+  .tpec-landing .poster-analysis .analysis-disclaimer {
+    flex: 0 0 auto !important;
+    margin: 9px 4px 0 !important;
+  }
+
+  .tpec-landing .poster-analysis .analysis-copy {
+    padding-top: 52px !important;
+  }
+}
