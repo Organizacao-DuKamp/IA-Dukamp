@@ -141,3 +141,77 @@
 .tpec-landing .site-header {
   display:none!important;
 }
+
+/* Mobile: a análise por foto vira uma tela inteira de verdade. */
+@media (max-width: 680px) {
+  .tpec-landing #analise.poster-analysis {
+    display: block !important;
+    height: 100svh !important;
+    min-height: 100svh !important;
+    max-height: 100svh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100vw !important;
+    max-width: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .tpec-landing #analise .analysis-field,
+  .tpec-landing #analise .analysis-copy,
+  .tpec-landing #analise .poster-swoosh {
+    display: none !important;
+  }
+
+  .tpec-landing #analise .analysis-phone {
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100vw !important;
+    max-width: none !important;
+    height: 100svh !important;
+    min-height: 100svh !important;
+    max-height: 100svh !important;
+    margin: 0 !important;
+    padding: 14px !important;
+    border-radius: 0 !important;
+    transform: none !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+  }
+
+  .tpec-landing #analise .analysis-top {
+    flex: 0 0 auto !important;
+    min-height: 38px !important;
+    padding: 4px 5px 10px !important;
+    font-size: 13px !important;
+  }
+
+  .tpec-landing #analise .analysis-cow-photo {
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    border-radius: 18px !important;
+  }
+
+  .tpec-landing #analise .analysis-cow-photo > img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+  }
+
+  .tpec-landing #analise .analysis-row {
+    flex: 0 0 58px !important;
+    min-height: 58px !important;
+    margin-top: 8px !important;
+    padding: 8px 10px !important;
+  }
+
+  .tpec-landing #analise .analysis-disclaimer {
+    flex: 0 0 auto !important;
+    margin: 7px 4px 0 !important;
+  }
+}
