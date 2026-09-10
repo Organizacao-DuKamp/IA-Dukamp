@@ -36,50 +36,98 @@
 .tpec-landing .poster-hero .hero-photo .scan-c .scan-connector { transform:rotate(5deg)!important; width:clamp(155px,14vw,215px)!important; }
 @media(max-width:980px){.tpec-landing .poster-hero .hero-photo .brand-seal{height:136px!important;width:136px!important;left:24%!important;top:38%!important}.tpec-landing .poster-hero .hero-photo .scan-c{left:31%!important;top:59%!important}.tpec-landing .poster-hero .hero-photo .scan-c .scan-connector{transform:rotate(5deg)!important;width:clamp(125px,19vw,175px)!important}}
 
-/* Composição mobile revisada no Lovable com webdesign-review. */
+/* Hero mobile: composição fechada dentro da própria foto, sem altura fantasma do poster. */
 @media (max-width:680px) {
+  .tpec-landing .poster.poster-hero {
+    display:flex!important;
+    flex-direction:column!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+  }
+
+  .tpec-landing .poster.poster-hero .hero-copy {
+    flex:0 0 auto!important;
+  }
+
   .tpec-landing .poster.poster-hero .reference-photo.hero-photo {
     flex:0 0 auto!important;
-    height:clamp(340px,94vw,420px)!important;
-    min-height:clamp(340px,94vw,420px)!important;
-    max-height:420px!important;
+    height:clamp(310px,86vw,360px)!important;
+    min-height:0!important;
+    max-height:none!important;
     overflow:hidden!important;
     position:relative!important;
   }
+
   .tpec-landing .poster.poster-hero .reference-photo.hero-photo > img {
+    display:block!important;
     height:100%!important;
     min-height:0!important;
     object-fit:cover!important;
-    object-position:63% 50%!important;
+    object-position:64% 49%!important;
     width:100%!important;
   }
+
   .tpec-landing .poster.poster-hero .reference-photo.hero-photo .photo-fade {
-    background:linear-gradient(90deg,rgba(8,25,17,.28) 0%,transparent 42%)!important;
+    background:linear-gradient(90deg,rgba(8,25,17,.24) 0%,rgba(8,25,17,.08) 26%,transparent 48%)!important;
+    inset:0!important;
   }
+
   .tpec-landing .poster.poster-hero .reference-photo.hero-photo .brand-seal {
-    height:clamp(82px,24vw,100px)!important;
-    left:12px!important;
-    top:12px!important;
+    height:clamp(82px,23vw,96px)!important;
+    left:14px!important;
+    top:14px!important;
     transform:none!important;
-    width:clamp(82px,24vw,100px)!important;
+    width:clamp(82px,23vw,96px)!important;
   }
-  .tpec-landing .poster.poster-hero .reference-photo.hero-photo .scan-label { max-width:calc(100% - 24px); }
+
+  .tpec-landing .poster.poster-hero .reference-photo.hero-photo .scan-label {
+    max-width:calc(100% - 20px)!important;
+    z-index:7!important;
+  }
+
   .tpec-landing .poster.poster-hero .reference-photo.hero-photo .scan-c {
-    left:12px!important; right:auto!important; top:clamp(112px,31vw,136px)!important;
+    bottom:18px!important;
+    left:12px!important;
+    right:auto!important;
+    top:auto!important;
   }
+
   .tpec-landing .poster.poster-hero .reference-photo.hero-photo .scan-c .scan-connector {
-    left:calc(100% - 4px)!important; right:auto!important; transform:rotate(9deg)!important; transform-origin:left center!important; width:clamp(72px,23vw,96px)!important;
+    left:calc(100% - 3px)!important;
+    right:auto!important;
+    top:52%!important;
+    transform:rotate(-8deg)!important;
+    transform-origin:left center!important;
+    width:clamp(74px,23vw,94px)!important;
   }
+
   .tpec-landing .poster.poster-hero .reference-photo.hero-photo .scan-b {
-    left:auto!important; right:10px!important; top:19%!important;
+    left:auto!important;
+    right:10px!important;
+    top:21%!important;
   }
+
   .tpec-landing .poster.poster-hero .reference-photo.hero-photo .scan-b .scan-connector {
-    right:calc(100% - 4px)!important; transform:rotate(-13deg)!important; transform-origin:right center!important; width:clamp(62px,19vw,82px)!important;
+    right:calc(100% - 3px)!important;
+    top:52%!important;
+    transform:rotate(-13deg)!important;
+    transform-origin:right center!important;
+    width:clamp(68px,20vw,84px)!important;
   }
+
   .tpec-landing .poster.poster-hero .reference-photo.hero-photo .scan-a {
-    bottom:24px!important; left:auto!important; right:10px!important; top:auto!important;
+    bottom:18px!important;
+    left:auto!important;
+    right:10px!important;
+    top:auto!important;
   }
+
   .tpec-landing .poster.poster-hero .reference-photo.hero-photo .scan-a .scan-connector {
-    right:calc(100% - 4px)!important; transform:rotate(16deg)!important; transform-origin:right center!important; width:clamp(72px,23vw,96px)!important;
+    right:calc(100% - 3px)!important;
+    top:52%!important;
+    transform:rotate(13deg)!important;
+    transform-origin:right center!important;
+    width:clamp(68px,21vw,88px)!important;
   }
 }
