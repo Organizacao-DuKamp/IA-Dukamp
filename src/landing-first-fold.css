@@ -223,3 +223,136 @@
     padding-top: 52px !important;
   }
 }
+
+/* Hero de entrada exclusivo do mobile: usa o bloco WhatsApp como componente principal. */
+@media (max-width: 680px) {
+  .tpec-landing .poster-whatsapp.poster-whatsapp-adapted {
+    align-items: stretch !important;
+    background:
+      radial-gradient(circle at 68% 14%, rgba(255,255,255,.82), transparent 34%),
+      linear-gradient(180deg, #fbf8ef 0%, #f8f3e8 66%, #f1eadc 100%) !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100svh !important;
+    justify-content: flex-start !important;
+    margin: 0 !important;
+    max-height: 100svh !important;
+    max-width: none !important;
+    min-height: 100svh !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    position: relative !important;
+    width: 100vw !important;
+  }
+
+  .tpec-landing .poster-whatsapp.poster-whatsapp-adapted::before {
+    background:
+      linear-gradient(164deg, transparent 0 70%, rgba(187,201,139,.48) 70.2% 77%, transparent 77.2%),
+      linear-gradient(158deg, transparent 0 76%, rgba(116,143,76,.62) 76.2% 84%, transparent 84.2%),
+      linear-gradient(152deg, transparent 0 82%, rgba(45,86,49,.96) 82.2% 100%) !important;
+    content: "" !important;
+    inset: 0 !important;
+    opacity: 1 !important;
+    pointer-events: none !important;
+    position: absolute !important;
+    z-index: 0 !important;
+  }
+
+  .tpec-landing .poster-whatsapp.poster-whatsapp-adapted::after {
+    background:
+      linear-gradient(155deg, transparent 0 77.8%, rgba(218,169,62,.9) 78% 78.35%, transparent 78.55%),
+      linear-gradient(150deg, transparent 0 84%, rgba(236,188,75,.82) 84.2% 84.48%, transparent 84.68%);
+    content: "";
+    inset: 0;
+    pointer-events: none;
+    position: absolute;
+    z-index: 1;
+  }
+
+  .tpec-landing .poster-whatsapp-adapted > .poster-swoosh,
+  .tpec-landing .poster-whatsapp-adapted > .whatsapp-phone,
+  .tpec-landing .poster-whatsapp-adapted > .whatsapp-field {
+    display: none !important;
+  }
+
+  .tpec-landing .poster-whatsapp-adapted .whatsapp-copy {
+    align-items: flex-start !important;
+    display: flex !important;
+    flex: 1 1 auto !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    justify-content: flex-start !important;
+    margin: 0 !important;
+    max-width: none !important;
+    padding: clamp(22px,5svh,44px) 24px 21svh !important;
+    position: relative !important;
+    text-align: left !important;
+    width: 100% !important;
+    z-index: 3 !important;
+  }
+
+  .tpec-landing .poster-whatsapp-adapted .whatsapp-copy .brand-seal-small {
+    align-self: center !important;
+    flex: 0 0 auto !important;
+    height: clamp(126px,34vw,158px) !important;
+    margin: 0 auto clamp(16px,2.4svh,24px) !important;
+    width: clamp(126px,34vw,158px) !important;
+  }
+
+  .tpec-landing .poster-whatsapp-adapted .whatsapp-copy .gold-title {
+    align-self: center !important;
+    display: block !important;
+    filter: drop-shadow(0 2px 1px rgba(72,43,10,.2)) !important;
+    font-family: Georgia, "Times New Roman", serif !important;
+    font-size: clamp(43px,12.2vw,58px) !important;
+    font-weight: 500 !important;
+    letter-spacing: -.02em !important;
+    line-height: .93 !important;
+    margin: 0 0 clamp(16px,2.6svh,26px) !important;
+    text-align: center !important;
+    width: 100% !important;
+  }
+
+  .tpec-landing .poster-whatsapp-adapted .whatsapp-copy h2 {
+    color: #0d472f !important;
+    font-family: Inter, ui-sans-serif, system-ui, sans-serif !important;
+    font-size: clamp(29px,8.2vw,40px) !important;
+    font-weight: 850 !important;
+    letter-spacing: -.025em !important;
+    line-height: 1.03 !important;
+    margin: 0 0 clamp(14px,2svh,20px) !important;
+    max-width: 340px !important;
+  }
+
+  .tpec-landing .poster-whatsapp-adapted .whatsapp-copy p {
+    color: #2f3330 !important;
+    font-size: clamp(16px,4.4vw,20px) !important;
+    line-height: 1.38 !important;
+    margin: 0 0 clamp(20px,3svh,30px) !important;
+    max-width: 330px !important;
+  }
+
+  .tpec-landing .poster-whatsapp-adapted .whatsapp-copy .whatsapp-big {
+    align-self: stretch !important;
+    background: linear-gradient(180deg,#1e653d 0%,#0b4b2c 100%) !important;
+    border: 2px solid #c79a37 !important;
+    border-radius: 14px !important;
+    box-shadow: 0 7px 16px rgba(34,63,39,.22), inset 0 0 0 1px rgba(255,255,255,.12) !important;
+    color: #fff !important;
+    flex: 0 0 auto !important;
+    font-size: clamp(13px,3.8vw,17px) !important;
+    font-weight: 900 !important;
+    gap: 10px !important;
+    min-height: 58px !important;
+    padding: 0 14px !important;
+    width: 100% !important;
+  }
+
+  .tpec-landing .poster-whatsapp-adapted .whatsapp-copy .whatsapp-big svg {
+    height: 30px !important;
+    width: 30px !important;
+  }
+}
