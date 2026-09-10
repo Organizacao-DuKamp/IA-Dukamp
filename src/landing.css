@@ -10,242 +10,76 @@
 @import "./landing-first-fold.css";
 
 /* Conversa do mockup: produtor = verde à direita; TPEC-IA = branco à esquerda. */
-.tpec-landing .poster-whatsapp.poster-whatsapp-adapted .phone-body > .bubble.incoming {
-  background: #d8f5c5 !important;
-  margin-left: auto !important;
-  margin-right: 0 !important;
-}
+.tpec-landing .poster-whatsapp.poster-whatsapp-adapted .phone-body > .bubble.incoming { background:#d8f5c5!important; margin-left:auto!important; margin-right:0!important; }
+.tpec-landing .poster-whatsapp.poster-whatsapp-adapted .phone-body > .bubble.outgoing { background:#fff!important; margin-left:0!important; margin-right:auto!important; }
+.tpec-landing .poster-swoosh { display:none!important; }
+.tpec-landing .hero-photo .scan-c .scan-connector { transform:rotate(6deg)!important; width:clamp(250px,24vw,390px)!important; }
+.tpec-landing .brand > img { height:60px!important; width:60px!important; }
+.tpec-landing .brand-seal:not(.brand-seal-small) { height:146px!important; width:146px!important; }
+.tpec-landing .brand-seal-small { height:103px!important; width:103px!important; }
+.tpec-landing .poster-whatsapp-adapted .whatsapp-copy .brand-seal-small { height:clamp(145px,12vw,195px)!important; width:clamp(145px,12vw,195px)!important; }
+.tpec-landing .how-field > img { content:url("https://images.pexels.com/photos/32388928/pexels-photo-32388928.jpeg?auto=compress&cs=tinysrgb&w=1400"); object-position:58% 50%!important; }
+.tpec-landing .reference-use-grid > article:nth-child(2) .use-photo img { content:url("https://images.pexels.com/photos/36675240/pexels-photo-36675240.jpeg?auto=compress&cs=tinysrgb&w=1200"); object-position:center 55%!important; }
+.tpec-landing .reference-use-grid > article:nth-child(4) .use-photo img { content:url("https://images.pexels.com/photos/32388928/pexels-photo-32388928.jpeg?auto=compress&cs=tinysrgb&w=1200"); object-position:58% 48%!important; }
+.tpec-landing .faq-list details > p { display:block!important; max-height:0; opacity:0; overflow:hidden; padding-bottom:0!important; transform:translateY(-5px); transition:max-height 260ms ease,opacity 180ms ease,padding-bottom 260ms ease,transform 220ms ease; }
+.tpec-landing .faq-list details > summary { cursor:default!important; pointer-events:none; }
+.tpec-landing .faq-list details > summary span { transform:rotate(0deg); transition:transform 260ms ease,opacity 200ms ease; }
+.tpec-landing .faq-list details:hover > p,.tpec-landing .faq-list details:focus-within > p { max-height:220px; opacity:1; padding-bottom:18px!important; transform:translateY(0); }
+.tpec-landing .faq-list details:hover > summary span,.tpec-landing .faq-list details:focus-within > summary span { opacity:.7; transform:rotate(45deg); }
+@media(max-width:980px){.tpec-landing .hero-photo .scan-c .scan-connector{transform:rotate(7deg)!important;width:clamp(165px,29vw,285px)!important}.tpec-landing .brand-seal:not(.brand-seal-small){height:116px!important;width:116px!important}.tpec-landing .brand-seal-small{height:88px!important;width:88px!important}}
+@media(hover:none){.tpec-landing .faq-list details>p{max-height:260px;opacity:1;padding-bottom:18px!important;transform:none}.tpec-landing .faq-list details>summary span{display:none}}
+.tpec-landing .reference-use-grid .mini-phone { background:transparent!important; border:0!important; border-radius:19px!important; box-shadow:0 7px 18px rgba(0,0,0,.18)!important; height:214px!important; left:16px!important; padding:0!important; overflow:hidden!important; width:120px!important; isolation:isolate; }
+.tpec-landing .reference-use-grid .mini-phone::before { content:""; position:absolute; inset:0; z-index:1; background-image:url("/tpec-whatsapp-phone-transparent.png"); background-repeat:no-repeat; background-position:center top; background-size:contain; border-radius:19px; }
+.tpec-landing .reference-use-grid .mini-phone > * { display:none!important; }
+.tpec-landing .poster-hero .hero-photo .brand-seal { height:168px!important; width:168px!important; left:21%!important; top:41%!important; }
+.tpec-landing .poster-hero .hero-photo .scan-c { left:28%!important; top:59%!important; }
+.tpec-landing .poster-hero .hero-photo .scan-c .scan-connector { transform:rotate(5deg)!important; width:clamp(155px,14vw,215px)!important; }
+@media(max-width:980px){.tpec-landing .poster-hero .hero-photo .brand-seal{height:136px!important;width:136px!important;left:24%!important;top:38%!important}.tpec-landing .poster-hero .hero-photo .scan-c{left:31%!important;top:59%!important}.tpec-landing .poster-hero .hero-photo .scan-c .scan-connector{transform:rotate(5deg)!important;width:clamp(125px,19vw,175px)!important}}
 
-.tpec-landing .poster-whatsapp.poster-whatsapp-adapted .phone-body > .bubble.outgoing {
-  background: #ffffff !important;
-  margin-left: 0 !important;
-  margin-right: auto !important;
-}
-
-/* Ajustes visuais solicitados em 09/09/2026. */
-
-/* 1. Remove todas as faixas verdes com o filete amarelo da landing page. */
-.tpec-landing .poster-swoosh {
-  display: none !important;
-}
-
-/* 2. Faz o indicador de condição corporal chegar de fato até o animal. */
-.tpec-landing .hero-photo .scan-c .scan-connector {
-  transform: rotate(6deg) !important;
-  width: clamp(250px, 24vw, 390px) !important;
-}
-
-/* 3. Dá um pouco mais de presença para as logos TPEC-IA. */
-.tpec-landing .brand > img {
-  height: 60px !important;
-  width: 60px !important;
-}
-
-.tpec-landing .brand-seal:not(.brand-seal-small) {
-  height: 146px !important;
-  width: 146px !important;
-}
-
-.tpec-landing .brand-seal-small {
-  height: 103px !important;
-  width: 103px !important;
-}
-
-.tpec-landing .poster-whatsapp-adapted .whatsapp-copy .brand-seal-small {
-  height: clamp(145px, 12vw, 195px) !important;
-  width: clamp(145px, 12vw, 195px) !important;
-}
-
-/* 4. Troca o bovino da área "Como funciona" por um touro visualmente mais forte. */
-.tpec-landing .how-field > img {
-  content: url("https://images.pexels.com/photos/32388928/pexels-photo-32388928.jpeg?auto=compress&cs=tinysrgb&w=1400");
-  object-position: 58% 50% !important;
-}
-
-/* 5. No exemplo sobre pasto, elimina o close de bovino e usa uma cena ampla de pastagem. */
-.tpec-landing .reference-use-grid > article:nth-child(2) .use-photo img {
-  content: url("https://images.pexels.com/photos/36675240/pexels-photo-36675240.jpeg?auto=compress&cs=tinysrgb&w=1200");
-  object-position: center 55% !important;
-}
-
-/* Troca o bovino do card "O que devo observar neste caso?" por um touro mais parrudo. */
-.tpec-landing .reference-use-grid > article:nth-child(4) .use-photo img {
-  content: url("https://images.pexels.com/photos/32388928/pexels-photo-32388928.jpeg?auto=compress&cs=tinysrgb&w=1200");
-  object-position: 58% 48% !important;
-}
-
-/* 7. FAQ abre ao passar o mouse, sem depender do clique no '+'. */
-.tpec-landing .faq-list details > p {
-  display: block !important;
-  max-height: 0;
-  opacity: 0;
-  overflow: hidden;
-  padding-bottom: 0 !important;
-  transform: translateY(-5px);
-  transition:
-    max-height 260ms ease,
-    opacity 180ms ease,
-    padding-bottom 260ms ease,
-    transform 220ms ease;
-}
-
-.tpec-landing .faq-list details > summary {
-  cursor: default !important;
-  pointer-events: none;
-}
-
-.tpec-landing .faq-list details > summary span {
-  transform: rotate(0deg);
-  transition: transform 260ms ease, opacity 200ms ease;
-}
-
-.tpec-landing .faq-list details:hover > p,
-.tpec-landing .faq-list details:focus-within > p {
-  max-height: 220px;
-  opacity: 1;
-  padding-bottom: 18px !important;
-  transform: translateY(0);
-}
-
-.tpec-landing .faq-list details:hover > summary span,
-.tpec-landing .faq-list details:focus-within > summary span {
-  opacity: .7;
-  transform: rotate(45deg);
-}
-
-@media (max-width: 980px) {
-  .tpec-landing .hero-photo .scan-c .scan-connector {
-    transform: rotate(7deg) !important;
-    width: clamp(165px, 29vw, 285px) !important;
+/* Composição mobile revisada no Lovable com webdesign-review. */
+@media (max-width:680px) {
+  .tpec-landing .poster.poster-hero .reference-photo.hero-photo {
+    flex:0 0 auto!important;
+    height:clamp(340px,94vw,420px)!important;
+    min-height:clamp(340px,94vw,420px)!important;
+    max-height:420px!important;
+    overflow:hidden!important;
+    position:relative!important;
   }
-
-  .tpec-landing .brand-seal:not(.brand-seal-small) {
-    height: 116px !important;
-    width: 116px !important;
+  .tpec-landing .poster.poster-hero .reference-photo.hero-photo > img {
+    height:100%!important;
+    min-height:0!important;
+    object-fit:cover!important;
+    object-position:63% 50%!important;
+    width:100%!important;
   }
-
-  .tpec-landing .brand-seal-small {
-    height: 88px !important;
-    width: 88px !important;
+  .tpec-landing .poster.poster-hero .reference-photo.hero-photo .photo-fade {
+    background:linear-gradient(90deg,rgba(8,25,17,.28) 0%,transparent 42%)!important;
   }
-}
-
-@media (max-width: 680px) {
-  .tpec-landing .hero-photo .scan-c .scan-connector {
-    transform: rotate(7deg) !important;
-    width: clamp(92px, 31vw, 145px) !important;
+  .tpec-landing .poster.poster-hero .reference-photo.hero-photo .brand-seal {
+    height:clamp(82px,24vw,100px)!important;
+    left:12px!important;
+    top:12px!important;
+    transform:none!important;
+    width:clamp(82px,24vw,100px)!important;
   }
-}
-
-/* Em telas touch não existe hover: mantém a resposta legível sem exigir o '+'. */
-@media (hover: none) {
-  .tpec-landing .faq-list details > p {
-    max-height: 260px;
-    opacity: 1;
-    padding-bottom: 18px !important;
-    transform: none;
+  .tpec-landing .poster.poster-hero .reference-photo.hero-photo .scan-label { max-width:calc(100% - 24px); }
+  .tpec-landing .poster.poster-hero .reference-photo.hero-photo .scan-c {
+    left:12px!important; right:auto!important; top:clamp(112px,31vw,136px)!important;
   }
-
-  .tpec-landing .faq-list details > summary span {
-    display: none;
+  .tpec-landing .poster.poster-hero .reference-photo.hero-photo .scan-c .scan-connector {
+    left:calc(100% - 4px)!important; right:auto!important; transform:rotate(9deg)!important; transform-origin:left center!important; width:clamp(72px,23vw,96px)!important;
   }
-}
-
-/* Exemplos de uso: mantém o mini celular no lugar e usa o print real em alta resolução. */
-.tpec-landing .reference-use-grid .mini-phone {
-  background: transparent !important;
-  border: 0 !important;
-  border-radius: 19px !important;
-  box-shadow: 0 7px 18px rgba(0,0,0,.18) !important;
-  height: 214px !important;
-  left: 16px !important;
-  padding: 0 !important;
-  overflow: hidden !important;
-  width: 120px !important;
-  isolation: isolate;
-}
-
-/* A proporção acompanha o print HD para preservar toda a moldura do celular sem cortar as bordas. */
-.tpec-landing .reference-use-grid .mini-phone::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background-image: url("/tpec-whatsapp-phone-transparent.png");
-  background-repeat: no-repeat;
-  background-position: center top;
-  background-size: contain;
-  border-radius: 19px;
-}
-
-.tpec-landing .reference-use-grid .mini-phone > * {
-  display: none !important;
-}
-
-/* Hero: composição da logo e dos marcadores técnicos. */
-.tpec-landing .poster-hero .hero-photo .brand-seal {
-  height: 168px !important;
-  width: 168px !important;
-  left: 21% !important;
-  top: 41% !important;
-}
-
-.tpec-landing .poster-hero .hero-photo .scan-c {
-  left: 28% !important;
-  top: 59% !important;
-}
-
-.tpec-landing .poster-hero .hero-photo .scan-c .scan-connector {
-  transform: rotate(5deg) !important;
-  width: clamp(155px, 14vw, 215px) !important;
-}
-
-/* Tablet: mantém a hierarquia visual sem encostar nos outros marcadores. */
-@media (max-width: 980px) {
-  .tpec-landing .poster-hero .hero-photo .brand-seal {
-    height: 136px !important;
-    width: 136px !important;
-    left: 24% !important;
-    top: 38% !important;
+  .tpec-landing .poster.poster-hero .reference-photo.hero-photo .scan-b {
+    left:auto!important; right:10px!important; top:19%!important;
   }
-
-  .tpec-landing .poster-hero .hero-photo .scan-c {
-    left: 31% !important;
-    top: 59% !important;
+  .tpec-landing .poster.poster-hero .reference-photo.hero-photo .scan-b .scan-connector {
+    right:calc(100% - 4px)!important; transform:rotate(-13deg)!important; transform-origin:right center!important; width:clamp(62px,19vw,82px)!important;
   }
-
-  .tpec-landing .poster-hero .hero-photo .scan-c .scan-connector {
-    transform: rotate(5deg) !important;
-    width: clamp(125px, 19vw, 175px) !important;
+  .tpec-landing .poster.poster-hero .reference-photo.hero-photo .scan-a {
+    bottom:24px!important; left:auto!important; right:10px!important; top:auto!important;
   }
-}
-
-/* Mobile: logo mais alta e marcador de condição logo abaixo, próximo ao animal. */
-@media (max-width: 680px) {
-  .tpec-landing .poster-hero .hero-photo .brand-seal {
-    height: 112px !important;
-    width: 112px !important;
-    left: 27% !important;
-    top: 29% !important;
-  }
-
-  .tpec-landing .poster-hero .hero-photo .scan-c {
-    left: 38% !important;
-    top: 50% !important;
-  }
-
-  .tpec-landing .poster-hero .hero-photo .scan-c .scan-connector {
-    transform: rotate(4deg) !important;
-    width: clamp(82px, 27vw, 118px) !important;
-  }
-
-  .tpec-landing .poster-hero .hero-photo .scan-b {
-    right: 3% !important;
-    top: 18% !important;
-  }
-
-  .tpec-landing .poster-hero .hero-photo .scan-a {
-    right: 4% !important;
-    top: 72% !important;
+  .tpec-landing .poster.poster-hero .reference-photo.hero-photo .scan-a .scan-connector {
+    right:calc(100% - 4px)!important; transform:rotate(16deg)!important; transform-origin:right center!important; width:clamp(72px,23vw,96px)!important;
   }
 }
