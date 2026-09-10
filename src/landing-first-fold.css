@@ -82,3 +82,68 @@
   margin-left: 0;
   margin-right: auto;
 }
+
+/* Corrige o hero no celular: elimina a área vazia e mantém todos os marcadores sobre a foto. */
+@media (max-width: 680px) {
+  .tpec-landing .poster.poster-hero .reference-photo.hero-photo {
+    height: 360px !important;
+    min-height: 360px !important;
+    overflow: hidden !important;
+    position: relative !important;
+  }
+
+  .tpec-landing .poster.poster-hero .reference-photo.hero-photo > img {
+    height: 100% !important;
+    min-height: 100% !important;
+    object-fit: cover !important;
+    object-position: 63% 50% !important;
+    width: 100% !important;
+  }
+
+  .tpec-landing .poster.poster-hero .reference-photo.hero-photo .brand-seal {
+    height: 104px !important;
+    left: 18% !important;
+    top: 23% !important;
+    width: 104px !important;
+  }
+
+  .tpec-landing .poster.poster-hero .reference-photo.hero-photo .scan-c {
+    left: 3% !important;
+    top: 59% !important;
+  }
+
+  .tpec-landing .poster.poster-hero .reference-photo.hero-photo .scan-c .scan-connector {
+    transform: rotate(8deg) !important;
+    width: 118px !important;
+  }
+
+  .tpec-landing .poster.poster-hero .reference-photo.hero-photo .scan-b {
+    right: 3% !important;
+    top: 35% !important;
+  }
+
+  .tpec-landing .poster.poster-hero .reference-photo.hero-photo .scan-b .scan-connector {
+    transform: rotate(-20deg) !important;
+    width: 78px !important;
+  }
+
+  .tpec-landing .poster.poster-hero .reference-photo.hero-photo .scan-a {
+    right: 3% !important;
+    top: 76% !important;
+  }
+
+  .tpec-landing .poster.poster-hero .reference-photo.hero-photo .scan-a .scan-connector {
+    transform: rotate(-26deg) !important;
+    width: 92px !important;
+  }
+
+  .tpec-landing .poster.poster-hero .reference-photo.hero-photo .scan-label .scan-icon {
+    height: 28px !important;
+    width: 28px !important;
+  }
+
+  .tpec-landing .poster.poster-hero .reference-photo.hero-photo .scan-label b {
+    font-size: 7px !important;
+    padding: 5px 6px 5px 8px !important;
+  }
+}
