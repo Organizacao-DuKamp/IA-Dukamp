@@ -136,3 +136,8 @@
 .tpec-landing .poster-how .how-field > .brand-seal {
   display:none!important;
 }
+
+/* A landing não precisa de navegação fixa no topo. */
+.tpec-landing .site-header {
+  display:none!important;
+}
