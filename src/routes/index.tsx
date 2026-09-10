@@ -15,9 +15,6 @@ const cattleWide =
   "https://images.pexels.com/photos/31026900/pexels-photo-31026900/free-photo-of-close-up-of-nelore-cattle-in-sao-paulo-pasture.jpeg?auto=compress&cs=tinysrgb&w=1400";
 const herdWide =
   "https://images.pexels.com/photos/33206150/pexels-photo-33206150/free-photo-of-herd-of-cattle-grazing-in-brazilian-pasture.png?auto=compress&cs=tinysrgb&w=1400";
-const aerialWide =
-  "https://images.pexels.com/photos/10251994/pexels-photo-10251994.jpeg?auto=compress&cs=tinysrgb&w=1400";
-
 const benefits = [
   { icon: "camera", title: "Análise por foto", text: "Envie fotos e use a imagem como parte da análise da TPEC-IA." },
   { icon: "clock", title: "Respostas rápidas", text: "Informações organizadas para você entender o cenário com agilidade." },
@@ -319,21 +316,6 @@ function LandingPage() {
             </article>
           ))}
         </div>
-        <div className="poster-swoosh" aria-hidden="true" />
-      </section>
-
-      <section className="poster poster-responsibility">
-        <div className="responsibility-copy reference-copy">
-          <BrandSeal small /><span className="reference-kicker">SEGURANÇA E RESPONSABILIDADE</span>
-          <h2><i><FeatureIcon name="shield" /></i>Tecnologia<br />com responsabilidade.</h2>
-          <div className="responsibility-points">
-            <span><i><FeatureIcon name="chart" /></i><b>Apoio à decisão</b><small>Informações confiáveis para escolhas mais assertivas no campo.</small></span>
-            <span><i><SparkIcon /></i><b>Situações críticas exigem avaliação profissional</b><small>A IA orienta, mas a decisão final é sempre sua e do profissional responsável.</small></span>
-            <span><i><UseIcon name="cow" /></i><b>Bem-estar em primeiro lugar</b><small>Manejo responsável para animais saudáveis e produtivos.</small></span>
-            <span><i><FeatureIcon name="shield" /></i><b>Segurança da informação</b><small>Seus dados são tratados com privacidade e responsabilidade.</small></span>
-          </div>
-        </div>
-        <div className="responsibility-field reference-photo"><img src={aerialWide} alt="Rebanho em área de produção" loading="lazy" /><div className="photo-fade left-fade" aria-hidden="true" /></div>
         <div className="poster-swoosh" aria-hidden="true" />
       </section>
 
