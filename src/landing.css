@@ -181,3 +181,71 @@
 .tpec-landing .reference-use-grid .mini-phone > * {
   display: none !important;
 }
+
+/* Hero: composição da logo e dos marcadores técnicos. */
+.tpec-landing .poster-hero .hero-photo .brand-seal {
+  height: 168px !important;
+  width: 168px !important;
+  left: 21% !important;
+  top: 41% !important;
+}
+
+.tpec-landing .poster-hero .hero-photo .scan-c {
+  left: 28% !important;
+  top: 59% !important;
+}
+
+.tpec-landing .poster-hero .hero-photo .scan-c .scan-connector {
+  transform: rotate(5deg) !important;
+  width: clamp(155px, 14vw, 215px) !important;
+}
+
+/* Tablet: mantém a hierarquia visual sem encostar nos outros marcadores. */
+@media (max-width: 980px) {
+  .tpec-landing .poster-hero .hero-photo .brand-seal {
+    height: 136px !important;
+    width: 136px !important;
+    left: 24% !important;
+    top: 38% !important;
+  }
+
+  .tpec-landing .poster-hero .hero-photo .scan-c {
+    left: 31% !important;
+    top: 59% !important;
+  }
+
+  .tpec-landing .poster-hero .hero-photo .scan-c .scan-connector {
+    transform: rotate(5deg) !important;
+    width: clamp(125px, 19vw, 175px) !important;
+  }
+}
+
+/* Mobile: logo mais alta e marcador de condição logo abaixo, próximo ao animal. */
+@media (max-width: 680px) {
+  .tpec-landing .poster-hero .hero-photo .brand-seal {
+    height: 112px !important;
+    width: 112px !important;
+    left: 27% !important;
+    top: 29% !important;
+  }
+
+  .tpec-landing .poster-hero .hero-photo .scan-c {
+    left: 38% !important;
+    top: 50% !important;
+  }
+
+  .tpec-landing .poster-hero .hero-photo .scan-c .scan-connector {
+    transform: rotate(4deg) !important;
+    width: clamp(82px, 27vw, 118px) !important;
+  }
+
+  .tpec-landing .poster-hero .hero-photo .scan-b {
+    right: 3% !important;
+    top: 18% !important;
+  }
+
+  .tpec-landing .poster-hero .hero-photo .scan-a {
+    right: 4% !important;
+    top: 72% !important;
+  }
+}
