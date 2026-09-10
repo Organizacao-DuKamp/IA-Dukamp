@@ -321,7 +321,7 @@ function LandingPage() {
 
       <section className="faq-section" id="duvidas">
         <div className="faq-heading"><span className="reference-kicker">DÚVIDAS FREQUENTES</span><h2>O que você precisa saber antes de começar.</h2><p>Se ainda tiver uma pergunta, fale com a TPEC-IA pelo WhatsApp e teste a experiência.</p></div>
-        <div className="faq-list">{faqs.map((faq) => <details key={faq.question}><summary>{faq.question}<span>+</span></summary><p>{faq.answer}</p></details>)}</div>
+        <div className="faq-list">{faqs.map((faq) => <details open key={faq.question}><summary>{faq.question}<span>+</span></summary><p>{faq.answer}</p></details>)}</div>
       </section>
 
       <section className="final-cta">

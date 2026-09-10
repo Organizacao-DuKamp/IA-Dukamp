@@ -95,7 +95,8 @@
 }
 
 .tpec-landing .faq-list details > summary span {
-  transition: transform 220ms ease, opacity 180ms ease;
+  transform: rotate(0deg);
+  transition: transform 260ms ease, opacity 200ms ease;
 }
 
 .tpec-landing .faq-list details:hover > p,
