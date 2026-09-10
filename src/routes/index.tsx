@@ -10,7 +10,8 @@ const heroBullPhoto = "/tpec-hero-bull.webp";
 const cattlePhoto = "/tpec-nelore-grazing.webp";
 const dairyPhoto =
   "https://images.pexels.com/photos/30982514/pexels-photo-30982514/free-photo-of-holstein-cow-grazing-in-sunny-pasture.jpeg?auto=compress&cs=tinysrgb&w=900";
-const cattleWide = "/tpec-nelore-strong.webp";
+const cattleWide = "/tpec-nelore-elite.webp";
+const cattlePanel = "/tpec-nelore-elite-panel.webp";
 const herdWide =
   "https://images.pexels.com/photos/33206150/pexels-photo-33206150/free-photo-of-herd-of-cattle-grazing-in-brazilian-pasture.png?auto=compress&cs=tinysrgb&w=1400";
 const benefits = [
@@ -281,7 +282,7 @@ function LandingPage() {
           <div className="how-banner"><FeatureIcon name="shield" /><span><b>Tecnologia que entende o campo</b><small>Conhecimento técnico com uma linguagem simples para a rotina do pecuarista.</small></span></div>
         </div>
         <div className="how-field reference-photo">
-          <img src={cattleWide} alt="Bovino com apoio de tecnologia" loading="lazy" /><div className="photo-fade left-fade" aria-hidden="true" />
+          <img src={cattlePanel} alt="Touro Nelore forte analisado pela TPEC-IA" loading="lazy" /><div className="photo-fade left-fade" aria-hidden="true" />
           <div className="scan-board board-one"><b>ANÁLISE CORPORAL</b><span>Musculatura <i style={{ width: "78%" }} /></span><span>Condição <i style={{ width: "68%" }} /></span><span>Estrutura <i style={{ width: "82%" }} /></span></div>
           <div className="scan-board board-two"><b>DESTAQUES</b><span>✓ Potencial do lote</span><span>✓ Conformação</span><span>✓ Rendimento</span></div><BrandSeal />
         </div>
