@@ -260,7 +260,11 @@
   bottom: 0;
   height: 100%;
   max-width: none;
-  object-fit: contain;
+  /* Only the rightmost 400px of the 1440px artwork contain the field scene.
+     Keep that crop wide enough to fill the column at every viewport size. */
+  min-width: calc(100% * 1440 / 400);
+  object-fit: cover;
+  object-position: right top;
   position: absolute;
   right: 0;
   width: auto;
