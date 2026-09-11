@@ -3,7 +3,6 @@
   const WEAK_CATTLE_IMAGES = [
     "/tpec-nelore-grazing.webp",
     "/tpec-nelore-elite.webp",
-    "/tpec-nelore-elite-panel.webp",
   ];
   const STRONG_CATTLE_IMAGE = "/tpec-hero-bull.webp";
   const MOBILE_ENTRY_ID = "tpec-mobile-entry-hero";
