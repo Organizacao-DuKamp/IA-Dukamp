@@ -137,7 +137,7 @@ function RootShell({ children }: { children: ReactNode }) {
       </head>
       <body>
         {children}
-        <script src="/landing-animations.js?v=20260911-panel-image-fix" defer />
+        <script src="/landing-animations.js?v=20260911-mobile-layout" defer />
         <Scripts />
       </body>
     </html>

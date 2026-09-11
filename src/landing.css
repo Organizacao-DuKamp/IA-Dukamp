@@ -215,3 +215,163 @@
     margin: 7px 4px 0 !important;
   }
 }
+
+/* Small screens use content-sized sections and captions below photographs. */
+@media (max-width: 980px) {
+  .tpec-landing .poster { min-width: 0; }
+  .tpec-landing .reference-copy { min-width: 0; }
+  .tpec-landing .reference-button,
+  .tpec-landing .outline-button { min-height: 48px; white-space: normal; text-align: center; padding: 12px; }
+  .tpec-landing .reference-button svg,
+  .tpec-landing .outline-button svg { flex-shrink: 0; }
+
+  .tpec-landing #whatsapp.poster-whatsapp-adapted {
+    height: auto !important; min-height: 0 !important; max-height: none !important;
+    width: calc(100% - 16px) !important; margin: 8px auto 16px !important;
+    border-radius: 20px !important; overflow: hidden !important;
+  }
+  .tpec-landing #whatsapp::before,
+  .tpec-landing #whatsapp::after { display: none !important; }
+  .tpec-landing #whatsapp .whatsapp-copy {
+    height: auto !important; padding: 32px 22px !important; flex: none !important;
+  }
+  .tpec-landing #whatsapp .whatsapp-copy .brand-seal-small {
+    width: 126px !important; height: 126px !important; margin-bottom: 20px !important;
+  }
+  .tpec-landing #whatsapp .whatsapp-copy .gold-title {
+    font-size: clamp(34px, 9vw, 52px) !important; line-height: 1.05 !important;
+  }
+  .tpec-landing #whatsapp .whatsapp-copy h2 {
+    font-size: clamp(26px, 6.5vw, 36px) !important; line-height: 1.15 !important;
+  }
+  .tpec-landing #whatsapp .whatsapp-copy p { font-size: 16px !important; line-height: 1.55 !important; }
+  .tpec-landing #whatsapp .whatsapp-copy .whatsapp-big {
+    font-size: 14px !important; height: auto !important; padding: 14px 10px !important;
+  }
+  .tpec-landing #whatsapp .whatsapp-copy .whatsapp-big svg { width: 24px !important; height: 24px !important; }
+
+  .tpec-landing #inicio .hero-copy,
+  .tpec-landing #como-funciona .how-copy { padding: 32px 20px !important; }
+  .tpec-landing #inicio h1 { font-size: clamp(30px, 7.4vw, 64px) !important; line-height: 1.05 !important; }
+  .tpec-landing .reference-kicker { font-size: 12px; line-height: 1.5; }
+  .tpec-landing #inicio .hero-copy p { font-size: 16px; line-height: 1.55; }
+  .tpec-landing .hero-mini-grid b { font-size: 14px; line-height: 1.35; }
+  .tpec-landing #inicio .reference-photo.hero-photo {
+    display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px; height: auto !important; min-height: 0 !important; padding: 0 12px 16px;
+    background: #f4f0e7;
+  }
+  .tpec-landing #inicio .reference-photo.hero-photo > img {
+    grid-column: 1 / -1; position: static !important; width: 100% !important;
+    height: auto !important; min-height: 0 !important; object-fit: contain !important;
+    border-radius: 14px;
+  }
+  .tpec-landing #inicio .hero-photo .photo-fade,
+  .tpec-landing #inicio .hero-photo .brand-seal,
+  .tpec-landing #inicio .hero-photo .scan-connector { display: none !important; }
+  .tpec-landing #inicio .hero-photo .scan-label {
+    position: static !important; transform: none !important; max-width: none !important;
+    flex-direction: column; gap: 8px; padding: 12px 4px; background: #fffdf7; border-radius: 12px;
+  }
+  .tpec-landing #inicio .hero-photo .scan-label .scan-icon { height: 32px !important; width: 32px !important; }
+  .tpec-landing #inicio .hero-photo .scan-label b {
+    font-size: 12px !important; line-height: 1.4; letter-spacing: 0; text-align: center;
+    border: 0; box-shadow: none; margin: 0; padding: 0 !important; background: none;
+  }
+
+  .tpec-landing #analise.poster-analysis {
+    display: flex !important; flex-direction: column !important;
+    height: auto !important; min-height: 0 !important; max-height: none !important;
+    width: calc(100% - 16px) !important; margin: 16px auto !important;
+    border-radius: 20px !important; overflow: hidden !important; padding: 0 !important;
+  }
+  .tpec-landing #analise .analysis-field { display: none !important; }
+  .tpec-landing #analise .analysis-copy {
+    display: block !important; order: 0; padding: 32px 20px !important; text-align: left;
+  }
+  .tpec-landing #analise .analysis-copy .gold-title { text-align: center; }
+  .tpec-landing #analise .analysis-copy > p { font-size: 16px; line-height: 1.55; }
+  .tpec-landing #analise .analysis-features { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 12px; }
+  .tpec-landing #analise .analysis-features b { font-size: 14px; }
+  .tpec-landing #analise .analysis-features small { font-size: 14px; line-height: 1.4; }
+  .tpec-landing #analise .analysis-phone {
+    order: 1; height: auto !important; min-height: 0 !important; max-height: none !important;
+    width: calc(100% - 24px) !important; max-width: 560px !important;
+    margin: 0 auto 24px !important; padding: 14px !important; border-radius: 20px !important;
+    transform: none !important;
+  }
+  .tpec-landing #analise .analysis-top { font-size: 16px !important; }
+  .tpec-landing #analise .analysis-cow-photo {
+    flex: none !important; height: auto !important; min-height: 0 !important;
+    max-height: none !important; aspect-ratio: 4 / 3;
+  }
+  .tpec-landing #analise .analysis-row {
+    flex: none !important; height: auto !important; min-height: 0 !important;
+    padding: 12px !important; align-items: flex-start;
+  }
+  .tpec-landing #analise .analysis-row > i { flex-shrink: 0; }
+  .tpec-landing #analise .analysis-row b { font-size: 15px !important; line-height: 1.35; }
+  .tpec-landing #analise .analysis-row small { font-size: 14px !important; line-height: 1.45; }
+  .tpec-landing #analise .analysis-disclaimer { font-size: 12px !important; line-height: 1.5; }
+
+  .tpec-landing #como-funciona .how-field {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;
+    height: auto; min-height: 0; padding: 0 12px 20px; background: #f4f0e7;
+  }
+  .tpec-landing #como-funciona .how-field > img {
+    grid-column: 1 / -1; width: 100%; height: auto; object-fit: contain; border-radius: 14px;
+  }
+  .tpec-landing #como-funciona .how-field .photo-fade { display: none; }
+  .tpec-landing #como-funciona .scan-board {
+    position: static; transform: none; width: auto; max-width: none; min-width: 0; padding: 14px 12px;
+  }
+  .tpec-landing #como-funciona .scan-board b { font-size: 14px; letter-spacing: 0; }
+  .tpec-landing #como-funciona .scan-board span { font-size: 14px; line-height: 1.5; }
+  .tpec-landing #como-funciona .scan-board span i { display: block; margin: 6px 0 0; }
+  .tpec-landing .reference-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tpec-landing .reference-steps p { font-size: 16px; }
+  .tpec-landing .reference-steps b { font-size: 14px; line-height: 1.4; }
+  .tpec-landing .how-banner b { font-size: 16px; }
+  .tpec-landing .how-banner small { font-size: 14px; }
+  .tpec-landing .how-banner > svg { flex-shrink: 0; }
+
+  .tpec-landing .reference-areas-grid h3 { font-size: 16px; line-height: 1.3; }
+  .tpec-landing .reference-areas-grid p,
+  .tpec-landing .reference-benefits-grid p,
+  .tpec-landing .areas-head p { font-size: 16px; line-height: 1.5; }
+  .tpec-landing .reference-areas-grid article { min-height: 0; }
+  .tpec-landing .reference-use-grid > article {
+    display: grid; grid-template-columns: 104px minmax(0, 1fr); align-items: center; min-height: 0;
+  }
+  .tpec-landing .reference-use-grid .use-photo { grid-column: 1 / -1; height: auto; aspect-ratio: auto; }
+  .tpec-landing .reference-use-grid .use-photo img { width: 100%; height: auto; object-fit: contain; }
+  .tpec-landing .reference-use-grid .mini-phone {
+    position: relative !important; top: auto !important; left: auto !important;
+    width: 88px !important; height: 157px !important; margin: 16px 8px;
+    border-radius: 14px !important;
+  }
+  .tpec-landing .reference-use-grid footer { flex-direction: column; align-items: flex-start; padding: 16px 12px; }
+  .tpec-landing .reference-use-grid footer strong { font-size: 16px; line-height: 1.45; }
+  .tpec-landing .faq-list details > p {
+    max-height: none !important; opacity: 1; transform: none; font-size: 16px; padding-bottom: 18px !important;
+  }
+  .tpec-landing .faq-list summary { font-size: 16px; line-height: 1.4; }
+  .tpec-landing .faq-list summary span { display: none; }
+  .tpec-landing .final-cta p { font-size: 16px; line-height: 1.5; }
+  .tpec-landing .site-footer > p,
+  .tpec-landing .site-footer nav a { font-size: 14px; line-height: 1.5; }
+  .tpec-landing .site-footer nav a { display: inline-flex; align-items: center; min-height: 44px; }
+}
+
+@media (max-width: 680px) {
+  .tpec-landing .reference-steps { grid-template-columns: 1fr; }
+  .tpec-landing .reference-steps article { grid-template-columns: 48px minmax(0, 1fr); gap: 8px 12px; }
+  .tpec-landing .reference-steps article > span { width: 48px; height: 48px; }
+  .tpec-landing .reference-steps article > span svg { width: 28px; height: 28px; }
+  .tpec-landing #como-funciona .how-field { grid-template-columns: 1fr; }
+  .tpec-landing .poster-benefits,
+  .tpec-landing .poster-areas,
+  .tpec-landing .poster-examples { padding-bottom: 36px; }
+  .tpec-landing .hero-actions a { font-size: 13px; letter-spacing: 0; }
+  .tpec-landing .final-cta .reference-button { font-size: 13px; letter-spacing: 0; }
+}
