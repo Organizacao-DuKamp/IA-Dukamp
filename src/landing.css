@@ -20,7 +20,7 @@
 .tpec-landing .poster-whatsapp-adapted .whatsapp-copy .brand-seal-small { height:clamp(145px,12vw,195px)!important; width:clamp(145px,12vw,195px)!important; }
 .tpec-landing .how-field > img { object-position:center center!important; }
 .tpec-landing .reference-use-grid > article:nth-child(2) .use-photo img { content:url("https://images.pexels.com/photos/36675240/pexels-photo-36675240.jpeg?auto=compress&cs=tinysrgb&w=1200"); object-position:center 55%!important; }
-.tpec-landing .reference-use-grid > article:nth-child(4) .use-photo img { content:url("https://images.pexels.com/photos/32388928/pexels-photo-32388928.jpeg?auto=compress&cs=tinysrgb&w=1200"); object-position:58% 48%!important; }
+.tpec-landing .reference-use-grid > article:nth-child(4) .use-photo img { object-position:center center!important; }
 .tpec-landing .faq-list details > p { display:block!important; max-height:0; opacity:0; overflow:hidden; padding-bottom:0!important; transform:translateY(-5px); transition:max-height 260ms ease,opacity 180ms ease,padding-bottom 260ms ease,transform 220ms ease; }
 .tpec-landing .faq-list details > summary { cursor:default!important; pointer-events:none; }
 .tpec-landing .faq-list details > summary span { transform:rotate(0deg); transition:transform 260ms ease,opacity 200ms ease; }

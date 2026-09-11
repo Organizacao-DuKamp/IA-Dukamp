@@ -12,6 +12,7 @@ const dairyPhoto =
   "https://images.pexels.com/photos/30982514/pexels-photo-30982514/free-photo-of-holstein-cow-grazing-in-sunny-pasture.jpeg?auto=compress&cs=tinysrgb&w=900";
 const cattleWide = "/tpec-nelore-elite.webp";
 const cattlePanel = "/tpec-nelore-elite-panel.webp";
+const observationCattlePhoto = "/tpec-nelore-observation.webp";
 const herdWide =
   "https://images.pexels.com/photos/33206150/pexels-photo-33206150/free-photo-of-herd-of-cattle-grazing-in-brazilian-pasture.png?auto=compress&cs=tinysrgb&w=1400";
 const benefits = [
@@ -37,7 +38,7 @@ const useCases = [
   { title: "Analise este animal.", icon: "cow", image: cattlePhoto },
   { title: "Como está a condição deste pasto?", icon: "leaf", image: cattleWide },
   { title: "Esta dieta está adequada?", icon: "feed", image: dairyPhoto },
-  { title: "O que devo observar neste caso?", icon: "eye", image: cattleWide },
+  { title: "O que devo observar neste caso?", icon: "eye", image: observationCattlePhoto },
 ];
 
 const faqs = [
