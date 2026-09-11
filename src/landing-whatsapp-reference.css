@@ -260,10 +260,10 @@
   bottom: 0;
   height: 100%;
   max-width: none;
-  object-fit: fill;
+  object-fit: contain;
   position: absolute;
   right: 0;
-  width: 345%;
+  width: auto;
 }
 
 .tpec-landing .poster-whatsapp-adapted .whatsapp-field .left-fade {
@@ -336,7 +336,7 @@
   }
 
   .tpec-landing .poster-whatsapp-adapted .whatsapp-field-reference {
-    width: 320%;
+    width: auto;
   }
 }
 
