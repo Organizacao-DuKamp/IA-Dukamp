@@ -375,3 +375,43 @@
   .tpec-landing .hero-actions a { font-size: 13px; letter-spacing: 0; }
   .tpec-landing .final-cta .reference-button { font-size: 13px; letter-spacing: 0; }
 }
+
+/* Keep analysis captions outside the photograph, including mobile landscape. */
+@media (max-width: 1080px) {
+  .tpec-landing #como-funciona .how-field.reference-photo {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px;
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 0 12px 20px;
+  }
+  .tpec-landing #como-funciona .how-field.reference-photo > img {
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    flex: none;
+    object-fit: contain !important;
+    border-radius: 14px;
+  }
+  .tpec-landing #como-funciona .how-field .photo-fade {
+    display: none !important;
+  }
+  .tpec-landing #como-funciona .how-field > .scan-board {
+    position: static !important;
+    inset: auto !important;
+    transform: none !important;
+    transition: none !important;
+    opacity: 1 !important;
+    flex: none;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 14px 16px;
+  }
+  .tpec-landing #como-funciona .scan-board b,
+  .tpec-landing #como-funciona .scan-board span {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+}
