@@ -12,14 +12,15 @@ test("cálculo puro vai para DeepSeek", () => {
   assert.equal(route.synthesize, false);
 });
 
-test("cálculo autossuficiente ignora contexto antigo e não exige web", () => {
+test("cálculo autossuficiente é reconhecido para isolar contexto antigo", () => {
   const prompt =
     "Tenho 80 bois com peso médio de 420 kg. Cada um consome 2,2% do peso vivo em matéria seca por dia. Se a ração custa R$ 1,85 por kg e o confinamento durar 90 dias, calcule o consumo total de ração, o custo por animal e o custo total do lote.";
   assert.equal(isSelfContainedCalculation(prompt), true);
 
+  // askTpecAI remove contexto/estado antigos e proíbe web antes de chamar o roteador.
   const route = routeAIRequest({
     message: prompt,
-    conversationContext: "cotações e produtos anteriores ".repeat(2_000),
+    conversationContext: "",
     prohibitWeb: true,
   });
   assert.equal(route.primary, "deepseek");
