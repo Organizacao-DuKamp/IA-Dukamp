@@ -36,6 +36,16 @@ test("incomplete market money requests market correction instead of commercial f
   assert.ok(!result.issues.includes("unsupported_commercial_fact"));
 });
 
+test("calculated money from supplied inputs is not treated as an unsupported price claim", () => {
+  const result = validateGrounding(
+    "O consumo total em 90 dias é 66.528 kg. O custo por animal é R$ 1.538,46 e o custo total do lote é R$ 123.076,80.",
+    { commercial: false, currentMarket: false },
+  );
+
+  assert.equal(result.valid, true);
+  assert.deepEqual(result.issues, []);
+});
+
 test("unattributed non-market money remains blocked when no commercial evidence exists", () => {
   const result = validateGrounding("O valor está em R$ 350,00.", {
     commercial: false,
