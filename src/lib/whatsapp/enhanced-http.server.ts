@@ -19,6 +19,8 @@ type EnvLike = Record<string, string | undefined>;
 
 const MAX_WEBHOOK_BODY_BYTES = 512 * 1024;
 const MAX_OUTBOUND_CHARS = 3500;
+const OUTBOUND_CHUNK_BODY_CHARS = 3450;
+const PROCESSING_TIMEOUT_MS = 90_000;
 const DELIVERY_CONFIRM_ATTEMPTS = 3;
 const DELIVERY_CONFIRM_RETRY_MS = 120;
 
@@ -83,6 +85,22 @@ function errorDetails(error: unknown): string {
   if (typeof candidate.code === "string") parts.push(`code=${candidate.code}`);
   if (typeof candidate.status === "number") parts.push(`status=${candidate.status}`);
   return parts.join(" ");
+}
+
+async function withProcessingTimeout<T>(task: Promise<T>): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const timeout = new Promise<T>((_, reject) => {
+    timer = setTimeout(() => {
+      const error = new Error("whatsapp_processing_timeout") as Error & { status?: number };
+      error.status = 504;
+      reject(error);
+    }, PROCESSING_TIMEOUT_MS);
+  });
+  try {
+    return await Promise.race([task, timeout]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
 }
 
 function verifyWebhookSignature(
@@ -180,15 +198,17 @@ function extractIncomingMessages(payload: unknown): IncomingWhatsAppMessage[] {
   return messages;
 }
 
-function splitOutboundText(value: string): string[] {
+export function splitOutboundText(value: string): string[] {
   const normalized = value.trim();
   if (!normalized) return [];
   const chars = Array.from(normalized);
-  const chunks: string[] = [];
-  for (let index = 0; index < chars.length; index += MAX_OUTBOUND_CHARS) {
-    chunks.push(chars.slice(index, index + MAX_OUTBOUND_CHARS).join(""));
+  if (chars.length <= MAX_OUTBOUND_CHARS) return [normalized];
+
+  const rawChunks: string[] = [];
+  for (let index = 0; index < chars.length; index += OUTBOUND_CHUNK_BODY_CHARS) {
+    rawChunks.push(chars.slice(index, index + OUTBOUND_CHUNK_BODY_CHARS).join(""));
   }
-  return chunks;
+  return rawChunks.map((chunk, index) => `(${index + 1}/${rawChunks.length}) ${chunk}`);
 }
 
 function extractOfficialImageUrls(body: string): string[] {
@@ -344,7 +364,6 @@ async function trySendWhatsAppTypingIndicator(
     console.info("[whatsapp] typing.indicator sent");
     return true;
   } catch (error) {
-    // Presença é opcional: nunca atrase nem substitua a resposta final por ela.
     console.error(`[whatsapp] typing.indicator send failed ${errorDetails(error)}`);
     return false;
   }
@@ -369,10 +388,6 @@ async function confirmWhatsAppDelivery(
       if (attempt < DELIVERY_CONFIRM_ATTEMPTS) await sleepImpl(DELIVERY_CONFIRM_RETRY_MS);
     }
   }
-
-  // A Graph API já aceitou a mensagem. Não libere o lease aqui: fazer isso
-  // tornaria uma resposta possivelmente entregue imediatamente elegível para
-  // reenvio por outro webhook, criando duplicatas para o usuário.
   throw lastError instanceof Error ? lastError : new Error("whatsapp_delivery_confirmation_failed");
 }
 
@@ -387,38 +402,24 @@ async function deliverPendingReply(
   let delivery = await control({ action: "claim_delivery", messageId: message.messageId });
 
   if (delivery.kind === "missing" && fallbackReply?.trim()) {
-    await control({
-      action: "complete",
-      messageId: message.messageId,
-      reply: fallbackReply.trim(),
-    });
+    await control({ action: "complete", messageId: message.messageId, reply: fallbackReply.trim() });
     delivery = await control({ action: "claim_delivery", messageId: message.messageId });
   }
 
   if (delivery.kind === "processing" || delivery.kind === "delivered") return;
-  if (delivery.kind !== "claimed" || !delivery.reply) {
-    throw new Error("whatsapp_delivery_not_ready");
-  }
+  if (delivery.kind !== "claimed" || !delivery.reply) throw new Error("whatsapp_delivery_not_ready");
 
-  // Falha ANTES da Graph API aceitar a mensagem: é seguro liberar o lease e
-  // permitir nova tentativa da mesma resposta pronta.
   try {
     await sendWhatsAppText(message.phone, delivery.reply, env, fetchImpl);
   } catch (error) {
     try {
-      await control({
-        action: "release_delivery",
-        messageId: message.messageId,
-        reply: delivery.reply,
-      });
+      await control({ action: "release_delivery", messageId: message.messageId, reply: delivery.reply });
     } catch (releaseError) {
       console.error(`[whatsapp] failed to release delivery lease ${errorDetails(releaseError)}`);
     }
     throw error;
   }
 
-  // Depois de a Graph API aceitar a mensagem, nunca volte o registro para
-  // "completed" só porque a confirmação no banco falhou. Isso evita reenvio.
   await confirmWhatsAppDelivery(message.messageId, delivery.reply, control, sleepImpl);
 }
 
@@ -427,9 +428,7 @@ export async function handleEnhancedWhatsAppWebhookRequest(
   dependencies: EnhancedWhatsAppHttpDependencies = {},
 ): Promise<Response> {
   const env = envOf(dependencies);
-  const sleepImpl =
-    dependencies.sleepImpl ??
-    ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
+  const sleepImpl = dependencies.sleepImpl ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
 
   if (request.method === "GET") {
     const url = new URL(request.url);
@@ -437,13 +436,7 @@ export async function handleEnhancedWhatsAppWebhookRequest(
     const provided = url.searchParams.get("hub.verify_token") ?? "";
     const challenge = url.searchParams.get("hub.challenge") ?? "";
     const expected = env.WHATSAPP_VERIFY_TOKEN?.trim() ?? "";
-    if (
-      mode === "subscribe" &&
-      expected &&
-      provided &&
-      safeEqual(expected, provided) &&
-      challenge
-    ) {
+    if (mode === "subscribe" && expected && provided && safeEqual(expected, provided) && challenge) {
       return text(challenge, 200);
     }
     return text("Forbidden", 403);
@@ -461,9 +454,7 @@ export async function handleEnhancedWhatsAppWebhookRequest(
 
   const appSecret = env.WHATSAPP_APP_SECRET?.trim() ?? "";
   if (!appSecret) return json({ error: "whatsapp_not_configured" }, 503);
-  if (!verifyWebhookSignature(rawBody, request.headers.get("x-hub-signature-256"), appSecret)) {
-    return text("Unauthorized", 401);
-  }
+  if (!verifyWebhookSignature(rawBody, request.headers.get("x-hub-signature-256"), appSecret)) return text("Unauthorized", 401);
 
   let payload: unknown;
   try {
@@ -479,38 +470,21 @@ export async function handleEnhancedWhatsAppWebhookRequest(
   if (incoming.length === 0) return json({ received: true });
 
   const fetchImpl = dependencies.fetchImpl ?? fetch;
-  const control =
-    dependencies.controlMessage ??
-    ((controlRequest: WhatsAppControlRequest) => controlWhatsAppMessage(controlRequest));
-  const dispatch =
-    dependencies.dispatchChat ??
-    ((input: WhatsAppChatInput) =>
-      dispatchClaimedWhatsAppChat(input, { env, fetchImpl: dependencies.fetchImpl }));
+  const control = dependencies.controlMessage ?? ((controlRequest: WhatsAppControlRequest) => controlWhatsAppMessage(controlRequest));
+  const dispatch = dependencies.dispatchChat ?? ((input: WhatsAppChatInput) => dispatchClaimedWhatsAppChat(input, { env, fetchImpl: dependencies.fetchImpl }));
 
   for (const message of incoming) {
     let claim: WhatsAppControlResult;
     try {
-      claim = await control({
-        action: "claim",
-        phone: message.phone,
-        messageId: message.messageId,
-      });
+      claim = await control({ action: "claim", phone: message.phone, messageId: message.messageId });
     } catch (error) {
       console.error(`[whatsapp] durable claim failed ${errorDetails(error)}`);
-      await trySendWhatsAppText(
-        message.phone,
-        friendlyWhatsAppError(error),
-        env,
-        fetchImpl,
-        "claim.failure.notice",
-      );
+      await trySendWhatsAppText(message.phone, friendlyWhatsAppError(error), env, fetchImpl, "claim.failure.notice");
       continue;
     }
 
     if (claim.kind === "processing" || claim.kind === "delivered") {
-      console.info(
-        `[whatsapp] duplicate ignored message_id=${message.messageId} state=${claim.kind}`,
-      );
+      console.info(`[whatsapp] duplicate ignored message_id=${message.messageId} state=${claim.kind}`);
       continue;
     }
     if (claim.kind === "completed") {
@@ -526,48 +500,36 @@ export async function handleEnhancedWhatsAppWebhookRequest(
     const started = Date.now();
     let result: WhatsAppChatResult;
     try {
-      const task = dispatch({
-        phone: message.phone,
-        messageId: message.messageId,
-        text: message.text,
-        ...(message.media ? { media: message.media } : {}),
-      });
+      const task = withProcessingTimeout(
+        dispatch({
+          phone: message.phone,
+          messageId: message.messageId,
+          text: message.text,
+          ...(message.media ? { media: message.media } : {}),
+        }),
+      );
       const progressText = message.media ? `${message.media.type}: ${message.text}` : message.text;
       result = await resolveWithWhatsAppProgress(
         task,
         buildWhatsAppProgressPlan(progressText, message.messageId),
         async () => {
-          // Reserva uma única presença por messageId. Isso elimina avisos
-          // repetidos mesmo quando a Meta repete o webhook em outra instância.
           try {
-            const current = await control({
-              action: "claim_presence",
-              messageId: message.messageId,
-            });
+            const current = await control({ action: "claim_presence", messageId: message.messageId });
             if (current.kind !== "claimed") {
-              console.info(
-                `[whatsapp] duplicate/stale presence suppressed message_id=${message.messageId} state=${current.kind}`,
-              );
+              console.info(`[whatsapp] duplicate/stale presence suppressed message_id=${message.messageId} state=${current.kind}`);
               return;
             }
           } catch (error) {
-            // Falhar ao conferir presença não pode derrubar a resposta principal.
             console.error(`[whatsapp] progress state check failed ${errorDetails(error)}`);
             return;
           }
-          // O indicador nativo desaparece quando a resposta chega e não deixa
-          // mensagens de "estou processando" acumuladas no histórico do chat.
           await trySendWhatsAppTypingIndicator(message.messageId, env, fetchImpl);
         },
         sleepImpl,
       );
-      console.info(
-        `[whatsapp] claimed processing completed duration_ms=${Date.now() - started} has_reply=${Boolean(result.reply)}`,
-      );
+      console.info(`[whatsapp] claimed processing completed duration_ms=${Date.now() - started} has_reply=${Boolean(result.reply)}`);
     } catch (error) {
-      console.error(
-        `[whatsapp] claimed processing failed duration_ms=${Date.now() - started} ${errorDetails(error)}`,
-      );
+      console.error(`[whatsapp] claimed processing failed duration_ms=${Date.now() - started} ${errorDetails(error)}`);
       const failure = friendlyWhatsAppError(error);
       try {
         await control({ action: "complete", messageId: message.messageId, reply: failure });
@@ -580,6 +542,11 @@ export async function handleEnhancedWhatsAppWebhookRequest(
 
     if (!result.shouldSend) {
       console.info(`[whatsapp] final delivery suppressed message_id=${message.messageId}`);
+      try {
+        await control({ action: "release", messageId: message.messageId });
+      } catch (error) {
+        console.error(`[whatsapp] suppressed message release failed ${errorDetails(error)}`);
+      }
       continue;
     }
 
@@ -593,8 +560,6 @@ export async function handleEnhancedWhatsAppWebhookRequest(
       }
     }
 
-    // Entrega é uma fase separada. Falha na própria Graph API libera o lease;
-    // falha apenas ao confirmar delivered_at NÃO libera uma mensagem já aceita.
     try {
       await deliverPendingReply(message, finalReply, control, env, fetchImpl, sleepImpl);
     } catch (error) {
