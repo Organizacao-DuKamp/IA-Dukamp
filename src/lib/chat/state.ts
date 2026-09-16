@@ -206,114 +206,14 @@ const CANCEL_RE = /\b(cancela|cancelar|esquece|deixa\s+pra\s+l[áa]|para\s+tudo|
 const TOPIC_CHANGE_RE =
   /\b(mudando\s+de\s+assunto|outro\s+assunto|outra\s+coisa|outra\s+pergunta|deixa\s+isso|agora\s+quero\s+saber|falando\s+em\s+outra|estou\s+falando\s+(?:de|sobre)\s+outra|n[aã]o\s+(?:me\s+)?refiro\s+a?)\b/i;
 
-// ---------------------------------------------------------------------------
-// Reconhecimento / reação curta ("user_acknowledgement")
-// ---------------------------------------------------------------------------
-
-/**
- * Tokens que, sozinhos ou combinados, representam apenas reação, concordância,
- * agradecimento ou encerramento — nunca um novo pedido.
- * A classificação NÃO depende só desta lista: ela só vale quando não existe
- * pergunta/ação pendente e quando não sobra nenhum conteúdo novo na mensagem.
- */
 const ACK_TOKENS = new Set([
-  "ah",
-  "aah",
-  "aa",
-  "oh",
-  "ooh",
-  "opa",
-  "pois",
-  "então",
-  "entao",
-  "e",
-  "é",
-  "eh",
-  "muito",
-  "mto",
-  "bem",
-  "bastante",
-  "que",
-  "tudo",
-  "isso",
-  "mesmo",
-  "assim",
-  "sim",
-  "ok",
-  "okay",
-  "okey",
-  "blz",
-  "beleza",
-  "certo",
-  "correto",
-  "exato",
-  "exatamente",
-  "entendi",
-  "entendido",
-  "entendida",
-  "entendo",
-  "compreendi",
-  "saquei",
-  "ciente",
-  "agora",
-  "faz",
-  "sentido",
-  "verdade",
-  "claro",
-  "uhum",
-  "aham",
-  "ahan",
-  "hm",
-  "hmm",
-  "hum",
-  "humm",
-  "legal",
-  "bacana",
-  "interessante",
-  "show",
-  "massa",
-  "top",
-  "ótimo",
-  "otimo",
-  "perfeito",
-  "boa",
-  "bom",
-  "joia",
-  "jóia",
-  "maneiro",
-  "dahora",
-  "demais",
-  "tranquilo",
-  "suave",
-  "nossa",
-  "uau",
-  "wow",
-  "caramba",
-  "puxa",
-  "eita",
-  "valeu",
-  "vlw",
-  "obrigado",
-  "obrigada",
-  "obg",
-  "grato",
-  "grata",
-  "thanks",
-  "obrigadão",
-  "obrigadao",
-  "ta",
-  "tá",
-  "tudo bem",
-  "belezinha",
-  "ss",
-  "ahh",
+  "ah", "aah", "aa", "oh", "ooh", "opa", "pois", "então", "entao", "e", "é", "eh", "muito", "mto", "bem", "bastante", "que", "tudo", "isso", "mesmo", "assim", "sim", "ok", "okay", "okey", "blz", "beleza", "certo", "correto", "exato", "exatamente", "entendi", "entendido", "entendida", "entendo", "compreendi", "saquei", "ciente", "agora", "faz", "sentido", "verdade", "claro", "uhum", "aham", "ahan", "hm", "hmm", "hum", "humm", "legal", "bacana", "interessante", "show", "massa", "top", "ótimo", "otimo", "perfeito", "boa", "bom", "joia", "jóia", "maneiro", "dahora", "demais", "tranquilo", "suave", "nossa", "uau", "wow", "caramba", "puxa", "eita", "valeu", "vlw", "obrigado", "obrigada", "obg", "grato", "grata", "thanks", "obrigadão", "obrigadao", "ta", "tá", "tudo bem", "belezinha", "ss", "ahh",
 ]);
 
 const THANKS_RE = /\b(valeu|vlw|obrigad\w*|obg|grat[oa]|thanks|brigad\w*)\b/i;
 const CLOSING_RE =
   /\b(tchau|at[ée]\s+mais|falou|flw|adeus|bye|por\s+hoje\s+[ée]\s+s[óo]|era\s+s[óo]\s+isso)\b/i;
 
-/** "hummmm", "hmmm", "aaah" → forma canônica curta. */
 function canonicalToken(w: string): string {
   if (/^h+[uma]*m+h*$/i.test(w)) return "hmm";
   if (/^a+h+$/i.test(w)) return "ah";
@@ -325,14 +225,9 @@ export interface AckAnalysis {
   isAcknowledgement: boolean;
   thanks: boolean;
   closing: boolean;
-  /** Restante da mensagem depois de remover os tokens de reação. */
   remainder: string;
 }
 
-/**
- * Detecta se a mensagem é PURA reação/reconhecimento, isto é: não contém
- * pergunta, pedido, dado novo, correção nem mudança de assunto.
- */
 export function analyzeAcknowledgement(text: string): AckAnalysis {
   const raw = text.trim();
   const thanks = THANKS_RE.test(raw);
@@ -363,41 +258,21 @@ export function analyzeAcknowledgement(text: string): AckAnalysis {
 }
 
 const ORDINALS: Record<string, number> = {
-  primeiro: 1,
-  primeira: 1,
-  um: 1,
-  "1": 1,
-  segundo: 2,
-  segunda: 2,
-  dois: 2,
-  "2": 2,
-  terceiro: 3,
-  terceira: 3,
-  três: 3,
-  tres: 3,
-  "3": 3,
-  quarto: 4,
-  quarta: 4,
-  quatro: 4,
-  "4": 4,
+  primeiro: 1, primeira: 1, um: 1, "1": 1,
+  segundo: 2, segunda: 2, dois: 2, "2": 2,
+  terceiro: 3, terceira: 3, três: 3, tres: 3, "3": 3,
+  quarto: 4, quarta: 4, quatro: 4, "4": 4,
 };
 
 function stripPunct(t: string): string {
-  return t
-    .trim()
-    .toLowerCase()
-    .replace(/[!.?…,;]+$/g, "")
-    .replace(/\s+/g, " ");
+  return t.trim().toLowerCase().replace(/[!.?…,;]+$/g, "").replace(/\s+/g, " ");
 }
 
 export function isAffirmative(text: string): boolean {
   const t = stripPunct(text);
   if (AFFIRMATIVE_RE.test(t)) return true;
-  // "sim, pode fazer", "isso mesmo, o segundo", "pode sim por favor"
-  return (
-    /^(sim|isso|claro|pode|ok|beleza|correto|exato|confirmo|perfeito|certo)\b/i.test(t) &&
-    !NEGATIVE_RE.test(t.split(/[, ]/)[0] ?? "")
-  );
+  return /^(sim|isso|claro|pode|ok|beleza|correto|exato|confirmo|perfeito|certo)\b/i.test(t) &&
+    !NEGATIVE_RE.test(t.split(/[, ]/)[0] ?? "");
 }
 
 export function isNegative(text: string): boolean {
@@ -406,7 +281,6 @@ export function isNegative(text: string): boolean {
   return /^(n[ãa]o|nao|cancela|esquece|errado)\b/i.test(t);
 }
 
-/** Extrai dados numéricos conhecidos do domínio a partir do texto livre. */
 export function extractDomainData(text: string): Record<string, number> {
   const t = text.toLowerCase().replace(/\./g, "").replace(/,/g, ".");
   const out: Record<string, number> = {};
@@ -416,16 +290,10 @@ export function extractDomainData(text: string): Record<string, number> {
     const v = Number.parseFloat(m[1]);
     return Number.isFinite(v) ? v : null;
   };
-  const animais = num(
-    /(\d+(?:\.\d+)?)\s*(?:cabe[çc]as?|animais|animal|bois?|vacas?|novilhas?|bezerros?|garrotes?|ovelhas?|cavalos?)\b/,
-  );
+  const animais = num(/(\d+(?:\.\d+)?)\s*(?:cabe[çc]as?|animais|animal|bois?|vacas?|novilhas?|bezerros?|garrotes?|ovelhas?|cavalos?)\b/);
   if (animais !== null) out.numero_animais = animais;
-  const peso = num(
-    /(\d+(?:\.\d+)?)\s*(?:kg|quilos?|arrobas?\s+de\s+peso)?\s*(?:de\s+)?(?:peso(?:\s+m[ée]dio)?)?\b(?=[^\d]*$|.*\bkg\b)/,
-  );
-  const pesoExpl = num(
-    /(?:peso(?:\s+m[ée]dio)?(?:\s+de)?\s*|com\s+|uns?\s+|cerca\s+de\s+|aproximadamente\s+)?(\d+(?:\.\d+)?)\s*(?:kg|quilos?)\b/,
-  );
+  const peso = num(/(\d+(?:\.\d+)?)\s*(?:kg|quilos?|arrobas?\s+de\s+peso)?\s*(?:de\s+)?(?:peso(?:\s+m[ée]dio)?)?\b(?=[^\d]*$|.*\bkg\b)/);
+  const pesoExpl = num(/(?:peso(?:\s+m[ée]dio)?(?:\s+de)?\s*|com\s+|uns?\s+|cerca\s+de\s+|aproximadamente\s+)?(\d+(?:\.\d+)?)\s*(?:kg|quilos?)\b/);
   if (pesoExpl !== null) out.peso_medio_kg = pesoExpl;
   else if (peso !== null && /kg|quilo/.test(t)) out.peso_medio_kg = peso;
   const dias = num(/(\d+(?:\.\d+)?)\s*dias?\b/);
@@ -442,9 +310,7 @@ export interface IntentAnalysis {
   selectedOption: number | null;
   extracted: Record<string, number>;
   isShort: boolean;
-  /** A mensagem se refere ao assunto anterior? */
   isContextuallyRelated: boolean;
-  /** A mensagem pede informação nova? */
   requiresInformationalAnswer: boolean;
   shouldContinueTopic: boolean;
   shouldExecuteAction: boolean;
@@ -461,9 +327,7 @@ export function classifyUserIntent(text: string, state: ConversationState): Inte
   let selectedOption: number | null = null;
   const om = raw.match(OPTION_RE);
   if (om) {
-    const word = (
-      om[0].match(/primeir[oa]|segund[oa]|terceir[oa]|quart[oa]|[úu]ltim[oa]|\d/i)?.[0] ?? ""
-    ).toLowerCase();
+    const word = (om[0].match(/primeir[oa]|segund[oa]|terceir[oa]|quart[oa]|[úu]ltim[oa]|\d/i)?.[0] ?? "").toLowerCase();
     if (/[úu]ltim/.test(word)) selectedOption = state.offered_options.length || null;
     else selectedOption = ORDINALS[word] ?? (Number.isFinite(Number(word)) ? Number(word) : null);
   }
@@ -471,8 +335,6 @@ export function classifyUserIntent(text: string, state: ConversationState): Inte
   const affirmative = isAffirmative(raw);
   const negative = isNegative(raw);
   const ack = analyzeAcknowledgement(raw);
-
-  // Existe algo pendente que uma resposta curta poderia estar respondendo?
   const hasPending =
     (state.awaiting_user_response || state.awaiting_confirmation) &&
     !!(state.pending_question || state.pending_action);
@@ -482,14 +344,13 @@ export function classifyUserIntent(text: string, state: ConversationState): Inte
   else if (CORRECTION_RE.test(raw) && Object.keys(extracted).length > 0) intent = "correcao";
   else if (hasPending && (affirmative || negative)) intent = "resposta_a_confirmacao";
   else if (hasPending && selectedOption !== null) intent = "selecao_de_opcao";
-  // Sem pendência explícita, reação curta é reconhecimento — nunca ordem de continuar.
   else if (!hasPending && ack.isAcknowledgement) intent = "user_acknowledgement";
   else if (TOPIC_CHANGE_RE.test(raw)) intent = "mudanca_de_assunto";
   else if (COMPARE_RE.test(raw)) intent = "pedido_de_comparacao";
   else if (CALC_RE.test(raw)) intent = "pedido_de_calculo";
   else if (
     Object.keys(extracted).length > 0 &&
-    (isShort || state.expected_response_type === "data" || state.awaiting_user_response)
+    (isShort || (hasPending && state.expected_response_type === "data"))
   )
     intent = "fornecimento_de_dado";
   else if (isShort && state.current_topic) intent = "continuacao";
@@ -505,13 +366,7 @@ export function classifyUserIntent(text: string, state: ConversationState): Inte
       intent === "nova_pergunta");
 
   return {
-    intent,
-    affirmative,
-    negative,
-    selectedOption,
-    extracted,
-    isShort,
-    ack,
+    intent, affirmative, negative, selectedOption, extracted, isShort, ack,
     isContextuallyRelated: isAck || intent === "continuacao" || hasPending,
     requiresInformationalAnswer: !isAck && intent !== "cancelamento",
     shouldContinueTopic: !isAck && intent !== "cancelamento",
@@ -520,53 +375,33 @@ export function classifyUserIntent(text: string, state: ConversationState): Inte
   };
 }
 
-// ---------------------------------------------------------------------------
-// Leitura da última resposta da IA → pergunta/ação pendente
-// ---------------------------------------------------------------------------
-
 const CONFIRM_ASK_RE =
   /\b(deseja|quer\s+que\s+eu|posso\s+(te\s+)?(calcular|fazer|montar|considerar|seguir|passar|buscar|verificar|consultar|ajudar)|confirma|confirmar|est[áa]\s+correto|[ée]\s+isso|fa[çc]o\s+(o|a)|prossigo|sigo\s+com)\b/i;
 const DATA_ASK_RE =
   /\b(qual\s+(é\s+)?(o|a)\s+|quantos?\s+|quantas?\s+|me\s+informe|me\s+diga|voc[êe]\s+sabe\s+(o|a|qual))/i;
 
-export function analyzeAssistantReply(reply: string): {
-  intent: AssistantIntent;
-  question: string | null;
-  options: string[];
-} {
+export function analyzeAssistantReply(reply: string): { intent: AssistantIntent; question: string | null; options: string[] } {
   const text = reply.trim();
-  const questions = text.split(/\n+/).flatMap((line) =>
-    line
-      .split(/(?<=\?)\s+/)
-      .map((s) => s.trim())
-      .filter((s) => s.endsWith("?") && s.length > 8),
-  );
+  const questions = text.split(/\n+/).flatMap((line) => line.split(/(?<=\?)\s+/).map((s) => s.trim()).filter((s) => s.endsWith("?") && s.length > 8));
   const question = questions.length > 0 ? questions[questions.length - 1].slice(0, 400) : null;
-
-  // Opções enumeradas ("1. ...", "- **Produto X**")
   const options: string[] = [];
   for (const line of text.split(/\n/)) {
     const m = line.match(/^\s*(?:\d+[.)]|[-*•])\s+(.{3,120})$/);
     if (m) options.push(m[1].replace(/\*\*/g, "").trim());
     if (options.length >= 8) break;
   }
-
   let intent: AssistantIntent = question ? "answer" : "none";
   if (question && CONFIRM_ASK_RE.test(question)) intent = "request_confirmation";
   else if (question && DATA_ASK_RE.test(question)) intent = "request_data";
   else if (!question && options.length >= 2) intent = "offer_options";
   else if (question && options.length >= 2) intent = "offer_options";
-
   return { intent, question, options };
 }
 
-/** Deriva um rótulo de ação pendente a partir da pergunta feita pela IA. */
 export function derivePendingAction(question: string | null): string | null {
   if (!question) return null;
-  if (/previs[aã]o\s+(?:do\s+)?tempo|meteorolog|cidade\s+e\s+(?:estado|uf)/i.test(question))
-    return "consultar_previsao_tempo";
-  if (/calcul|consumo|quantidade|dieta|dimension/i.test(question))
-    return "calcular_quantidade_suplemento";
+  if (/previs[aã]o\s+(?:do\s+)?tempo|meteorolog|cidade\s+e\s+(?:estado|uf)/i.test(question)) return "consultar_previsao_tempo";
+  if (/calcul|consumo|quantidade|dieta|dimension/i.test(question)) return "calcular_quantidade_suplemento";
   if (/vendedor|contato|whats/i.test(question)) return "indicar_vendedor";
   if (/cota[çc][ãa]o|pre[çc]o|valor/i.test(question)) return "consultar_cotacao";
   if (/compar/i.test(question)) return "comparar_produtos";
@@ -574,23 +409,10 @@ export function derivePendingAction(question: string | null): string | null {
   return "responder_pergunta_pendente";
 }
 
-// ---------------------------------------------------------------------------
-// Atualização do estado
-// ---------------------------------------------------------------------------
-
 const TOPIC_PATTERNS: Array<[RegExp, string]> = [
-  [
-    /previs[aã]o\s+(?:do\s+)?tempo|meteorolog|vai\s+chover|chuva|temperatura|umidade|vento|geada|tempestade/i,
-    "clima e previsão do tempo",
-  ],
-  [
-    /proteinad|suplement|mineral|ra[çc][ãa]o|n[úu]cleo|concentrado|creep/i,
-    "suplementação e nutrição animal",
-  ],
-  [
-    /cota[çc][ãa]o|pre[çc]o|arroba|saca|mercado|d[óo]lar|boi\s+gordo/i,
-    "cotações e preços de mercado",
-  ],
+  [/previs[aã]o\s+(?:do\s+)?tempo|meteorolog|vai\s+chover|chuva|temperatura|umidade|vento|geada|tempestade/i, "clima e previsão do tempo"],
+  [/proteinad|suplement|mineral|ra[çc][ãa]o|n[úu]cleo|concentrado|creep/i, "suplementação e nutrição animal"],
+  [/cota[çc][ãa]o|pre[çc]o|arroba|saca|mercado|d[óo]lar|boi\s+gordo/i, "cotações e preços de mercado"],
   [/vendedor|representante|contato|whats/i, "vendedores e atendimento comercial"],
   [/unidade|filial|matriz|endere[çc]o|cnpj/i, "unidades da DuKamp"],
   [/pasto|pastagem|lota[çc][ãa]o|brachiaria|capim/i, "pastagens e lotação"],
@@ -604,11 +426,7 @@ function detectTopic(text: string): string | null {
   return null;
 }
 
-export function applyUserTurn(
-  state: ConversationState,
-  text: string,
-  analysis: IntentAnalysis,
-): ConversationState {
+export function applyUserTurn(state: ConversationState, text: string, analysis: IntentAnalysis): ConversationState {
   const next: ConversationState = {
     ...state,
     confirmed_data: { ...state.confirmed_data },
@@ -623,8 +441,6 @@ export function applyUserTurn(
     updated_at: new Date().toISOString(),
   };
 
-  // Reconhecimento/reação: nada de novo objetivo, nada de nova ação. O assunto
-  // permanece disponível como contexto, mas não autoriza continuar falando.
   if (analysis.intent === "user_acknowledgement") {
     next.pending_question = null;
     next.pending_action = null;
@@ -638,12 +454,9 @@ export function applyUserTurn(
     return next;
   }
 
-  // Dados novos / correções — o valor mais recente SEMPRE substitui o anterior.
   for (const [field, value] of Object.entries(analysis.extracted)) {
     const prev = next.confirmed_data[field];
-    if (prev !== undefined && prev !== value) {
-      next.corrections.push({ field, from: prev, to: value });
-    }
+    if (prev !== undefined && prev !== value) next.corrections.push({ field, from: prev, to: value });
     next.confirmed_data[field] = value;
   }
   next.missing_data = next.missing_data.filter((f) => next.confirmed_data[f] === undefined);
@@ -656,23 +469,12 @@ export function applyUserTurn(
     next.pending_action = "calcular_quantidade_suplemento";
   } else if (analysis.intent === "pedido_de_comparacao") {
     next.user_goal = text.slice(0, 300);
-  } else if (
-    (analysis.intent === "nova_pergunta" || analysis.intent === "mudanca_de_assunto") &&
-    text.length > 25
-  ) {
+  } else if ((analysis.intent === "nova_pergunta" || analysis.intent === "mudanca_de_assunto") && text.length > 25) {
     next.user_goal = text.slice(0, 300);
-  } else if (!next.user_goal && text.length > 25) {
-    next.user_goal = text.slice(0, 300);
-  }
+  } else if (!next.user_goal && text.length > 25) next.user_goal = text.slice(0, 300);
 
   if (analysis.intent === "mudanca_de_assunto") {
-    // Não apaga o contexto anterior: arquiva no resumo.
-    if (state.current_topic) {
-      next.conversation_summary.known_facts = dedupePush(
-        next.conversation_summary.known_facts,
-        `Assunto anterior interrompido pelo usuário: ${state.current_topic}.`,
-      );
-    }
+    if (state.current_topic) next.conversation_summary.known_facts = dedupePush(next.conversation_summary.known_facts, `Assunto anterior interrompido pelo usuário: ${state.current_topic}.`);
     next.pending_question = null;
     next.pending_action = null;
     next.pending_payload = null;
@@ -684,12 +486,7 @@ export function applyUserTurn(
   }
 
   if (analysis.intent === "cancelamento" || (analysis.negative && state.awaiting_user_response)) {
-    if (state.pending_question) {
-      next.conversation_summary.rejected_options = dedupePush(
-        next.conversation_summary.rejected_options,
-        state.pending_question,
-      );
-    }
+    if (state.pending_question) next.conversation_summary.rejected_options = dedupePush(next.conversation_summary.rejected_options, state.pending_question);
     next.pending_question = null;
     next.pending_action = null;
     next.pending_payload = null;
@@ -699,56 +496,33 @@ export function applyUserTurn(
   }
 
   if (analysis.affirmative && state.awaiting_user_response && state.pending_question) {
-    next.conversation_summary.confirmed_decisions = dedupePush(
-      next.conversation_summary.confirmed_decisions,
-      `Usuário confirmou: ${state.pending_question}`,
-    );
-    if (state.pending_payload) {
-      for (const [k, v] of Object.entries(state.pending_payload)) {
-        if (typeof v === "number" || typeof v === "string") next.confirmed_data[k] = v;
-      }
-    }
-    // A confirmação foi consumida: nunca pode ficar ativa para o próximo turno.
+    next.conversation_summary.confirmed_decisions = dedupePush(next.conversation_summary.confirmed_decisions, `Usuário confirmou: ${state.pending_question}`);
+    if (state.pending_payload) for (const [k, v] of Object.entries(state.pending_payload)) if (typeof v === "number" || typeof v === "string") next.confirmed_data[k] = v;
     next.conversation_summary.last_completed_action = state.pending_action ?? "";
     next.awaiting_user_response = false;
     next.awaiting_confirmation = false;
     next.expected_response_type = null;
     next.pending_question = null;
-    // pending_action permanece: é o que a IA deve executar AGORA.
   }
 
   if (analysis.selectedOption !== null && state.offered_options.length > 0) {
     const picked = state.offered_options[analysis.selectedOption - 1];
     if (picked) {
       next.confirmed_data.opcao_selecionada = picked;
-      next.conversation_summary.confirmed_decisions = dedupePush(
-        next.conversation_summary.confirmed_decisions,
-        `Usuário selecionou a opção ${analysis.selectedOption}: ${picked}`,
-      );
+      next.conversation_summary.confirmed_decisions = dedupePush(next.conversation_summary.confirmed_decisions, `Usuário selecionou a opção ${analysis.selectedOption}: ${picked}`);
       next.awaiting_user_response = false;
       next.awaiting_confirmation = false;
       next.pending_question = null;
     }
   }
-
   return next;
 }
 
-export function applyAssistantTurn(
-  state: ConversationState,
-  reply: string,
-  opts: { acknowledgement?: boolean } = {},
-): ConversationState {
-  // Numa resposta de puro reconhecimento a IA não abre pergunta nem ação: o
-  // estado continua "idle" aguardando o próximo pedido do usuário.
+export function applyAssistantTurn(state: ConversationState, reply: string, opts: { acknowledgement?: boolean } = {}): ConversationState {
   if (opts.acknowledgement) {
     return {
       ...state,
-      conversation_summary: {
-        ...state.conversation_summary,
-        pending_questions: [],
-        next_expected_action: "aguardar novo pedido do usuário",
-      },
+      conversation_summary: { ...state.conversation_summary, pending_questions: [], next_expected_action: "aguardar novo pedido do usuário" },
       version: state.version + 1,
       updated_at: new Date().toISOString(),
       last_assistant_intent: "none",
@@ -801,15 +575,12 @@ export function applyAssistantTurn(
     next.awaiting_confirmation = false;
     next.expected_response_type = null;
     next.confirmation_options = [];
-    if (state.pending_action)
-      next.conversation_summary.last_completed_action = state.pending_action;
+    if (state.pending_action) next.conversation_summary.last_completed_action = state.pending_action;
     next.pending_action = null;
     next.pending_payload = null;
   }
 
-  next.conversation_summary.pending_questions = next.pending_question
-    ? [next.pending_question]
-    : [];
+  next.conversation_summary.pending_questions = next.pending_question ? [next.pending_question] : [];
   next.conversation_summary.next_expected_action =
     next.expected_response_type === "confirmation"
       ? "aguardar confirmação do usuário e executar a ação pendente"
@@ -827,21 +598,9 @@ function dedupePush(list: string[], item: string, max = 12): string[] {
   return filtered.slice(-max);
 }
 
-// ---------------------------------------------------------------------------
-// Resumo estruturado acumulado
-// ---------------------------------------------------------------------------
-
 export const KEEP_FULL_TURNS = 10;
 
-/**
- * Atualiza o resumo estruturado a partir do estado + das mensagens que saíram
- * da janela recente. Determinístico (sem chamada extra ao modelo) para não
- * introduzir latência nem risco de alucinação no resumo.
- */
-export function updateSummary(
-  state: ConversationState,
-  droppedMessages: ChatMessage[],
-): ConversationSummary {
+export function updateSummary(state: ConversationState, droppedMessages: ChatMessage[]): ConversationSummary {
   const s: ConversationSummary = {
     ...state.conversation_summary,
     known_facts: [...state.conversation_summary.known_facts],
@@ -850,53 +609,23 @@ export function updateSummary(
   };
   s.user_goal = state.user_goal ?? s.user_goal;
   s.current_topic = state.current_topic ?? s.current_topic;
-
-  for (const [field, value] of Object.entries(state.confirmed_data)) {
-    s.known_facts = dedupePush(
-      s.known_facts.filter((f) => !f.startsWith(`${field}=`)),
-      `${field}=${value}`,
-      15,
-    );
-  }
-  for (const c of state.corrections.slice(-5)) {
-    s.known_facts = dedupePush(
-      s.known_facts,
-      `correção: ${c.field} passou de ${c.from} para ${c.to}`,
-      15,
-    );
-  }
-
+  for (const [field, value] of Object.entries(state.confirmed_data)) s.known_facts = dedupePush(s.known_facts.filter((f) => !f.startsWith(`${field}=`)), `${field}=${value}`, 15);
+  for (const c of state.corrections.slice(-5)) s.known_facts = dedupePush(s.known_facts, `correção: ${c.field} passou de ${c.from} para ${c.to}`, 15);
   for (const m of droppedMessages) {
     if (m.role !== "user") continue;
     const data = extractDomainData(m.content);
-    for (const [k, v] of Object.entries(data))
-      s.known_facts = dedupePush(s.known_facts, `${k}=${v}`, 15);
-    const ent = m.content.match(
-      /\b(DUKAMP[\w\s/-]{0,24}|BABYKAMP|ADEKAMP|HORSE\s+POWER|FERTIKAMP|BEEFKAMP)\b/i,
-    );
+    for (const [k, v] of Object.entries(data)) s.known_facts = dedupePush(s.known_facts, `${k}=${v}`, 15);
+    const ent = m.content.match(/\b(DUKAMP[\w\s/-]{0,24}|BABYKAMP|ADEKAMP|HORSE\s+POWER|FERTIKAMP|BEEFKAMP)\b/i);
     if (ent) s.important_entities = dedupePush(s.important_entities, ent[0].trim(), 12);
-    const loc = m.content.match(
-      /\b(?:em|no|na)\s+([A-ZÁ-Ú][a-zá-ú]+(?:\s+[A-ZÁ-Ú]?[a-zá-ú]+){0,2})/,
-    );
+    const loc = m.content.match(/\b(?:em|no|na)\s+([A-ZÁ-Ú][a-zá-ú]+(?:\s+[A-ZÁ-Ú]?[a-zá-ú]+){0,2})/);
     if (loc) s.important_entities = dedupePush(s.important_entities, `localidade: ${loc[1]}`, 12);
   }
-
   s.pending_questions = state.pending_question ? [state.pending_question] : [];
   return s;
 }
 
-// ---------------------------------------------------------------------------
-// Janela de contexto por tokens
-// ---------------------------------------------------------------------------
-
-/** Estimativa conservadora: ~4 caracteres por token em português. */
-export function estimateTokens(text: string): number {
-  return Math.ceil(text.length / 4);
-}
-
-export function estimateMessagesTokens(messages: ChatMessage[]): number {
-  return messages.reduce((acc, m) => acc + estimateTokens(m.content) + 4, 0);
-}
+export function estimateTokens(text: string): number { return Math.ceil(text.length / 4); }
+export function estimateMessagesTokens(messages: ChatMessage[]): number { return messages.reduce((acc, m) => acc + estimateTokens(m.content) + 4, 0); }
 
 export interface WindowResult {
   kept: ChatMessage[];
@@ -906,27 +635,12 @@ export interface WindowResult {
   reason: string | null;
 }
 
-/**
- * Monta a janela de histórico priorizando as mensagens mais recentes e
- * respeitando de fato o orçamento de tokens. O resumo/estado estruturado
- * preserva os fatos que ficaram fora da janela.
- */
-export function buildHistoryWindow(
-  history: ChatMessage[],
-  budgetTokens = 6000,
-  maxMessages = 40,
-): WindowResult {
+export function buildHistoryWindow(history: ChatMessage[], budgetTokens = 6000, maxMessages = 40): WindowResult {
   const recentCap = history.slice(-maxMessages);
   const dropped: ChatMessage[] = history.slice(0, Math.max(0, history.length - maxMessages));
   const keptReverse: ChatMessage[] = [];
   let tokens = 0;
   let truncated = dropped.length > 0;
-
-  // A versão anterior mantinha sempre dez mensagens, mesmo quando uma única
-  // resposta tinha milhares de caracteres. O orçamento agora é efetivo: a
-  // janela preserva o trecho mais recente e usa o resumo estruturado para o
-  // que ficou fora dela. Se a mensagem mais recente sozinha exceder o limite,
-  // preservamos início e fim, marcando a omissão.
   for (let i = recentCap.length - 1; i >= 0; i -= 1) {
     const message = recentCap[i];
     const cost = estimateTokens(message.content) + 4;
@@ -935,42 +649,23 @@ export function buildHistoryWindow(
       tokens += cost;
       continue;
     }
-
     const availableTokens = Math.max(0, budgetTokens - tokens - 4);
     if (keptReverse.length === 0 && availableTokens > 8) {
       const maxChars = availableTokens * 4;
       const headChars = Math.max(1, Math.floor(maxChars * 0.65));
       const tailChars = Math.max(1, maxChars - headChars - 40);
-      keptReverse.push({
-        role: message.role,
-        content:
-          message.content.slice(0, headChars) +
-          "\n[… trecho antigo omitido da janela …]\n" +
-          message.content.slice(-tailChars),
-      });
+      keptReverse.push({ role: message.role, content: message.content.slice(0, headChars) + "\n[… trecho antigo omitido da janela …]\n" + message.content.slice(-tailChars) });
       tokens = budgetTokens;
     }
     dropped.unshift(...recentCap.slice(0, i + 1));
     truncated = true;
     break;
   }
-
   return {
-    kept: keptReverse.reverse(),
-    dropped,
-    tokens,
-    truncated,
-    reason: truncated
-      ? dropped.length > 0 && history.length > maxMessages
-        ? "limite de mensagens e/ou orçamento de tokens"
-        : "orçamento de tokens"
-      : null,
+    kept: keptReverse.reverse(), dropped, tokens, truncated,
+    reason: truncated ? (dropped.length > 0 && history.length > maxMessages ? "limite de mensagens e/ou orçamento de tokens" : "orçamento de tokens") : null,
   };
 }
-
-// ---------------------------------------------------------------------------
-// Serialização do estado para o modelo
-// ---------------------------------------------------------------------------
 
 export function renderStateForModel(state: ConversationState): string {
   const payload = {
@@ -994,131 +689,40 @@ export function renderStateForModel(state: ConversationState): string {
   return JSON.stringify(payload, null, 0);
 }
 
-export function renderSummaryForModel(
-  summary: ConversationSummary,
-  state?: ConversationState,
-): string | null {
-  // confirmed_data é enviado em uma camada própria. Remover do resumo as
-  // cópias exatas evita repetir fatos sem perder memória: fatos antigos que
-  // não estão no estado atual continuam no resumo.
-  const currentFacts = new Set(
-    Object.entries(state?.confirmed_data ?? {}).map(([field, value]) => `${field}=${value}`),
-  );
-  const compactSummary = currentFacts.size
-    ? {
-        ...summary,
-        known_facts: summary.known_facts.filter((fact) => !currentFacts.has(fact)),
-      }
-    : summary;
-  const hasContent =
-    compactSummary.user_goal ||
-    compactSummary.current_topic ||
-    compactSummary.known_facts.length ||
-    compactSummary.confirmed_decisions.length ||
-    compactSummary.rejected_options.length ||
-    compactSummary.important_entities.length;
+export function renderSummaryForModel(summary: ConversationSummary, state?: ConversationState): string | null {
+  const currentFacts = new Set(Object.entries(state?.confirmed_data ?? {}).map(([field, value]) => `${field}=${value}`));
+  const compactSummary = currentFacts.size ? { ...summary, known_facts: summary.known_facts.filter((fact) => !currentFacts.has(fact)) } : summary;
+  const hasContent = compactSummary.user_goal || compactSummary.current_topic || compactSummary.known_facts.length || compactSummary.confirmed_decisions.length || compactSummary.rejected_options.length || compactSummary.important_entities.length;
   if (!hasContent) return null;
   return JSON.stringify(compactSummary, null, 0);
 }
 
-/**
- * Instrução explícita de como interpretar a mensagem atual, derivada do estado
- * e da intenção detectada. É isto que impede a IA de tratar "sim" como uma
- * nova conversa.
- */
-export function buildInterpretationDirective(
-  stateBefore: ConversationState,
-  analysis: IntentAnalysis,
-  text: string,
-): string | null {
+export function buildInterpretationDirective(stateBefore: ConversationState, analysis: IntentAnalysis, text: string): string | null {
   const lines: string[] = [];
   const pq = stateBefore.pending_question;
-
   if (analysis.intent === "user_acknowledgement") {
-    lines.push(
-      `A mensagem atual ("${text}") é apenas RECONHECIMENTO/REAÇÃO do usuário (${analysis.ack.thanks ? "agradecimento" : analysis.ack.closing ? "encerramento" : "concordância"}). NÃO é um pedido novo nem uma autorização para continuar o assunto.`,
-      `Responda com UMA frase curta e cordial, no máximo 12 palavras. NÃO repita informações já dadas, NÃO recalcule, NÃO liste opções, NÃO cite fontes, NÃO faça nova pergunta técnica, NÃO reabra o tema.`,
-      `Depois disso, pare e aguarde o próximo pedido do usuário.`,
-    );
+    lines.push(`A mensagem atual ("${text}") é apenas RECONHECIMENTO/REAÇÃO do usuário (${analysis.ack.thanks ? "agradecimento" : analysis.ack.closing ? "encerramento" : "concordância"}). NÃO é um pedido novo nem uma autorização para continuar o assunto.`, `Responda com UMA frase curta e cordial, no máximo 12 palavras. NÃO repita informações já dadas, NÃO recalcule, NÃO liste opções, NÃO cite fontes, NÃO faça nova pergunta técnica, NÃO reabra o tema.`, `Depois disso, pare e aguarde o próximo pedido do usuário.`);
     return lines.join("\n");
   }
-
-  if (analysis.intent === "resposta_a_confirmacao" && analysis.affirmative && pq) {
-    lines.push(
-      `A mensagem atual ("${text}") é uma CONFIRMAÇÃO POSITIVA da sua pergunta anterior: "${pq}".`,
-      `EXECUTE AGORA a ação pendente (${stateBefore.pending_action ?? "responder o que foi oferecido"}) usando os dados já confirmados.`,
-      `NÃO repita a pergunta, NÃO cumprimente, NÃO encerre a conversa, NÃO peça dados que já constam em confirmed_data.`,
-    );
-  } else if (analysis.intent === "resposta_a_confirmacao" && analysis.negative && pq) {
-    lines.push(
-      `A mensagem atual ("${text}") é uma NEGAÇÃO da sua pergunta anterior: "${pq}".`,
-      `Cancele/revise essa ação. Se o usuário indicou um novo valor na mesma mensagem, use o novo valor e siga com a ação corrigida.`,
-    );
-  } else if (analysis.intent === "cancelamento") {
-    lines.push(
-      `O usuário cancelou a ação pendente. Confirme o cancelamento em uma frase e pergunte como seguir.`,
-    );
-  } else if (analysis.intent === "selecao_de_opcao" && analysis.selectedOption) {
+  if (analysis.intent === "resposta_a_confirmacao" && analysis.affirmative && pq) lines.push(`A mensagem atual ("${text}") é uma CONFIRMAÇÃO POSITIVA da sua pergunta anterior: "${pq}".`, `EXECUTE AGORA a ação pendente (${stateBefore.pending_action ?? "responder o que foi oferecido"}) usando os dados já confirmados.`, `NÃO repita a pergunta, NÃO cumprimente, NÃO encerre a conversa, NÃO peça dados que já constam em confirmed_data.`);
+  else if (analysis.intent === "resposta_a_confirmacao" && analysis.negative && pq) lines.push(`A mensagem atual ("${text}") é uma NEGAÇÃO da sua pergunta anterior: "${pq}".`, `Cancele/revise essa ação. Se o usuário indicou um novo valor na mesma mensagem, use o novo valor e siga com a ação corrigida.`);
+  else if (analysis.intent === "cancelamento") lines.push(`O usuário cancelou a ação pendente. Confirme o cancelamento em uma frase e pergunte como seguir.`);
+  else if (analysis.intent === "selecao_de_opcao" && analysis.selectedOption) {
     const picked = stateBefore.offered_options[analysis.selectedOption - 1];
-    lines.push(
-      `O usuário selecionou a opção ${analysis.selectedOption}${picked ? `: "${picked}"` : ""} da lista que VOCÊ apresentou antes. Continue tratando exclusivamente dessa opção.`,
-    );
-  } else if (analysis.intent === "correcao") {
-    lines.push(
-      `O usuário CORRIGIU dados anteriores. Os valores válidos agora são os mais recentes em confirmed_data. Refaça o raciocínio/cálculo com eles e mencione brevemente a atualização.`,
-    );
-  } else if (analysis.intent === "fornecimento_de_dado" && pq) {
-    lines.push(
-      `A mensagem atual responde à sua pergunta "${pq}". Registre o dado e prossiga com a ação pendente — não repita a pergunta.`,
-    );
-  } else if (analysis.intent === "continuacao") {
-    lines.push(
-      `Mensagem curta de continuação. Resolva pronomes e referências ("isso", "ele", "esse", "o outro") pelo assunto em aberto (${stateBefore.current_topic ?? "última pergunta do usuário"}) antes de responder.`,
-    );
-  } else if (analysis.intent === "mudanca_de_assunto") {
-    lines.push(
-      `O usuário mudou de assunto intencionalmente. Atenda o novo pedido, mas mantenha os dados já confirmados disponíveis caso ele volte ao tema anterior.`,
-    );
-  }
-
-  if (stateBefore.awaiting_user_response && analysis.intent === "nova_pergunta" && pq) {
-    lines.push(
-      `Atenção: havia uma pergunta sua em aberto ("${pq}") que o usuário não respondeu. Responda ao novo pedido primeiro e, se ainda for necessário, retome a pergunta pendente ao final — sem insistir mais de uma vez.`,
-    );
-  }
-
+    lines.push(`O usuário selecionou a opção ${analysis.selectedOption}${picked ? `: "${picked}"` : ""} da lista que VOCÊ apresentou antes. Continue tratando exclusivamente dessa opção.`);
+  } else if (analysis.intent === "correcao") lines.push(`O usuário CORRIGIU dados anteriores. Os valores válidos agora são os mais recentes em confirmed_data. Refaça o raciocínio/cálculo com eles e mencione brevemente a atualização.`);
+  else if (analysis.intent === "fornecimento_de_dado" && pq) lines.push(`A mensagem atual responde à sua pergunta "${pq}". Registre o dado e prossiga com a ação pendente — não repita a pergunta.`);
+  else if (analysis.intent === "continuacao") lines.push(`Mensagem curta de continuação. Resolva pronomes e referências ("isso", "ele", "esse", "o outro") pelo assunto em aberto (${stateBefore.current_topic ?? "última pergunta do usuário"}) antes de responder.`);
+  else if (analysis.intent === "mudanca_de_assunto") lines.push(`O usuário mudou de assunto intencionalmente. Atenda o novo pedido, mas mantenha os dados já confirmados disponíveis caso ele volte ao tema anterior.`);
+  if (stateBefore.awaiting_user_response && analysis.intent === "nova_pergunta" && pq) lines.push(`Atenção: havia uma pergunta sua em aberto ("${pq}") que o usuário não respondeu. Responda ao novo pedido primeiro e, se ainda for necessário, retome a pergunta pendente ao final — sem insistir mais de uma vez.`);
   return lines.length > 0 ? lines.join("\n") : null;
 }
 
-// ---------------------------------------------------------------------------
-// Resposta curta de reconhecimento (sem modelo, sem busca, sem RAG)
-// ---------------------------------------------------------------------------
+const ACK_THANKS_REPLIES = ["Disponha! Qualquer coisa, é só chamar.", "Por nada! Estou por aqui se precisar.", "Imagina, foi um prazer ajudar."];
+const ACK_CLOSING_REPLIES = ["Até mais! Qualquer dúvida, é só chamar.", "Combinado. Bom trabalho por aí!"];
+const ACK_PLAIN_REPLIES = ["Que bom que ficou claro!", "Isso mesmo.", "Perfeito.", "Fico feliz que tenha ajudado!"];
 
-const ACK_THANKS_REPLIES = [
-  "Disponha! Qualquer coisa, é só chamar.",
-  "Por nada! Estou por aqui se precisar.",
-  "Imagina, foi um prazer ajudar.",
-];
-const ACK_CLOSING_REPLIES = [
-  "Até mais! Qualquer dúvida, é só chamar.",
-  "Combinado. Bom trabalho por aí!",
-];
-const ACK_PLAIN_REPLIES = [
-  "Que bom que ficou claro!",
-  "Isso mesmo.",
-  "Perfeito.",
-  "Fico feliz que tenha ajudado!",
-];
-
-/**
- * Resposta breve para mensagens de puro reconhecimento. Determinística
- * (varia pelo turno, para não soar robótica) e sem qualquer conteúdo novo.
- */
 export function buildAcknowledgementReply(ack: AckAnalysis, turn: number): string {
-  const pool = ack.thanks
-    ? ACK_THANKS_REPLIES
-    : ack.closing
-      ? ACK_CLOSING_REPLIES
-      : ACK_PLAIN_REPLIES;
+  const pool = ack.thanks ? ACK_THANKS_REPLIES : ack.closing ? ACK_CLOSING_REPLIES : ACK_PLAIN_REPLIES;
   return pool[Math.abs(turn) % pool.length];
 }
