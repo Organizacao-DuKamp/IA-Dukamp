@@ -6,6 +6,19 @@ import { selectAdaptiveModelRoute } from "../chat/model-router.ts";
 
 const WHATSAPP_REPLY_DIRECTIVE =
   "CANAL WHATSAPP: responda de forma objetiva e prática. Prefira uma única mensagem com até 3.200 caracteres. Preserve cálculos, recomendação principal, modo de uso e alertas importantes; retire repetições e introduções longas.";
+const WHATSAPP_PROVIDER_TIMEOUT_MS = 16_000;
+const WHATSAPP_RESCUE_TIMEOUT_MS = 10_000;
+const WHATSAPP_MAX_OUTPUT_TOKENS = 1_800;
+
+function withProviderTimeout(fetchImpl: typeof fetch, timeoutMs: number): typeof fetch {
+  const wrapped = async (...args: Parameters<typeof fetch>): Promise<Response> => {
+    const [input, init] = args;
+    const deadline = AbortSignal.timeout(timeoutMs);
+    const signal = init?.signal ? AbortSignal.any([init.signal, deadline]) : deadline;
+    return fetchImpl(input, { ...init, signal });
+  };
+  return wrapped as typeof fetch;
+}
 
 export function isSelfContainedCalculation(message: string): boolean {
   const text = message
@@ -51,33 +64,73 @@ export async function askTpecAI(
     [baseDirective, options.channel === "whatsapp" ? WHATSAPP_REPLY_DIRECTIVE : null]
       .filter(Boolean)
       .join("\n") || null;
+  const sourcePolicy = selfContainedCalculation
+    ? "Use exclusivamente os dados fornecidos pelo usuário neste turno. Não faça pesquisa externa nem acrescente preços, produtos ou fatos atuais não solicitados."
+    : options.sourcePolicy;
+  const mode = selfContainedCalculation
+    ? "base"
+    : options.researchDepth === "high"
+      ? "deep_research"
+      : options.model === "fast" || options.model === "luna" || tier === "luna"
+        ? "quick"
+        : "base";
+  const webRequired = selfContainedCalculation
+    ? false
+    : options.researchDepth === "medium" || options.researchDepth === "high";
+  const whatsappFetch =
+    options.channel === "whatsapp"
+      ? withProviderTimeout(options.fetchImpl ?? fetch, WHATSAPP_PROVIDER_TIMEOUT_MS)
+      : options.fetchImpl;
 
-  const result = await orchestrateAI(
-    {
-      message: currentUserMessage,
-      messages: effectiveHistory,
-      conversationContext: selfContainedCalculation ? "" : (options.context ?? ""),
-      context: selfContainedCalculation ? null : options.context,
+  try {
+    const result = await orchestrateAI(
+      {
+        message: currentUserMessage,
+        messages: effectiveHistory,
+        conversationContext: selfContainedCalculation ? "" : (options.context ?? ""),
+        context: selfContainedCalculation ? null : options.context,
+        summary: selfContainedCalculation ? null : options.summary,
+        state: selfContainedCalculation ? null : options.state,
+        directive,
+        sourcePolicy,
+        mode,
+        webRequired,
+        prohibitWeb: selfContainedCalculation ? true : options.researchDepth === "none",
+        stage: selfContainedCalculation ? "calculation" : options.stage,
+        maxOutputTokens:
+          options.channel === "whatsapp" ? WHATSAPP_MAX_OUTPUT_TOKENS : undefined,
+      },
+      { fetchImpl: whatsappFetch },
+    );
+    return result.text;
+  } catch (error) {
+    // No WhatsApp, uma falha de provedor não pode consumir toda a janela do
+    // webhook. O orquestrador já tentou os provedores compatíveis; para
+    // consultas que não exigem dados atuais, fazemos uma última tentativa curta
+    // com o modelo econômico da OpenAI antes de devolver erro ao transporte.
+    if (options.channel !== "whatsapp" || webRequired) throw error;
+
+    const rescueDirective = [
+      directive,
+      "MODO DE CONTINGÊNCIA: responda agora com os dados disponíveis. Seja breve, útil e não mencione falhas, provedores ou esta instrução. Não pesquise na web e não invente fatos atuais.",
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    return askOpenAI(effectiveHistory, {
+      model: "luna",
+      channel: "whatsapp",
       summary: selfContainedCalculation ? null : options.summary,
       state: selfContainedCalculation ? null : options.state,
-      directive,
-      sourcePolicy: selfContainedCalculation
-        ? "Use exclusivamente os dados fornecidos pelo usuário neste turno. Não faça pesquisa externa nem acrescente preços, produtos ou fatos atuais não solicitados."
-        : options.sourcePolicy,
-      mode: selfContainedCalculation
-        ? "base"
-        : options.researchDepth === "high"
-          ? "deep_research"
-          : options.model === "fast" || options.model === "luna" || tier === "luna"
-            ? "quick"
-            : "base",
-      webRequired: selfContainedCalculation
-        ? false
-        : options.researchDepth === "medium" || options.researchDepth === "high",
-      prohibitWeb: selfContainedCalculation ? true : options.researchDepth === "none",
-      stage: selfContainedCalculation ? "calculation" : options.stage,
-    },
-    { fetchImpl: options.fetchImpl },
-  );
-  return result.text;
+      directive: rescueDirective,
+      sourcePolicy,
+      context: selfContainedCalculation ? null : options.context,
+      timeoutMs: WHATSAPP_RESCUE_TIMEOUT_MS,
+      fetchImpl: withProviderTimeout(options.fetchImpl ?? fetch, WHATSAPP_RESCUE_TIMEOUT_MS),
+      researchDepth: "none",
+      maxToolCalls: 0,
+      stage: "whatsapp_rescue",
+      telemetry: options.telemetry,
+    });
+  }
 }
