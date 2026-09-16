@@ -1,4 +1,4 @@
-// Semantic search over knowledge_chunks. Returns top matches with source metadata.
+// Semantic + lexical search over knowledge_chunks. Returns top matches with source metadata.
 
 import { logDiagnostic } from "../chat/diagnostics.server.ts";
 import { classifyDomainIntent } from "../chat/intent.ts";
@@ -11,6 +11,7 @@ export interface Match {
   category: string;
   subcategory: string | null;
   similarity: number;
+  retrieval?: "semantic" | "lexical";
 }
 
 function minimumExplicitSimilarity(): number {
@@ -19,14 +20,31 @@ function minimumExplicitSimilarity(): number {
   return Math.min(Math.max(configured, 0.6), 0.95);
 }
 
+/**
+ * O RPC lexical usa uma escala própria (base 0.55 + ts_rank_cd), portanto não
+ * pode compartilhar o limiar de embeddings/cosseno. Sem este limiar separado,
+ * fichas RTPI com termos exatos ficam carregadas no banco, mas são descartadas
+ * antes de chegar ao modelo quando os embeddings ainda não foram processados.
+ */
+function minimumLexicalSimilarity(): number {
+  const configured = Number(process.env.TPEC_KNOWLEDGE_MIN_LEXICAL_SIMILARITY ?? 0.58);
+  if (!Number.isFinite(configured)) return 0.58;
+  return Math.min(Math.max(configured, 0.55), 0.8);
+}
+
 const RAG_CACHE_TTL_MS = 10 * 60_000;
 const RAG_CACHE_MAX_ENTRIES = 128;
 const RAG_MAX_PER_DOCUMENT = 2;
 const RAG_MAX_CONTEXT_CHARS = 7_500;
 const ragCache = new Map<string, { at: number; value: Match[] }>();
 
-function cacheKey(query: string, matchCount: number, threshold: number): string {
-  return `${embeddingProvider()}|${threshold.toFixed(3)}|${Math.min(Math.max(matchCount, 1), 8)}|${query
+function cacheKey(
+  query: string,
+  matchCount: number,
+  semanticThreshold: number,
+  lexicalThreshold: number,
+): string {
+  return `${embeddingProvider()}|sem:${semanticThreshold.toFixed(3)}|lex:${lexicalThreshold.toFixed(3)}|${Math.min(Math.max(matchCount, 1), 8)}|${query
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
     .toLocaleLowerCase("pt-BR")
@@ -42,16 +60,29 @@ function needsExpandedContext(query: string, topSimilarity: number | null): bool
   );
 }
 
+function thresholdForMatch(
+  match: Match,
+  semanticThreshold: number,
+  lexicalThreshold?: number,
+): number {
+  return match.retrieval === "lexical" && lexicalThreshold != null
+    ? lexicalThreshold
+    : semanticThreshold;
+}
+
 /** Seleção determinística: forte relevância, diversidade por documento e teto de contexto. */
 export function selectKnowledgeMatches(
   candidates: Match[],
   query: string,
   requestedCount: number,
-  threshold = minimumExplicitSimilarity(),
+  semanticThreshold = minimumExplicitSimilarity(),
+  lexicalThreshold?: number,
 ): Match[] {
   const maxRequested = Math.min(Math.max(Math.trunc(requestedCount), 1), 8);
   const topSimilarity =
-    candidates.find((match) => match.similarity >= threshold)?.similarity ?? null;
+    candidates.find(
+      (match) => match.similarity >= thresholdForMatch(match, semanticThreshold, lexicalThreshold),
+    )?.similarity ?? null;
   const target = Math.min(
     maxRequested,
     needsExpandedContext(query, topSimilarity) ? 6 : Math.min(3, maxRequested),
@@ -62,7 +93,8 @@ export function selectKnowledgeMatches(
   let chars = 0;
 
   for (const match of candidates) {
-    if (match.similarity < threshold) continue;
+    const requiredSimilarity = thresholdForMatch(match, semanticThreshold, lexicalThreshold);
+    if (match.similarity < requiredSimilarity) continue;
     const contentKey = match.content
       .normalize("NFD")
       .replace(/\p{Diacritic}/gu, "")
@@ -93,8 +125,8 @@ function remember(key: string, value: Match[]): void {
 
 export async function searchKnowledge(query: string, matchCount = 6): Promise<Match[]> {
   // Perguntas cujo objetivo é informação atual e que não pedem pesquisa interna
-  // devem ir direto para a pesquisa web do ChatGPT. Além de poupar uma geração
-  // de embedding + RPCs no Supabase, isso evita material histórico concorrendo
+  // devem ir direto para a pesquisa web. Além de poupar uma geração de
+  // embedding + RPCs no Supabase, isso evita material histórico concorrendo
   // com evidência atual.
   const domainIntent = classifyDomainIntent(query);
   if (
@@ -111,8 +143,8 @@ export async function searchKnowledge(query: string, matchCount = 6): Promise<Ma
   }
 
   // A base RAG é privada e suas RPCs aceitam apenas service_role. Em runtimes
-  // públicos onde essa chave deliberadamente não existe, o ChatGPT segue com
-  // seu próprio conhecimento e Web Search.
+  // públicos onde essa chave deliberadamente não existe, a TPEC-IA segue com
+  // os demais contextos e pesquisa externa quando necessário.
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()) {
     logDiagnostic("warn", "rag.search.skipped", {
       reason: "service_role_unavailable",
@@ -123,8 +155,9 @@ export async function searchKnowledge(query: string, matchCount = 6): Promise<Ma
   }
 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const minimumSimilarity = minimumExplicitSimilarity();
-  const key = cacheKey(query, matchCount, minimumSimilarity);
+  const semanticThreshold = minimumExplicitSimilarity();
+  const lexicalThreshold = minimumLexicalSimilarity();
+  const key = cacheKey(query, matchCount, semanticThreshold, lexicalThreshold);
   const cached = ragCache.get(key);
   if (cached && Date.now() - cached.at < RAG_CACHE_TTL_MS) {
     logDiagnostic("info", "rag.search.cache_hit", {
@@ -150,7 +183,7 @@ export async function searchKnowledge(query: string, matchCount = 6): Promise<Ma
     });
     if (error) throw error;
     for (const match of (data ?? []) as Match[]) {
-      byKey.set(`${match.filename}:${match.content}`, match);
+      byKey.set(`${match.filename}:${match.content}`, { ...match, retrieval: "semantic" });
     }
     logDiagnostic("info", "rag.search.semantic.success", {
       provider: embeddingProvider(),
@@ -169,7 +202,7 @@ export async function searchKnowledge(query: string, matchCount = 6): Promise<Ma
   }
 
   // Busca lexical: recupera nomes, códigos, siglas e números exatos e funciona
-  // também como fallback quando o provedor de embeddings estiver indisponível.
+  // também como fallback quando os embeddings das fichas ainda não existem.
   const lexicalStarted = Date.now();
   try {
     const { data, error } = await supabaseAdmin.rpc("search_knowledge_lexical", {
@@ -180,12 +213,14 @@ export async function searchKnowledge(query: string, matchCount = 6): Promise<Ma
     if (error) throw error;
     for (const match of (data ?? []) as Match[]) {
       const key = `${match.filename}:${match.content}`;
+      const lexicalMatch: Match = { ...match, retrieval: "lexical" };
       const previous = byKey.get(key);
-      if (!previous || match.similarity > previous.similarity) byKey.set(key, match);
+      if (!previous || match.similarity > previous.similarity) byKey.set(key, lexicalMatch);
     }
     logDiagnostic("info", "rag.search.lexical.success", {
       duration_ms: Date.now() - lexicalStarted,
       result_count: (data ?? []).length,
+      similarity_threshold: lexicalThreshold,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -207,19 +242,27 @@ export async function searchKnowledge(query: string, matchCount = 6): Promise<Ma
     throw new Error(`buscas da base indisponíveis (${errors.join("; ")})`);
   }
 
-  // ChatGPT-first: a base privada só é considerada "evidência explícita" com
-  // correspondência forte. Se nenhum trecho atingir o limiar, devolvemos [] e
-  // o modelo fica livre para usar Web Search em vez de forçar um RAG parecido.
+  // A busca semântica mantém um limiar alto; a lexical usa sua escala nativa.
+  // Assim, um termo exato de ficha técnica pode ser usado sem rebaixar a
+  // segurança do limiar de cosseno aplicado aos embeddings.
   const candidates = [...byKey.values()].sort((a, b) => b.similarity - a.similarity);
-  const matches = selectKnowledgeMatches(candidates, query, matchCount, minimumSimilarity);
+  const matches = selectKnowledgeMatches(
+    candidates,
+    query,
+    matchCount,
+    semanticThreshold,
+    lexicalThreshold,
+  );
 
   logDiagnostic("info", "rag.search.finish", {
     duration_ms: Date.now() - totalStarted,
     query_chars: query.length,
     requested_matches: matchCount,
     returned_matches: matches.length,
-    explicit_similarity_threshold: minimumSimilarity,
+    semantic_similarity_threshold: semanticThreshold,
+    lexical_similarity_threshold: lexicalThreshold,
     top_similarity: matches[0]?.similarity ?? null,
+    retrieval_modes: [...new Set(matches.map((match) => match.retrieval).filter(Boolean))],
     partial_errors: errors,
   });
 
