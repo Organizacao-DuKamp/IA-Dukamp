@@ -132,7 +132,7 @@ test("a different commodity does not inherit livestock context", () => {
   assert.equal(parsed, null);
 });
 
-test("supplied ration cost in a self-contained calculation is not a livestock quote", () => {
+test("supplied ration cost in a self-contained calculation ignores stale livestock context", () => {
   const calculationCategories: LivestockCategoryRow[] = [
     { ...categories[0], sinonimos: ["boi gordo", "boi", "bois"] },
     ...categories.slice(1),
@@ -141,6 +141,14 @@ test("supplied ration cost in a self-contained calculation is not a livestock qu
     "Tenho 80 bois com peso médio de 420 kg. Cada um consome 2,2% do peso vivo em matéria seca por dia. Se a ração custa R$ 1,85 por kg e o confinamento durar 90 dias, calcule o consumo total de ração, o custo por animal e o custo total do lote.",
     calculationCategories,
     places,
+    {
+      previous: {
+        categorySlug: "boi-gordo",
+        placeSlug: "sao-paulo",
+        uf: "SP",
+        unit: "@",
+      },
+    },
   );
 
   assert.equal(parsed, null);
