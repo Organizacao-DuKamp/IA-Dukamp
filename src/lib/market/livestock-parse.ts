@@ -35,7 +35,7 @@ export function norm(s: string): string {
 export const LIVESTOCK_PRICE_INTENT_RE =
   /(^|[^a-z0-9])(cotacao|cotacoes|preco|precos|valor|vale|custa|custando|arroba|arrobas|mercado|fechamento|indicador|quanto (esta|ta|sai|vale|custa))([^a-z0-9]|$)/;
 
-function isSelfContainedCalculationPremise(text: string): boolean {
+export function isSelfContainedCalculationPremise(text: string): boolean {
   const normalized = norm(text);
   const numbers = normalized.match(/\d+(?:[.,]\d+)?/g) ?? [];
   const explicitCalculation =
@@ -219,6 +219,11 @@ export function parseLivestockQueryWithContext(
   places: LivestockPlaceRow[],
   options: LivestockContextOptions = {},
 ): LivestockQuery | null {
+  // Um cálculo autossuficiente com preço fornecido pelo próprio usuário não é
+  // continuação de uma cotação anterior. Faça este corte antes de olhar unidade,
+  // categoria ou contexto persistido para impedir que "kg"/"bois" reativem mercado.
+  if (isSelfContainedCalculationPremise(text)) return null;
+
   const currentCategory = detectCategory(text, categories);
   const currentPlace = detectPlace(text, places);
   const currentUf = detectUf(text, places);
