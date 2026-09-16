@@ -257,6 +257,7 @@ function AdminKnowledgeBase() {
   }
 
   const s = statData?.docs;
+  const lexicalReady = docs.filter((doc) => doc.chunk_count > 0).length;
   const recoverableRateLimitErrors = docs.filter(
     (doc) => doc.status === "erro" && isRateLimitMessage(doc.error_message),
   ).length;
@@ -306,18 +307,20 @@ function AdminKnowledgeBase() {
         )}
 
         {s && (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             <Stat label="Total" value={s.total} />
-            <Stat label="Aguardando" value={s.aguardando} />
+            <Stat label="Disponíveis" value={lexicalReady} tone="success" />
+            <Stat label="Vetores pendentes" value={s.aguardando} />
             <Stat label="Processando" value={s.processando} />
-            <Stat label="Concluídos" value={s.concluido} tone="success" />
+            <Stat label="Vetorizados" value={s.concluido} tone="success" />
             <Stat label="Erros" value={s.erro} tone={s.erro > 0 ? "danger" : undefined} />
           </div>
         )}
         {statData && (
           <p className="text-xs text-muted-foreground">
-            {statData.chunks} trechos indexados. Novos documentos e reprocessamentos usam embeddings
-            OpenAI · 3072d; a busca lexical permanece como fallback durante a migração.
+            {statData.chunks} trechos disponíveis para busca. Documentos com trechos e vetores
+            pendentes já participam da busca lexical; “vetorizados” indica embeddings OpenAI ·
+            3072d concluídos.
           </p>
         )}
 
@@ -372,10 +375,10 @@ function AdminKnowledgeBase() {
             {running
               ? "Processando…"
               : s && s.aguardando > 0
-                ? `2. Processar pendentes (${s.aguardando})`
+                ? `2. Gerar vetores pendentes (${s.aguardando})`
                 : recoverableRateLimitErrors > 0
                   ? `2. Retomar falhas temporárias (${recoverableRateLimitErrors})`
-                  : "2. Processar pendentes (0)"}
+                  : "2. Gerar vetores pendentes (0)"}
           </button>
           <button
             onClick={refresh}
@@ -425,7 +428,7 @@ function AdminKnowledgeBase() {
                     {d.subcategory ? ` / ${d.subcategory}` : ""}
                   </td>
                   <td className="px-3 py-2">
-                    <StatusBadge status={d.status} />
+                    <StatusBadge status={d.status} chunkCount={d.chunk_count} />
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums">{d.chunk_count}</td>
                   <td className="px-3 py-2 text-right">
@@ -479,18 +482,32 @@ function Stat({
   );
 }
 
-function StatusBadge({ status }: { status: Doc["status"] }) {
+function StatusBadge({ status, chunkCount }: { status: Doc["status"]; chunkCount: number }) {
+  if (status === "aguardando" && chunkCount > 0) {
+    return (
+      <span className="inline-block rounded-full bg-secondary px-2 py-0.5 text-[11px] font-medium text-foreground">
+        disponível · vetores pendentes
+      </span>
+    );
+  }
+
   const map: Record<Doc["status"], string> = {
     aguardando: "bg-muted text-muted-foreground",
     processando: "bg-primary/20 text-primary",
     concluido: "bg-primary text-primary-foreground",
     erro: "bg-destructive/20 text-destructive",
   };
+  const label: Record<Doc["status"], string> = {
+    aguardando: "aguardando conteúdo",
+    processando: "gerando vetores...",
+    concluido: "vetorizado",
+    erro: "erro",
+  };
   return (
     <span
       className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-medium ${map[status]}`}
     >
-      {status === "processando" ? "processando..." : status}
+      {label[status]}
     </span>
   );
 }
