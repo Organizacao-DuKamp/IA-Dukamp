@@ -40,6 +40,16 @@ function normalizeComparable(value: string): string {
     .trim();
 }
 
+function looksLikeComputedMoneyReply(reply: string): boolean {
+  const normalized = normalizeComparable(reply);
+  const numbers = normalized.match(/\d+(?:[.,]\d+)?/g) ?? [];
+  const calculationSignal =
+    /\b(?:calculo|calculado|custo total|custo por (?:animal|cabeca)|consumo total|por animal|por cabeca|por dia|dias|kg por animal|kg dia|multiplic|resultado)\b/.test(
+      normalized,
+    );
+  return numbers.length >= 2 && calculationSignal;
+}
+
 function mentionsExpectedLocation(reply: string, location: string): boolean {
   const normalizedReply = normalizeComparable(reply);
   const tokens = normalizeComparable(location)
@@ -80,6 +90,7 @@ export function validateGrounding(
 
   const hasMoney = /(?:R\$\s*\d|US\$\s*\d)/i.test(reply);
   const marketReply = hasMoney && looksLikeMarketReply(reply);
+  const computedMoneyReply = hasMoney && looksLikeComputedMoneyReply(reply);
   const externallyAttributedMarketFact =
     marketReply && hasExplicitDate(reply) && hasIdentifiedSource(reply) && hasMarketUnit(reply);
 
@@ -95,6 +106,7 @@ export function validateGrounding(
   } else if (
     !evidence.commercial &&
     !externallyAttributedMarketFact &&
+    !computedMoneyReply &&
     /(?:R\$\s*\d|\b(?:estoque|dispon[ií]vel)\s*(?:de|:)?\s*\d)/i.test(reply)
   ) {
     addIssue(issues, "unsupported_commercial_fact");
