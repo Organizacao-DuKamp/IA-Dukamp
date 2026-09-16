@@ -6,7 +6,8 @@
 // degradação técnica/segurança quando o modelo ou a validação falham.
 
 import { recordAIChatTurn } from "./analytics.server";
-import { askOpenAI, chatModelKindForChannel, OpenAIError, openAIModel } from "./openai.server";
+import { chatModelKindForChannel, OpenAIError, openAIModel } from "./openai.server";
+import { askTpecAI as askOpenAI } from "../ai/chat.server";
 import {
   aggregateAIUsage,
   getAIUsageEvents,
@@ -174,7 +175,7 @@ export interface ChatResult {
 
 /** Locks lógicos por conversa: evita condição de corrida entre dois envios. */
 const inFlight = new Map<string, number>();
-const IN_FLIGHT_TTL_MS = 60_000;
+const IN_FLIGHT_TTL_MS = 4 * 60_000;
 /** Cache de idempotência: mesma clientMessageId ⇒ mesma resposta. */
 const idempotency = new Map<string, { at: number; result: ChatResult }>();
 const IDEMPOTENCY_TTL_MS = 5 * 60_000;

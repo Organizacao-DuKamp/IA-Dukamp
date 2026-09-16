@@ -119,9 +119,15 @@ export class WebChatAdapter implements ChannelAdapter {
     history: ChatMessage[],
     clientMessageId: string,
   ): Promise<{ reply: string; state: string | null; providerLabel?: string }> {
+    const { supabase } = await import("../../integrations/supabase/client");
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
     const response = await fetch("/api/public/chat", {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: {
+        "content-type": "application/json",
+        ...(token ? { authorization: `Bearer ${token}` } : {}),
+      },
       body: JSON.stringify({
         sessionId: this.sessionId,
         conversationId: this.conversationId,

@@ -19,6 +19,7 @@ function replaceControlCharacters(value: string): string {
 }
 
 function cleanString(value: string, limit = 1500): string {
+  value = value.replace(/(?:AIza|AQ\.)[A-Za-z0-9_-]{20,}/g, "[REDACTED]");
   const redacted = value.replace(SECRET_VALUE, (match, bearer) =>
     bearer ? `${bearer}[REDACTED]` : "[REDACTED]",
   );

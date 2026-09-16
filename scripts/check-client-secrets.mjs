@@ -9,6 +9,9 @@ const forbidden = [
   "SUPABASE_SERVICE_ROLE_KEY",
   "OPENAI_API_KEY",
   "PERPLEXITY_API_KEY",
+  "GEMINI_API_KEY",
+  "DEEPSEEK_API_KEY",
+  "ANTHROPIC_API_KEY",
   "WHATSAPP_ACCESS_TOKEN",
   "WHATSAPP_APP_SECRET",
   "WHATSAPP_VERIFY_TOKEN",
@@ -58,6 +61,12 @@ const leaks = [];
 for (const root of roots) {
   for (const file of await filesUnder(root)) {
     const text = await readFile(file, "utf8");
+    if (
+      /(?:sk-(?:proj-|ant-)?[A-Za-z0-9_-]{25,}|pplx-[A-Za-z0-9_-]{25,}|AIza[A-Za-z0-9_-]{30,}|AQ\.[A-Za-z0-9_-]{30,})/.test(
+        text,
+      )
+    )
+      leaks.push(`${file}: secret-like value`);
     for (const token of forbidden) {
       if (text.includes(token)) leaks.push(`${file}: ${token}`);
     }

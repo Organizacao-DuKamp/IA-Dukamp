@@ -2,6 +2,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { summarizeProviderAnalytics, type SpendRow } from "./ai/provider-summary";
 
 type AdminContext = {
   supabase: any;
@@ -283,4 +284,32 @@ export const aiChatHistory = createServerFn({ method: "GET" })
     const { data: rows, error } = await query;
     if (error) throw new Error(error.message);
     return (rows ?? []).map(normalizeTurn);
+  });
+
+export const aiProviderAnalytics = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => RangeInput.parse(d ?? {}))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context as AdminContext);
+    const { getPrivilegedClient } = await import("@/lib/privileged.server");
+    const db = (await getPrivilegedClient((context as AdminContext).supabase)) as any;
+    const range = rangeValues(data);
+    const rows: SpendRow[] = [];
+    const snapshot = new Date().toISOString();
+    // Fetch every matching page: a truncated sample is not a spending total.
+    for (let offset = 0; ; offset += 500) {
+      let query = db
+        .from("ai_chat_turns")
+        .select("metadata,estimated_cost_usd,pricing_configured,model,user_key,conversation_id")
+        .lte("created_at", snapshot)
+        .order("created_at", { ascending: false })
+        .order("id")
+        .range(offset, offset + 499);
+      query = applyDateRange(query, range);
+      const result = await query;
+      if (result.error) throw new Error("Não foi possível carregar métricas por provedor.");
+      rows.push(...(result.data ?? []));
+      if ((result.data ?? []).length < 500) break;
+    }
+    return summarizeProviderAnalytics(rows);
   });

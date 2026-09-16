@@ -1,5 +1,6 @@
 import { ChatInputSchema, MAX_CHAT_BODY_BYTES, type ChatInput } from "./input.ts";
 import { TpecBackendError, dispatchChat, type TpecBackendDependencies } from "./backend.server.ts";
+import { conversationIdFor } from "../ai/context.ts";
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -67,6 +68,13 @@ export async function handlePublicChatRequest(
   if (request.method !== "POST") return json({ error: "method_not_allowed" }, 405);
   try {
     const input = await parseInput(request);
+    if (process.env.TPEC_MULTIMODEL_ENABLED === "true") {
+      const { authenticatedChatUser } = await import("../ai/auth.server.ts");
+      const userId = await authenticatedChatUser(request);
+      input.sessionId = `web:${userId}`;
+      input.conversationId = conversationIdFor(userId, input.conversationId);
+      input.channel = "web";
+    }
     const result = await dispatchChat(input, deps);
     if (result.status >= 200 && result.status < 300) {
       const body = result.body as {
@@ -80,7 +88,7 @@ export async function handlePublicChatRequest(
           reply: body.reply,
           state: JSON.stringify(body.state),
           conversationId: body.conversationId,
-          providerLabel: providerLabelFromDiagnostics(body.diagnostics),
+          providerLabel: "TPEC-IA",
         },
         result.status,
       );

@@ -15,10 +15,17 @@ import {
   aiAnalyticsOverview,
   aiAnalyticsUsers,
   aiChatHistory,
+  aiProviderAnalytics,
   type AIAnalyticsOverview,
   type AIAnalyticsTurn,
   type AIAnalyticsUser,
 } from "@/lib/analytics.functions";
+import {
+  providerName,
+  summarizeSpend,
+  type ProviderSpendAnalytics,
+  type SpendSummary,
+} from "@/lib/ai/provider-summary";
 
 export const Route = createFileRoute("/_authenticated/admin/ia")({
   head: () => ({
@@ -193,6 +200,8 @@ function AdminAIAnalytics() {
   const overviewFn = useServerFn(aiAnalyticsOverview);
   const usersFn = useServerFn(aiAnalyticsUsers);
   const historyFn = useServerFn(aiChatHistory);
+  const providersFn = useServerFn(aiProviderAnalytics);
+  const [providerStats, setProviderStats] = useState<ProviderSpendAnalytics | null>(null);
 
   const [from, setFrom] = useState(localDate(-29));
   const [to, setTo] = useState(localDate());
@@ -207,14 +216,19 @@ function AdminAIAnalytics() {
   async function refresh() {
     setLoading(true);
     setError(null);
+    setSelected(null);
+    setHistory([]);
+    setProviderStats(null);
     try {
       const range = { from: from || undefined, to: to || undefined };
-      const [summary, rows] = await Promise.all([
+      const [summary, rows, providers] = await Promise.all([
         overviewFn({ data: range }),
         usersFn({ data: { ...range, limit: 200, offset: 0 } }),
+        providersFn({ data: range }),
       ]);
       setOverview(summary as AIAnalyticsOverview);
       setUsers(rows as AIAnalyticsUser[]);
+      setProviderStats(providers);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Não foi possível carregar a análise.");
     } finally {
@@ -439,6 +453,7 @@ function AdminAIAnalytics() {
                       <th className="px-3 py-3 text-right">Conversas</th>
                       <th className="px-3 py-3 text-right">Respostas</th>
                       <th className="px-3 py-3 text-right">Custo</th>
+                      <th className="px-3 py-3 text-left">IA com maior gasto</th>
                       <th className="px-3 py-3 text-left">Distribuição</th>
                       <th className="px-4 py-3 text-right"></th>
                     </tr>
@@ -464,6 +479,11 @@ function AdminAIAnalytics() {
                         </td>
                         <td className="px-3 py-3 text-right font-medium tabular-nums">
                           {formatUsd(user.total_cost_usd)}
+                        </td>
+                        <td className="px-3 py-3 text-xs">
+                          <TopProviderCost
+                            summary={providerStats?.users.find((s) => s.userKey === user.user_key)}
+                          />
                         </td>
                         <td className="px-3 py-3">
                           <div className="space-y-1.5 text-[11px]">
@@ -497,7 +517,7 @@ function AdminAIAnalytics() {
                     {users.length === 0 && (
                       <tr>
                         <td
-                          colSpan={7}
+                          colSpan={8}
                           className="px-4 py-10 text-center text-sm text-muted-foreground"
                         >
                           Nenhuma conversa registrada neste período.
@@ -511,6 +531,86 @@ function AdminAIAnalytics() {
           </>
         )}
 
+        {providerStats && (
+          <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+            <h2 className="text-base font-semibold">Gastos de todas as IAs</h2>
+            <p className="mt-2 text-2xl font-bold tabular-nums">
+              {formatUsd(providerStats.totalCost)}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Total estimado no período selecionado
+              {!providerStats.pricingConfigured
+                ? " · custos parciais: há tarifas ou detalhamento ausentes"
+                : ""}
+              .
+            </p>
+            <div className="my-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {providerStats.providers.map((p) => (
+                <div
+                  key={p.provider}
+                  className="rounded-lg border border-border bg-secondary/30 p-3"
+                >
+                  <h3 className="text-sm font-medium">{providerName(p.provider)}</h3>
+                  <p className="mt-1 text-xl font-semibold tabular-nums">{formatUsd(p.cost)}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {providerStats.totalCost > 0
+                      ? formatPercent((p.cost / providerStats.totalCost) * 100)
+                      : "0%"}{" "}
+                    do gasto total · {formatNumber(p.calls)} chamadas
+                    {!p.pricingConfigured ? " · parcial" : ""}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <p className="my-2 text-xs text-muted-foreground">
+              {providerStats.turns} perguntas analisadas. Percentuais por chamada, incluindo falhas.{" "}
+              Custos sem tarifa configurada são parciais; registros antigos podem não conter
+              detalhes de custo por chamada. Valores não atribuíveis a uma IA ficam separados, sem
+              divisão estimada entre provedores.
+            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr>
+                    {[
+                      "Provedor",
+                      "Chamadas",
+                      "Uso",
+                      "Entrada",
+                      "Saída",
+                      "Custo USD",
+                      "Latência média",
+                      "Falhas",
+                      "Fallbacks",
+                    ].map((h) => (
+                      <th key={h} className="p-2 text-left">
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {providerStats.providers.map((p) => (
+                    <tr key={p.provider} className="border-t border-border">
+                      <td className="p-2">{providerName(p.provider)}</td>
+                      <td>{p.calls}</td>
+                      <td>{formatPercent(p.share)}</td>
+                      <td>{formatNumber(p.inputTokens)}</td>
+                      <td>{formatNumber(p.outputTokens)}</td>
+                      <td>
+                        {formatUsd(p.cost)}
+                        {!p.pricingConfigured ? " (parcial)" : ""}
+                      </td>
+                      <td>{formatNumber(p.latencyMs)} ms</td>
+                      <td>{p.failures}</td>
+                      <td>{p.fallbacks}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
         {selected && (
           <section className="rounded-xl border border-border bg-card shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border p-4">
@@ -551,6 +651,38 @@ function AdminAIAnalytics() {
             </div>
 
             <div className="p-4">
+              {!detailLoading && providerStats && (
+                <div className="mb-5 space-y-3">
+                  <h3 className="text-sm font-semibold">Gastos por conversa no período</h3>
+                  {providerStats.conversations
+                    .filter((c) => c.userKey === selected.user_key)
+                    .map((c) => (
+                      <div
+                        key={c.conversationId}
+                        className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm"
+                      >
+                        <p className="break-all text-xs text-muted-foreground">
+                          Conversa: {c.conversationId}
+                        </p>
+                        <p className="mt-1 font-medium">
+                          Total: {formatUsd(c.totalCost)}
+                          {!c.pricingConfigured ? " (parcial)" : ""}
+                        </p>
+                        <div className="mt-1">
+                          <TopProviderCost summary={c} />
+                        </div>
+                        <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                          {c.providers.map((p) => (
+                            <span key={p.provider} className="rounded-md bg-background px-2 py-1">
+                              {providerName(p.provider)}: {formatUsd(p.cost)}
+                              {!p.pricingConfigured ? " (parcial)" : ""}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
               {detailLoading && (
                 <div className="py-8 text-center text-sm text-muted-foreground">
                   Carregando histórico…
@@ -617,6 +749,9 @@ function AdminAIAnalytics() {
                       </div>
 
                       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+                        <span className="basis-full font-medium text-foreground">
+                          <TopProviderCost summary={summarizeSpend([turn])} />
+                        </span>
                         <span>
                           custo:{" "}
                           <strong className="text-foreground">
@@ -636,6 +771,22 @@ function AdminAIAnalytics() {
                         )}
                         <span>tokens: {formatNumber(turn.total_tokens)}</span>
                         <span>modelo: {turn.model || "não informado"}</span>
+                        {Array.isArray(turn.metadata?.usage_events) &&
+                          (turn.metadata.usage_events as Array<Record<string, unknown>>).map(
+                            (event, index) => (
+                              <span key={index} className="basis-full">
+                                {String(event.provider ?? "openai")} · {String(event.model ?? "")} ·
+                                nível: {String(event.mode ?? turn.response_mode)} ·{" "}
+                                {event.success === false
+                                  ? `falha: ${String(event.error_code ?? "erro")}`
+                                  : "concluída"}
+                                {event.fallback_from
+                                  ? ` · fallback de ${String(event.fallback_from)}`
+                                  : ""}{" "}
+                                · {String(event.created_at ?? turn.created_at)}
+                              </span>
+                            ),
+                          )}
                         <span>rota: {turn.route_reason || turn.response_mode}</span>
                         <span>
                           tempo: {turn.duration_ms ? formatNumber(turn.duration_ms) + " ms" : "—"}
@@ -658,6 +809,25 @@ function AdminAIAnalytics() {
         )}
       </main>
     </div>
+  );
+}
+
+function TopProviderCost({ summary }: { summary?: SpendSummary }) {
+  if (!summary) return <span>Não disponível</span>;
+  if (!summary.leaders.length)
+    return (
+      <span>
+        {summary.totalCost > 0 || !summary.pricingConfigured
+          ? "Maior gasto não determinado"
+          : "Sem gasto registrado"}
+      </span>
+    );
+  return (
+    <span>
+      {summary.leaders.length > 1 ? "Empate no maior gasto: " : "Maior gasto registrado: "}
+      {summary.leaders.map((p) => `${providerName(p.provider)} (${formatUsd(p.cost)})`).join(" / ")}
+      {!summary.pricingConfigured ? " · parcial" : ""}
+    </span>
   );
 }
 

@@ -8,6 +8,9 @@ import {
 import { sanitizeRetrievedContent } from "../chat/security.ts";
 import { parseOpenAIUsage, recordAIUsageEvent } from "../chat/usage.server.ts";
 import type { WhatsAppChatInput, WhatsAppMedia } from "./types.ts";
+import { multimodelEnabled } from "../ai/config.server.ts";
+import { orchestrateAI } from "../ai/orchestrator.server.ts";
+import type { AIAttachment } from "../ai/types.ts";
 
 type EnvLike = Record<string, string | undefined>;
 
@@ -72,6 +75,7 @@ interface ResponsesPayload {
 }
 
 export interface WhatsAppMediaDependencies {
+  history?: import("../chat/types.ts").ChatMessage[];
   env?: EnvLike;
   fetchImpl?: typeof fetch;
 }
@@ -578,6 +582,49 @@ export async function resolveWhatsAppUserText(
   if (!input.media) return input.text;
 
   const downloaded = await downloadWhatsAppMedia(input.media, dependencies);
+  if (multimodelEnabled(envOf(dependencies)) && input.media.type !== "audio") {
+    let attachment: AIAttachment = {
+      mimeType: downloaded.mimeType,
+      base64: Buffer.from(downloaded.bytes).toString("base64"),
+      sizeBytes: downloaded.bytes.byteLength,
+      name: downloaded.filename,
+    };
+    // Gemini handles long textual documents and scanned PDFs, with compatible fallback.
+    if (input.media.type === "document") {
+      try {
+        const { extractText } = await import("../rag/text-extract.server.ts");
+        const extracted = await extractText(downloaded.filename, downloaded.bytes);
+        if (extracted.text.trim().length > 100)
+          attachment = { mimeType: "text/plain", text: extracted.text, name: downloaded.filename };
+      } catch {
+        /* Binary PDF still supported, unsupported formats fail capability checks. */
+      }
+    }
+    const analysis = await orchestrateAI(
+      {
+        message: input.media.caption || input.text,
+        messages: [
+          ...(dependencies.history ?? []),
+          { role: "user", content: input.media.caption || input.text },
+        ],
+        attachments: [attachment],
+        operation: "media_analysis",
+        stage: "media_analysis",
+        prohibitWeb: true,
+        sourcePolicy:
+          "Analise a mídia integral para auxiliar a resposta da TPEC-IA. Preserve fatos observáveis, números, unidades, recomendações e limitações. Não invente o que não é legível. Não faça diagnóstico definitivo por foto. Produza resumo técnico de até 1400 caracteres sem perder ressalvas importantes.",
+        maxOutputTokens: 2000,
+      },
+      { env: envOf(dependencies), fetchImpl: dependencies.fetchImpl },
+    );
+    return sanitizeRetrievedContent(
+      compactText(
+        `[Mensagem recebida por ${mediaLabel(input.media.type)} no WhatsApp]\nPedido: ${input.media.caption || input.text}\nAnálise técnica da mídia: ${analysis.text}`,
+        MAX_RESOLVED_TEXT_CHARS,
+      ),
+      MAX_RESOLVED_TEXT_CHARS,
+    );
+  }
   const extracted =
     input.media.type === "audio" || input.media.type === "video"
       ? await transcribeAudioOrVideo(input.media, downloaded, dependencies)
