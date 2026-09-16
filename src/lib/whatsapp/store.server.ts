@@ -1,5 +1,6 @@
 import type { ChatMessage } from "../chat/types.ts";
 import { supabaseAdmin } from "../../integrations/supabase/client.server.ts";
+import type { WhatsAppChatInput } from "./types.ts";
 
 export interface WhatsAppConversationSnapshot {
   conversationId: string;
@@ -26,8 +27,15 @@ export type WhatsAppPresenceClaim =
   | { kind: "delivered" }
   | { kind: "missing" };
 
+export interface StaleWhatsAppMessage {
+  messageId: string;
+  phoneNumber: string;
+  requestPayload: unknown;
+  retryCount: number;
+}
+
 const MAX_STORED_HISTORY = 40;
-const PROCESSING_STALE_MS = 5 * 60_000;
+const PROCESSING_STALE_MS = 2 * 60_000;
 // Se a Graph API aceitou a resposta, mas a gravação de delivered_at falhou,
 // o registro fica processing + reply. Uma janela maior reduz drasticamente o
 // risco de reenviar uma mensagem que provavelmente já chegou ao usuário.
@@ -94,6 +102,7 @@ export async function saveWhatsAppConversation(
 export async function claimWhatsAppMessage(
   messageId: string,
   phone: string,
+  requestPayload?: WhatsAppChatInput,
 ): Promise<WhatsAppMessageClaim> {
   const now = new Date().toISOString();
   const { error: insertError } = await db().from("whatsapp_processed_messages").insert({
@@ -102,6 +111,9 @@ export async function claimWhatsAppMessage(
     status: "processing",
     reply: null,
     delivered_at: null,
+    request_payload: requestPayload ?? null,
+    retry_count: 0,
+    last_error: null,
     updated_at: now,
   });
 
@@ -112,12 +124,28 @@ export async function claimWhatsAppMessage(
 
   const { data, error } = await db()
     .from("whatsapp_processed_messages")
-    .select("status,reply,updated_at,delivered_at")
+    .select("status,reply,updated_at,delivered_at,request_payload")
     .eq("message_id", messageId)
     .maybeSingle();
 
   if (error) throw new Error(`whatsapp_message_claim_lookup_failed:${error.code ?? "unknown"}`);
   if (!data) return { kind: "processing" };
+
+  // Mensagens criadas antes da fila durável podem reaparecer por retry da Meta.
+  // Aproveitamos esse retry para guardar a entrada sem alterar o lease atual.
+  if (!data.request_payload && requestPayload) {
+    const { error: payloadError } = await db()
+      .from("whatsapp_processed_messages")
+      .update({ request_payload: requestPayload })
+      .eq("message_id", messageId)
+      .is("request_payload", null);
+    if (payloadError) {
+      console.error(
+        `[whatsapp] request payload persistence failed code=${payloadError.code ?? "unknown"}`,
+      );
+    }
+  }
+
   if (data.delivered_at) return { kind: "delivered" };
 
   if (data.status === "completed") {
@@ -154,6 +182,8 @@ export async function claimWhatsAppMessage(
       reply: null,
       presence_claimed_at: null,
       delivered_at: null,
+      last_error: null,
+      ...(requestPayload ? { request_payload: requestPayload } : {}),
       updated_at: now,
     })
     .eq("message_id", messageId)
@@ -165,6 +195,40 @@ export async function claimWhatsAppMessage(
   return { kind: "claimed" };
 }
 
+export async function claimStaleWhatsAppMessages(
+  limit = 5,
+  staleSeconds = 105,
+  maxRetries = 3,
+): Promise<StaleWhatsAppMessage[]> {
+  const { data, error } = await db().rpc("claim_stale_whatsapp_messages", {
+    p_limit: limit,
+    p_stale_seconds: staleSeconds,
+    p_max_retries: maxRetries,
+  });
+  if (error) throw new Error(`whatsapp_retry_claim_failed:${error.code ?? "unknown"}`);
+  if (!Array.isArray(data)) return [];
+  return data.map((row) => ({
+    messageId: String(row.message_id),
+    phoneNumber: String(row.phone_number),
+    requestPayload: row.request_payload,
+    retryCount: Number(row.retry_count ?? 0),
+  }));
+}
+
+export async function markWhatsAppRetryError(messageId: string, errorMessage: string): Promise<void> {
+  const { error } = await db()
+    .from("whatsapp_processed_messages")
+    .update({
+      last_error: errorMessage.slice(0, 1000),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("message_id", messageId)
+    .eq("status", "processing")
+    .is("reply", null)
+    .is("delivered_at", null);
+  if (error) throw new Error(`whatsapp_retry_error_persist_failed:${error.code ?? "unknown"}`);
+}
+
 export async function completeWhatsAppMessage(messageId: string, reply: string): Promise<void> {
   const { error } = await db()
     .from("whatsapp_processed_messages")
@@ -172,6 +236,7 @@ export async function completeWhatsAppMessage(messageId: string, reply: string):
       status: "completed",
       reply,
       delivered_at: null,
+      last_error: null,
       updated_at: new Date().toISOString(),
     })
     .eq("message_id", messageId)
