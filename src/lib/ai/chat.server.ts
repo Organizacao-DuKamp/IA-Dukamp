@@ -4,6 +4,9 @@ import { multimodelEnabled } from "./config.server.ts";
 import { orchestrateAI } from "./orchestrator.server.ts";
 import { selectAdaptiveModelRoute } from "../chat/model-router.ts";
 
+const WHATSAPP_REPLY_DIRECTIVE =
+  "CANAL WHATSAPP: responda de forma objetiva e prática. Prefira uma única mensagem com até 3.200 caracteres. Preserve cálculos, recomendação principal, modo de uso e alertas importantes; retire repetições e introduções longas.";
+
 export function isSelfContainedCalculation(message: string): boolean {
   const text = message
     .normalize("NFD")
@@ -35,6 +38,12 @@ export async function askTpecAI(
     ? [{ role: "user", content: currentUserMessage }]
     : history;
   const tier = selectAdaptiveModelRoute(effectiveHistory, options).tier;
+  const baseDirective = selfContainedCalculation
+    ? "CÁLCULO AUTOSSUFICIENTE: use somente os números e premissas fornecidos nesta mensagem. Mostre fórmula, unidades e resultado. Não pesquise na web e não herde assunto, produto, cotação ou pendência de turnos anteriores."
+    : options.directive;
+  const directive = [baseDirective, options.channel === "whatsapp" ? WHATSAPP_REPLY_DIRECTIVE : null]
+    .filter(Boolean)
+    .join("\n") || null;
 
   const result = await orchestrateAI(
     {
@@ -44,9 +53,7 @@ export async function askTpecAI(
       context: selfContainedCalculation ? null : options.context,
       summary: selfContainedCalculation ? null : options.summary,
       state: selfContainedCalculation ? null : options.state,
-      directive: selfContainedCalculation
-        ? "CÁLCULO AUTOSSUFICIENTE: use somente os números e premissas fornecidos nesta mensagem. Mostre fórmula, unidades e resultado. Não pesquise na web e não herde assunto, produto, cotação ou pendência de turnos anteriores."
-        : options.directive,
+      directive,
       sourcePolicy: selfContainedCalculation
         ? "Use exclusivamente os dados fornecidos pelo usuário neste turno. Não faça pesquisa externa nem acrescente preços, produtos ou fatos atuais não solicitados."
         : options.sourcePolicy,
