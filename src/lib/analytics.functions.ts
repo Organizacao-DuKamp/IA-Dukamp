@@ -2,7 +2,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { summarizeProviders } from "./ai/provider-summary";
+import { summarizeProviderAnalytics, type SpendRow } from "./ai/provider-summary";
 
 type AdminContext = {
   supabase: any;
@@ -294,12 +294,14 @@ export const aiProviderAnalytics = createServerFn({ method: "GET" })
     const { getPrivilegedClient } = await import("@/lib/privileged.server");
     const db = (await getPrivilegedClient((context as AdminContext).supabase)) as any;
     const range = rangeValues(data);
-    const rows: Array<{ metadata?: unknown }> = [];
-    const limit = 10000;
-    for (let offset = 0; offset < limit; offset += 500) {
+    const rows: SpendRow[] = [];
+    const snapshot = new Date().toISOString();
+    // Fetch every matching page: a truncated sample is not a spending total.
+    for (let offset = 0; ; offset += 500) {
       let query = db
         .from("ai_chat_turns")
-        .select("metadata")
+        .select("metadata,estimated_cost_usd,pricing_configured,model,user_key,conversation_id")
+        .lte("created_at", snapshot)
         .order("created_at", { ascending: false })
         .order("id")
         .range(offset, offset + 499);
@@ -309,9 +311,5 @@ export const aiProviderAnalytics = createServerFn({ method: "GET" })
       rows.push(...(result.data ?? []));
       if ((result.data ?? []).length < 500) break;
     }
-    return {
-      providers: summarizeProviders(rows),
-      sampled: rows.length === limit,
-      turns: rows.length,
-    };
+    return summarizeProviderAnalytics(rows);
   });

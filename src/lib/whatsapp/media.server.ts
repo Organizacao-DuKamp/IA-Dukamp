@@ -589,7 +589,7 @@ export async function resolveWhatsAppUserText(
       sizeBytes: downloaded.bytes.byteLength,
       name: downloaded.filename,
     };
-    // Text extraction selects Claude for long textual documents; scans stay with Gemini.
+    // Gemini handles long textual documents and scanned PDFs, with compatible fallback.
     if (input.media.type === "document") {
       try {
         const { extractText } = await import("../rag/text-extract.server.ts");

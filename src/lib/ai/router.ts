@@ -56,7 +56,7 @@ export function routeAIRequest(input: RoutingInput): AIRoute {
     : web
       ? "perplexity"
       : long
-        ? "claude"
+        ? "gemini"
         : doc
           ? "gemini"
           : calc

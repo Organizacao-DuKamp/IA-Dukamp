@@ -12,8 +12,11 @@ Com `TPEC_MULTIMODEL_ENABLED` ausente ou `false`, continua o fluxo anterior.
 Não há migração nem exclusão de dados. `ai_chat_turns.metadata.usage_events`
 recebe os detalhes de cada chamada. O painel existente mantém totais e custos
 por usuário, e ganha agregação por provedor, percentual, erros, fallbacks,
-modelo, nível, tokens, latência e data. O recorte por provedor tem limite de
-10 mil turnos e sinaliza amostragem; reduza o intervalo para análise completa.
+modelo, nível, tokens, latência e data. A consulta de gastos percorre todas as
+páginas do período, sem limitar o total às primeiras 10 mil perguntas.
+Há total consolidado, cartões por IA e maior gasto por usuário, conversa e turno.
+Empates são explícitos; custos desconhecidos ficam parciais/não atribuídos.
+Registros históricos são preservados, inclusive de provedores desativados.
 
 `whatsapp_conversations` continua guardando histórico e estado independentes de
 provedor. `whatsapp_processed_messages` mantém a deduplicação e entrega duráveis.
@@ -26,7 +29,7 @@ Em múltiplas instâncias, use também limites de tráfego no gateway da hospeda
 
 `ai/router.ts` classifica a mensagem e anexos sem gastar uma chamada de IA.
 Perguntas gerais → OpenAI; cálculos → DeepSeek; imagem/vídeo → Gemini;
-texto longo → Claude; PDF binário → Gemini; fatos atuais → Perplexity.
+texto longo e PDF → Gemini; fatos atuais → Perplexity.
 Pesquisa + cálculo e Pesquisa Profunda usam Perplexity → OpenAI, com cálculo
 e síntese na segunda chamada. Fontes são preservadas e vinculadas à resposta.
 Base interna continua prioritária para catálogo, estoque e contatos.
@@ -61,21 +64,19 @@ acesso a recursos só podem ser confirmados por chamadas autenticadas.
 - [Gemini](https://ai.google.dev/gemini-api/docs/models): 3.5 Flash Lite e 3.8 Flash.
 - [DeepSeek](https://api-docs.deepseek.com/): V4 Flash e V4 Pro.
 - [Perplexity](https://docs.perplexity.ai/api-reference/sonar-post): Sonar, Sonar Pro e Sonar Deep Research.
-- [Claude](https://platform.claude.com/docs/en/models/overview): Haiku 4.5, Sonnet 5 e Opus 5.
 
-Override: `AI_<PROVIDER>_<FAST|BASE|ADVANCED>_MODEL`, com `CLAUDE` como provider
-para configurar modelos Anthropic. As chaves são `ANTHROPIC_API_KEY` e as outras
-quatro variáveis mostradas em `.env.example`.
+Override: `AI_<PROVIDER>_<FAST|BASE|ADVANCED>_MODEL`. São usadas apenas as quatro
+chaves de OpenAI, Gemini, DeepSeek e Perplexity mostradas em `.env.example`.
 
 ## Ativação e verificação
 
-1. Configure as cinco chaves como secrets privados das Functions na Netlify,
+1. Configure as quatro chaves como secrets privados das Functions na Netlify,
    primeiro no deploy preview. Não use variáveis públicas `VITE_`.
 2. Configure modelos e tarifas; mantenha `TPEC_MULTIMODEL_ENABLED=false`.
 3. No ambiente backend com esses secrets, execute
    `node --experimental-strip-types scripts/smoke-ai.ts`. Faz chamadas pagas,
    uma por provedor, sem imprimir respostas, credenciais ou bodies de erro.
-   Ausência de secret ou erro retorna status não zero. Claude requer sua chave.
+   Ausência de secret ou erro retorna status não zero.
 4. Execute `npm test`, `npm run lint`, `npx tsc --noEmit`, `npm run build`.
    O build inclui scan de identificadores e padrões de secrets no bundle público.
 5. Ative a flag no preview. Valide os sete cenários do usuário, incluindo um
@@ -84,7 +85,7 @@ quatro variáveis mostradas em `.env.example`.
    restaura o roteamento anterior sem migração ou perda de histórico.
 
 Os testes automatizados `tests/multimodel.test.ts` usam fetch simulado e verificam
-os contratos dos cinco adapters, sete rotas, fontes, síntese, custos, redaction,
+os contratos dos quatro adapters, sete rotas, fontes, síntese, custos, redaction,
 falhas e orçamento de chamadas. Eles não comprovam autorização nas contas reais,
 qualidade das respostas reais ou disponibilidade dos modelos.
 
@@ -92,7 +93,7 @@ qualidade das respostas reais ou disponibilidade dos modelos.
 
 O fluxo atual aceita anexos do WhatsApp com download validado no servidor.
 Não foi criada uma nova UI de upload no site. Documentos com texto extraído longo
-vão ao Claude; PDFs sem texto e imagens vão ao Gemini, com fallback compatível.
+vão ao Gemini, assim como PDFs sem texto e imagens, com fallback compatível.
 Vídeo usa Gemini quando MIME/tamanho são suportados; áudio conserva transcrição
 anterior. Mídia é analisada com histórico e seu resumo integra a resposta final.
 O contexto total tem limite explícito de 160 mil caracteres; arquivos acima

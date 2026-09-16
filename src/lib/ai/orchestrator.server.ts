@@ -28,11 +28,10 @@ export interface OrchestrationDependencies extends Partial<ProviderRuntime> {
   registry?: ReturnType<typeof createProviderRegistry>;
 }
 const FALLBACKS: Record<ProviderId, ProviderId[]> = {
-  openai: ["claude", "gemini"],
+  openai: ["gemini"],
   gemini: ["openai"],
   deepseek: ["openai"],
   perplexity: ["openai"],
-  claude: ["openai", "gemini"],
 };
 export function citationText(text: string, citations: Citation[]): string {
   const byId = new Map(citations.map((c) => [c.id, c]));

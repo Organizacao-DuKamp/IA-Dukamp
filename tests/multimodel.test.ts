@@ -18,7 +18,7 @@ test("conversa autenticada preserva ID após vários turnos e isola contas", () 
 
 test("anexos são enviados em formato multimodal e não como URLs externas", async () => {
   const registry = createProviderRegistry();
-  for (const id of ["gemini", "claude", "openai"] as const) {
+  for (const id of ["gemini", "openai"] as const) {
     const provider = registry.get(id)!;
     const attachment = { mimeType: "application/pdf", base64: "YWJj", name: "tecnico.pdf" };
     const req = { ...request, attachments: [attachment] };
@@ -81,7 +81,7 @@ const cases = [
   {
     message: "Resuma esse material e destaque recomendações.",
     attachments: [{ mimeType: "application/pdf", text: "x".repeat(26000) }],
-    provider: "claude",
+    provider: "gemini",
   },
   {
     message:
@@ -146,10 +146,6 @@ const fixture: Record<ProviderId, unknown> = {
     search_results: [{ url: source, title: "Estudo" }],
     usage: { prompt_tokens: 12, completion_tokens: 3, cost: { total_cost: 0.012 } },
   },
-  claude: {
-    content: [{ type: "text", text: "Resultado" }],
-    usage: { input_tokens: 12, output_tokens: 3 },
-  },
 };
 const request: AIRequest = {
   messages: [{ role: "user", content: "Calcule GMD" }],
@@ -162,7 +158,6 @@ const env = {
   GEMINI_API_KEY: "fake-gemini",
   DEEPSEEK_API_KEY: "fake-deepseek",
   PERPLEXITY_API_KEY: "fake-perplexity",
-  ANTHROPIC_API_KEY: "fake-claude",
 };
 for (const provider of createProviderRegistry().values()) {
   test(`adapter ${provider.id}: contrato, autenticação e tokens`, async () => {
@@ -211,11 +206,9 @@ function responder(calls: string[], fail?: string): typeof fetch {
       ? "perplexity"
       : host.includes("deepseek")
         ? "deepseek"
-        : host.includes("anthropic")
-          ? "claude"
-          : host.includes("googleapis")
-            ? "gemini"
-            : "openai";
+        : host.includes("googleapis")
+          ? "gemini"
+          : "openai";
     if (provider === "openai" && calls[0].includes("perplexity") && !fail)
       assert.ok(String(init?.body).includes(source));
     return Response.json(fixture[provider]);
@@ -238,7 +231,7 @@ test("pipeline preço + cálculo faz exatamente pesquisa e síntese e preserva f
 });
 for (const [message, failing, fallback] of [
   [cases[1].message, "deepseek", "openai"],
-  [cases[0].message, "openai", "claude"],
+  [cases[0].message, "openai", "gemini"],
   [cases[2].message, "perplexity", "openai"],
 ] as const)
   test(`fallback ${failing} → ${fallback}`, async () => {

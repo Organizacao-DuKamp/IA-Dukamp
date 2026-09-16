@@ -14,11 +14,6 @@ export const AI_MODELS: Record<ProviderId, Record<AIMode, string>> = {
     deep_research: "deepseek-v4-pro",
   },
   perplexity: { quick: "sonar", base: "sonar-pro", deep_research: "sonar-deep-research" },
-  claude: {
-    quick: "claude-haiku-4-5-20251001",
-    base: "claude-sonnet-5",
-    deep_research: "claude-opus-5",
-  },
 };
 export function modelFor(
   provider: ProviderId,

@@ -1,6 +1,6 @@
 import type { ChatMessage } from "../chat/types.ts";
 
-export type ProviderId = "openai" | "gemini" | "deepseek" | "perplexity" | "claude";
+export type ProviderId = "openai" | "gemini" | "deepseek" | "perplexity";
 export type AIMode = "quick" | "base" | "deep_research";
 export type RequestCategory =
   | "GENERAL"
