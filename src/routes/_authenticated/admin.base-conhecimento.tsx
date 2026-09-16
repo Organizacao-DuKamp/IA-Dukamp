@@ -319,8 +319,8 @@ function AdminKnowledgeBase() {
         {statData && (
           <p className="text-xs text-muted-foreground">
             {statData.chunks} trechos disponíveis para busca. Documentos com trechos e vetores
-            pendentes já participam da busca lexical; “vetorizados” indica embeddings OpenAI ·
-            3072d concluídos.
+            pendentes já participam da busca lexical; “vetorizados” indica embeddings OpenAI · 3072d
+            concluídos.
           </p>
         )}
 
