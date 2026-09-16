@@ -5,7 +5,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { enforceDurableWhatsAppStateStore } from "@/lib/whatsapp/state-store-guard.server";
 
 const MAX_BACKGROUND_WEBHOOK_BYTES = 240 * 1024;
-const BACKGROUND_FUNCTION_PATH = "/.netlify/functions/whatsapp-process";
+const BACKGROUND_FUNCTION_PATH = "/.netlify/functions/whatsapp-process-background";
 
 type EnvLike = Record<string, string | undefined>;
 
