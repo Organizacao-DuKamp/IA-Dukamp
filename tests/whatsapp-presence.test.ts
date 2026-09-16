@@ -249,6 +249,61 @@ test("resposta rápida é enviada sem mensagem de espera desnecessária", async 
   assert.equal(lifecycle.states.get(messageId)?.stage, "delivered");
 });
 
+test("research sends one clean reply even if the webhook is repeated", async () => {
+  const lifecycle = fakeLifecycle();
+  const sent: string[] = [];
+  const messageId = "wamid.research-clean";
+  const answer = "A previsão indica tempo seco, conforme a pesquisa de hoje.";
+  const reply =
+    answer + Array.from({ length: 90 }, (_, i) => `[Fonte](https://example.com/${i})`).join("");
+  let calls = 0;
+  const deps = {
+    env,
+    fetchImpl: graphCapture(sent),
+    controlMessage: lifecycle.control,
+    dispatchChat: async () => {
+      calls++;
+      await lifecycle.control({ action: "complete", messageId, reply });
+      return { reply, shouldSend: true, duplicate: false };
+    },
+  };
+  await handleEnhancedWhatsAppWebhookRequest(requestFor("Previsão", messageId), deps);
+  await handleEnhancedWhatsAppWebhookRequest(requestFor("Previsão", messageId), deps);
+  assert.deepEqual(sent, [answer]);
+  assert.equal(calls, 1);
+});
+
+test("partial or uncertain delivery does not release the lease and resend accepted text", async () => {
+  for (const networkFailure of [false, true]) {
+    const lifecycle = fakeLifecycle();
+    const messageId = `wamid.partial-${networkFailure}`;
+    const reply = "Orientação detalhada de manejo. ".repeat(180);
+    let sends = 0;
+    let releases = 0;
+    const deps = {
+      env,
+      controlMessage: async (request: WhatsAppControlRequest) => {
+        if (request.action === "release_delivery") releases++;
+        return lifecycle.control(request);
+      },
+      fetchImpl: (async () => {
+        sends++;
+        if (networkFailure) throw new Error("timeout");
+        return new Response("{}", { status: sends === 1 ? 200 : 500 });
+      }) as typeof fetch,
+      dispatchChat: async () => {
+        await lifecycle.control({ action: "complete", messageId, reply });
+        return { reply, shouldSend: true, duplicate: false };
+      },
+    };
+    await handleEnhancedWhatsAppWebhookRequest(requestFor("Manejo", messageId), deps);
+    const previousSends = sends;
+    await handleEnhancedWhatsAppWebhookRequest(requestFor("Manejo", messageId), deps);
+    assert.equal(sends, previousSends);
+    assert.equal(releases, 0);
+  }
+});
+
 test("webhook ativo encaminha áudio, imagem, vídeo e documento para o backend privado", async () => {
   const cases = [
     { type: "audio" as const, expectedText: "Analise e responda ao áudio que enviei." },

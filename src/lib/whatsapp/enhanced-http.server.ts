@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { splitWhatsAppReply } from "./reply-format.ts";
 
 import { controlWhatsAppMessage, dispatchClaimedWhatsAppChat } from "./backend.server.ts";
 import {
@@ -18,9 +19,14 @@ import {
 type EnvLike = Record<string, string | undefined>;
 
 const MAX_WEBHOOK_BODY_BYTES = 512 * 1024;
-const MAX_OUTBOUND_CHARS = 3500;
 const DELIVERY_CONFIRM_ATTEMPTS = 3;
 const DELIVERY_CONFIRM_RETRY_MS = 120;
+
+class UncertainDeliveryError extends Error {
+  constructor() {
+    super("whatsapp_delivery_partial_or_uncertain");
+  }
+}
 
 export interface EnhancedWhatsAppHttpDependencies {
   env?: EnvLike;
@@ -181,14 +187,7 @@ function extractIncomingMessages(payload: unknown): IncomingWhatsAppMessage[] {
 }
 
 function splitOutboundText(value: string): string[] {
-  const normalized = value.trim();
-  if (!normalized) return [];
-  const chars = Array.from(normalized);
-  const chunks: string[] = [];
-  for (let index = 0; index < chars.length; index += MAX_OUTBOUND_CHARS) {
-    chunks.push(chars.slice(index, index + MAX_OUTBOUND_CHARS).join(""));
-  }
-  return chunks;
+  return splitWhatsAppReply(value);
 }
 
 function extractOfficialImageUrls(body: string): string[] {
@@ -259,6 +258,7 @@ async function sendWhatsAppText(
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 
+  let accepted = false;
   for (const chunk of splitOutboundText(textBody)) {
     const response = await fetchImpl(
       `https://graph.facebook.com/${version}/${encodeURIComponent(phoneNumberId)}/messages`,
@@ -277,12 +277,24 @@ async function sendWhatsAppText(
         }),
         redirect: "error",
       },
-    );
-    if (!response.ok) throw new Error(`whatsapp_send_failed:${response.status}`);
+    ).catch(() => {
+      // A network timeout does not prove that Meta rejected the send.
+      throw new UncertainDeliveryError();
+    });
+    if (!response.ok) {
+      if (accepted) throw new UncertainDeliveryError();
+      throw new Error(`whatsapp_send_failed:${response.status}`);
+    }
+    accepted = true;
   }
 
   for (const imageUrl of imageUrls) {
-    await sendWhatsAppImage(to, imageUrl, env, fetchImpl);
+    try {
+      await sendWhatsAppImage(to, imageUrl, env, fetchImpl);
+    } catch {
+      // Do not resend already delivered text because a product image failed.
+      throw new UncertainDeliveryError();
+    }
   }
 }
 
@@ -405,6 +417,7 @@ async function deliverPendingReply(
   try {
     await sendWhatsAppText(message.phone, delivery.reply, env, fetchImpl);
   } catch (error) {
+    if (error instanceof UncertainDeliveryError) throw error;
     try {
       await control({
         action: "release_delivery",

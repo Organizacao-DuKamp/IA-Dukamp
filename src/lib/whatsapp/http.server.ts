@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { splitWhatsAppReply } from "./reply-format.ts";
 
 import { dispatchWhatsAppChat } from "./backend.server.ts";
 import {
@@ -10,7 +11,6 @@ import {
 type EnvLike = Record<string, string | undefined>;
 
 const MAX_WEBHOOK_BODY_BYTES = 512 * 1024;
-const MAX_OUTBOUND_CHARS = 3500;
 
 export interface WhatsAppHttpDependencies {
   env?: EnvLike;
@@ -142,14 +142,7 @@ function extractTextMessages(payload: unknown): IncomingTextMessage[] {
 }
 
 function splitOutboundText(value: string): string[] {
-  const normalized = value.trim();
-  if (!normalized) return [];
-  const chars = Array.from(normalized);
-  const chunks: string[] = [];
-  for (let index = 0; index < chars.length; index += MAX_OUTBOUND_CHARS) {
-    chunks.push(chars.slice(index, index + MAX_OUTBOUND_CHARS).join(""));
-  }
-  return chunks;
+  return splitWhatsAppReply(value);
 }
 
 async function sendWhatsAppText(
