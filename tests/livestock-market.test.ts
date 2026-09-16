@@ -147,7 +147,11 @@ test("supplied ration cost in a self-contained calculation is not a livestock qu
 });
 
 test("real livestock price questions still enter the quote flow", () => {
-  const parsed = parseLivestockQueryWithContext("quanto custa o boi gordo em São Paulo?", categories, places);
+  const parsed = parseLivestockQueryWithContext(
+    "quanto custa o boi gordo em São Paulo?",
+    categories,
+    places,
+  );
 
   assert.equal(parsed?.category.slug, "boi-gordo");
   assert.equal(parsed?.place?.slug, "sao-paulo");
