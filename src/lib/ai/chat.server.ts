@@ -13,10 +13,16 @@ export function isSelfContainedCalculation(message: string): boolean {
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
   const numbers = text.match(/\d+(?:[.,]\d+)?/g) ?? [];
-  const explicitCalculation =
-    /\b(calcule|calcular|calculo|gmd|ganho medio diario|custo total|custo por (?:animal|cabeca)|consumo total|ganho total|quanto (?:o lote|cada animal|cada cabeca|precisa|consome|custa))\b/.test(
+  const strongCalculation =
+    /\b(calcule|calcular|calculo|custo total|custo por (?:animal|cabeca)|consumo total|ganho total|quanto (?:o lote|cada animal|cada cabeca|precisa|consome|custa))\b/.test(
       text,
     );
+  const performanceCalculation = /\b(gmd|ganho medio diario)\b/.test(text);
+  const recommendationRequest =
+    /\b(suger\w*|recomend\w*|indiqu\w*|qual (?:racao|suplemento|produto)|que (?:racao|suplemento|produto)|o que (?:usar|uso|dar|dou)|melhor (?:racao|suplemento|produto))\b/.test(
+      text,
+    );
+  const explicitCalculation = strongCalculation || (performanceCalculation && !recommendationRequest);
   const requiresFreshData =
     /\b(hoje|agora|atual|cotacao|preco atual|valor atual|mercado|pesquise|pesquisa|internet|noticias|ultima|ultimo|mais recente)\b/.test(
       text,
@@ -41,9 +47,10 @@ export async function askTpecAI(
   const baseDirective = selfContainedCalculation
     ? "CÁLCULO AUTOSSUFICIENTE: use somente os números e premissas fornecidos nesta mensagem. Mostre fórmula, unidades e resultado. Não pesquise na web e não herde assunto, produto, cotação ou pendência de turnos anteriores."
     : options.directive;
-  const directive = [baseDirective, options.channel === "whatsapp" ? WHATSAPP_REPLY_DIRECTIVE : null]
-    .filter(Boolean)
-    .join("\n") || null;
+  const directive =
+    [baseDirective, options.channel === "whatsapp" ? WHATSAPP_REPLY_DIRECTIVE : null]
+      .filter(Boolean)
+      .join("\n") || null;
 
   const result = await orchestrateAI(
     {
