@@ -20,7 +20,9 @@ export async function post(
 ): Promise<Record<string, unknown>> {
   const host = new URL(url).hostname;
   const providerTimeout = AbortSignal.timeout(request.mode === "deep_research" ? 60_000 : 20_000);
-  const signal = request.signal ? AbortSignal.any([request.signal, providerTimeout]) : providerTimeout;
+  const signal = request.signal
+    ? AbortSignal.any([request.signal, providerTimeout])
+    : providerTimeout;
 
   try {
     const response = await runtime.fetchImpl(url, {
