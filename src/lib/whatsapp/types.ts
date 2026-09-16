@@ -33,6 +33,7 @@ export const WhatsAppControlRequestSchema = z.discriminatedUnion("action", [
     action: z.literal("claim"),
     phone: z.string().regex(/^\d{6,20}$/),
     messageId: z.string().min(1).max(128),
+    input: WhatsAppChatInputSchema.optional(),
   }),
   z.object({
     action: z.literal("complete"),
