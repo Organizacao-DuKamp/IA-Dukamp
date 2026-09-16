@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
   Activity,
@@ -53,8 +53,29 @@ function localDate(offsetDays = 0): string {
   return date.toISOString().slice(0, 10);
 }
 
+function saoPauloDate(offsetDays = 0): string {
+  const date = new Date(Date.now() + offsetDays * 86_400_000);
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const value = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${value.year}-${value.month}-${value.day}`;
+}
+
 function formatNumber(value: number): string {
   return new Intl.NumberFormat("pt-BR").format(Number.isFinite(value) ? value : 0);
+}
+
+function formatDay(value: string): string {
+  const date = new Date(`${value}T12:00:00-03:00`);
+  if (Number.isNaN(date.valueOf())) return value;
+  return new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    dateStyle: "short",
+  }).format(date);
 }
 
 function formatPercent(value: number): string {
@@ -209,6 +230,11 @@ function AdminAIAnalytics() {
   const [users, setUsers] = useState<AIAnalyticsUser[]>([]);
   const [selected, setSelected] = useState<AIAnalyticsUser | null>(null);
   const [history, setHistory] = useState<AIAnalyticsTurn[]>([]);
+  const [historyDate, setHistoryDate] = useState(saoPauloDate());
+  const [detailProviderStats, setDetailProviderStats] = useState<ProviderSpendAnalytics | null>(
+    null,
+  );
+  const detailRequest = useRef(0);
   const [loading, setLoading] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -218,6 +244,7 @@ function AdminAIAnalytics() {
     setError(null);
     setSelected(null);
     setHistory([]);
+    setDetailProviderStats(null);
     setProviderStats(null);
     try {
       const range = { from: from || undefined, to: to || undefined };
@@ -240,30 +267,48 @@ function AdminAIAnalytics() {
     void refresh();
   }, []);
 
-  async function openUser(user: AIAnalyticsUser) {
+  async function loadUserHistory(user: AIAnalyticsUser, date: string) {
+    const request = ++detailRequest.current;
     setSelected(user);
     setHistory([]);
+    setDetailProviderStats(null);
     setDetailLoading(true);
     setError(null);
     try {
-      const rows = await historyFn({
-        data: {
-          userKey: user.user_key,
-          from: from || undefined,
-          to: to || undefined,
-        },
-      });
+      const range = { from: date, to: date };
+      const [rows, providers] = await Promise.all([
+        historyFn({ data: { userKey: user.user_key, ...range } }),
+        providersFn({ data: range }),
+      ]);
+      if (request !== detailRequest.current) return;
       setHistory(rows as AIAnalyticsTurn[]);
+      setDetailProviderStats(providers);
     } catch (err) {
+      if (request !== detailRequest.current) return;
       setError(err instanceof Error ? err.message : "Não foi possível carregar a conversa.");
     } finally {
-      setDetailLoading(false);
+      if (request === detailRequest.current) setDetailLoading(false);
     }
   }
 
+  function openUser(user: AIAnalyticsUser) {
+    const today = saoPauloDate();
+    setHistoryDate(today);
+    void loadUserHistory(user, today);
+  }
+
+  function changeHistoryDate(date: string) {
+    if (!selected || !date) return;
+    setHistoryDate(date);
+    void loadUserHistory(selected, date);
+  }
+
   function closeDetail() {
+    detailRequest.current += 1;
     setSelected(null);
     setHistory([]);
+    setDetailProviderStats(null);
+    setDetailLoading(false);
   }
 
   return (
@@ -613,20 +658,31 @@ function AdminAIAnalytics() {
         )}
         {selected && (
           <section className="rounded-xl border border-border bg-card shadow-sm">
-            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border p-4">
+            <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border p-4">
               <div>
                 <h2 className="text-base font-semibold">Histórico de {formatUser(selected)}</h2>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {formatChannel(selected.channel)} · {formatNumber(selected.completed_turns)}{" "}
-                  respostas · custo {formatUsd(selected.total_cost_usd)}
+                  {formatChannel(selected.channel)} · conversas do dia selecionado
                 </p>
               </div>
-              <button
-                onClick={closeDetail}
-                className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1.5 text-xs hover:bg-accent"
-              >
-                <X size={14} /> Fechar
-              </button>
+              <div className="flex items-end gap-2">
+                <label className="grid gap-1 text-xs text-muted-foreground">
+                  Data da conversa
+                  <input
+                    type="date"
+                    value={historyDate}
+                    max={saoPauloDate()}
+                    onChange={(event) => changeHistoryDate(event.target.value)}
+                    className="rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground"
+                  />
+                </label>
+                <button
+                  onClick={closeDetail}
+                  className="inline-flex h-9 items-center gap-1 rounded-md border border-border px-2 text-xs hover:bg-accent"
+                >
+                  <X size={14} /> Fechar
+                </button>
+              </div>
             </div>
 
             <div className="grid gap-3 border-b border-border p-4 md:grid-cols-3">
@@ -649,12 +705,18 @@ function AdminAIAnalytics() {
                 description="Percentual dos turnos concluídos atendidos pelo caminho leve."
               />
             </div>
+            <p className="border-b border-border px-4 py-2 text-xs text-muted-foreground">
+              Os indicadores acima seguem o período geral do painel. As conversas e seus gastos
+              abaixo correspondem somente à data selecionada.
+            </p>
 
             <div className="p-4">
-              {!detailLoading && providerStats && (
+              {!detailLoading && detailProviderStats && (
                 <div className="mb-5 space-y-3">
-                  <h3 className="text-sm font-semibold">Gastos por conversa no período</h3>
-                  {providerStats.conversations
+                  <h3 className="text-sm font-semibold">
+                    Gastos por conversa em {formatDay(historyDate)}
+                  </h3>
+                  {detailProviderStats.conversations
                     .filter((c) => c.userKey === selected.user_key)
                     .map((c) => (
                       <div
@@ -690,7 +752,7 @@ function AdminAIAnalytics() {
               )}
               {!detailLoading && history.length === 0 && (
                 <div className="py-8 text-center text-sm text-muted-foreground">
-                  Nenhum turno encontrado para este usuário no período.
+                  Nenhuma conversa encontrada para este usuário em {formatDay(historyDate)}.
                 </div>
               )}
               {!detailLoading && history.length > 0 && (
