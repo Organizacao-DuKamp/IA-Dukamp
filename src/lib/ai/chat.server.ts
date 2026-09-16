@@ -1,4 +1,4 @@
-import { askOpenAI, type OpenAIOptions } from "../chat/openai.server";
+import { askOpenAI, type OpenAIOptions } from "../chat/openai.server.ts";
 import type { ChatMessage } from "../chat/types.ts";
 import { multimodelEnabled } from "./config.server.ts";
 import { orchestrateAI } from "./orchestrator.server.ts";
