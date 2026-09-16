@@ -18,21 +18,31 @@ export async function post(
   request: AIRequest,
   runtime: ProviderRuntime,
 ): Promise<Record<string, unknown>> {
+  const host = new URL(url).hostname;
+  const providerTimeout = AbortSignal.timeout(request.mode === "deep_research" ? 60_000 : 20_000);
+  const signal = request.signal ? AbortSignal.any([request.signal, providerTimeout]) : providerTimeout;
+
   try {
     const response = await runtime.fetchImpl(url, {
       method: "POST",
       headers: { "content-type": "application/json", ...headers },
       body: JSON.stringify(body),
-      signal: request.signal,
+      signal,
       redirect: "error",
     });
     // Deliberately never log/propagate provider error bodies or headers (may echo secrets).
-    if (!response.ok)
+    if (!response.ok) {
+      console.warn(`[ai-provider] http_error host=${host} status=${response.status}`);
       throw new AIProviderError(`http_${response.status}`, response.status === 429 ? 429 : 503);
+    }
     return record(await response.json());
   } catch (error) {
     if (error instanceof AIProviderError) throw error;
-    throw new AIProviderError(request.signal?.aborted ? "timeout" : "network_or_format");
+    const timedOut = signal.aborted;
+    console.warn(
+      `[ai-provider] request_failed host=${host} code=${timedOut ? "timeout" : "network_or_format"}`,
+    );
+    throw new AIProviderError(timedOut ? "timeout" : "network_or_format");
   }
 }
 export function safeUrl(value: unknown): string | null {
