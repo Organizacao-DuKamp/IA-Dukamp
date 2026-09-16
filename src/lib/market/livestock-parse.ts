@@ -35,8 +35,24 @@ export function norm(s: string): string {
 export const LIVESTOCK_PRICE_INTENT_RE =
   /(^|[^a-z0-9])(cotacao|cotacoes|preco|precos|valor|vale|custa|custando|arroba|arrobas|mercado|fechamento|indicador|quanto (esta|ta|sai|vale|custa))([^a-z0-9]|$)/;
 
+function isSelfContainedCalculationPremise(text: string): boolean {
+  const normalized = norm(text);
+  const numbers = normalized.match(/\d+(?:[.,]\d+)?/g) ?? [];
+  const explicitCalculation =
+    /\b(calcule|calcular|calculo|gmd|ganho medio diario|custo total|custo por (?:animal|cabeca)|consumo total|ganho total|quanto (?:o lote|cada animal|cada cabeca|precisa|consome|custa))\b/.test(
+      normalized,
+    );
+  const requiresFreshData =
+    /\b(hoje|agora|atual|cotacao|preco atual|valor atual|mercado|pesquise|pesquisa|internet|noticias|ultima|ultimo|mais recente)\b/.test(
+      normalized,
+    );
+
+  return explicitCalculation && numbers.length >= 2 && !requiresFreshData;
+}
+
 /** Testa a intenção de preço sobre o texto já normalizado (sem acento). */
 export function hasPriceIntent(text: string): boolean {
+  if (isSelfContainedCalculationPremise(text)) return false;
   return LIVESTOCK_PRICE_INTENT_RE.test(norm(text)) || text.includes("@");
 }
 
