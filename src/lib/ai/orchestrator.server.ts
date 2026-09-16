@@ -8,6 +8,7 @@ import {
   type ProviderId,
   type ProviderRuntime,
   type Citation,
+  type RequestCategory,
 } from "./types.ts";
 import { routeAIRequest, type RoutingInput } from "./router.ts";
 import { createProviderRegistry } from "./registry.server.ts";
@@ -28,11 +29,28 @@ export interface OrchestrationDependencies extends Partial<ProviderRuntime> {
   registry?: ReturnType<typeof createProviderRegistry>;
 }
 const FALLBACKS: Record<ProviderId, ProviderId[]> = {
-  openai: ["gemini"],
-  gemini: ["openai"],
-  deepseek: ["openai"],
-  perplexity: ["openai"],
+  openai: ["gemini", "deepseek"],
+  gemini: ["openai", "deepseek"],
+  deepseek: ["openai", "gemini"],
+  perplexity: ["openai", "gemini", "deepseek"],
 };
+
+/**
+ * A pesquisa atual continua com a Perplexity, mas a etapa de raciocínio final
+ * é entregue ao provedor mais adequado ao conteúdo. Isso evita que toda
+ * pesquisa + cálculo/documento volte obrigatoriamente para a OpenAI.
+ */
+export function synthesisProviderFor(categories: RequestCategory[]): ProviderId {
+  if (categories.includes("CALCULATION")) return "deepseek";
+  if (
+    categories.includes("DOCUMENT_ANALYSIS") ||
+    categories.includes("LONG_CONTEXT") ||
+    categories.includes("IMAGE_ANALYSIS")
+  )
+    return "gemini";
+  return "openai";
+}
+
 export function citationText(text: string, citations: Citation[]): string {
   const byId = new Map(citations.map((c) => [c.id, c]));
   // Convert provider references to actual links before legacy grounding removes [n].
@@ -225,8 +243,9 @@ export async function orchestrateAI(
     );
     if (!route.synthesize) return { ...first, text: citationText(first.text, first.citations) };
     const evidence = citationText(first.text, first.citations);
+    const synthesisProvider = synthesisProviderFor(route.categories);
     const final = await run(
-      "openai",
+      synthesisProvider,
       {
         ...base,
         webRequired: false,
