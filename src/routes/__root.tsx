@@ -33,11 +33,10 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
-  console.error(error);
+function ErrorComponent({ error, reset }: { error: unknown; reset: () => void }) {
   const router = useRouter();
   useEffect(() => {
-    console.error("[tpec-ia] root error boundary", error);
+    console.error("[tpec-ia] root error boundary");
   }, [error]);
 
   return (

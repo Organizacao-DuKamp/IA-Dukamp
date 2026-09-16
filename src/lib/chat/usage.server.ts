@@ -4,6 +4,17 @@ export type AIUsageOperation = "chat" | "embedding" | "media_analysis" | "transc
 export type AIUsageDepth = "none" | "medium" | "high";
 
 export interface AIUsageEvent {
+  orchestration?: boolean;
+  success?: boolean;
+  errorCode?: string;
+  fallbackFrom?: string;
+  fallbackReason?: string;
+  mode?: string;
+  requestType?: string;
+  createdAt?: string;
+  estimatedCostUsd?: number;
+  usageUnknown?: boolean;
+  citations?: Array<{ id: number; url: string; title: string; date?: string }>;
   provider: string;
   operation: AIUsageOperation;
   model: string;
@@ -219,6 +230,11 @@ function rateFor(
   const model = event.model.toLowerCase();
   const tier = event.modelTier?.toLowerCase() ?? "";
   const names: string[] = [];
+  if (event.orchestration) {
+    const suffix = kind === "output" ? "OUTPUT" : kind === "cached" ? "CACHED_INPUT" : "INPUT";
+    const modelKey = event.model.toUpperCase().replace(/[^A-Z0-9]/g, "_");
+    return envRate([`AI_PRICE_${event.provider.toUpperCase()}_${modelKey}_${suffix}_USD_PER_1M`]);
+  }
 
   if (event.operation === "chat" && ["luna", "terra", "sol"].includes(tier)) {
     const tierName = tier.toUpperCase();
@@ -281,12 +297,23 @@ type EventCost = {
   sources: string[];
 };
 
-function eventCost(event: AIUsageEvent): EventCost {
+export function eventCost(event: AIUsageEvent): EventCost {
+  if (
+    typeof event.estimatedCostUsd === "number" &&
+    Number.isFinite(event.estimatedCostUsd) &&
+    event.estimatedCostUsd >= 0
+  ) {
+    return {
+      costUsd: event.estimatedCostUsd,
+      pricingConfigured: true,
+      sources: ["provider-reported"],
+    };
+  }
   const input = finiteNonNegative(event.inputTokens);
   const output = finiteNonNegative(event.outputTokens);
   const cached = Math.min(input, finiteNonNegative(event.cachedInputTokens));
   let costUsd = 0;
-  let pricingConfigured = true;
+  let pricingConfigured = !event.usageUnknown;
   const sources: string[] = [];
 
   if (event.operation === "transcription") {
@@ -319,11 +346,12 @@ function eventCost(event: AIUsageEvent): EventCost {
 
   const webSearchCalls = Math.trunc(finiteNonNegative(event.webSearchCalls));
   if (webSearchCalls > 0) {
-    const configured = envRate(["OPENAI_WEB_SEARCH_USD_PER_CALL"]);
+    const configured = envRate([`${event.provider.toUpperCase()}_WEB_SEARCH_USD_PER_CALL`]);
     // A pesquisa web da API é cobrada por chamada; o preço público de
     // referência é US$10/1.000 chamadas (US$0,01 por chamada). O ambiente
     // pode sobrescrever isso quando a conta/produto tiver outra tarifa.
-    const searchRateValue = configured.value ?? 0.01;
+    const searchRateValue = configured.value ?? (event.provider === "openai" ? 0.01 : 0);
+    if (event.provider !== "openai" && configured.value === null) pricingConfigured = false;
     costUsd += webSearchCalls * searchRateValue;
     sources.push(configured.source || "built-in:openai-web-search-per-call");
   }

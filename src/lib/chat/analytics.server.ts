@@ -3,6 +3,7 @@ import { supabaseAdmin } from "../../integrations/supabase/client.server.ts";
 import { logDiagnostic } from "./diagnostics.server.ts";
 import {
   aggregateAIUsage,
+  eventCost,
   getAIUsageEvents,
   hasInternalKnowledgeSupport,
   internalKnowledgeMatchCount,
@@ -140,6 +141,17 @@ function aggregateMetadata(
     usd_to_brl: aggregate.usdToBrl,
     usd_to_brl_source: aggregate.usdToBrlSource || null,
     usage_events: events.slice(0, 32).map((event) => ({
+      provider: event.provider,
+      success: event.success !== false,
+      error_code: event.errorCode ?? null,
+      fallback_from: event.fallbackFrom ?? null,
+      fallback_reason: event.fallbackReason ?? null,
+      mode: event.mode ?? null,
+      request_type: event.requestType ?? null,
+      created_at: event.createdAt ?? null,
+      estimated_cost_usd: eventCost(event).costUsd,
+      pricing_configured: eventCost(event).pricingConfigured,
+      citations: event.citations ?? [],
       operation: event.operation,
       stage: event.stage ?? event.operation,
       model: event.model,

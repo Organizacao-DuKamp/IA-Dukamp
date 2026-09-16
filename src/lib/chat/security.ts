@@ -16,6 +16,7 @@ export function sanitizeRetrievedContent(content: string, maxChars = 2400): stri
 }
 export function redactLogValue(value: string): string {
   return value
+    .replace(/(?:AIza|AQ\.)[A-Za-z0-9_-]{20,}/g, "[REDACTED]")
     .replace(/(?:sk-|pplx-|sb_secret_)[A-Za-z0-9_-]{8,}/g, "[REDACTED]")
     .replace(/Bearer\s+\S+/gi, "Bearer [REDACTED]");
 }

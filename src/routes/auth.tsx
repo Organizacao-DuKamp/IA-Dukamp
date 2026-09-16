@@ -6,7 +6,10 @@ export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Entrar · IA do Boi" },
-      { name: "description", content: "Acesso restrito ao painel administrativo da IA do Boi (TPEC-IA)." },
+      {
+        name: "description",
+        content: "Acesso restrito ao painel administrativo da IA do Boi (TPEC-IA).",
+      },
       { name: "robots", content: "noindex, nofollow, noarchive" },
       { name: "googlebot", content: "noindex, nofollow, noarchive" },
       { property: "og:title", content: "Entrar · IA do Boi" },

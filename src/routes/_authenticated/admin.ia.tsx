@@ -15,10 +15,12 @@ import {
   aiAnalyticsOverview,
   aiAnalyticsUsers,
   aiChatHistory,
+  aiProviderAnalytics,
   type AIAnalyticsOverview,
   type AIAnalyticsTurn,
   type AIAnalyticsUser,
 } from "@/lib/analytics.functions";
+import type { ProviderSummary } from "@/lib/ai/provider-summary";
 
 export const Route = createFileRoute("/_authenticated/admin/ia")({
   head: () => ({
@@ -193,6 +195,12 @@ function AdminAIAnalytics() {
   const overviewFn = useServerFn(aiAnalyticsOverview);
   const usersFn = useServerFn(aiAnalyticsUsers);
   const historyFn = useServerFn(aiChatHistory);
+  const providersFn = useServerFn(aiProviderAnalytics);
+  const [providerStats, setProviderStats] = useState<{
+    providers: ProviderSummary[];
+    sampled: boolean;
+    turns: number;
+  } | null>(null);
 
   const [from, setFrom] = useState(localDate(-29));
   const [to, setTo] = useState(localDate());
@@ -209,12 +217,14 @@ function AdminAIAnalytics() {
     setError(null);
     try {
       const range = { from: from || undefined, to: to || undefined };
-      const [summary, rows] = await Promise.all([
+      const [summary, rows, providers] = await Promise.all([
         overviewFn({ data: range }),
         usersFn({ data: { ...range, limit: 200, offset: 0 } }),
+        providersFn({ data: range }),
       ]);
       setOverview(summary as AIAnalyticsOverview);
       setUsers(rows as AIAnalyticsUser[]);
+      setProviderStats(providers);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Não foi possível carregar a análise.");
     } finally {
@@ -511,6 +521,60 @@ function AdminAIAnalytics() {
           </>
         )}
 
+        {providerStats && (
+          <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+            <h2 className="text-sm font-semibold">Orquestração por provedor</h2>
+            <p className="my-2 text-xs text-muted-foreground">
+              {providerStats.turns} perguntas analisadas. Percentuais por chamada, incluindo falhas.{" "}
+              {providerStats.sampled
+                ? "Recorte limitado às 10.000 perguntas mais recentes; reduza o período para totais completos."
+                : ""}{" "}
+              Custos sem tarifa configurada são parciais; registros antigos podem não conter
+              detalhes de custo por chamada.
+            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr>
+                    {[
+                      "Provedor",
+                      "Chamadas",
+                      "Uso",
+                      "Entrada",
+                      "Saída",
+                      "Custo USD",
+                      "Latência média",
+                      "Falhas",
+                      "Fallbacks",
+                    ].map((h) => (
+                      <th key={h} className="p-2 text-left">
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {providerStats.providers.map((p) => (
+                    <tr key={p.provider} className="border-t border-border">
+                      <td className="p-2">{p.provider}</td>
+                      <td>{p.calls}</td>
+                      <td>{formatPercent(p.share)}</td>
+                      <td>{formatNumber(p.inputTokens)}</td>
+                      <td>{formatNumber(p.outputTokens)}</td>
+                      <td>
+                        {formatUsd(p.cost)}
+                        {!p.pricingConfigured ? " (parcial)" : ""}
+                      </td>
+                      <td>{formatNumber(p.latencyMs)} ms</td>
+                      <td>{p.failures}</td>
+                      <td>{p.fallbacks}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
         {selected && (
           <section className="rounded-xl border border-border bg-card shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border p-4">
@@ -636,6 +700,22 @@ function AdminAIAnalytics() {
                         )}
                         <span>tokens: {formatNumber(turn.total_tokens)}</span>
                         <span>modelo: {turn.model || "não informado"}</span>
+                        {Array.isArray(turn.metadata?.usage_events) &&
+                          (turn.metadata.usage_events as Array<Record<string, unknown>>).map(
+                            (event, index) => (
+                              <span key={index} className="basis-full">
+                                {String(event.provider ?? "openai")} · {String(event.model ?? "")} ·
+                                nível: {String(event.mode ?? turn.response_mode)} ·{" "}
+                                {event.success === false
+                                  ? `falha: ${String(event.error_code ?? "erro")}`
+                                  : "concluída"}
+                                {event.fallback_from
+                                  ? ` · fallback de ${String(event.fallback_from)}`
+                                  : ""}{" "}
+                                · {String(event.created_at ?? turn.created_at)}
+                              </span>
+                            ),
+                          )}
                         <span>rota: {turn.route_reason || turn.response_mode}</span>
                         <span>
                           tempo: {turn.duration_ms ? formatNumber(turn.duration_ms) + " ms" : "—"}

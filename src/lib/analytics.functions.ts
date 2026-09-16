@@ -2,6 +2,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { summarizeProviders } from "./ai/provider-summary";
 
 type AdminContext = {
   supabase: any;
@@ -283,4 +284,34 @@ export const aiChatHistory = createServerFn({ method: "GET" })
     const { data: rows, error } = await query;
     if (error) throw new Error(error.message);
     return (rows ?? []).map(normalizeTurn);
+  });
+
+export const aiProviderAnalytics = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => RangeInput.parse(d ?? {}))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context as AdminContext);
+    const { getPrivilegedClient } = await import("@/lib/privileged.server");
+    const db = (await getPrivilegedClient((context as AdminContext).supabase)) as any;
+    const range = rangeValues(data);
+    const rows: Array<{ metadata?: unknown }> = [];
+    const limit = 10000;
+    for (let offset = 0; offset < limit; offset += 500) {
+      let query = db
+        .from("ai_chat_turns")
+        .select("metadata")
+        .order("created_at", { ascending: false })
+        .order("id")
+        .range(offset, offset + 499);
+      query = applyDateRange(query, range);
+      const result = await query;
+      if (result.error) throw new Error("Não foi possível carregar métricas por provedor.");
+      rows.push(...(result.data ?? []));
+      if ((result.data ?? []).length < 500) break;
+    }
+    return {
+      providers: summarizeProviders(rows),
+      sampled: rows.length === limit,
+      turns: rows.length,
+    };
   });

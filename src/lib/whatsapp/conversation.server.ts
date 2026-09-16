@@ -4,11 +4,13 @@ import { ChatCoreResultSchema, type ChatInput } from "../chat/input.ts";
 import { executeLocalChat } from "../chat/backend.server.ts";
 import type { ChatMessage } from "../chat/types.ts";
 import type { WhatsAppChatInput, WhatsAppChatResult } from "./types.ts";
+import { multimodelEnabled } from "../ai/config.server.ts";
+import { checkRateLimit } from "../chat/rate-limit.server.ts";
 
 const MAX_HISTORY_MESSAGES = 40;
 const MEMORY_CONVERSATION_TTL_MS = 6 * 60 * 60_000;
 const MEMORY_MESSAGE_TTL_MS = 24 * 60 * 60_000;
-const MEMORY_PROCESSING_STALE_MS = 2 * 60_000;
+const MEMORY_PROCESSING_STALE_MS = 5 * 60_000;
 const MAX_MEMORY_CONVERSATIONS = 500;
 const MAX_MEMORY_MESSAGES = 2_000;
 
@@ -66,7 +68,7 @@ export interface WhatsAppConversationDependencies {
   loadConversation?: (phone: string) => Promise<WhatsAppConversationSnapshot | null>;
   saveConversation?: (phone: string, snapshot: WhatsAppConversationSnapshot) => Promise<void>;
   executeChat?: (input: ChatInput) => Promise<{ status: number; body: unknown }>;
-  resolveUserText?: (input: WhatsAppChatInput) => Promise<string>;
+  resolveUserText?: (input: WhatsAppChatInput, history?: ChatMessage[]) => Promise<string>;
 }
 
 function cloneSnapshot(snapshot: WhatsAppConversationSnapshot): WhatsAppConversationSnapshot {
@@ -281,10 +283,13 @@ async function defaultSaveConversation(
   return store.saveWhatsAppConversation(phone, snapshot);
 }
 
-async function defaultResolveUserText(input: WhatsAppChatInput): Promise<string> {
+async function defaultResolveUserText(
+  input: WhatsAppChatInput,
+  history?: ChatMessage[],
+): Promise<string> {
   if (!input.media) return input.text;
   const media = await import("./media.server.ts");
-  return media.resolveWhatsAppUserText(input);
+  return media.resolveWhatsAppUserText(input, { history });
 }
 
 function depsWithDefaults(deps: WhatsAppConversationDependencies) {
@@ -398,12 +403,16 @@ export async function processClaimedWhatsAppChat(
     let telemetryRecorded = false;
 
     try {
-      // O download/transcrição da mídia não depende do histórico. Iniciar os dois
-      // juntos elimina uma ida ao banco do caminho crítico de áudio, imagem e arquivo.
-      const [previous, resolvedUserText] = await Promise.all([
-        deps.loadConversation(input.phone),
-        deps.resolveUserText(input),
-      ]);
+      if (input.media && !checkRateLimit(`media:${input.phone}`).ok)
+        throw new Error("Limite de solicitações de mídia atingido. Aguarde um minuto.");
+      // Visual/document specialists need history; legacy/audio retain parallel loading.
+      const needsHistory = multimodelEnabled() && input.media && input.media.type !== "audio";
+      const [previous, resolvedUserText] = needsHistory
+        ? await (async () => {
+            const snapshot = await deps.loadConversation(input.phone);
+            return [snapshot, await deps.resolveUserText(input, snapshot?.history)] as const;
+          })()
+        : await Promise.all([deps.loadConversation(input.phone), deps.resolveUserText(input)]);
       userText = resolvedUserText;
       conversationId = previous?.conversationId ?? `wa:${input.phone}`;
       const casualGreeting = greetingReply(userText, Boolean(previous?.history.length));

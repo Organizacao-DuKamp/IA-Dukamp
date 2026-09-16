@@ -1,9 +1,6 @@
 (() => {
   const ROOT_SELECTOR = ".tpec-landing";
-  const WEAK_CATTLE_IMAGES = [
-    "/tpec-nelore-grazing.webp",
-    "/tpec-nelore-elite.webp",
-  ];
+  const WEAK_CATTLE_IMAGES = ["/tpec-nelore-grazing.webp", "/tpec-nelore-elite.webp"];
   const STRONG_CATTLE_IMAGE = "/tpec-hero-bull.webp";
   const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)");
   let observer = null;
@@ -35,7 +32,8 @@
       stagger: 70,
     },
     {
-      selector: ".reference-steps article, .reference-benefits-grid > article, .reference-use-grid > article, .hero-mini-grid > span",
+      selector:
+        ".reference-steps article, .reference-benefits-grid > article, .reference-use-grid > article, .hero-mini-grid > span",
       className: "tpec-card-rise",
       stagger: 85,
     },
@@ -154,7 +152,7 @@
     const roots = document.querySelectorAll(ROOT_SELECTOR);
     if (!roots.length) return;
     roots.forEach((root) => {
-        replaceWeakCattleImages(root);
+      replaceWeakCattleImages(root);
       if (root.dataset.tpecMotionReady !== "1") setupRoot(root);
     });
   });

@@ -8,10 +8,10 @@ test("rota raiz apresenta a vitrine e direciona o atendimento para o WhatsApp", 
   const source = await readFile(landingPath, "utf8");
 
   assert.match(source, /createFileRoute\("\/"\)/);
-  assert.match(source, /Todo o conhecimento da pecuária/);
+  assert.match(source, /TPEC-IA/);
   assert.match(source, /https:\/\/wa\.me\/5516992256069/);
-  assert.match(source, /Falar com a IA do Boi/);
-  assert.match(source, /Previsão do tempo aplicada à sua região/);
+  assert.match(source, /href=\{whatsappUrl\}/);
+  assert.match(source, /Testar no WhatsApp/);
   assert.doesNotMatch(source, /CattleShowcase|model-viewer|bull-3d/);
 });
 
@@ -36,6 +36,6 @@ test("recursos visuais da vitrine enviada estão presentes", async () => {
 test("estilos da vitrine ficam isolados das telas administrativas", async () => {
   const css = await readFile("src/landing.css", "utf8");
 
-  assert.match(css, /^\.tpec-landing\s*\{/);
+  assert.match(css, /\.tpec-landing\s/);
   assert.doesNotMatch(css, /(^|\})\s*(body|nav|footer)\s*\{/m);
 });

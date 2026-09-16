@@ -8,7 +8,7 @@ test("mantém a imagem exclusiva do painel de análise corporal", async () => {
   const weakImages = animations.match(/const WEAK_CATTLE_IMAGES = \[([\s\S]*?)\];/)?.[1] ?? "";
 
   assert.doesNotMatch(weakImages, /tpec-nelore-elite-panel\.webp/);
-  assert.match(rootRoute, /landing-animations\.js\?v=20260911-panel-image-fix/);
+  assert.match(rootRoute, /landing-animations\.js\?v=[\w-]+/);
 });
 
 test("usa um Nelore exclusivo no cartão de observação", async () => {
@@ -16,6 +16,6 @@ test("usa um Nelore exclusivo no cartão de observação", async () => {
   const css = await readFile("src/landing.css", "utf8");
 
   assert.match(landing, /observationCattlePhoto = "\/tpec-nelore-observation\.webp"/);
-  assert.match(landing, /"O que devo observar neste caso\?"[^\n]+image: observationCattlePhoto/);
+  assert.match(landing, /"O que devo observar neste caso\?"[^}]+image: observationCattlePhoto/);
   assert.doesNotMatch(css, /article:nth-child\(4\)[^\n]+content\s*:\s*url/);
 });

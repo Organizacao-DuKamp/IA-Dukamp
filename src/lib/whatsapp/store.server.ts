@@ -27,7 +27,7 @@ export type WhatsAppPresenceClaim =
   | { kind: "missing" };
 
 const MAX_STORED_HISTORY = 40;
-const PROCESSING_STALE_MS = 2 * 60_000;
+const PROCESSING_STALE_MS = 5 * 60_000;
 // Se a Graph API aceitou a resposta, mas a gravação de delivered_at falhou,
 // o registro fica processing + reply. Uma janela maior reduz drasticamente o
 // risco de reenviar uma mensagem que provavelmente já chegou ao usuário.
