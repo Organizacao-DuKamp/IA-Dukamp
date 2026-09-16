@@ -37,6 +37,20 @@ export async function dispatchClaimedWhatsAppChat(
   input: WhatsAppChatInput,
   dependencies: WhatsAppBackendDependencies = {},
 ): Promise<WhatsAppChatResult> {
+  // O claim já existe neste ponto. Persista a entrada imediatamente antes do
+  // pipeline pesado para que uma morte abrupta da função seja recuperável.
+  // Falha nesta gravação não bloqueia a resposta normal; apenas reduz a
+  // capacidade de replay daquela mensagem específica.
+  if (process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()) {
+    try {
+      const retryStore = await import("./retry-store.server.ts");
+      await retryStore.persistWhatsAppRetryPayload(input);
+    } catch (error) {
+      console.error(
+        `[whatsapp] retry payload persistence failed ${error instanceof Error ? error.message : "unknown_error"}`,
+      );
+    }
+  }
   return dispatchLocal(input, dependencies, true);
 }
 
