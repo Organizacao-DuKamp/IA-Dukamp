@@ -9,3 +9,11 @@
   object-position: center;
   image-rendering: auto;
 }
+
+/* The logo artwork already contains its own gold rings.
+   Remove the extra orange/gold border added by the landing seal container. */
+.tpec-landing .brand-seal {
+  border: 0 !important;
+  padding: 0 !important;
+  box-shadow: 0 8px 24px rgba(46, 30, 7, .22) !important;
+}
