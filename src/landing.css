@@ -589,8 +589,10 @@
   }
   .tpec-landing #inicio .hero-photo .brand-seal {
     display: block !important;
-    left: 19% !important;
-    top: 32% !important;
+    /* Encosta o selo na transição entre o painel branco e a foto,
+       sem avançar sobre a cabeça do boi. */
+    left: 12.5% !important;
+    top: 25% !important;
     width: 22% !important;
     height: auto !important;
     aspect-ratio: 1;
