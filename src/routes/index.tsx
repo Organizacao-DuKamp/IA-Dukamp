@@ -64,6 +64,11 @@ const areas: Area[] = [
   { title: "Suínos", text: "Ambiência, alimentação e desempenho.", crop: "area-crop-pig" },
   { title: "Aves", text: "Manejo, sanidade, consumo e ambiência.", crop: "area-crop-chicken" },
   {
+    title: "Búfalos",
+    text: "Manejo, nutrição, reprodução e produtividade.",
+    crop: "area-crop-buffalo",
+  },
+  {
     title: "Piscicultura",
     text: "Qualidade da água, manejo e alimentação.",
     crop: "area-crop-fish",
@@ -91,7 +96,7 @@ const faqs = [
   {
     question: "Serve apenas para bovinos?",
     answer:
-      "O foco principal é a pecuária bovina, mas a TPEC-IA também apoia dúvidas sobre equinos, ovinos, caprinos, suínos, aves e piscicultura.",
+      "O foco principal é a pecuária bovina, mas a TPEC-IA também apoia dúvidas sobre equinos, ovinos, caprinos, suínos, aves, búfalos e piscicultura.",
   },
   {
     question: "A TPEC-IA substitui veterinário, zootecnista ou agrônomo?",
