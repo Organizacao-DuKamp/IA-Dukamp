@@ -1,5 +1,6 @@
 /* Keep every visible TPEC-IA mark sharp without replacing the <img> source via CSS.
-   The landing uses /tpec-logo.png, the full-resolution brand asset. */
+   The source artwork has a white square around the circular seal; clip that
+   outer area so only the actual TPEC-IA seal is visible. */
 .tpec-landing .brand > img,
 .tpec-landing .brand-seal img,
 .tpec-landing .phone-header img,
@@ -10,10 +11,15 @@
   image-rendering: auto;
 }
 
-/* The logo artwork already contains its own gold rings.
-   Remove the extra orange/gold border added by the landing seal container. */
 .tpec-landing .brand-seal {
+  background: transparent !important;
   border: 0 !important;
+  outline: 0 !important;
   padding: 0 !important;
-  box-shadow: 0 8px 24px rgba(46, 30, 7, .22) !important;
+  box-shadow: none !important;
+}
+
+/* The real gold artwork ends just before the white outer margin. */
+.tpec-landing .brand-seal img {
+  clip-path: circle(49% at 50% 50%);
 }
