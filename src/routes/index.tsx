@@ -452,7 +452,6 @@ function LandingPage() {
         <div className="hero-photo reference-photo">
           <img src={heroBullPhoto} alt="Touro Nelore forte em pastagem" loading="lazy" />
           <div className="photo-fade" aria-hidden="true" />
-          <BrandSeal />
           <span className="scan-label scan-a">
             <span className="scan-icon">
               <HeroScanIcon name="management" />
@@ -479,6 +478,7 @@ function LandingPage() {
             <span className="scan-connector" aria-hidden="true" />
           </span>
         </div>
+        <BrandSeal />
       </section>
 
       <section className="poster poster-analysis" id="analise">
