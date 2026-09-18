@@ -1,7 +1,11 @@
-/* Force all visible TPEC-IA logo instances to use the high-resolution brand asset. */
+/* Keep every visible TPEC-IA mark sharp without replacing the <img> source via CSS.
+   The landing uses /tpec-logo.png, the full-resolution brand asset. */
 .tpec-landing .brand > img,
 .tpec-landing .brand-seal img,
 .tpec-landing .phone-header img,
 .tpec-landing .footer-brand img {
-  content: url('/tpec-logo-hq.webp');
+  display: block;
+  object-fit: contain;
+  object-position: center;
+  image-rendering: auto;
 }
