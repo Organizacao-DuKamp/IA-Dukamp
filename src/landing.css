@@ -587,18 +587,21 @@
     min-height: 0 !important;
     max-height: none !important;
   }
-  .tpec-landing #inicio .hero-photo .brand-seal {
+
+  /* Center the TPEC-IA seal exactly on the split between the white copy panel
+     (49%) and the bull photo (51%), so half sits on each side. */
+  .tpec-landing #inicio > .brand-seal {
     display: block !important;
-    /* Encosta o selo na transição entre o painel branco e a foto,
-       sem avançar sobre a cabeça do boi. */
-    left: 12.5% !important;
-    top: 25% !important;
-    width: 22% !important;
+    position: absolute !important;
+    left: 49% !important;
+    top: 28% !important;
+    width: clamp(138px, 11vw, 168px) !important;
     height: auto !important;
     aspect-ratio: 1;
     transform: translate(-50%, -50%) !important;
+    z-index: 8 !important;
   }
 }
 @media (max-width: 980px) {
-  .tpec-landing #inicio .hero-photo .brand-seal { display: none !important; }
+  .tpec-landing #inicio > .brand-seal { display: none !important; }
 }
