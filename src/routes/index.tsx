@@ -111,7 +111,7 @@ const structuredData = {
       url: "https://iadoboi.com.br/",
       logo: {
         "@type": "ImageObject",
-        url: "https://iadoboi.com.br/tpec-logo.png",
+        url: "https://iadoboi.com.br/tpec-logo-hq.webp",
       },
     },
     {
@@ -290,7 +290,7 @@ function HeroScanIcon({ name }: { name: "management" | "nutrition" | "condition"
 function BrandSeal({ small = false }: { small?: boolean }) {
   return (
     <span className={small ? "brand-seal brand-seal-small" : "brand-seal"} aria-hidden="true">
-      <img src="/tpec-logo.png" alt="" />
+      <img src="/tpec-logo-hq.webp" alt="" />
     </span>
   );
 }
@@ -304,7 +304,7 @@ function LandingPage() {
       />
       <header className="site-header">
         <a className="brand" href="#whatsapp" aria-label="IA do Boi — início">
-          <img src="/tpec-logo.png" alt="" />
+          <img src="/tpec-logo-hq.webp" alt="" />
           <span>
             <strong>TPEC-IA</strong>
             <small>INTELIGÊNCIA ARTIFICIAL DA PECUÁRIA</small>
@@ -360,7 +360,7 @@ function LandingPage() {
             <span className="phone-back" aria-hidden="true">
               ‹
             </span>
-            <img src="/tpec-logo.png" alt="" />
+            <img src="/tpec-logo-hq.webp" alt="" />
             <span className="phone-contact">
               <strong>TPEC IA</strong>
               <small>online</small>
@@ -809,7 +809,7 @@ function LandingPage() {
 
       <footer className="site-footer">
         <a className="footer-brand" href="#whatsapp">
-          <img src="/tpec-logo.png" alt="" />
+          <img src="/tpec-logo-hq.webp" alt="" />
           <span>
             <strong>TPEC-IA</strong>
             <small>INTELIGÊNCIA ARTIFICIAL DA PECUÁRIA</small>
