@@ -96,7 +96,7 @@ const faqs = [
   {
     question: "Serve apenas para bovinos?",
     answer:
-      "O foco principal é a pecuária bovina, mas a TPEC-IA também apoia dúvidas sobre equinos, ovinos, caprinos, suínos, aves, búfalos e piscicultura.",
+      "Não. O foco principal é a pecuária bovina, mas a TPEC-IA também apoia dúvidas sobre equinos, ovinos, caprinos, suínos, aves, búfalos e piscicultura.",
   },
   {
     question: "A TPEC-IA substitui veterinário, zootecnista ou agrônomo?",
