@@ -315,7 +315,7 @@
 .tpec-landing .reference-areas-grid {
   display: grid;
   gap: 8px;
-  grid-template-columns: repeat(7, minmax(0,1fr));
+  grid-template-columns: repeat(8, minmax(0,1fr));
   margin: 10px auto 0;
   max-width: 1380px;
   position: relative;
@@ -367,6 +367,11 @@
 .tpec-landing .area-crop-sheep::before { background-position-x: 48.7%; }
 .tpec-landing .area-crop-pig::before { background-position-x: 64.1%; }
 .tpec-landing .area-crop-chicken::before { background-position-x: 78.7%; }
+.tpec-landing .area-crop-buffalo::before {
+  background-image: url("https://images.pexels.com/photos/1618679/pexels-photo-1618679.jpeg?auto=compress&cs=tinysrgb&w=900");
+  background-position: center 45%;
+  background-size: cover;
+}
 .tpec-landing .area-crop-fish::before { background-position-x: 94.2%; }
 
 .tpec-landing .reference-areas-grid > article.is-visible:hover .area-photo-reference::before {
