@@ -137,19 +137,20 @@
   border-radius: 14px;
   color: #fff;
   display: flex;
-  gap: 16px;
-  margin: 24px 0 0 17%;
-  max-width: 500px;
-  padding: 14px 18px;
+  gap: 20px;
+  margin: 26px 0 0 14%;
+  max-width: 590px;
+  min-height: 74px;
+  padding: 18px 24px;
 }
 
-.tpec-landing .how-banner > svg { color: #efc059; height: 36px; width: 36px; }
+.tpec-landing .how-banner > svg { color: #efc059; flex-shrink: 0; height: 44px; width: 44px; }
 
 .tpec-landing .how-banner span { display: flex; flex-direction: column; }
 
-.tpec-landing .how-banner b { color: #e9c36e; font-size: 13px; }
+.tpec-landing .how-banner b { color: #e9c36e; font-size: 16px; line-height: 1.25; }
 
-.tpec-landing .how-banner small { font-size: 10px; line-height: 1.4; margin-top: 3px; }
+.tpec-landing .how-banner small { font-size: 13px; line-height: 1.5; margin-top: 5px; }
 
 .tpec-landing .how-field {
   min-height: 720px;
