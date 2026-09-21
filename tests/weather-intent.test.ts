@@ -165,12 +165,8 @@ test("diretriz meteorológica prioriza fontes oficiais e impacto pecuário", () 
   assert.match(directive, /conforto térmico/i);
 });
 
-
 test("frase de conversa antes do pedido de clima não vira localização", () => {
-  assert.equal(
-    extractWeatherLocation("Ok. E a previsão do tempo hoje? Como está?"),
-    null,
-  );
+  assert.equal(extractWeatherLocation("Ok. E a previsão do tempo hoje? Como está?"), null);
 });
 
 test("DDD 17 fornece São José do Rio Preto como referência regional", () => {
