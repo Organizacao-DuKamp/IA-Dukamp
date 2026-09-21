@@ -29,7 +29,7 @@ Sem template, o item é marcado como skipped em vez de tentar texto livre.
 4. Definir WHATSAPP_PROACTIVE_ENABLED=true.
 5. Publicar o deploy principal.
 
-O scheduler roda a cada 5 minutos e apenas chama uma Background Function; o trabalho de IA e envio fica no worker em background.
+O scheduler roda a cada 5 minutos e apenas chama uma Background Function; o trabalho de IA e envio fica no worker em background. O processamento permanece desativável por variável de ambiente.
 
 ## Segurança
 
