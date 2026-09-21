@@ -49,4 +49,3 @@ test("sincronização proativa é idempotente e restrita ao service role", async
   assert.match(sql, /FROM PUBLIC, anon, authenticated/i);
   assert.match(sql, /TO service_role/i);
 });
-
