@@ -33,7 +33,7 @@ O scheduler roda a cada 5 minutos e apenas chama uma Background Function; o trab
 
 ## Estado de implantação
 
-Migração aplicada no Supabase TPEC-IA em 2026-09-21. O worker é controlado por `WHATSAPP_PROACTIVE_ENABLED` no ambiente Netlify.
+Migração aplicada no Supabase TPEC-IA em 2026-09-21. O worker está habilitado em produção com `WHATSAPP_PROACTIVE_ENABLED=true` no ambiente Netlify.
 
 ## Segurança
 
