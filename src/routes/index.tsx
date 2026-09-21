@@ -5,7 +5,7 @@ const whatsappUrl =
   "https://wa.me/5516992256069?text=Ol%C3%A1%2C%20quero%20conhecer%20a%20TPEC-IA%2C%20a%20IA%20do%20Boi.";
 
 const whatsappReferenceImage = "/tpec-whatsapp-reference.webp";
-const heroBullPhoto = "/tpec-hero-bull.webp";
+const heroBullPhoto = "/tpec-hero-bull.webp?v=hq-1800-20260921";
 
 const cattlePhoto = "/tpec-nelore-grazing.webp";
 const dairyPhoto =
