@@ -31,6 +31,10 @@ Sem template, o item é marcado como skipped em vez de tentar texto livre.
 
 O scheduler roda a cada 5 minutos e apenas chama uma Background Function; o trabalho de IA e envio fica no worker em background. O processamento permanece desativável por variável de ambiente.
 
+## Estado de implantação
+
+Migração aplicada no Supabase TPEC-IA em 2026-09-21. O worker é controlado por `WHATSAPP_PROACTIVE_ENABLED` no ambiente Netlify.
+
 ## Segurança
 
 As quatro tabelas têm RLS habilitada. Acesso de PUBLIC, anon e authenticated é revogado. Os RPCs de claim usam SECURITY INVOKER, têm EXECUTE revogado dos papéis públicos e são concedidos somente a service_role.
