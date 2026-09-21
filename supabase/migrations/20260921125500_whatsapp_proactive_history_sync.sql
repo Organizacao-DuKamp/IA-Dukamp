@@ -4,6 +4,14 @@
 ALTER TABLE public.whatsapp_proactive_queue
   ADD COLUMN IF NOT EXISTS history_synced_at TIMESTAMPTZ;
 
+-- Envios feitos antes desta correção já podem ter respostas posteriores no
+-- histórico; não os acrescente no final fora de ordem. Casos pontuais podem
+-- ser reconciliados preservando a posição real da conversa.
+UPDATE public.whatsapp_proactive_queue
+SET history_synced_at = COALESCE(sent_at, NOW())
+WHERE status = 'sent'
+  AND history_synced_at IS NULL;
+
 CREATE INDEX IF NOT EXISTS whatsapp_proactive_history_sync_idx
   ON public.whatsapp_proactive_queue (phone_number, sent_at)
   WHERE status = 'sent' AND history_synced_at IS NULL;
