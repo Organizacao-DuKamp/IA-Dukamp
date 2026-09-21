@@ -201,9 +201,7 @@ async function ensureProfile(
     .eq("phone_number", phone)
     .maybeSingle();
   if (current.error) {
-    throw new Error(
-      "whatsapp_followup_profile_load_failed:" + (current.error.code ?? "unknown"),
-    );
+    throw new Error("whatsapp_followup_profile_load_failed:" + (current.error.code ?? "unknown"));
   }
 
   if (current.data) {
@@ -237,9 +235,7 @@ async function ensureProfile(
     .select("*")
     .single();
   if (insert.error) {
-    throw new Error(
-      "whatsapp_followup_profile_insert_failed:" + (insert.error.code ?? "unknown"),
-    );
+    throw new Error("whatsapp_followup_profile_insert_failed:" + (insert.error.code ?? "unknown"));
   }
   return mapProfile(insert.data);
 }
@@ -286,9 +282,7 @@ export async function observeWhatsAppInboundForMemory(
     { onConflict: "message_id", ignoreDuplicates: true },
   );
   if (inbox.error) {
-    throw new Error(
-      "whatsapp_memory_inbox_enqueue_failed:" + (inbox.error.code ?? "unknown"),
-    );
+    throw new Error("whatsapp_memory_inbox_enqueue_failed:" + (inbox.error.code ?? "unknown"));
   }
 
   return { queued: true, preference };
@@ -488,10 +482,7 @@ async function extractActionsWithAI(
   return normalizeMemoryActions(extractJsonObject(response));
 }
 
-async function applyMemoryActions(
-  item: MemoryInboxItem,
-  actions: MemoryAction[],
-): Promise<void> {
+async function applyMemoryActions(item: MemoryInboxItem, actions: MemoryAction[]): Promise<void> {
   const now = new Date().toISOString();
 
   for (const action of actions) {
@@ -525,9 +516,7 @@ async function applyMemoryActions(
       .eq("fact_key", action.factKey)
       .maybeSingle();
     if (existing.error) {
-      throw new Error(
-        "whatsapp_memory_fact_lookup_failed:" + (existing.error.code ?? "unknown"),
-      );
+      throw new Error("whatsapp_memory_fact_lookup_failed:" + (existing.error.code ?? "unknown"));
     }
 
     const payload = {
@@ -550,13 +539,15 @@ async function applyMemoryActions(
           .update(payload)
           .eq("id", existing.data.id)
           .eq("phone_number", item.phoneNumber)
-      : await db().from("whatsapp_user_memory_facts").insert({
-          phone_number: item.phoneNumber,
-          fact_key: action.factKey,
-          ...payload,
-          first_seen_at: now,
-          created_at: now,
-        });
+      : await db()
+          .from("whatsapp_user_memory_facts")
+          .insert({
+            phone_number: item.phoneNumber,
+            fact_key: action.factKey,
+            ...payload,
+            first_seen_at: now,
+            created_at: now,
+          });
     if (result.error) {
       throw new Error("whatsapp_memory_fact_save_failed:" + (result.error.code ?? "unknown"));
     }
@@ -581,9 +572,7 @@ async function applyMemoryActions(
     })
     .eq("phone_number", item.phoneNumber);
   if (profile.error) {
-    throw new Error(
-      "whatsapp_memory_profile_count_failed:" + (profile.error.code ?? "unknown"),
-    );
+    throw new Error("whatsapp_memory_profile_count_failed:" + (profile.error.code ?? "unknown"));
   }
 }
 
@@ -664,9 +653,7 @@ export async function seedDailyWhatsAppFollowups(now = new Date()): Promise<numb
     .gt("memory_count", 0)
     .limit(2000);
   if (profiles.error) {
-    throw new Error(
-      "whatsapp_followup_seed_profiles_failed:" + (profiles.error.code ?? "unknown"),
-    );
+    throw new Error("whatsapp_followup_seed_profiles_failed:" + (profiles.error.code ?? "unknown"));
   }
 
   const rows: Record<string, unknown>[] = [];
@@ -693,12 +680,10 @@ export async function seedDailyWhatsAppFollowups(now = new Date()): Promise<numb
   }
 
   if (rows.length === 0) return 0;
-  const insert = await db()
-    .from("whatsapp_proactive_queue")
-    .upsert(rows, {
-      onConflict: "phone_number,local_date,slot_no",
-      ignoreDuplicates: true,
-    });
+  const insert = await db().from("whatsapp_proactive_queue").upsert(rows, {
+    onConflict: "phone_number,local_date,slot_no",
+    ignoreDuplicates: true,
+  });
   if (insert.error) {
     throw new Error("whatsapp_followup_seed_failed:" + (insert.error.code ?? "unknown"));
   }
@@ -773,8 +758,7 @@ async function generateProactiveMessage(
     slotNo === 1 &&
     !message.toLocaleLowerCase("pt-BR").includes("parar acompanhamento")
   ) {
-    message +=
-      "\n\nSe quiser pausar esse acompanhamento, responda “parar acompanhamento”.";
+    message += "\n\nSe quiser pausar esse acompanhamento, responda “parar acompanhamento”.";
   }
   return message;
 }
@@ -880,8 +864,7 @@ async function graphSend(
     );
     if (response.ok) return { status: "sent", error: null };
     const raw = await response.text().catch(() => "");
-    const detail =
-      "whatsapp_proactive_send_failed:" + response.status + ":" + raw.slice(0, 300);
+    const detail = "whatsapp_proactive_send_failed:" + response.status + ":" + raw.slice(0, 300);
     if (response.status >= 500) return { status: "uncertain", error: detail };
     return { status: "failed", error: detail };
   } catch (error) {
@@ -989,11 +972,7 @@ async function processQueueItem(item: QueueClaim): Promise<ManualFollowupResult>
   const delivery = await graphSend(phone, message, mode);
   const now = new Date().toISOString();
   const queueStatus =
-    delivery.status === "sent"
-      ? "sent"
-      : delivery.status === "uncertain"
-        ? "uncertain"
-        : "failed";
+    delivery.status === "sent" ? "sent" : delivery.status === "uncertain" ? "uncertain" : "failed";
   const update = await db()
     .from("whatsapp_proactive_queue")
     .update({
@@ -1006,9 +985,7 @@ async function processQueueItem(item: QueueClaim): Promise<ManualFollowupResult>
     })
     .eq("id", item.id);
   if (update.error) {
-    throw new Error(
-      "whatsapp_followup_result_save_failed:" + (update.error.code ?? "unknown"),
-    );
+    throw new Error("whatsapp_followup_result_save_failed:" + (update.error.code ?? "unknown"));
   }
 
   if (delivery.status === "sent") {
@@ -1018,8 +995,7 @@ async function processQueueItem(item: QueueClaim): Promise<ManualFollowupResult>
       .eq("phone_number", phone);
     if (profileUpdate.error) {
       console.error(
-        "[whatsapp-followup] profile timestamp failed " +
-          (profileUpdate.error.code ?? "unknown"),
+        "[whatsapp-followup] profile timestamp failed " + (profileUpdate.error.code ?? "unknown"),
       );
     }
   }
@@ -1083,9 +1059,7 @@ export async function runWhatsAppFollowupMaintenance() {
   return { enabled: true, memory, seeded, proactive };
 }
 
-export async function forceWhatsAppFollowup(
-  phoneValue: string,
-): Promise<ManualFollowupResult> {
+export async function forceWhatsAppFollowup(phoneValue: string): Promise<ManualFollowupResult> {
   if (!hasDurableStore()) {
     return {
       status: "failed",
@@ -1122,9 +1096,7 @@ export async function forceWhatsAppFollowup(
     .select("id,phone_number,local_date,slot_no,source,scheduled_for,attempts")
     .single();
   if (inserted.error) {
-    throw new Error(
-      "whatsapp_manual_followup_create_failed:" + (inserted.error.code ?? "unknown"),
-    );
+    throw new Error("whatsapp_manual_followup_create_failed:" + (inserted.error.code ?? "unknown"));
   }
 
   return processQueueItem({
@@ -1184,19 +1156,13 @@ export async function getWhatsAppFollowupDetail(
       .limit(30),
   ]);
   if (profile.error) {
-    throw new Error(
-      "whatsapp_followup_detail_profile_failed:" + (profile.error.code ?? "unknown"),
-    );
+    throw new Error("whatsapp_followup_detail_profile_failed:" + (profile.error.code ?? "unknown"));
   }
   if (facts.error) {
-    throw new Error(
-      "whatsapp_followup_detail_facts_failed:" + (facts.error.code ?? "unknown"),
-    );
+    throw new Error("whatsapp_followup_detail_facts_failed:" + (facts.error.code ?? "unknown"));
   }
   if (queue.error) {
-    throw new Error(
-      "whatsapp_followup_detail_queue_failed:" + (queue.error.code ?? "unknown"),
-    );
+    throw new Error("whatsapp_followup_detail_queue_failed:" + (queue.error.code ?? "unknown"));
   }
 
   return {
