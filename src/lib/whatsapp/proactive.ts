@@ -73,10 +73,7 @@ function seededMinute(seed: string, startMinute: number, endMinute: number): num
   return startMinute + (hash32(seed) % width);
 }
 
-export function localDateForTimeZone(
-  date = new Date(),
-  timeZone = DEFAULT_TIME_ZONE,
-): string {
+export function localDateForTimeZone(date = new Date(), timeZone = DEFAULT_TIME_ZONE): string {
   const parts = localParts(date, timeZone);
   return [
     String(parts.year).padStart(4, "0"),
@@ -114,10 +111,7 @@ export function buildDailyFollowupSchedule(
 }
 
 export function parseFollowupPreference(text: string): FollowupPreference {
-  const normalized = text
-    .trim()
-    .toLocaleLowerCase("pt-BR")
-    .replace(/\s+/g, " ");
+  const normalized = text.trim().toLocaleLowerCase("pt-BR").replace(/\s+/g, " ");
 
   const disable =
     /\b(parar|pare|pausar|pause|desativar|desative|cancelar|cancele)\b.{0,55}\b(acompanhamento|mensagens?|lembretes?|avisos?)\b/i.test(
