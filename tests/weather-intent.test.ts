@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { classifyDomainIntent } from "../src/lib/chat/intent.ts";
+import { inferBrazilianDddRegion } from "../src/lib/chat/brazil-ddd.ts";
 import { validateWeatherGrounding } from "../src/lib/chat/response-validation.ts";
 import { applyAssistantTurn, createConversationState } from "../src/lib/chat/state.ts";
 import {
@@ -133,7 +134,7 @@ test("pergunta cidade e UF antes de pesquisar e mantém a ação pendente", () =
 
   const finalState = applyAssistantTurn(state, WEATHER_LOCATION_QUESTION);
 
-  assert.match(WEATHER_LOCATION_QUESTION, /qual é a sua cidade e o estado \(UF\)/i);
+  assert.match(WEATHER_LOCATION_QUESTION, /de qual cidade ou região/i);
   assert.equal(finalState.pending_action, "consultar_previsao_tempo");
   assert.equal(finalState.expected_response_type, "data");
   assert.ok(finalState.missing_data.includes("weather_location"));
@@ -162,4 +163,33 @@ test("diretriz meteorológica prioriza fontes oficiais e impacto pecuário", () 
   assert.match(directive, /CPTEC\/INPE/);
   assert.match(directive, /pelo menos duas fontes/i);
   assert.match(directive, /conforto térmico/i);
+});
+
+
+test("frase de conversa antes do pedido de clima não vira localização", () => {
+  assert.equal(
+    extractWeatherLocation("Ok. E a previsão do tempo hoje? Como está?"),
+    null,
+  );
+});
+
+test("DDD 17 fornece São José do Rio Preto como referência regional", () => {
+  const inferred = inferBrazilianDddRegion("+55 17 99285-2376");
+
+  assert.ok(inferred);
+  assert.equal(inferred.ddd, "17");
+  assert.equal(inferred.location, "São José do Rio Preto - SP");
+  assert.match(inferred.region, /São José do Rio Preto/i);
+});
+
+test("DDD desconhecido não inventa região", () => {
+  assert.equal(inferBrazilianDddRegion("+55 20 99999-9999"), null);
+});
+
+test("pergunta meteorológica sem cidade continua sem localização explícita", () => {
+  const state = createConversationState("weather-no-location");
+  const resolved = resolveWeatherTurn("Eu quero saber a previsão do tempo", state);
+
+  assert.equal(resolved.isWeatherTurn, true);
+  assert.equal(resolved.location, null);
 });
