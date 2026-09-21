@@ -11,14 +11,11 @@ export default async (): Promise<Response> => {
   }
 
   try {
-    const response = await fetch(
-      baseUrl + "/.netlify/functions/whatsapp-followup-background",
-      {
-        method: "POST",
-        headers: { "x-tpec-followup-secret": secret },
-        signal: AbortSignal.timeout(5_000),
-      },
-    );
+    const response = await fetch(baseUrl + "/.netlify/functions/whatsapp-followup-background", {
+      method: "POST",
+      headers: { "x-tpec-followup-secret": secret },
+      signal: AbortSignal.timeout(5_000),
+    });
     if (!response.ok && response.status !== 202) {
       throw new Error("followup_enqueue_failed:" + response.status);
     }
