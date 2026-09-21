@@ -335,6 +335,14 @@
   z-index: 7;
 }
 
+.tpec-landing .areas-whatsapp {
+  box-sizing: border-box;
+  margin: 28px auto 0;
+  position: relative;
+  width: min(100%, 590px);
+  z-index: 7;
+}
+
 .tpec-landing .reference-areas-grid article {
   align-items: center;
   background: rgba(255,255,255,.78);
