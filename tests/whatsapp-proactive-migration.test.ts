@@ -33,3 +33,20 @@ test("migração de memória proativa protege dados e usa claims concorrentes", 
   assert.match(sql, /TO service_role/i);
   assert.match(sql, /bootstrap:/i);
 });
+
+test("mensagens proativas enviadas entram de forma idempotente no histórico", async () => {
+  const sql = await readFile(
+    "supabase/migrations/20260921125500_whatsapp_proactive_history_sync.sql",
+    "utf8",
+  );
+
+  assert.match(sql, /history_synced_at/i);
+  assert.match(sql, /sync_whatsapp_proactive_history/i);
+  assert.match(sql, /FOR UPDATE/i);
+  assert.match(sql, /JSONB_BUILD_OBJECT\(\s*'role',\s*'assistant'/i);
+  assert.match(sql, /status\s*=\s*'sent'/i);
+  assert.match(sql, /SECURITY INVOKER/i);
+  assert.match(sql, /FROM PUBLIC, anon, authenticated/i);
+  assert.match(sql, /TO service_role/i);
+});
+
