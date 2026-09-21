@@ -142,11 +142,24 @@
   max-width: 590px;
   min-height: 74px;
   padding: 18px 24px;
+  text-decoration: none;
+  transition: background 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 }
+
+.tpec-landing .how-banner:hover,
+.tpec-landing .how-banner:focus-visible {
+  background: linear-gradient(145deg, #216247, #12412d);
+  box-shadow: 0 8px 22px rgba(13, 53, 37, .2);
+  transform: translateY(-2px);
+}
+
+.tpec-landing .how-banner:focus-visible { outline: 3px solid #d3a844; outline-offset: 3px; }
 
 .tpec-landing .how-banner > svg { color: #efc059; flex-shrink: 0; height: 44px; width: 44px; }
 
-.tpec-landing .how-banner span { display: flex; flex-direction: column; }
+.tpec-landing .how-banner > span:not(.how-banner-arrow) { display: flex; flex-direction: column; }
+
+.tpec-landing .how-banner .how-banner-arrow { color: #efc059; font-size: 30px; margin-left: auto; }
 
 .tpec-landing .how-banner b { color: #e9c36e; font-size: 16px; line-height: 1.25; }
 
