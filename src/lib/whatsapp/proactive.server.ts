@@ -3,6 +3,7 @@ import { askOpenAI } from "../chat/openai.server.ts";
 import type { ChatMessage } from "../chat/types.ts";
 import { supabaseAdmin } from "../../integrations/supabase/client.server.ts";
 import type { WhatsAppChatInput } from "./types.ts";
+import { syncWhatsAppProactiveHistory } from "./store.server.ts";
 import {
   buildDailyFollowupSchedule,
   localDateForTimeZone,
@@ -988,15 +989,12 @@ async function processQueueItem(item: QueueClaim): Promise<ManualFollowupResult>
   }
 
   if (delivery.status === "sent") {
-    const historySync = await db().rpc("append_whatsapp_assistant_history", {
-      p_phone_number: phone,
-      p_content: message,
-    });
-    if (historySync.error) {
-      console.error(
-        "[whatsapp-followup] conversation history sync failed " +
-          (historySync.error.code ?? "unknown"),
-      );
+    try {
+      await syncWhatsAppProactiveHistory(item.id);
+    } catch (error) {
+      // O envio já foi aceito pela Meta. Não reenvie por falha de persistência:
+      // a próxima entrada do usuário fará a reconciliação antes do chat.
+      console.error("[whatsapp-followup] history sync failed " + errorMessage(error));
     }
 
     const profileUpdate = await db()
