@@ -988,6 +988,17 @@ async function processQueueItem(item: QueueClaim): Promise<ManualFollowupResult>
   }
 
   if (delivery.status === "sent") {
+    const historySync = await db().rpc("append_whatsapp_assistant_history", {
+      p_phone_number: phone,
+      p_content: message,
+    });
+    if (historySync.error) {
+      console.error(
+        "[whatsapp-followup] conversation history sync failed " +
+          (historySync.error.code ?? "unknown"),
+      );
+    }
+
     const profileUpdate = await db()
       .from("whatsapp_followup_profiles")
       .update({ last_proactive_at: now, updated_at: now })
