@@ -624,3 +624,76 @@
     object-position: center center !important;
   }
 }
+
+
+/* CTA principal do WhatsApp: leitura simples e alvo grande para uso no campo. */
+.tpec-landing #whatsapp .whatsapp-big .whatsapp-cta-copy {
+  align-items: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.1;
+  text-align: left;
+}
+
+.tpec-landing #whatsapp .whatsapp-big .whatsapp-cta-copy strong {
+  font-size: 1em;
+  font-weight: 900;
+}
+
+.tpec-landing #whatsapp .whatsapp-big .whatsapp-cta-copy small {
+  color: rgba(255, 255, 255, .88);
+  font-size: .78em;
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+@media (max-width: 680px) {
+  .tpec-landing #whatsapp .whatsapp-copy .whatsapp-big {
+    align-self: center !important;
+    width: 100% !important;
+    max-width: 320px !important;
+    min-height: 64px !important;
+    margin: 2px auto 0 !important;
+    padding: 10px 16px !important;
+    border-radius: 14px !important;
+    box-shadow:
+      0 8px 18px rgba(24, 60, 28, .24),
+      inset 0 0 0 1px rgba(255, 255, 255, .16) !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+    font-size: clamp(13px, 3.8vw, 16px) !important;
+    gap: 11px !important;
+    letter-spacing: 0 !important;
+    white-space: normal !important;
+  }
+
+  .tpec-landing #whatsapp .whatsapp-copy .whatsapp-big svg {
+    flex: 0 0 auto !important;
+    width: 31px !important;
+    height: 31px !important;
+  }
+
+  .tpec-landing #whatsapp .whatsapp-big .whatsapp-cta-copy {
+    align-items: center;
+    text-align: center;
+  }
+
+  .tpec-landing #whatsapp .whatsapp-big .whatsapp-cta-copy strong {
+    font-size: 14px;
+    letter-spacing: .01em;
+  }
+
+  .tpec-landing #whatsapp .whatsapp-big .whatsapp-cta-copy small {
+    font-size: 11px;
+    line-height: 1.2;
+  }
+
+  .tpec-landing #whatsapp .whatsapp-copy > p {
+    width: 100% !important;
+  }
+
+  .tpec-landing #whatsapp .whatsapp-copy .whatsapp-big:active {
+    transform: scale(.985) !important;
+  }
+}
