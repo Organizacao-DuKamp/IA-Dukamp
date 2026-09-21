@@ -27,6 +27,7 @@ import {
   validateWeatherGrounding,
 } from "./response-validation";
 import { sanitizeRetrievedContent } from "./security";
+import { inferBrazilianDddRegion, type BrazilianDddRegion } from "./brazil-ddd.ts";
 import {
   buildWeatherResearchQuery,
   resolveWeatherTurn,
@@ -287,7 +288,6 @@ async function runTurn(
   let domainIntent = classifyDomainIntent(text, history.length > 0);
   const weatherTurn = resolveWeatherTurn(text, stateBefore, lastAssistant?.content ?? null);
   const state = applyUserTurn(stateBefore, text, analysis);
-  state.conversation_summary = updateSummary(state, windowed.dropped);
 
   const continuity =
     stateBefore.awaiting_user_response ||
@@ -302,26 +302,41 @@ async function runTurn(
 
   let weatherLocation: string | null = null;
   let weatherLocationRequired = false;
+  let weatherDddRegion: BrazilianDddRegion | null = null;
   if (weatherTurn.isWeatherTurn) {
     state.current_topic = "clima e previsão do tempo";
     state.user_goal = state.user_goal || stateBefore.user_goal || text.slice(0, 300);
     state.pending_action = "consultar_previsao_tempo";
+
+    if (!weatherTurn.location && input.channel === "whatsapp") {
+      weatherDddRegion = inferBrazilianDddRegion(input.sessionId);
+    }
+
+    const resolvedWeatherLocation = weatherTurn.location ?? weatherDddRegion?.location ?? null;
     domainIntent = classifyDomainIntent(
-      `previsão do tempo${weatherTurn.location ? ` em ${weatherTurn.location}` : ""}`,
+      `previsão do tempo${resolvedWeatherLocation ? ` em ${resolvedWeatherLocation}` : ""}`,
       history.length > 0,
     );
 
-    if (!weatherTurn.location) {
+    if (!resolvedWeatherLocation) {
       weatherLocationRequired = true;
+      delete state.confirmed_data.weather_location;
       if (!state.missing_data.includes("weather_location")) {
         state.missing_data.push("weather_location");
       }
     } else {
-      weatherLocation = weatherTurn.location;
-      state.confirmed_data.weather_location = weatherLocation;
+      weatherLocation = resolvedWeatherLocation;
+      if (weatherTurn.location) {
+        state.confirmed_data.weather_location = weatherLocation;
+      } else {
+        // DDD é apenas referência regional, não prova da cidade exata do usuário.
+        delete state.confirmed_data.weather_location;
+      }
       state.missing_data = state.missing_data.filter((field) => field !== "weather_location");
     }
   }
+
+  state.conversation_summary = updateSummary(state, windowed.dropped);
 
   let routerInput = resolveLookupText(
     text,
@@ -331,8 +346,12 @@ async function runTurn(
     lastAssistant?.content ?? null,
   );
   if (weatherLocation) {
-    routerInput =
-      `${text}\nLocalização meteorológica confirmada: ${weatherLocation}, Brasil.`.slice(0, 600);
+    routerInput = weatherDddRegion
+      ? `${text}\nReferência meteorológica regional inferida pelo DDD: ${weatherLocation}, Brasil.`.slice(
+          0,
+          600,
+        )
+      : `${text}\nLocalização meteorológica confirmada: ${weatherLocation}, Brasil.`.slice(0, 600);
   }
 
   let routed: Awaited<ReturnType<typeof routeQuery>>;
@@ -397,9 +416,16 @@ async function runTurn(
 
   if (weatherLocationRequired) {
     contextParts.push(
-      "CLIMA — LOCALIZAÇÃO NECESSÁRIA: o usuário pediu informação meteorológica, mas ainda não há cidade/UF ou região suficientemente confirmada. Não invente previsão e não pesquise uma localidade por suposição. Responda pelo próprio GPT pedindo somente cidade e UF/região necessária, de forma natural e curta.",
+      "CLIMA — LOCALIZAÇÃO NECESSÁRIA: o usuário pediu informação meteorológica, mas não foi possível obter uma região confiável pela mensagem nem pelo DDD do WhatsApp. Não invente previsão e não pesquise uma localidade por suposição. Pergunte de forma curta: \"De qual cidade ou região você quer saber a previsão do tempo?\"",
     );
     retrieved.push("weather:location-required");
+  }
+
+  if (weatherDddRegion && weatherLocation) {
+    contextParts.push(
+      `CLIMA — REGIÃO INFERIDA PELO DDD: o número do WhatsApp usa DDD ${weatherDddRegion.ddd}, associado a ${weatherDddRegion.region}. Use ${weatherDddRegion.location} apenas como referência meteorológica regional. Não diga que essa é a cidade exata do usuário e não salve essa inferência como localização confirmada. Se o usuário indicar outra cidade/região, a informação explícita dele tem prioridade.`,
+    );
+    retrieved.push(`weather:ddd:${weatherDddRegion.ddd}`);
   }
 
   if (routed.kind === "structural") {
