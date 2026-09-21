@@ -378,7 +378,7 @@ export function classifyUserIntent(text: string, state: ConversationState): Inte
 const CONFIRM_ASK_RE =
   /\b(deseja|quer\s+que\s+eu|posso\s+(te\s+)?(calcular|fazer|montar|considerar|seguir|passar|buscar|verificar|consultar|ajudar)|confirma|confirmar|est[áa]\s+correto|[ée]\s+isso|fa[çc]o\s+(o|a)|prossigo|sigo\s+com)\b/i;
 const DATA_ASK_RE =
-  /\b(qual\s+(é\s+)?(o|a)\s+|quantos?\s+|quantas?\s+|me\s+informe|me\s+diga|voc[êe]\s+sabe\s+(o|a|qual))/i;
+  /\b((?:de\s+)?qual\s+(?:(?:é\s+)?(?:o|a|seu|sua)\s+)?|quantos?\s+|quantas?\s+|me\s+informe|me\s+diga|voc[êe]\s+sabe\s+(o|a|qual))/i;
 
 export function analyzeAssistantReply(reply: string): { intent: AssistantIntent; question: string | null; options: string[] } {
   const text = reply.trim();
