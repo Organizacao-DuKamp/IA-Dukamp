@@ -77,6 +77,7 @@ function cleanLocationCandidate(value: string): string | null {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, " ")
     .split(/\s+/)
     .filter(Boolean)
     .filter(
@@ -84,6 +85,11 @@ function cleanLocationCandidate(value: string): string | null {
         !new Set([
           "qual",
           "como",
+          "eu",
+          "voce",
+          "você",
+          "meu",
+          "minha",
           "e",
           "a",
           "o",
