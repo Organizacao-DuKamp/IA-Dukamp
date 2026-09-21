@@ -6,11 +6,17 @@ export interface BrazilianDddRegion {
 
 const DDD_REGIONS: Record<string, Omit<BrazilianDddRegion, "ddd">> = {
   "11": { location: "São Paulo - SP", region: "Grande São Paulo" },
-  "12": { location: "São José dos Campos - SP", region: "Vale do Paraíba e Litoral Norte de São Paulo" },
+  "12": {
+    location: "São José dos Campos - SP",
+    region: "Vale do Paraíba e Litoral Norte de São Paulo",
+  },
   "13": { location: "Santos - SP", region: "Baixada Santista e Vale do Ribeira" },
   "14": { location: "Bauru - SP", region: "região de Bauru e Marília" },
   "15": { location: "Sorocaba - SP", region: "região de Sorocaba e Itapetininga" },
-  "16": { location: "Ribeirão Preto - SP", region: "região de Ribeirão Preto, Araraquara e Franca" },
+  "16": {
+    location: "Ribeirão Preto - SP",
+    region: "região de Ribeirão Preto, Araraquara e Franca",
+  },
   "17": { location: "São José do Rio Preto - SP", region: "região de São José do Rio Preto" },
   "18": { location: "Presidente Prudente - SP", region: "oeste paulista" },
   "19": { location: "Campinas - SP", region: "região de Campinas e Piracicaba" },
@@ -19,7 +25,10 @@ const DDD_REGIONS: Record<string, Omit<BrazilianDddRegion, "ddd">> = {
   "24": { location: "Volta Redonda - RJ", region: "sul fluminense" },
   "27": { location: "Vitória - ES", region: "Grande Vitória e norte do Espírito Santo" },
   "28": { location: "Cachoeiro de Itapemirim - ES", region: "sul do Espírito Santo" },
-  "31": { location: "Belo Horizonte - MG", region: "Belo Horizonte e região central de Minas Gerais" },
+  "31": {
+    location: "Belo Horizonte - MG",
+    region: "Belo Horizonte e região central de Minas Gerais",
+  },
   "32": { location: "Juiz de Fora - MG", region: "Zona da Mata de Minas Gerais" },
   "33": { location: "Governador Valadares - MG", region: "leste de Minas Gerais" },
   "34": { location: "Uberlândia - MG", region: "Triângulo Mineiro" },
