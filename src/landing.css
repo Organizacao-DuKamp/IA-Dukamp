@@ -784,46 +784,46 @@
 
 
 /* Hero desktop: callouts apontam para áreas reais do boi. */
-@media (min-width: 1081px) {
-  /* Nutrição: aponta para a região superior/central do tronco. */
+@media (min-width: 981px) {
+  /* Nutrição: ponto no ombro/cupim, dentro do animal. */
   .tpec-landing .poster-hero .hero-photo .scan-b {
     right: 4.5% !important;
-    top: 23% !important;
+    top: 24% !important;
   }
 
   .tpec-landing .poster-hero .hero-photo .scan-b .scan-connector {
     right: calc(100% - 4px) !important;
     top: 54% !important;
-    width: clamp(132px, 11vw, 160px) !important;
-    transform: rotate(-28deg) !important;
+    width: clamp(72px, 6vw, 92px) !important;
+    transform: rotate(-22deg) !important;
     transform-origin: right center !important;
   }
 
-  /* Condição corporal: aponta para o flanco, e não para fora do animal. */
+  /* Condição corporal: ponto no flanco/abdômen, dentro do corpo. */
   .tpec-landing .poster-hero .hero-photo .scan-c {
-    left: 12% !important;
-    top: 57% !important;
+    left: 7% !important;
+    top: 56% !important;
   }
 
   .tpec-landing .poster-hero .hero-photo .scan-c .scan-connector {
     left: calc(100% - 4px) !important;
     top: 53% !important;
-    width: clamp(150px, 13vw, 182px) !important;
-    transform: rotate(-18deg) !important;
+    width: clamp(125px, 10vw, 150px) !important;
+    transform: rotate(-8deg) !important;
     transform-origin: left center !important;
   }
 
-  /* Manejo: termina sobre a região da perna/peito do boi. */
+  /* Manejo: ponto na região da perna/peito, sem cair no chão. */
   .tpec-landing .poster-hero .hero-photo .scan-a {
     right: 4.5% !important;
-    top: 69% !important;
+    top: 66% !important;
   }
 
   .tpec-landing .poster-hero .hero-photo .scan-a .scan-connector {
     right: calc(100% - 4px) !important;
     top: 52% !important;
-    width: clamp(104px, 9vw, 128px) !important;
-    transform: rotate(11deg) !important;
+    width: clamp(72px, 6vw, 92px) !important;
+    transform: rotate(24deg) !important;
     transform-origin: right center !important;
   }
 }
