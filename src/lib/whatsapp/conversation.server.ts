@@ -6,6 +6,7 @@ import type { ChatMessage } from "../chat/types.ts";
 import type { WhatsAppChatInput, WhatsAppChatResult } from "./types.ts";
 import { multimodelEnabled } from "../ai/config.server.ts";
 import { checkRateLimit } from "../chat/rate-limit.server.ts";
+import { observeWhatsAppInboundForMemory } from "./proactive.server.ts";
 
 const MAX_HISTORY_MESSAGES = 40;
 const MEMORY_CONVERSATION_TTL_MS = 6 * 60 * 60_000;
@@ -415,6 +416,15 @@ export async function processClaimedWhatsAppChat(
         : await Promise.all([deps.loadConversation(input.phone), deps.resolveUserText(input)]);
       userText = resolvedUserText;
       conversationId = previous?.conversationId ?? `wa:${input.phone}`;
+      try {
+        await observeWhatsAppInboundForMemory(input, userText);
+      } catch (error) {
+        // A memória é complementar e nunca deve impedir a resposta principal.
+        console.error(
+          "[whatsapp-memory] inbound observation failed " +
+            (error instanceof Error ? error.message : "unknown_error"),
+        );
+      }
       const casualGreeting = greetingReply(userText, Boolean(previous?.history.length));
 
       if (casualGreeting) {

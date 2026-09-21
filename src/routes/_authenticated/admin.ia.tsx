@@ -26,6 +26,7 @@ import {
   type ProviderSpendAnalytics,
   type SpendSummary,
 } from "@/lib/ai/provider-summary";
+import { WhatsAppFollowupPanel } from "@/components/admin/WhatsAppFollowupPanel";
 
 export const Route = createFileRoute("/_authenticated/admin/ia")({
   head: () => ({
@@ -709,6 +710,12 @@ function AdminAIAnalytics() {
               Os indicadores acima seguem o período geral do painel. As conversas e seus gastos
               abaixo correspondem somente à data selecionada.
             </p>
+
+            {selected.channel === "whatsapp" && selected.phone_number && (
+              <div className="border-b border-border p-4">
+                <WhatsAppFollowupPanel phone={selected.phone_number} />
+              </div>
+            )}
 
             <div className="p-4">
               {!detailLoading && detailProviderStats && (
