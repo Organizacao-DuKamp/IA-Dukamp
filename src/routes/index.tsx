@@ -636,15 +636,14 @@ function LandingPage() {
               <p>Use a resposta como apoio para entender o cenário e definir próximos passos.</p>
             </article>
           </div>
-          <div className="how-banner">
-            <FeatureIcon name="shield" />
+          <a className="how-banner" href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+            <WhatsappIcon />
             <span>
-              <b>Tecnologia que entende o campo</b>
-              <small>
-                Conhecimento técnico com uma linguagem simples para a rotina do pecuarista.
-              </small>
+              <b>Converse com a IA pelo WhatsApp</b>
+              <small>Envie sua dúvida ou foto e comece a conversa.</small>
             </span>
-          </div>
+            <span className="how-banner-arrow" aria-hidden="true">→</span>
+          </a>
         </div>
         <div className="how-field reference-photo">
           <img src={cattlePanel} alt="Touro Nelore forte analisado pela TPEC-IA" loading="lazy" />
