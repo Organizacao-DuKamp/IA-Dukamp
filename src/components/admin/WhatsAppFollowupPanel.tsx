@@ -143,9 +143,7 @@ export function WhatsAppFollowupPanel({ phone }: { phone: string }) {
         </div>
         <div className="rounded-lg border border-border bg-background p-3">
           <p className="text-[11px] uppercase text-muted-foreground">Último contato proativo</p>
-          <p className="mt-1 text-sm font-medium">
-            {formatDate(detail?.profile?.lastProactiveAt)}
-          </p>
+          <p className="mt-1 text-sm font-medium">{formatDate(detail?.profile?.lastProactiveAt)}</p>
         </div>
       </div>
 
@@ -175,7 +173,10 @@ export function WhatsAppFollowupPanel({ phone }: { phone: string }) {
           </h4>
           <div className="mt-2 space-y-2">
             {activeFacts.map((fact) => (
-              <div key={fact.id} className="rounded-md border border-border bg-background p-3 text-xs">
+              <div
+                key={fact.id}
+                className="rounded-md border border-border bg-background p-3 text-xs"
+              >
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium">{fact.subject}</span>
                   <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] text-emerald-800">
@@ -216,7 +217,10 @@ export function WhatsAppFollowupPanel({ phone }: { phone: string }) {
           </h4>
           <div className="mt-2 space-y-2">
             {recentQueue.map((item) => (
-              <div key={item.id} className="rounded-md border border-border bg-background p-3 text-xs">
+              <div
+                key={item.id}
+                className="rounded-md border border-border bg-background p-3 text-xs"
+              >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="font-medium">
                     {item.source === "manual"
