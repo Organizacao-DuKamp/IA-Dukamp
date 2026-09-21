@@ -350,8 +350,13 @@ function LandingPage() {
             href={whatsappUrl}
             target="_blank"
             rel="noreferrer"
+            aria-label="Abrir o WhatsApp e falar com a TPEC-IA"
           >
-            <WhatsappIcon /> CONVERSAR COM A TPEC-IA
+            <WhatsappIcon />
+            <span className="whatsapp-cta-copy">
+              <strong>FALAR COM A TPEC-IA</strong>
+              <small>Toque aqui para abrir o WhatsApp</small>
+            </span>
           </a>
         </div>
 
