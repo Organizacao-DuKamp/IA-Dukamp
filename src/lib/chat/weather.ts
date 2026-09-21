@@ -4,7 +4,7 @@ export const WEATHER_INTENT_RE =
   /\b(previs[aã]o\s+(?:do\s+)?tempo|condi[cç][aã]o\s+(?:do\s+)?tempo|tempo\s+(?:hoje|amanh[aã]|agora|essa\s+semana|nos\s+pr[oó]ximos)|meteorolog\w*|vai\s+chover|vai\s+fazer\s+(?:frio|calor)|risco\s+de\s+(?:calor|frio|chuva|tempestade|geada|granizo)|(?:calor|frio)\s+(?:hoje|amanh[aã]|agora|nesta\s+semana|essa\s+semana|em\s+)|chuva\w*|temperatura\w*|umidade\w*|vento\w*|rajada\w*|tempestade\w*|granizo|geada\w*|onda\s+de\s+(?:calor|frio)|alerta\s+(?:do\s+)?tempo|clima\s+(?:hoje|amanh[aã]|agora|em\s+|na\s+|no\s+|da\s+regi[aã]o|do\s+munic[ií]pio|da\s+semana|para\s+os\s+pr[oó]ximos))\b/i;
 
 export const WEATHER_LOCATION_QUESTION =
-  "Qual é a sua cidade e o estado (UF) para eu buscar a previsão detalhada?";
+  "De qual cidade ou região você quer saber a previsão do tempo?";
 
 const NON_WEATHER_RE =
   /\b(tempo\s+de\s+(?:entrega|espera|viagem|trabalho|servi[cç]o|uso|car[eê]ncia)|quanto\s+tempo|previs[aã]o\s+de\s+(?:venda|pre[cç]o|mercado|entrega|abate|parto)|clima\s+organizacional)\b/i;
@@ -17,7 +17,7 @@ const EXPLICIT_NON_WEATHER_RE =
 const NON_WEATHER_TOPIC_RE =
   /\b(?:pre[cç]o|valor|produto|dukamp|cat[aá]logo|vendedor(?:es)?|tesoura|estoque|ra[cç][aã]o|suplemento|proteinado|mineral|pedido|compra|entrega)\b/i;
 const WEATHER_LOCATION_PROMPT_RE =
-  /\bqual\s+(?:é\s+)?(?:a\s+sua\s+)?cidade[\s\S]{0,100}(?:estado|uf)\b|\bcidade[\s\S]{0,50}(?:estado|uf)\b/i;
+  /\b(?:qual|de qual)\s+(?:é\s+)?(?:a\s+sua\s+)?(?:cidade|regi[aã]o)[\s\S]{0,100}(?:estado|uf|previs[aã]o)?\b|\b(?:cidade|regi[aã]o)[\s\S]{0,50}(?:estado|uf|previs[aã]o)\b/i;
 const WEATHER_FOLLOW_UP_RE =
   /^(?:e\s+)?(?:amanh[aã]|depois\s+de\s+amanh[aã]|hoje|essa\s+semana|no\s+fim\s+de\s+semana|nos\s+pr[oó]ximos\s+dias|e?\s*a\s+chuva|e?\s*o\s+vento|e?\s*a\s+umidade|e?\s*a\s+temperatura|e?\s*a\s+geada|e\s+para\s+.+)[?.!]*$/i;
 const TEMPORAL_TAIL_RE =
@@ -81,9 +81,44 @@ function cleanLocationCandidate(value: string): string | null {
     .filter(Boolean)
     .filter(
       (token) =>
-        !new Set(["qual", "como", "e", "a", "o", "as", "os", "para", "em", "de", "da", "do"]).has(
-          token,
-        ),
+        !new Set([
+          "qual",
+          "como",
+          "e",
+          "a",
+          "o",
+          "as",
+          "os",
+          "para",
+          "em",
+          "de",
+          "da",
+          "do",
+          "ok",
+          "certo",
+          "beleza",
+          "opa",
+          "oi",
+          "ola",
+          "bom",
+          "boa",
+          "dia",
+          "tarde",
+          "noite",
+          "quero",
+          "saber",
+          "previsao",
+          "tempo",
+          "hoje",
+          "amanha",
+          "agora",
+          "esta",
+          "está",
+          "ta",
+          "vai",
+          "fica",
+          "ficar",
+        ]).has(token),
     );
   if (meaningfulTokens.length === 0) return null;
   if (/^(?:e|a|o|e\s+a|e\s+o|para|em)$/i.test(candidate)) return null;
