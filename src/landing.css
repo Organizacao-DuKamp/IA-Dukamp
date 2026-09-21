@@ -697,3 +697,86 @@
     transform: scale(.985) !important;
   }
 }
+
+
+/* Mobile composition requested from hand-drawn layout: oversized seal, lower copy and CTA by the bands. */
+@media (max-width: 680px) {
+  .tpec-landing #whatsapp .whatsapp-copy {
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 100svh !important;
+    width: min(100%, 440px) !important;
+    max-width: 440px !important;
+    margin: 0 auto !important;
+    padding:
+      clamp(12px, 3.8vw, 18px)
+      clamp(28px, 9.5vw, 42px)
+      clamp(82px, 19vw, 110px) !important;
+  }
+
+  .tpec-landing #whatsapp .whatsapp-copy .brand-seal-small {
+    flex: none !important;
+    width: clamp(176px, 55vw, 236px) !important;
+    height: clamp(176px, 55vw, 236px) !important;
+    margin: 0 auto clamp(18px, 5vw, 28px) !important;
+  }
+
+  .tpec-landing #whatsapp .whatsapp-copy .gold-title {
+    width: 100% !important;
+    margin:
+      clamp(8px, 2.5vw, 14px)
+      0
+      clamp(13px, 3.8vw, 19px) !important;
+    font-size: clamp(37px, 12vw, 54px) !important;
+    line-height: .96 !important;
+    text-align: left !important;
+    white-space: normal !important;
+  }
+
+  .tpec-landing #whatsapp .whatsapp-copy h2 {
+    width: 100% !important;
+    margin: 0 0 clamp(14px, 4vw, 20px) !important;
+    font-size: clamp(25px, 7.8vw, 34px) !important;
+    line-height: 1.12 !important;
+    text-align: left !important;
+  }
+
+  .tpec-landing #whatsapp .whatsapp-copy p {
+    width: 100% !important;
+    margin: 0 0 clamp(22px, 6vw, 32px) !important;
+    font-size: clamp(13px, 4vw, 17px) !important;
+    line-height: 1.42 !important;
+    text-align: left !important;
+  }
+
+  .tpec-landing #whatsapp .whatsapp-copy .whatsapp-big {
+    align-self: center !important;
+    width: 100% !important;
+    max-width: 330px !important;
+    min-height: 66px !important;
+    margin: auto auto 0 !important;
+    padding: 10px 16px !important;
+    border-radius: 15px !important;
+    z-index: 8 !important;
+  }
+
+  .tpec-landing #whatsapp .whatsapp-copy .whatsapp-big svg {
+    width: 32px !important;
+    height: 32px !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .tpec-landing #whatsapp .whatsapp-copy {
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+    padding-bottom: 76px !important;
+  }
+
+  .tpec-landing #whatsapp .whatsapp-copy .brand-seal-small {
+    width: clamp(168px, 54vw, 205px) !important;
+    height: clamp(168px, 54vw, 205px) !important;
+    margin-bottom: 16px !important;
+  }
+}
