@@ -697,7 +697,12 @@ export function renderSummaryForModel(summary: ConversationSummary, state?: Conv
   return JSON.stringify(compactSummary, null, 0);
 }
 
-export function buildInterpretationDirective(stateBefore: ConversationState, analysis: IntentAnalysis, text: string): string | null {
+export function buildInterpretationDirective(
+  stateBefore: ConversationState,
+  analysis: IntentAnalysis,
+  text: string,
+  lastAssistantText?: string | null,
+): string | null {
   const lines: string[] = [];
   const pq = stateBefore.pending_question;
   if (analysis.intent === "user_acknowledgement") {
@@ -712,7 +717,17 @@ export function buildInterpretationDirective(stateBefore: ConversationState, ana
     lines.push(`O usuário selecionou a opção ${analysis.selectedOption}${picked ? `: "${picked}"` : ""} da lista que VOCÊ apresentou antes. Continue tratando exclusivamente dessa opção.`);
   } else if (analysis.intent === "correcao") lines.push(`O usuário CORRIGIU dados anteriores. Os valores válidos agora são os mais recentes em confirmed_data. Refaça o raciocínio/cálculo com eles e mencione brevemente a atualização.`);
   else if (analysis.intent === "fornecimento_de_dado" && pq) lines.push(`A mensagem atual responde à sua pergunta "${pq}". Registre o dado e prossiga com a ação pendente — não repita a pergunta.`);
-  else if (analysis.intent === "continuacao") lines.push(`Mensagem curta de continuação. Resolva pronomes e referências ("isso", "ele", "esse", "o outro") pelo assunto em aberto (${stateBefore.current_topic ?? "última pergunta do usuário"}) antes de responder.`);
+  else if (analysis.intent === "continuacao") {
+    if (lastAssistantText?.trim()) {
+      lines.push(
+        `Mensagem curta de continuação. A referência PRINCIPAL é a sua fala imediatamente anterior: "${lastAssistantText.trim().slice(0, 600)}". Interprete a mensagem atual como resposta a essa fala. Só use o tópico persistido (${stateBefore.current_topic ?? "nenhum"}) se ele não conflitar com essa mensagem mais recente.`,
+      );
+    } else {
+      lines.push(
+        `Mensagem curta de continuação. Resolva pronomes e referências ("isso", "ele", "esse", "o outro") pelo assunto em aberto (${stateBefore.current_topic ?? "última pergunta do usuário"}) antes de responder.`,
+      );
+    }
+  }
   else if (analysis.intent === "mudanca_de_assunto") lines.push(`O usuário mudou de assunto intencionalmente. Atenda o novo pedido, mas mantenha os dados já confirmados disponíveis caso ele volte ao tema anterior.`);
   if (stateBefore.awaiting_user_response && analysis.intent === "nova_pergunta" && pq) lines.push(`Atenção: havia uma pergunta sua em aberto ("${pq}") que o usuário não respondeu. Responda ao novo pedido primeiro e, se ainda for necessário, retome a pergunta pendente ao final — sem insistir mais de uma vez.`);
   return lines.length > 0 ? lines.join("\n") : null;
