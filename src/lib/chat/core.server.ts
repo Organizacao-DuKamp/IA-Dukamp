@@ -630,7 +630,12 @@ async function runTurn(
     }
   }
 
-  const directive = buildInterpretationDirective(stateBefore, analysis, text);
+  const directive = buildInterpretationDirective(
+    stateBefore,
+    analysis,
+    text,
+    lastAssistant?.content ?? null,
+  );
   const evidence = assessEvidence({
     catalog: hasCatalogEvidence,
     site: hasSiteEvidence,
