@@ -46,6 +46,47 @@ function db() {
   return supabaseAdmin as any;
 }
 
+
+async function syncPendingProactiveHistory(phone: string): Promise<void> {
+  const pending = await db()
+    .from("whatsapp_proactive_queue")
+    .select("id")
+    .eq("phone_number", phone)
+    .eq("status", "sent")
+    .is("history_synced_at", null)
+    .order("sent_at", { ascending: true })
+    .limit(8);
+
+  if (pending.error) {
+    console.error(
+      `[whatsapp] proactive history lookup failed code=${pending.error.code ?? "unknown"}`,
+    );
+    return;
+  }
+
+  for (const row of pending.data ?? []) {
+    const synced = await db().rpc("sync_whatsapp_proactive_history", {
+      p_queue_id: row.id,
+    });
+    if (synced.error) {
+      console.error(
+        `[whatsapp] proactive history sync failed code=${synced.error.code ?? "unknown"}`,
+      );
+      return;
+    }
+  }
+}
+
+export async function syncWhatsAppProactiveHistory(queueId: string): Promise<boolean> {
+  const { data, error } = await db().rpc("sync_whatsapp_proactive_history", {
+    p_queue_id: queueId,
+  });
+  if (error) {
+    throw new Error(`whatsapp_proactive_history_sync_failed:${error.code ?? "unknown"}`);
+  }
+  return data === true;
+}
+
 function normalizeHistory(value: unknown): ChatMessage[] {
   if (!Array.isArray(value)) return [];
   return value
@@ -64,6 +105,11 @@ function normalizeHistory(value: unknown): ChatMessage[] {
 export async function loadWhatsAppConversation(
   phone: string,
 ): Promise<WhatsAppConversationSnapshot | null> {
+  // Uma mensagem proativa pode ter sido enviada milissegundos antes da
+  // resposta do usuário. Reconcilie qualquer envio confirmado antes de
+  // montar o histórico que será entregue ao modelo.
+  await syncPendingProactiveHistory(phone);
+
   const { data, error } = await db()
     .from("whatsapp_conversations")
     .select("conversation_id,state,history")
