@@ -1,17 +1,21 @@
-export default async (): Promise<Response> => {
+export default async (request: Request): Promise<Response> => {
   if (process.env.WHATSAPP_PROACTIVE_ENABLED?.trim().toLowerCase() !== "true") {
     return new Response("Disabled", { status: 200 });
   }
 
-  const baseUrl = (process.env.URL || process.env.DEPLOY_PRIME_URL || "").replace(/\/$/, "");
   const secret = process.env.WHATSAPP_APP_SECRET?.trim() ?? "";
-  if (!baseUrl || !secret) {
-    console.error("[whatsapp-followup] scheduler missing URL or secret");
+  if (!secret) {
+    console.error("[whatsapp-followup] scheduler missing secret");
     return new Response("Follow-up not configured", { status: 503 });
   }
 
+  const backgroundUrl = new URL(
+    "/.netlify/functions/whatsapp-followup-background",
+    request.url,
+  );
+
   try {
-    const response = await fetch(baseUrl + "/.netlify/functions/whatsapp-followup-background", {
+    const response = await fetch(backgroundUrl, {
       method: "POST",
       headers: { "x-tpec-followup-secret": secret },
       signal: AbortSignal.timeout(5_000),
@@ -30,5 +34,5 @@ export default async (): Promise<Response> => {
 };
 
 export const config = {
-  schedule: "*/5 * * * *",
+  schedule: "* * * * *",
 };
