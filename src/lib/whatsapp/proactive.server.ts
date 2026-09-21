@@ -789,8 +789,7 @@ function fallbackMessage(
       " Como está isso hoje?";
   }
   if (source === "scheduled" && slotNo === 1) {
-    message +=
-      "\n\nSe quiser pausar esse acompanhamento, responda “parar acompanhamento”.";
+    message += "\n\nSe quiser pausar esse acompanhamento, responda “parar acompanhamento”.";
   }
   return Array.from(message).slice(0, MAX_GENERATED_MESSAGE).join("");
 }
