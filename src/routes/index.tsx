@@ -724,6 +724,19 @@ function LandingPage() {
             </article>
           ))}
         </div>
+        <a
+          className="how-banner areas-whatsapp"
+          href={whatsappUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <WhatsappIcon />
+          <span>
+            <b>Converse com a IA pelo WhatsApp</b>
+            <small>Pergunte sobre qualquer uma dessas áreas da pecuária.</small>
+          </span>
+          <span className="how-banner-arrow" aria-hidden="true">→</span>
+        </a>
         <div className="poster-swoosh" aria-hidden="true" />
       </section>
 
