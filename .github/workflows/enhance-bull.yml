@@ -1,0 +1,82 @@
+name: One-off enhance bull hero
+
+on:
+  push:
+    paths:
+      - ".github/workflows/enhance-bull.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  enhance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install super-resolution dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install opencv-contrib-python-headless pillow
+          curl -L --fail --retry 3 \
+            https://raw.githubusercontent.com/Saafke/FSRCNN_Tensorflow/master/models/FSRCNN_x2.pb \
+            -o /tmp/FSRCNN_x2.pb
+
+      - name: Enhance bull hero with neural super-resolution
+        run: |
+          python - <<'PY'
+          import cv2
+          from PIL import Image, ImageFilter
+
+          src = "public/tpec-hero-bull.webp"
+          model = "/tmp/FSRCNN_x2.pb"
+
+          image = cv2.imread(src, cv2.IMREAD_COLOR)
+          if image is None:
+              raise SystemExit(f"Could not read {src}")
+
+          sr = cv2.dnn_superres.DnnSuperResImpl_create()
+          sr.readModel(model)
+          sr.setModel("fsrcnn", 2)
+          enhanced = sr.upsample(image)
+
+          h, w = enhanced.shape[:2]
+          target_w = 2400
+          target_h = round(h * target_w / w)
+          enhanced = cv2.resize(enhanced, (target_w, target_h), interpolation=cv2.INTER_LANCZOS4)
+          cv2.imwrite("/tmp/tpec-hero-bull-sr.png", enhanced)
+
+          final = Image.open("/tmp/tpec-hero-bull-sr.png").convert("RGB")
+          final = final.filter(ImageFilter.UnsharpMask(radius=1.15, percent=115, threshold=2))
+          final.save(src, "WEBP", quality=95, method=6)
+
+          print("saved", src, final.size)
+          PY
+
+      - name: Bust browser/CDN cache
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path("src/routes/index.tsx")
+          s = p.read_text()
+          import re
+          s = re.sub(
+              r'/tpec-hero-bull\.webp\?v=[^"]+',
+              '/tpec-hero-bull.webp?v=sr-2400-20260921',
+              s,
+          )
+          p.write_text(s)
+          PY
+
+      - name: Commit enhanced asset
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/tpec-hero-bull.webp src/routes/index.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m "fix(landing): neural super-resolution for bull hero"
+          git push origin HEAD:main
