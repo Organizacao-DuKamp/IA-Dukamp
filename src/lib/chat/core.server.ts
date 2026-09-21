@@ -416,7 +416,7 @@ async function runTurn(
 
   if (weatherLocationRequired) {
     contextParts.push(
-      "CLIMA — LOCALIZAÇÃO NECESSÁRIA: o usuário pediu informação meteorológica, mas não foi possível obter uma região confiável pela mensagem nem pelo DDD do WhatsApp. Não invente previsão e não pesquise uma localidade por suposição. Pergunte de forma curta: \"De qual cidade ou região você quer saber a previsão do tempo?\"",
+      'CLIMA — LOCALIZAÇÃO NECESSÁRIA: o usuário pediu informação meteorológica, mas não foi possível obter uma região confiável pela mensagem nem pelo DDD do WhatsApp. Não invente previsão e não pesquise uma localidade por suposição. Pergunte de forma curta: "De qual cidade ou região você quer saber a previsão do tempo?"',
     );
     retrieved.push("weather:location-required");
   }
