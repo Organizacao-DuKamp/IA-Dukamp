@@ -138,6 +138,43 @@
   display:none!important;
 }
 
+.tpec-landing .analysis-cta {
+  align-items:center;
+  align-self:stretch;
+  background:#176b4b;
+  border:1px solid #d8aa4c;
+  border-radius:999px;
+  box-shadow:0 5px 12px rgba(16,55,37,.15);
+  color:#fff;
+  display:flex;
+  font-size:14px;
+  font-weight:700;
+  gap:8px;
+  justify-content:center;
+  line-height:1.2;
+  margin:0 0 8px;
+  min-height:42px;
+  padding:8px 14px;
+  text-decoration:none;
+  transition:background-color 160ms ease, transform 160ms ease;
+}
+
+.tpec-landing .analysis-cta svg {
+  flex:none;
+  height:18px;
+  width:18px;
+}
+
+.tpec-landing .analysis-cta:hover {
+  background:#1b7954;
+  transform:translateY(-1px);
+}
+
+.tpec-landing .analysis-cta:focus-visible {
+  outline:3px solid #e7a32b;
+  outline-offset:2px;
+}
+
 /* Mobile: a análise por foto vira uma tela inteira de verdade. */
 @media (max-width: 680px) {
   .tpec-landing #analise.poster-analysis {

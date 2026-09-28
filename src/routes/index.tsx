@@ -509,6 +509,10 @@ function LandingPage() {
           <div className="photo-fade right-fade" aria-hidden="true" />
         </div>
         <div className="analysis-phone" aria-label="Painel de análise por foto">
+          <a className="analysis-cta" href={whatsappUrl} target="_blank" rel="noreferrer">
+            <WhatsappIcon />
+            Converse com a IA
+          </a>
           <div className="analysis-top">
             <SparkIcon /> <span>Analisando imagem...</span>
           </div>
