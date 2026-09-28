@@ -8,8 +8,6 @@ const whatsappReferenceImage = "/tpec-whatsapp-reference.webp";
 const heroBullPhoto = "/tpec-hero-bull.webp?v=sr-2400-20260921-v2";
 
 const cattlePhoto = "/tpec-nelore-grazing.webp";
-const dairyPhoto =
-  "https://images.pexels.com/photos/30982514/pexels-photo-30982514/free-photo-of-holstein-cow-grazing-in-sunny-pasture.jpeg?auto=compress&cs=tinysrgb&w=900";
 const cattleWide = "/tpec-nelore-elite.webp";
 const cattlePanel = "/tpec-nelore-elite-panel.webp";
 const observationCattlePhoto = "/tpec-nelore-observation.webp";
@@ -76,10 +74,22 @@ const areas: Area[] = [
 ];
 
 const useCases = [
-  { title: "Analise este animal.", icon: "cow", image: cattlePhoto },
-  { title: "Como está a condição deste pasto?", icon: "leaf", image: cattleWide },
-  { title: "Esta dieta está adequada?", icon: "feed", image: dairyPhoto },
-  { title: "O que devo observar neste caso?", icon: "eye", image: observationCattlePhoto },
+  {
+    title: "Analise este animal.",
+    icon: "cow",
+    image: "/tpec-hero-bull.webp",
+    imageAlt: "Bovino no campo enviado pelo produtor",
+    question: "Pode analisar este animal pela foto?",
+    answer: "Pela imagem, dá para observar a conformação e a condição corporal. Para uma avaliação mais precisa, me conte a idade, o peso e o objetivo do manejo.",
+  },
+  {
+    title: "O que devo observar neste caso?",
+    icon: "eye",
+    image: observationCattlePhoto,
+    imageAlt: "Bovino observado no pasto e enviado pelo produtor",
+    question: "O que devo observar neste animal?",
+    answer: "Observe apetite, locomoção, postura e mudanças de comportamento. Se houver sinais persistentes ou piora, procure um médico-veterinário.",
+  },
 ];
 
 const faqs = [
@@ -749,37 +759,35 @@ function LandingPage() {
           </span>
           <h2>Perguntas reais do dia a dia que a TPEC-IA ajuda a responder no campo.</h2>
         </div>
-        <div className="reference-use-grid">
-          {useCases.map((item, index) => (
-            <article key={item.title}>
-              <div className="use-photo">
-                <img src={item.image} alt="" loading="lazy" />
-              </div>
-              <div className="mini-phone">
-                <div className="mini-phone-top">
-                  TPEC-IA <small>analisando</small>
+        <div className="example-chat-grid">
+          {useCases.map((item) => (
+            <article className="example-chat-card" key={item.title}>
+              <div className="example-phone" aria-label={`Exemplo de conversa: ${item.title}`}>
+                <div className="example-phone-status" aria-hidden="true">
+                  <span>9:41</span><span className="example-phone-camera" /><span>●●● ▰</span>
                 </div>
-                <span>
-                  <SparkIcon />
-                </span>
-                <b>
-                  {index === 0
-                    ? "Condição corporal"
-                    : index === 1
-                      ? "Condição do pasto"
-                      : index === 2
-                        ? "Análise da dieta"
-                        : "Pontos de atenção"}
-                </b>
-                <p>
-                  {index === 0
-                    ? "Avalie cobertura, estrutura e uniformidade."
-                    : index === 1
-                      ? "Observe cobertura, vigor e disponibilidade."
-                      : index === 2
-                        ? "Compare objetivo, consumo e composição."
-                        : "Organize sinais e contexto antes de agir."}
-                </p>
+                <div className="example-phone-header">
+                  <span className="example-back" aria-hidden="true">‹</span>
+                  <img src="/tpec-logo-hq.webp" alt="" />
+                  <span><strong>TPEC-IA</strong><small>Inteligência para o campo</small></span>
+                  <span className="example-menu" aria-hidden="true">⋮</span>
+                </div>
+                <div className="example-phone-messages">
+                  <span className="example-chat-date">Hoje</span>
+                  <div className="example-chat-bubble example-chat-question">
+                    <img src={item.image} alt={item.imageAlt} loading="lazy" />
+                    <p>{item.question}</p>
+                    <small>9:41 ✓✓</small>
+                  </div>
+                  <div className="example-chat-bubble example-chat-answer">
+                    <strong>✦ TPEC-IA</strong>
+                    <p>{item.answer}</p>
+                    <small>9:42</small>
+                  </div>
+                </div>
+                <div className="example-phone-compose" aria-hidden="true">
+                  <span>＋</span><span>Mensagem</span><span>🎙</span>
+                </div>
               </div>
               <footer>
                 <i>
