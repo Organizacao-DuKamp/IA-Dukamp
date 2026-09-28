@@ -75,13 +75,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "IA do Boi — Inteligência Artificial para Pecuária" },
-      { property: "og:title", content: "IA do Boi — Inteligência Artificial para Pecuária" },
-      { name: "twitter:title", content: "IA do Boi — Inteligência Artificial para Pecuária" },
+      { title: "TPEC - IA da pecuária" },
+      { property: "og:title", content: "TPEC - IA da pecuária" },
+      { name: "twitter:title", content: "TPEC - IA da pecuária" },
       {
         name: "description",
         content:
-          "IA do Boi é uma inteligência artificial para pecuária e gado, com apoio prático sobre manejo, nutrição, pastagens e rotina do campo pelo WhatsApp.",
+          "A TPEC - IA da pecuária oferece apoio prático sobre manejo, nutrição, pastagens e rotina do campo pelo WhatsApp.",
       },
       {
         property: "og:description",
@@ -93,15 +93,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "Inteligência artificial para pecuária e gado, com respostas práticas e análise por foto direto no WhatsApp.",
       },
-      { property: "og:site_name", content: "IA do Boi" },
+      { property: "og:site_name", content: "TPEC - IA da pecuária" },
       { property: "og:locale", content: "pt_BR" },
       {
         property: "og:image",
-        content: "https://iadoboi.com.br/og.png",
+        content: "https://iadoboi.com.br/og.png?v=tpec-20260928",
       },
       {
         name: "twitter:image",
-        content: "https://iadoboi.com.br/og.png",
+        content: "https://iadoboi.com.br/og.png?v=tpec-20260928",
       },
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:type", content: "website" },

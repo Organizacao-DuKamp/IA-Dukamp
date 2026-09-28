@@ -3,11 +3,11 @@ import { createFileRoute } from "@tanstack/react-router";
 export const Route = createFileRoute("/exclusao-de-dados")({
   head: () => ({
     meta: [
-      { title: "Exclusão de Dados | IA do Boi" },
+      { title: "Exclusão de Dados | TPEC - IA da pecuária" },
       {
         name: "description",
         content:
-          "Instruções para solicitar a exclusão de dados associados ao uso da IA do Boi (TPEC-IA).",
+          "Instruções para solicitar a exclusão de dados associados ao uso da TPEC - IA da pecuária.",
       },
       { name: "robots", content: "noindex, follow" },
       { name: "googlebot", content: "noindex, follow" },
