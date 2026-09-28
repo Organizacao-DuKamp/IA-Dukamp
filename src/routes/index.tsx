@@ -80,7 +80,8 @@ const useCases = [
     image: "/tpec-hero-bull.webp",
     imageAlt: "Bovino no campo enviado pelo produtor",
     question: "Pode analisar este animal pela foto?",
-    answer: "Pela imagem, dá para observar a conformação e a condição corporal. Para uma avaliação mais precisa, me conte a idade, o peso e o objetivo do manejo.",
+    answer:
+      "Pela imagem, dá para observar a conformação e a condição corporal. Para uma avaliação mais precisa, me conte a idade, o peso e o objetivo do manejo.",
   },
   {
     title: "O que devo observar neste caso?",
@@ -88,7 +89,8 @@ const useCases = [
     image: observationCattlePhoto,
     imageAlt: "Bovino observado no pasto e enviado pelo produtor",
     question: "O que devo observar neste animal?",
-    answer: "Observe apetite, locomoção, postura e mudanças de comportamento. Se houver sinais persistentes ou piora, procure um médico-veterinário.",
+    answer:
+      "Observe apetite, locomoção, postura e mudanças de comportamento. Se houver sinais persistentes ou piora, procure um médico-veterinário.",
   },
 ];
 
@@ -764,13 +766,22 @@ function LandingPage() {
             <article className="example-chat-card" key={item.title}>
               <div className="example-phone" aria-label={`Exemplo de conversa: ${item.title}`}>
                 <div className="example-phone-status" aria-hidden="true">
-                  <span>9:41</span><span className="example-phone-camera" /><span>●●● ▰</span>
+                  <span>9:41</span>
+                  <span className="example-phone-camera" />
+                  <span>●●● ▰</span>
                 </div>
                 <div className="example-phone-header">
-                  <span className="example-back" aria-hidden="true">‹</span>
+                  <span className="example-back" aria-hidden="true">
+                    ‹
+                  </span>
                   <img src="/tpec-logo-hq.webp" alt="" />
-                  <span><strong>TPEC-IA</strong><small>Inteligência para o campo</small></span>
-                  <span className="example-menu" aria-hidden="true">⋮</span>
+                  <span>
+                    <strong>TPEC-IA</strong>
+                    <small>Inteligência para o campo</small>
+                  </span>
+                  <span className="example-menu" aria-hidden="true">
+                    ⋮
+                  </span>
                 </div>
                 <div className="example-phone-messages">
                   <span className="example-chat-date">Hoje</span>
@@ -786,7 +797,9 @@ function LandingPage() {
                   </div>
                 </div>
                 <div className="example-phone-compose" aria-hidden="true">
-                  <span>＋</span><span>Mensagem</span><span>🎙</span>
+                  <span>＋</span>
+                  <span>Mensagem</span>
+                  <span>🎙</span>
                 </div>
               </div>
               <footer>
