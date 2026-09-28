@@ -770,41 +770,165 @@ function LandingPage() {
             <article className="example-chat-card" key={item.title}>
               <div className="example-phone" aria-label={`Exemplo de conversa: ${item.title}`}>
                 <div className="example-phone-status" aria-hidden="true">
-                  <span>9:41</span>
+                  <span className="example-status-time">9:41</span>
                   <span className="example-phone-camera" />
-                  <span>●●● ▰</span>
+                  <span className="example-status-icons">
+                    <svg viewBox="0 0 18 14" fill="currentColor">
+                      <path d="M1 11.5h2.5V9H1zm4-3h2.5V6H5zm4-3h2.5V3H9zm4-3h2.5V.5H13z" />
+                    </svg>
+                    <svg viewBox="0 0 16 14" fill="none">
+                      <path
+                        d="M1 5a11 11 0 0 1 14 0M3.5 8a7 7 0 0 1 9 0M6.5 11a3 3 0 0 1 3 0"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <svg viewBox="0 0 23 12" fill="none">
+                      <rect
+                        x="1"
+                        y="1"
+                        width="18"
+                        height="10"
+                        rx="2"
+                        stroke="currentColor"
+                        strokeWidth="1.4"
+                      />
+                      <rect x="3" y="3" width="13" height="6" rx="1" fill="currentColor" />
+                      <path
+                        d="M21 4v4"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </span>
                 </div>
                 <div className="example-phone-header">
                   <span className="example-back" aria-hidden="true">
-                    ‹
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="m14 5-7 7 7 7"
+                        stroke="currentColor"
+                        strokeWidth="2.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
                   </span>
-                  <img src="/tpec-logo-hq.webp" alt="" />
-                  <span>
+                  <img src="/tpec-logo-v2.png" alt="" width="38" height="38" />
+                  <span className="example-contact">
                     <strong>TPEC-IA</strong>
-                    <small>Inteligência para o campo</small>
+                    <small>conta comercial</small>
                   </span>
-                  <span className="example-menu" aria-hidden="true">
-                    ⋮
+                  <span className="example-header-actions" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <rect
+                        x="3"
+                        y="6"
+                        width="12"
+                        height="12"
+                        rx="3"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                      />
+                      <path
+                        d="m15 10 5-3v10l-5-3"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M6.5 3.5 10 7l-2 3c1.1 2.2 2.8 3.9 5 5l3-2 3.5 3.5-2 3c-.5.8-1.5 1.2-2.5 1-5.9-1.5-10-5.6-11.5-11.5-.2-1 .2-2 1-2.5l3-2Z"
+                        stroke="currentColor"
+                        strokeWidth="1.7"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <circle cx="12" cy="5" r="1.6" />
+                      <circle cx="12" cy="12" r="1.6" />
+                      <circle cx="12" cy="19" r="1.6" />
+                    </svg>
                   </span>
                 </div>
                 <div className="example-phone-messages">
                   <span className="example-chat-date">Hoje</span>
+                  <span className="example-chat-encryption">
+                    🔒 As mensagens desta conversa são protegidas
+                  </span>
                   <div className="example-chat-bubble example-chat-question">
                     <img src={item.image} alt={item.imageAlt} loading="lazy" />
                     <p>{item.question}</p>
-                    <small>9:41 ✓✓</small>
+                    <small>
+                      9:41{" "}
+                      <span className="example-read-checks" aria-label="Lida">
+                        ✓✓
+                      </span>
+                    </small>
                   </div>
                   <div className="example-chat-bubble example-chat-answer">
-                    <strong>✦ TPEC-IA</strong>
+                    <strong>
+                      <span aria-hidden="true">✦</span> TPEC-IA
+                    </strong>
                     <p>{item.answer}</p>
                     <small>9:42</small>
                   </div>
                 </div>
                 <div className="example-phone-compose" aria-hidden="true">
-                  <span>＋</span>
-                  <span>Mensagem</span>
-                  <span>🎙</span>
+                  <span className="example-compose-field">
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.7" />
+                      <path
+                        d="M8 15c1.2 1.4 2.5 2 4 2s2.8-.6 4-2M9 9h.01M15 9h.01"
+                        stroke="currentColor"
+                        strokeWidth="1.7"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <span>Mensagem</span>
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="m8 12.5 6.2-6.2a3.5 3.5 0 0 1 5 5l-8.4 8.4a5 5 0 0 1-7-7l8-8"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M4 8h3l1.5-2h7L17 8h3v11H4z"
+                        stroke="currentColor"
+                        strokeWidth="1.7"
+                        strokeLinejoin="round"
+                      />
+                      <circle cx="12" cy="13.5" r="3" stroke="currentColor" strokeWidth="1.7" />
+                    </svg>
+                  </span>
+                  <span className="example-compose-mic">
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <rect
+                        x="9"
+                        y="3"
+                        width="6"
+                        height="12"
+                        rx="3"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                      />
+                      <path
+                        d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3m-3 0h6"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </span>
                 </div>
+                <span className="example-phone-home" aria-hidden="true" />
               </div>
               <footer>
                 <i>
