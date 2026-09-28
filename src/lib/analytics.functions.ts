@@ -79,6 +79,15 @@ export type AIAnalyticsTurn = {
   metadata: Record<string, unknown>;
 };
 
+export type AIUserAnalytics = {
+  week: { date: string; messages: number }[];
+  month: string;
+  month_messages: number;
+  month_cost_usd: number;
+  month_cost_brl: number | null;
+  pricing_configured: boolean;
+};
+
 const DateString = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const RangeInput = z.object({
   from: DateString.nullable().optional(),
@@ -93,7 +102,28 @@ const UsersInput = RangeInput.extend({
 const HistoryInput = RangeInput.extend({
   userKey: z.string().min(1).max(256),
   conversationId: z.string().min(1).max(128).optional(),
+  limit: z.number().int().min(1).max(500).default(100),
+  offset: z.number().int().min(0).default(0),
 });
+
+const UserInput = z.object({ userKey: z.string().min(1).max(256) });
+
+function saoPauloDay(date: Date): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const fields = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${fields.year}-${fields.month}-${fields.day}`;
+}
+
+function shiftDay(day: string, offset: number): string {
+  const date = new Date(`${day}T12:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + offset);
+  return date.toISOString().slice(0, 10);
+}
 
 async function assertAdmin(ctx: AdminContext) {
   const { data, error } = await ctx.supabase.rpc("has_role", {
@@ -278,12 +308,65 @@ export const aiChatHistory = createServerFn({ method: "GET" })
       .select(HISTORY_COLUMNS)
       .eq("user_key", data.userKey)
       .order("created_at", { ascending: true })
-      .limit(2_000);
+      .order("id")
+      .range(data.offset, data.offset + data.limit - 1);
     if (data.conversationId) query = query.eq("conversation_id", data.conversationId);
     query = applyDateRange(query, range);
     const { data: rows, error } = await query;
     if (error) throw new Error(error.message);
     return (rows ?? []).map(normalizeTurn);
+  });
+
+export const aiUserAnalytics = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => UserInput.parse(d))
+  .handler(async ({ context, data }): Promise<AIUserAnalytics> => {
+    await assertAdmin(context as AdminContext);
+    const { getPrivilegedClient } = await import("@/lib/privileged.server");
+    const db = (await getPrivilegedClient((context as AdminContext).supabase)) as any;
+    const now = new Date();
+    const today = saoPauloDay(now);
+    const weekStart = shiftDay(today, -6);
+    const month = today.slice(0, 7);
+    const monthStart = `${month}-01`;
+    const start = monthStart < weekStart ? monthStart : weekStart;
+    const counts = new Map<string, number>();
+    const result: AIUserAnalytics = {
+      week: Array.from({ length: 7 }, (_, i) => ({ date: shiftDay(weekStart, i), messages: 0 })),
+      month,
+      month_messages: 0,
+      month_cost_usd: 0,
+      month_cost_brl: 0,
+      pricing_configured: true,
+    };
+    // Páginas ordenadas evitam o limite padrão de 1.000 linhas do Data API.
+    for (let offset = 0; ; offset += 500) {
+      const { data: rows, error } = await db
+        .from("ai_chat_turns")
+        .select("id,created_at,estimated_cost_usd,estimated_cost_brl,pricing_configured")
+        .eq("user_key", data.userKey)
+        .gte("created_at", dateBoundary(start, false))
+        .lte("created_at", now.toISOString())
+        .order("created_at", { ascending: true })
+        .order("id")
+        .range(offset, offset + 499);
+      if (error) throw new Error("Não foi possível carregar a análise do usuário.");
+      for (const row of rows ?? []) {
+        const day = saoPauloDay(new Date(row.created_at));
+        if (day >= weekStart && day <= today) counts.set(day, (counts.get(day) ?? 0) + 1);
+        if (day.startsWith(month)) {
+          result.month_messages++;
+          result.month_cost_usd += asNumber(row.estimated_cost_usd);
+          if (!asBoolean(row.pricing_configured)) result.pricing_configured = false;
+          const brl = asNullableNumber(row.estimated_cost_brl);
+          if (brl === null) result.month_cost_brl = null;
+          else if (result.month_cost_brl !== null) result.month_cost_brl += brl;
+        }
+      }
+      if ((rows ?? []).length < 500) break;
+    }
+    result.week = result.week.map((entry) => ({ ...entry, messages: counts.get(entry.date) ?? 0 }));
+    return result;
   });
 
 export const aiProviderAnalytics = createServerFn({ method: "GET" })

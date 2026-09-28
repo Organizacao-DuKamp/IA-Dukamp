@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import {
   Activity,
   Clock3,
@@ -16,9 +17,11 @@ import {
   aiAnalyticsUsers,
   aiChatHistory,
   aiProviderAnalytics,
+  aiUserAnalytics,
   type AIAnalyticsOverview,
   type AIAnalyticsTurn,
   type AIAnalyticsUser,
+  type AIUserAnalytics,
 } from "@/lib/analytics.functions";
 import {
   providerName,
@@ -222,6 +225,7 @@ function AdminAIAnalytics() {
   const overviewFn = useServerFn(aiAnalyticsOverview);
   const usersFn = useServerFn(aiAnalyticsUsers);
   const historyFn = useServerFn(aiChatHistory);
+  const userAnalyticsFn = useServerFn(aiUserAnalytics);
   const providersFn = useServerFn(aiProviderAnalytics);
   const [providerStats, setProviderStats] = useState<ProviderSpendAnalytics | null>(null);
 
@@ -231,21 +235,24 @@ function AdminAIAnalytics() {
   const [users, setUsers] = useState<AIAnalyticsUser[]>([]);
   const [selected, setSelected] = useState<AIAnalyticsUser | null>(null);
   const [history, setHistory] = useState<AIAnalyticsTurn[]>([]);
-  const [historyDate, setHistoryDate] = useState(saoPauloDate());
-  const [detailProviderStats, setDetailProviderStats] = useState<ProviderSpendAnalytics | null>(
-    null,
-  );
+  const [historyFrom, setHistoryFrom] = useState(saoPauloDate(-6));
+  const [historyTo, setHistoryTo] = useState(saoPauloDate());
+  const [userStats, setUserStats] = useState<AIUserAnalytics | null>(null);
+  const [hasMoreHistory, setHasMoreHistory] = useState(false);
   const detailRequest = useRef(0);
   const [loading, setLoading] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function refresh() {
+    detailRequest.current += 1;
     setLoading(true);
     setError(null);
     setSelected(null);
     setHistory([]);
-    setDetailProviderStats(null);
+    setUserStats(null);
+    setHasMoreHistory(false);
+    setDetailLoading(false);
     setProviderStats(null);
     try {
       const range = { from: from || undefined, to: to || undefined };
@@ -268,47 +275,94 @@ function AdminAIAnalytics() {
     void refresh();
   }, []);
 
-  async function loadUserHistory(user: AIAnalyticsUser, date: string) {
+  async function loadUserHistory(
+    user: AIAnalyticsUser,
+    start: string,
+    end: string,
+    loadStats = false,
+  ) {
     const request = ++detailRequest.current;
     setSelected(user);
     setHistory([]);
-    setDetailProviderStats(null);
+    setHasMoreHistory(false);
+    if (loadStats) setUserStats(null);
     setDetailLoading(true);
     setError(null);
     try {
-      const range = { from: date, to: date };
-      const [rows, providers] = await Promise.all([
-        historyFn({ data: { userKey: user.user_key, ...range } }),
-        providersFn({ data: range }),
-      ]);
+      const rows = await historyFn({
+        data: { userKey: user.user_key, from: start, to: end, limit: 100 },
+      });
       if (request !== detailRequest.current) return;
       setHistory(rows as AIAnalyticsTurn[]);
-      setDetailProviderStats(providers);
+      setHasMoreHistory(rows.length === 100);
     } catch (err) {
       if (request !== detailRequest.current) return;
       setError(err instanceof Error ? err.message : "Não foi possível carregar a conversa.");
     } finally {
       if (request === detailRequest.current) setDetailLoading(false);
     }
+    if (loadStats && request === detailRequest.current) {
+      try {
+        const stats = await userAnalyticsFn({ data: { userKey: user.user_key } });
+        if (request === detailRequest.current) setUserStats(stats);
+      } catch (err) {
+        if (request === detailRequest.current)
+          setError(err instanceof Error ? err.message : "Não foi possível carregar a análise.");
+      }
+    }
   }
 
   function openUser(user: AIAnalyticsUser) {
     const today = saoPauloDate();
-    setHistoryDate(today);
-    void loadUserHistory(user, today);
+    const start = saoPauloDate(-6);
+    setHistoryFrom(start);
+    setHistoryTo(today);
+    void loadUserHistory(user, start, today, true);
   }
 
-  function changeHistoryDate(date: string) {
-    if (!selected || !date) return;
-    setHistoryDate(date);
-    void loadUserHistory(selected, date);
+  function changeHistoryRange(start: string, end: string) {
+    setHistoryFrom(start);
+    setHistoryTo(end);
+    if (selected && start && end && start <= end) void loadUserHistory(selected, start, end);
+    else {
+      detailRequest.current++;
+      setHistory([]);
+      setHasMoreHistory(false);
+      setDetailLoading(false);
+    }
+  }
+
+  async function loadMoreHistory() {
+    if (!selected || detailLoading || !hasMoreHistory) return;
+    const request = detailRequest.current;
+    setDetailLoading(true);
+    try {
+      const rows = await historyFn({
+        data: {
+          userKey: selected.user_key,
+          from: historyFrom,
+          to: historyTo,
+          offset: history.length,
+          limit: 100,
+        },
+      });
+      if (request !== detailRequest.current) return;
+      setHistory((previous) => [...previous, ...rows]);
+      setHasMoreHistory(rows.length === 100);
+    } catch (err) {
+      if (request === detailRequest.current)
+        setError(err instanceof Error ? err.message : "Não foi possível carregar mais conversas.");
+    } finally {
+      if (request === detailRequest.current) setDetailLoading(false);
+    }
   }
 
   function closeDetail() {
     detailRequest.current += 1;
     setSelected(null);
     setHistory([]);
-    setDetailProviderStats(null);
+    setUserStats(null);
+    setHasMoreHistory(false);
     setDetailLoading(false);
   }
 
@@ -484,7 +538,8 @@ function AdminAIAnalytics() {
                       Usuários e números que conversaram com a IA
                     </h2>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Clique em “Analisar chat” para ver cada turno, origem e custo.
+                      Clique em “Analisar usuário” para ver mensagens da semana, gasto do mês e
+                      conversas.
                     </p>
                   </div>
                   <span className="text-xs text-muted-foreground">{users.length} registros</span>
@@ -555,7 +610,7 @@ function AdminAIAnalytics() {
                             onClick={() => void openUser(user)}
                             className="rounded-md border border-primary px-3 py-1.5 text-xs text-primary hover:bg-primary/10"
                           >
-                            Analisar chat
+                            Analisar usuário
                           </button>
                         </td>
                       </tr>
@@ -661,19 +716,30 @@ function AdminAIAnalytics() {
           <section className="rounded-xl border border-border bg-card shadow-sm">
             <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border p-4">
               <div>
-                <h2 className="text-base font-semibold">Histórico de {formatUser(selected)}</h2>
+                <h2 className="text-base font-semibold">Análise de {formatUser(selected)}</h2>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {formatChannel(selected.channel)} · conversas do dia selecionado
+                  {formatChannel(selected.channel)} · atividade e conversas deste usuário
                 </p>
               </div>
-              <div className="flex items-end gap-2">
+              <div className="flex flex-wrap items-end gap-2">
                 <label className="grid gap-1 text-xs text-muted-foreground">
-                  Data da conversa
+                  Conversas de
                   <input
                     type="date"
-                    value={historyDate}
+                    value={historyFrom}
+                    max={historyTo || saoPauloDate()}
+                    onChange={(event) => changeHistoryRange(event.target.value, historyTo)}
+                    className="rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground"
+                  />
+                </label>
+                <label className="grid gap-1 text-xs text-muted-foreground">
+                  Até
+                  <input
+                    type="date"
+                    value={historyTo}
+                    min={historyFrom}
                     max={saoPauloDate()}
-                    onChange={(event) => changeHistoryDate(event.target.value)}
+                    onChange={(event) => changeHistoryRange(historyFrom, event.target.value)}
                     className="rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground"
                   />
                 </label>
@@ -683,6 +749,74 @@ function AdminAIAnalytics() {
                 >
                   <X size={14} /> Fechar
                 </button>
+              </div>
+            </div>
+
+            <div className="grid gap-4 border-b border-border p-4 lg:grid-cols-[minmax(0,2fr)_minmax(240px,1fr)]">
+              <div className="rounded-xl border border-border p-4">
+                <h3 className="text-sm font-semibold">
+                  Mensagens enviadas à IA nos últimos 7 dias
+                </h3>
+                {userStats ? (
+                  <>
+                    <p className="mb-3 text-xs text-muted-foreground">
+                      {formatDay(userStats.week[0].date)} a {formatDay(userStats.week[6].date)} ·{" "}
+                      {formatNumber(userStats.week.reduce((total, day) => total + day.messages, 0))}{" "}
+                      mensagens
+                    </p>
+                    <div
+                      className="h-48 w-full"
+                      role="img"
+                      aria-label="Gráfico diário de mensagens enviadas pelo usuário à IA nos últimos sete dias"
+                    >
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={userStats.week}
+                          margin={{ top: 8, right: 8, left: -24, bottom: 0 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                          <XAxis
+                            dataKey="date"
+                            tickFormatter={(day: string) => day.slice(8) + "/" + day.slice(5, 7)}
+                            tick={{ fontSize: 11 }}
+                          />
+                          <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
+                          <Tooltip
+                            labelFormatter={(day) => formatDay(String(day))}
+                            formatter={(value) => [formatNumber(Number(value)), "Mensagens"]}
+                          />
+                          <Bar dataKey="messages" fill="var(--primary)" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </>
+                ) : (
+                  <p className="mt-3 text-sm text-muted-foreground">Carregando atividade…</p>
+                )}
+              </div>
+              <div className="rounded-xl border border-border p-4">
+                <h3 className="text-sm font-semibold">Gasto estimado no mês</h3>
+                {userStats ? (
+                  <>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {userStats.month.slice(5, 7)}/{userStats.month.slice(0, 4)} ·{" "}
+                      {formatNumber(userStats.month_messages)} mensagens
+                    </p>
+                    <p className="mt-5 text-2xl font-semibold tabular-nums">
+                      {formatUsd(userStats.month_cost_usd)}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {formatBrl(userStats.month_cost_brl)}
+                    </p>
+                    {!userStats.pricing_configured && (
+                      <p className="mt-2 text-xs text-amber-700">
+                        Valor parcial: faltam tarifas configuradas para algumas chamadas.
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <p className="mt-3 text-sm text-muted-foreground">Carregando gastos…</p>
+                )}
               </div>
             </div>
 
@@ -707,8 +841,8 @@ function AdminAIAnalytics() {
               />
             </div>
             <p className="border-b border-border px-4 py-2 text-xs text-muted-foreground">
-              Os indicadores acima seguem o período geral do painel. As conversas e seus gastos
-              abaixo correspondem somente à data selecionada.
+              Os indicadores de uso acima seguem o período geral do painel. O gráfico e o gasto
+              mensal são deste usuário; abaixo estão as conversas do intervalo selecionado.
             </p>
 
             {selected.channel === "whatsapp" && selected.phone_number && (
@@ -718,51 +852,28 @@ function AdminAIAnalytics() {
             )}
 
             <div className="p-4">
-              {!detailLoading && detailProviderStats && (
-                <div className="mb-5 space-y-3">
-                  <h3 className="text-sm font-semibold">
-                    Gastos por conversa em {formatDay(historyDate)}
-                  </h3>
-                  {detailProviderStats.conversations
-                    .filter((c) => c.userKey === selected.user_key)
-                    .map((c) => (
-                      <div
-                        key={c.conversationId}
-                        className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm"
-                      >
-                        <p className="break-all text-xs text-muted-foreground">
-                          Conversa: {c.conversationId}
-                        </p>
-                        <p className="mt-1 font-medium">
-                          Total: {formatUsd(c.totalCost)}
-                          {!c.pricingConfigured ? " (parcial)" : ""}
-                        </p>
-                        <div className="mt-1">
-                          <TopProviderCost summary={c} />
-                        </div>
-                        <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                          {c.providers.map((p) => (
-                            <span key={p.provider} className="rounded-md bg-background px-2 py-1">
-                              {providerName(p.provider)}: {formatUsd(p.cost)}
-                              {!p.pricingConfigured ? " (parcial)" : ""}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                </div>
+              {history.length > 0 && (
+                <h3 className="mb-5 text-sm font-semibold">
+                  Conversas de {formatDay(historyFrom)} a {formatDay(historyTo)}
+                </h3>
               )}
-              {detailLoading && (
+              {detailLoading && history.length === 0 && (
                 <div className="py-8 text-center text-sm text-muted-foreground">
                   Carregando histórico…
                 </div>
               )}
-              {!detailLoading && history.length === 0 && (
+              {!detailLoading && history.length === 0 && historyFrom <= historyTo && (
                 <div className="py-8 text-center text-sm text-muted-foreground">
-                  Nenhuma conversa encontrada para este usuário em {formatDay(historyDate)}.
+                  Nenhuma conversa encontrada para este usuário de {formatDay(historyFrom)} a{" "}
+                  {formatDay(historyTo)}.
                 </div>
               )}
-              {!detailLoading && history.length > 0 && (
+              {historyFrom > historyTo && (
+                <p className="py-4 text-sm text-destructive">
+                  A data inicial deve ser anterior à data final.
+                </p>
+              )}
+              {history.length > 0 && (
                 <div className="space-y-5">
                   {history.map((turn) => (
                     <article key={turn.id} className="rounded-lg border border-border/80 p-3">
@@ -872,6 +983,15 @@ function AdminAIAnalytics() {
                     </article>
                   ))}
                 </div>
+              )}
+              {hasMoreHistory && (
+                <button
+                  onClick={() => void loadMoreHistory()}
+                  disabled={detailLoading}
+                  className="mt-5 rounded-md border border-border px-4 py-2 text-sm hover:bg-accent disabled:opacity-50"
+                >
+                  {detailLoading ? "Carregando…" : "Carregar mais mensagens"}
+                </button>
               )}
             </div>
           </section>
