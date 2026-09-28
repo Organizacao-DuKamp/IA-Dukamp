@@ -214,7 +214,7 @@ function responder(calls: string[], fail?: string): typeof fetch {
     return Response.json(fixture[provider]);
   };
 }
-test("pipeline preço + cálculo faz exatamente pesquisa e síntese e preserva fontes", async () => {
+test("pipeline preço + cálculo preserva as fontes internamente sem anexá-las à resposta", async () => {
   const calls: string[] = [];
   await withAIUsageContext(async (events) => {
     const result = await orchestrateAI(input(cases[5].message), {
@@ -223,7 +223,8 @@ test("pipeline preço + cálculo faz exatamente pesquisa e síntese e preserva f
     });
     assert.deepEqual(calls, ["api.perplexity.ai", "api.deepseek.com"]);
     assert.equal(result.provider, "deepseek");
-    assert.ok(result.text.includes(source));
+    assert.ok(!result.text.includes(source));
+    assert.equal(result.citations[0].url, source);
     assert.equal(events.length, 2);
     assert.equal(events[0].stage, "research");
     assert.equal(events[1].stage, "synthesis");

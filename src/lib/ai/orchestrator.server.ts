@@ -13,6 +13,7 @@ import {
 import { routeAIRequest, type RoutingInput } from "./router.ts";
 import { createProviderRegistry } from "./registry.server.ts";
 import { modelFor } from "./config.server.ts";
+import { userRequestedSourceLinks } from "../chat/response-format.ts";
 
 export interface OrchestrationInput extends RoutingInput {
   messages: AIRequest["messages"];
@@ -241,7 +242,14 @@ export async function orchestrateAI(
       base,
       input.stage ?? (route.webRequired ? "research" : "response"),
     );
-    if (!route.synthesize) return { ...first, text: citationText(first.text, first.citations) };
+    const showSourceLinks = userRequestedSourceLinks(input.message);
+    if (!route.synthesize)
+      return {
+        ...first,
+        text: showSourceLinks
+          ? citationText(first.text, first.citations.slice(0, 3))
+          : first.text,
+      };
     const evidence = citationText(first.text, first.citations);
     const synthesisProvider = synthesisProviderFor(route.categories);
     const final = await run(
@@ -252,7 +260,7 @@ export async function orchestrateAI(
         attachments: undefined,
         instructions:
           instructions +
-          "\nSintetize a pesquisa a seguir. Se houver cálculo, realize-o explicitamente com fórmula, unidades e premissas. Use exclusivamente as fontes fornecidas para fatos atuais; preserve referências. Não invente novas URLs.",
+          "\nSintetize a pesquisa a seguir. Se houver cálculo, realize-o explicitamente com fórmula, unidades e premissas. Use exclusivamente as fontes fornecidas para fatos atuais; identifique pelo nome as fontes determinantes e preserve datas. Não inclua links nem bibliografia na resposta, salvo se o usuário pedir os links. Não invente novas URLs.",
         messages: [
           ...base.messages,
           {
@@ -263,11 +271,12 @@ export async function orchestrateAI(
       },
       "synthesis",
     );
-    // A deterministic source appendix survives synthesis and WhatsApp plain text.
     return {
       ...final,
       citations: first.citations,
-      text: citationText(final.text, first.citations),
+      text: showSourceLinks
+        ? citationText(final.text, first.citations.slice(0, 3))
+        : final.text,
     };
   });
 }

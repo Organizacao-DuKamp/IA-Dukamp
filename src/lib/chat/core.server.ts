@@ -27,6 +27,7 @@ import {
   validateWeatherGrounding,
 } from "./response-validation";
 import { sanitizeRetrievedContent } from "./security";
+import { formatReplyForUser } from "./response-format";
 import { inferBrazilianDddRegion, type BrazilianDddRegion } from "./brazil-ddd.ts";
 import {
   buildWeatherResearchQuery,
@@ -722,6 +723,7 @@ async function runTurn(
       stage: requestedResearchDepth === "none" ? "final_response" : "research_synthesis",
       telemetry: promptTelemetry,
     });
+    reply = formatReplyForUser(reply, text);
 
     let grounding = validateGrounding(reply, {
       commercial: hasCatalogEvidence || hasSiteEvidence || hasMarketEvidence,
@@ -747,6 +749,7 @@ async function runTurn(
         stage: "validation_retry_market",
         telemetry: promptTelemetry,
       });
+      reply = formatReplyForUser(reply, text);
       grounding = validateGrounding(reply, {
         commercial: hasCatalogEvidence || hasSiteEvidence || hasMarketEvidence,
         citations: 0,
@@ -788,6 +791,7 @@ async function runTurn(
           stage: "validation_retry_weather",
           telemetry: promptTelemetry,
         });
+        reply = formatReplyForUser(reply, text);
         weatherGrounding = validateWeatherGrounding(reply, weatherLocation);
         grounding = validateGrounding(reply, {
           commercial: hasCatalogEvidence || hasSiteEvidence || hasMarketEvidence,
@@ -819,6 +823,8 @@ async function runTurn(
         telemetry: promptTelemetry,
       });
     }
+
+    reply = formatReplyForUser(reply, text);
 
     const finalState = applyAssistantTurn(
       state,
