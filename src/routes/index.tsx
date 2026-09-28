@@ -654,7 +654,9 @@ function LandingPage() {
               <b>Converse com a IA pelo WhatsApp</b>
               <small>Envie sua dúvida ou foto e comece a conversa.</small>
             </span>
-            <span className="how-banner-arrow" aria-hidden="true">→</span>
+            <span className="how-banner-arrow" aria-hidden="true">
+              →
+            </span>
           </a>
         </div>
         <div className="how-field reference-photo">
@@ -747,7 +749,9 @@ function LandingPage() {
             <b>Converse com a IA pelo WhatsApp</b>
             <small>Pergunte sobre qualquer uma dessas áreas da pecuária.</small>
           </span>
-          <span className="how-banner-arrow" aria-hidden="true">→</span>
+          <span className="how-banner-arrow" aria-hidden="true">
+            →
+          </span>
         </a>
         <div className="poster-swoosh" aria-hidden="true" />
       </section>
