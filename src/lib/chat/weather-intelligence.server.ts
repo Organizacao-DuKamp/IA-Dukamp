@@ -1265,7 +1265,7 @@ async function fetchWeatherIntelligenceUncached(
   const nowMs = now();
   const timeoutMs = Math.min(Math.max(options.timeoutMs ?? DEFAULT_TIMEOUT_MS, 2_000), 10_000);
   const allowCache = !options.fetchImpl;
-  const analysis = analyzeWeatherRequest(userText);
+  const analysis = analyzeWeatherRequest(userText, nowMs);
   const list = await loadMunicipalities(fetchImpl, timeoutMs, now, allowCache);
   const municipality = resolveMunicipality(requestedLocation, list);
   const coordinates = await geocodeMunicipality(
@@ -1658,13 +1658,17 @@ export function renderWeatherFallbackReply(intelligence: WeatherIntelligence): s
     `${intelligence.location.city}/${intelligence.location.uf} — dados atualizados nesta consulta, referência local ${intelligence.timeWindow.localNow} (${intelligence.location.timezone}).`,
   ];
 
-  if (intelligence.analysis.asksCurrent && current) {
+  if (
+    (intelligence.analysis.asksCurrent ||
+      (!days.length && !consensus.length && !intelligence.officialForecastText)) &&
+    current
+  ) {
     lines.push(
       `Agora: ${fmt(current.temperatureC, " °C")}, umidade ${fmt(current.relativeHumidityPct, "%")}, vento ${fmt(current.windSpeedKmh, " km/h")}${current.apparentTemperatureC !== null ? `, sensação ${fmt(current.apparentTemperatureC, " °C")}` : ""}. ${current.observed ? "Medição de estação do INMET." : "Estimativa modelada do Open-Meteo."}`,
     );
   }
 
-  for (const day of days.slice(0, 3)) {
+  for (const day of days.slice(0, 8)) {
     const model = consensus.find((item) => item.date === day.date);
     const modelText = model?.precipitation.valuesMm.length
       ? ` Os modelos ECMWF/GFS/ICON ficam entre ${fmt(model.precipitation.minMm, " mm")} e ${fmt(model.precipitation.maxMm, " mm")} de chuva (confiança ${model.precipitation.confidence}).`
@@ -1672,6 +1676,17 @@ export function renderWeatherFallbackReply(intelligence: WeatherIntelligence): s
     lines.push(
       `${day.date}: mínima ${fmt(day.temperatureMinC, " °C")}, máxima ${fmt(day.temperatureMaxC, " °C")}, chuva ${fmt(day.precipitationSumMm, " mm")} e probabilidade máxima ${fmt(day.precipitationProbabilityMaxPct, "%")}.${modelText}`,
     );
+  }
+
+  if (!days.length) {
+    for (const day of consensus.slice(0, 8)) {
+      lines.push(
+        `${day.date}: máxima prevista entre ${fmt(day.temperatureMax.minC, " °C")} e ${fmt(day.temperatureMax.maxC, " °C")}; chuva entre ${fmt(day.precipitation.minMm, " mm")} e ${fmt(day.precipitation.maxMm, " mm")} (confiança ${day.precipitation.confidence}). Modelos: ${day.models.join(", ")}.`,
+      );
+    }
+    if (!consensus.length && intelligence.officialForecastText) {
+      lines.push(intelligence.officialForecastText);
+    }
   }
 
   if (intelligence.analysis.needsHourly) {

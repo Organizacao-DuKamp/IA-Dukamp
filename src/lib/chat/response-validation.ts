@@ -1,3 +1,5 @@
+import { hasCurrentLookupRefusal } from "./research-answer.ts";
+
 export interface GroundingResult {
   valid: boolean;
   issues: string[];
@@ -65,8 +67,26 @@ function hasWeatherSource(reply: string): boolean {
   );
 }
 
-export function validateWeatherGrounding(reply: string, location: string): GroundingResult {
+export function validateWeatherGrounding(
+  reply: string,
+  location: string,
+  requestedDates: string[] = [],
+): GroundingResult {
   const issues: string[] = [];
+  if (hasCurrentLookupRefusal(reply)) addIssue(issues, "weather_lookup_refused");
+  const hasForecastFacts =
+    /(?:\d+(?:[.,]\d+)?\s*(?:°\s*C|mm|km\/h|%)|(?:previs[aã]o|previst[oa]|c[eé]u|tempo)[^.!?]{0,100}(?:nublado|limpo|ensolarado|pancadas|chuva|seco))/i.test(
+      reply,
+    );
+  if (!hasForecastFacts) addIssue(issues, "weather_forecast_missing");
+  for (const date of requestedDates) {
+    const [year, month, day] = date.split("-");
+    const br = new RegExp(
+      `\\b0?${Number(day)}[/-]0?${Number(month)}(?:[/-](?:${year}|${year.slice(-2)}))?\\b`,
+    );
+    if (!reply.includes(date) && !br.test(reply))
+      addIssue(issues, "weather_requested_date_missing");
+  }
   if (!mentionsExpectedLocation(reply, location)) addIssue(issues, "weather_location_missing");
   if (!hasExplicitDate(reply)) addIssue(issues, "weather_date_missing");
   if (!hasWeatherSource(reply)) addIssue(issues, "weather_source_missing");

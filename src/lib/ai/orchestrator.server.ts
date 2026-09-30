@@ -13,6 +13,7 @@ import {
 import { routeAIRequest, type RoutingInput } from "./router.ts";
 import { createProviderRegistry } from "./registry.server.ts";
 import { modelFor } from "./config.server.ts";
+import { hasCurrentLookupRefusal } from "../chat/research-answer.ts";
 import { userRequestedSourceLinks } from "../chat/response-format.ts";
 
 export interface OrchestrationInput extends RoutingInput {
@@ -25,6 +26,8 @@ export interface OrchestrationInput extends RoutingInput {
   operation?: "chat" | "media_analysis";
   stage?: string;
   maxOutputTokens?: number;
+  /** Recuperações especializadas já validam a resposta pesquisada e dispensam outra síntese paga. */
+  skipSynthesis?: boolean;
 }
 export interface OrchestrationDependencies extends Partial<ProviderRuntime> {
   registry?: ReturnType<typeof createProviderRegistry>;
@@ -195,6 +198,13 @@ export async function orchestrateAI(
               title: scrub(c.title),
               date: c.date ? scrub(c.date) : undefined,
             }));
+          const researchIssue = request.webRequired
+            ? !result.citations.length
+              ? "missing_sources"
+              : hasCurrentLookupRefusal(result.text)
+                ? "lookup_refused"
+                : undefined
+            : undefined;
           recordAIUsageEvent({
             ...event,
             model: result.model,
@@ -209,13 +219,12 @@ export async function orchestrateAI(
             webSearchCalls: result.webSearchCalls,
             webSearchSources: result.citations.length,
             citations: result.citations,
-            success: !request.webRequired || result.citations.length > 0,
-            errorCode:
-              request.webRequired && !result.citations.length ? "missing_sources" : undefined,
+            success: !researchIssue,
+            errorCode: researchIssue,
           });
-          if (request.webRequired && !result.citations.length) {
+          if (researchIssue) {
             fallbackFrom = id;
-            fallbackReason = "missing_sources";
+            fallbackReason = researchIssue;
             continue;
           }
           return result;
@@ -243,12 +252,10 @@ export async function orchestrateAI(
       input.stage ?? (route.webRequired ? "research" : "response"),
     );
     const showSourceLinks = userRequestedSourceLinks(input.message);
-    if (!route.synthesize)
+    if (!route.synthesize || input.skipSynthesis)
       return {
         ...first,
-        text: showSourceLinks
-          ? citationText(first.text, first.citations.slice(0, 3))
-          : first.text,
+        text: showSourceLinks ? citationText(first.text, first.citations.slice(0, 3)) : first.text,
       };
     const evidence = citationText(first.text, first.citations);
     const synthesisProvider = synthesisProviderFor(route.categories);
@@ -274,9 +281,7 @@ export async function orchestrateAI(
     return {
       ...final,
       citations: first.citations,
-      text: showSourceLinks
-        ? citationText(final.text, first.citations.slice(0, 3))
-        : final.text,
+      text: showSourceLinks ? citationText(final.text, first.citations.slice(0, 3)) : final.text,
     };
   });
 }

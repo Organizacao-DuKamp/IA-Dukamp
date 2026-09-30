@@ -1,7 +1,7 @@
 import type { ConversationState } from "./state.ts";
 
 export const WEATHER_INTENT_RE =
-  /\b(previs[aã]o\s+(?:do\s+)?tempo|condi[cç][aã]o\s+(?:do\s+)?tempo|tempo\s+(?:hoje|amanh[aã]|agora|essa\s+semana|nos\s+pr[oó]ximos)|meteorolog\w*|vai\s+chover|vai\s+fazer\s+(?:frio|calor)|risco\s+de\s+(?:calor|frio|chuva|tempestade|geada|granizo)|(?:calor|frio)\s+(?:hoje|amanh[aã]|agora|nesta\s+semana|essa\s+semana|em\s+)|chuva\w*|temperatura\w*|umidade\w*|vento\w*|rajada\w*|tempestade\w*|granizo|geada\w*|onda\s+de\s+(?:calor|frio)|alerta\s+(?:do\s+)?tempo|clima\s+(?:hoje|amanh[aã]|agora|em\s+|na\s+|no\s+|da\s+regi[aã]o|do\s+munic[ií]pio|da\s+semana|para\s+os\s+pr[oó]ximos))\b/i;
+  /\b(como\s+(?:est[aá]|estar[aá]|fica|ficar[aá]|vai\s+estar)\s+(?:o\s+)?tempo|tempo\s+(?:em|na|no)\s+|previs[aã]o\s+(?:em|para|de)\s+|previs[aã]o\s+(?:do\s+)?tempo|condi[cç][aã]o\s+(?:do\s+)?tempo|tempo\s+(?:hoje|amanh[aã]|agora|essa\s+semana|nos\s+pr[oó]ximos)|meteorolog\w*|vai\s+chover|vai\s+fazer\s+(?:frio|calor)|risco\s+de\s+(?:calor|frio|chuva|tempestade|geada|granizo)|(?:calor|frio)\s+(?:hoje|amanh[aã]|agora|nesta\s+semana|essa\s+semana|em\s+)|chuva\w*|temperatura\w*|umidade\w*|vento\w*|rajada\w*|tempestade\w*|granizo|geada\w*|onda\s+de\s+(?:calor|frio)|alerta\s+(?:do\s+)?tempo|clima\s+(?:hoje|amanh[aã]|agora|em\s+|na\s+|no\s+|da\s+regi[aã]o|do\s+munic[ií]pio|da\s+semana|para\s+os\s+pr[oó]ximos))\b/i;
 
 export const WEATHER_LOCATION_QUESTION =
   "De qual cidade ou região você quer saber a previsão do tempo?";
@@ -22,6 +22,8 @@ const WEATHER_FOLLOW_UP_RE =
   /^(?:e\s+)?(?:amanh[aã]|depois\s+de\s+amanh[aã]|hoje|essa\s+semana|no\s+fim\s+de\s+semana|nos\s+pr[oó]ximos\s+dias|e?\s*a\s+chuva|e?\s*o\s+vento|e?\s*a\s+umidade|e?\s*a\s+temperatura|e?\s*a\s+geada|e\s+para\s+.+)[?.!]*$/i;
 const TEMPORAL_TAIL_RE =
   /(?:^|\s)(?:hoje|amanh[aã]|depois\s+de\s+amanh[aã]|agora|n?esta\s+semana|n?essa\s+semana|pr[oó]xima\s+semana|nos\s+pr[oó]ximos\s+dias|no\s+fim\s+de\s+semana|pel[ao]\s+(?:manh[aã]|tarde|noite))(?=$|\s|[,.;!?])[\s\S]*$/i;
+const DATE_TAIL_RE =
+  /\s+(?:(?:para|pro|pros|nos?|em)\s+)?(?:(?:os?\s+)?dias?\s+)?(?:[0-3]?\d[/-][01]?\d(?:[/-](?:20)?\d{2})?|20\d{2}-[01]\d-[0-3]\d)\b[\s\S]*$/i;
 const DETAIL_TAIL_RE =
   /\s+(?:e|com)\s+(?:a\s+|o\s+)?(?:chuva|temperatura|umidade|vento|rajadas?|alertas?|detalhes?)[\s\S]*$/i;
 const GENERIC_LOCATION_RE =
@@ -63,8 +65,11 @@ function isLikelyWeatherLocationReply(text: string): boolean {
 
 function cleanLocationCandidate(value: string): string | null {
   const candidate = value
+    .replace(DATE_TAIL_RE, "")
     .replace(TEMPORAL_TAIL_RE, "")
     .replace(DETAIL_TAIL_RE, "")
+    .trim()
+    .replace(/^(?:o|a|do|da|em|de|para|pro)\s+/i, "")
     .replace(/^(?:a\s+|o\s+)?(?:cidade|munic[ií]pio|regi[aã]o)\s+(?:de\s+)?/i, "")
     .replace(/\s+/g, " ")
     .replace(/^[\s,;:/-]+|[\s,;:/-]+$/g, "")
@@ -72,6 +77,8 @@ function cleanLocationCandidate(value: string): string | null {
     .slice(0, 120);
 
   if (!candidate || candidate.length < 2 || GENERIC_LOCATION_RE.test(candidate)) return null;
+  if (/^(?:(?:os?\s+)?dias?\s+)?(?:\d{1,2}[/-]\d{1,2}|20\d{2}-\d{2}-\d{2})\b/i.test(candidate))
+    return null;
   if (!/[\p{L}]/u.test(candidate)) return null;
   const meaningfulTokens = candidate
     .normalize("NFD")

@@ -20,6 +20,9 @@ export interface WeatherRequestAnalysis {
   highImpactDecision: boolean;
   dayOffset: number | null;
   explicitDate: string | null;
+  explicitEndDate?: string | null;
+  requestedDates?: string[];
+  dayOffsets?: number[];
   weekday: number | null;
   weekend: boolean;
   period: WeatherDayPeriod;
@@ -75,17 +78,29 @@ function normalizeForMatching(text: string): string {
   return text.normalize("NFD").replace(/\p{Diacritic}/gu, "");
 }
 
-function parseExplicitDate(text: string): string | null {
-  const iso = text.match(/\b(20\d{2})-([01]\d)-([0-3]\d)\b/);
-  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
-
-  const br = text.match(/\b([0-3]?\d)[/-]([01]?\d)(?:[/-](20\d{2}))?\b/);
-  if (!br) return null;
-  const day = Number(br[1]);
-  const month = Number(br[2]);
-  if (day < 1 || day > 31 || month < 1 || month > 12) return null;
-  const year = br[3] ? Number(br[3]) : new Date().getUTCFullYear();
-  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+export function parseWeatherDates(text: string, defaultYear = new Date().getFullYear()): string[] {
+  const matches = [
+    ...text.matchAll(
+      /\b(20\d{2})-([01]\d)-([0-3]\d)\b|\b([0-3]?\d)[/-]([01]?\d)(?:[/-](20\d{2}|\d{2}))?\b/g,
+    ),
+  ];
+  const sharedYear = matches.find((m) => m[1] || m[6]);
+  const yearHint = sharedYear ? Number(sharedYear[1] || sharedYear[6]) : defaultYear;
+  const dates = matches.flatMap((m) => {
+    const rawYear = Number(m[1] || m[6] || yearHint);
+    const year = rawYear < 100 ? 2000 + rawYear : rawYear;
+    const month = Number(m[2] || m[5]);
+    const day = Number(m[3] || m[4]);
+    const value = new Date(Date.UTC(year, month - 1, day));
+    if (
+      value.getUTCFullYear() !== year ||
+      value.getUTCMonth() !== month - 1 ||
+      value.getUTCDate() !== day
+    )
+      return [];
+    return [`${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`];
+  });
+  return [...new Set(dates)].sort();
 }
 
 function temporalExpression(text: string): string | null {
@@ -104,16 +119,30 @@ function periodForText(text: string): WeatherDayPeriod {
   return null;
 }
 
-export function analyzeWeatherRequest(text: string): WeatherRequestAnalysis {
+export function analyzeWeatherRequest(text: string, nowMs = Date.now()): WeatherRequestAnalysis {
   const matchText = normalizeForMatching(text);
   const intents: WeatherSubIntent[] = [];
-  const asksCurrent = CURRENT_RE.test(matchText);
+  const requestedDates = parseWeatherDates(
+    text,
+    Number(
+      new Intl.DateTimeFormat("en", { timeZone: "America/Sao_Paulo", year: "numeric" }).format(
+        nowMs,
+      ),
+    ),
+  );
+  const hasForecastPeriod =
+    requestedDates.length > 0 || /\b(?:hoje|amanha|semana|dias)\b/i.test(matchText);
+  const asksCurrent = CURRENT_RE.test(matchText) && !hasForecastPeriod;
   const needsHourly = HOURLY_RE.test(matchText);
   const needsAlerts = ALERT_RE.test(matchText);
   const agroAnalysis = AGRO_RE.test(matchText);
   const highImpactDecision =
     HIGH_IMPACT_RE.test(matchText) && (PRECIP_RE.test(matchText) || agroAnalysis);
-  const explicitDate = parseExplicitDate(text);
+  const explicitDate = requestedDates[0] ?? null;
+  const dayOffsets: number[] = [];
+  if (/\bhoje\b/i.test(matchText)) dayOffsets.push(0);
+  if (/\bdepois\s+de\s+amanha\b/i.test(matchText)) dayOffsets.push(2);
+  if (/\bamanha\b/i.test(matchText.replace(/depois\s+de\s+amanha/gi, ""))) dayOffsets.push(1);
   const weekend = /\b(?:fim|final)\s+de\s+semana\b/i.test(matchText);
 
   let dayOffset: number | null = null;
@@ -167,6 +196,9 @@ export function analyzeWeatherRequest(text: string): WeatherRequestAnalysis {
     highImpactDecision,
     dayOffset,
     explicitDate,
+    explicitEndDate: requestedDates.at(-1) ?? null,
+    requestedDates,
+    dayOffsets,
     weekday,
     weekend,
     period: periodForText(matchText),
@@ -258,7 +290,7 @@ export function resolveWeatherTimeWindow(
 
   if (analysis.explicitDate) {
     startDate = analysis.explicitDate;
-    endDate = analysis.explicitDate;
+    endDate = analysis.explicitEndDate ?? analysis.explicitDate;
   } else if (analysis.weekend) {
     const saturday = nextWeekday(localDate, 6);
     startDate = saturday;
@@ -266,6 +298,9 @@ export function resolveWeatherTimeWindow(
   } else if (analysis.weekday !== null) {
     startDate = nextWeekday(localDate, analysis.weekday);
     endDate = startDate;
+  } else if (analysis.dayOffsets?.length) {
+    startDate = addDays(localDate, Math.min(...analysis.dayOffsets));
+    endDate = addDays(localDate, Math.max(...analysis.dayOffsets));
   } else if (analysis.dayOffset !== null) {
     startDate = addDays(localDate, analysis.dayOffset);
     endDate = startDate;

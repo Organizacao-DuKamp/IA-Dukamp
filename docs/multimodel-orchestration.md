@@ -108,3 +108,41 @@ credenciais estão ignorados. O exemplo contém apenas nomes/placeholders.
 Erros externos não propagam bodies ou headers. Secrets são removidos de texto
 e metadados de fontes antes da telemetria. Nenhuma chave recebida em conversa
 deve ser inserida em código, documentação, commit ou chamada frontend.
+
+## Recuperação de previsão meteorológica
+
+Pedidos como “Como está o tempo em São José do Rio Preto dias 30/09 e
+01/10/26” usam a intenção meteorológica e preservam os dois dias. Datas não
+entram no nome do município; anos com dois dígitos e datas inválidas são tratados
+antes da consulta. “Hoje e amanhã” é resolvido no fuso local.
+
+`weather-response.server.ts` valida a resposta inclusive nas consultas rápidas.
+Uma recusa acompanhada apenas de cidade/data/nome de instituto não conta como
+previsão. A resposta precisa trazer condições concretas e as datas pedidas.
+A primeira síntese simples usa o tier econômico configurado. Se ela falhar e as
+fontes estruturadas tiverem os dados necessários, esses dados são apresentados
+diretamente, evitando outra chamada paga. O fallback preserva também consenso
+de modelos ou previsão municipal oficial quando o Best Match não estiver disponível.
+
+Quando faltarem dados utilizáveis, a recuperação chama o orquestrador com
+pesquisa profunda: Perplexity e alternativa OpenAI com web_search obrigatório.
+Quando a pesquisa já responde ao pedido, não há uma segunda síntese paga.
+Isso funciona também com o fluxo legado selecionado; só usa provedores com
+credenciais presentes. O orquestrador rejeita recusas de consulta mesmo se vierem
+com citações, contabiliza o consumo e tenta alternativa compatível. Gemini e
+DeepSeek não recebem pesquisas atuais sem suporte de busca; continuam atendendo
+as suas especialidades.
+
+O orçamento compartilhado de quatro chamadas permanece ativo. No WhatsApp,
+a primeira etapa tem até 20 segundos e as etapas de resposta/recuperação juntas
+têm até 45 segundos, além do tempo usado pela camada de fontes estruturadas.
+Os mesmos sinais de cancelamento chegam aos adapters e à síntese da pesquisa.
+Em indisponibilidade total, a resposta conserva os dados parciais disponíveis,
+identifica o período sem confirmação e indica uma ação concreta no portal do
+INMET. Não há garantia de obter dados durante uma indisponibilidade de todas as
+fontes, nem autorização para inventar temperatura ou chuva.
+
+Os testes de `weather-recovery.test.ts` reproduzem a frase e a recusa do incidente,
+as duas datas, reutilização econômica de dados, falhas de provedores, escalada
+de pesquisa e rejeição de recusa com citações. Os dados são simulados; eles não
+validam disponibilidade ou qualidade das APIs em produção.

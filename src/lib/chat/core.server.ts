@@ -21,11 +21,8 @@ import { productContextBlock, routeQuery } from "./query-router.server";
 import { assessEvidence, sourceDirective } from "./source-policy";
 import { classifyDomainIntent } from "./intent";
 import { isConversationalTurn } from "./model-router";
-import {
-  stripUnmappedCitations,
-  validateGrounding,
-  validateWeatherGrounding,
-} from "./response-validation";
+import { stripUnmappedCitations, validateGrounding } from "./response-validation";
+import { answerWeatherWithRecovery } from "./weather-response.server.ts";
 import { sanitizeRetrievedContent } from "./security";
 import { formatReplyForUser } from "./response-format";
 import { inferBrazilianDddRegion, type BrazilianDddRegion } from "./brazil-ddd.ts";
@@ -711,7 +708,7 @@ async function runTurn(
         (weatherIntelligence?.sources.length ?? 0),
     };
 
-    let reply = await askOpenAI(conversation, {
+    const answerOptions = {
       model: modelKind,
       channel: input.channel,
       summary: renderSummaryForModel(state.conversation_summary, state),
@@ -722,7 +719,15 @@ async function runTurn(
       researchDepth: requestedResearchDepth,
       stage: requestedResearchDepth === "none" ? "final_response" : "research_synthesis",
       telemetry: promptTelemetry,
-    });
+    };
+    let reply = weatherLocation
+      ? await answerWeatherWithRecovery(
+          conversation,
+          answerOptions,
+          weatherLocation,
+          weatherIntelligence,
+        )
+      : await askOpenAI(conversation, answerOptions);
     reply = formatReplyForUser(reply, text);
 
     let grounding = validateGrounding(reply, {
@@ -769,41 +774,6 @@ async function runTurn(
           citations: 0,
           currentMarket: true,
         });
-      }
-    }
-
-    if (weatherLocation) {
-      const requiresFullWeatherGrounding =
-        !weatherIntelligence || weatherIntelligence.analysis.depth !== "quick";
-      let weatherGrounding = validateWeatherGrounding(reply, weatherLocation);
-      if (!weatherGrounding.valid && requiresFullWeatherGrounding) {
-        reply = await askOpenAI(conversation, {
-          model: modelKind,
-          channel: input.channel,
-          summary: renderSummaryForModel(state.conversation_summary, state),
-          state: renderStateForModel(state),
-          directive,
-          sourcePolicy:
-            `${sourcePolicy}\nCORREÇÃO METEOROLÓGICA OBRIGATÓRIA: a tentativa anterior falhou em ${weatherGrounding.issues.join(", ")}. ` +
-            `Reescreva a resposta para ${weatherLocation} usando os dados estruturados e, quando marcado no contexto, o Web Search nativo. Inclua localização, data explícita com ano, hora/fuso da atualização, fontes identificadas, chuva, temperatura, vento/rajadas, umidade e alertas quando disponíveis. Se os modelos divergirem, informe faixa/consenso e confiança.`,
-          context: modelContext,
-          researchDepth: needsWebResearch ? "high" : "none",
-          stage: "validation_retry_weather",
-          telemetry: promptTelemetry,
-        });
-        reply = formatReplyForUser(reply, text);
-        weatherGrounding = validateWeatherGrounding(reply, weatherLocation);
-        grounding = validateGrounding(reply, {
-          commercial: hasCatalogEvidence || hasSiteEvidence || hasMarketEvidence,
-          citations: 0,
-          currentMarket: false,
-        });
-        if (!weatherGrounding.valid) {
-          // Guardrail final: só entra após duas sínteses do GPT falharem validação.
-          reply = weatherIntelligence
-            ? renderWeatherFallbackReply(weatherIntelligence)
-            : `Não consegui confirmar agora uma previsão meteorológica completa e verificável para ${weatherLocation}, com data e fontes suficientes. Para não te passar dados imprecisos, tente novamente em alguns instantes.`;
-        }
       }
     }
 
