@@ -13,6 +13,30 @@ import {
   weatherSourceDirective,
 } from "../src/lib/chat/weather.ts";
 
+test("chuvas como contexto de suplementação não acionam previsão", () => {
+  const state = createConversationState("nutrition-after-weather");
+  state.current_topic = "clima e previsão do tempo";
+  state.pending_action = "consultar_previsao_tempo";
+  state.pending_question = WEATHER_LOCATION_QUESTION;
+  for (const text of [
+    "Com muitas chuvas e pastagem boa qual sal mineral devo usar em novilhas",
+    "Qual o sal mineral devo nessa época de chuva e com boa pastagem em novilhas",
+    "Qual suplemento usar para vacas no calor?",
+    "Como proteger o cocho da chuva?",
+  ]) {
+    assert.equal(isWeatherRequest(text), false, text);
+    assert.equal(resolveWeatherTurn(text, state).isWeatherTurn, false, text);
+    assert.notEqual(classifyDomainIntent(text).intent, "weather_forecast", text);
+  }
+  assert.equal(classifyDomainIntent("Qual sal mineral usar nas chuvas?").intent, "nutrition");
+});
+
+test("pedido explícito de previsão continua válido no contexto de manejo", () => {
+  const text = "Vai chover em Araçatuba amanhã para eu planejar o manejo do pasto?";
+  assert.equal(isWeatherRequest(text), true);
+  assert.equal(extractWeatherLocation("Vai chover em novilhas?"), null);
+});
+
 test("pedido de previsão com cidade e UF usa intenção meteorológica", () => {
   const result = classifyDomainIntent("Vai chover em Monte Aprazível - SP amanhã?");
 

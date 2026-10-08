@@ -16,6 +16,14 @@ const EXPLICIT_NON_WEATHER_RE =
   /\b(?:n[aã]o\s+(?:me\s+)?refiro|n[aã]o\s+estou\s+falando|n[aã]o\s+[ée]\s+sobre)\b[\s\S]{0,120}\b(?:tempo|clima|previs[aã]o|meteorolog\w*|dukamp|produto|pre[cç]o|valor|cat[aá]logo|tesoura|vendedor)\b/i;
 const NON_WEATHER_TOPIC_RE =
   /\b(?:pre[cç]o|valor|produto|dukamp|cat[aá]logo|vendedor(?:es)?|tesoura|estoque|ra[cç][aã]o|suplemento|proteinado|mineral|pedido|compra|entrega)\b/i;
+// Chuva, calor e umidade também descrevem o contexto de manejo/nutrição.
+// Só sobrepor esses assuntos quando houver um pedido meteorológico explícito.
+const EXPLICIT_WEATHER_REQUEST_RE =
+  /\b(?:previs[aã]o|meteorolog\w*|vai\s+chover|vai\s+fazer\s+(?:frio|calor)|como\s+(?:est[aá]|estar[aá]|fica|ficar[aá]|vai\s+estar)\s+(?:o\s+)?tempo|risco\s+de\s+(?:calor|frio|chuva|tempestade|geada|granizo)|(?:chuva|temperatura|umidade|vento|clima|tempo)\s+(?:hoje|amanh[aã]|agora|em\s+|para\s+amanh[aã]))\b/i;
+const HUSBANDRY_TOPIC_RE =
+  /\b(?:sal\s+mineral|minerais?|ra[cç][aã]o|suplement\w*|proteinad\w*|nutri\w*|pastagem|pasto|manejo|cocho|verm[ií]fugo|vacina\w*)\b/i;
+const ANIMAL_LOCATION_RE =
+  /^(?:(?:as?|os?|meus?|minhas?)\s+)?(?:novilhas?|vacas?|bois|boi|bezerros?|bezerras?|garrotes?|gado|rebanho)\b/i;
 const WEATHER_LOCATION_PROMPT_RE =
   /\b(?:qual|de qual)\s+(?:é\s+)?(?:a\s+sua\s+)?(?:cidade|regi[aã]o)[\s\S]{0,100}(?:estado|uf|previs[aã]o)?\b|\b(?:cidade|regi[aã]o)[\s\S]{0,50}(?:estado|uf|previs[aã]o)\b/i;
 const WEATHER_FOLLOW_UP_RE =
@@ -39,6 +47,7 @@ export function isWeatherRequest(text: string): boolean {
   return (
     !TOPIC_CHANGE_RE.test(text) &&
     !EXPLICIT_NON_WEATHER_RE.test(text) &&
+    !(HUSBANDRY_TOPIC_RE.test(text) && !EXPLICIT_WEATHER_REQUEST_RE.test(text)) &&
     !(NON_WEATHER_TOPIC_RE.test(text) && !WEATHER_INTENT_RE.test(text)) &&
     WEATHER_INTENT_RE.test(text) &&
     !NON_WEATHER_RE.test(text)
@@ -77,6 +86,7 @@ function cleanLocationCandidate(value: string): string | null {
     .slice(0, 120);
 
   if (!candidate || candidate.length < 2 || GENERIC_LOCATION_RE.test(candidate)) return null;
+  if (ANIMAL_LOCATION_RE.test(candidate)) return null;
   if (/^(?:(?:os?\s+)?dias?\s+)?(?:\d{1,2}[/-]\d{1,2}|20\d{2}-\d{2}-\d{2})\b/i.test(candidate))
     return null;
   if (!/[\p{L}]/u.test(candidate)) return null;

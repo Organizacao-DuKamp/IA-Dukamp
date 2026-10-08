@@ -33,8 +33,7 @@ export function classifyHealthError(
   const code = String(error.code ?? "").toLowerCase();
   const type = String(error.type ?? error.status ?? "").toLowerCase();
   const message = String(error.message ?? record(body).message ?? "").toLowerCase();
-  if (status === 401 || status === 403 || /api_key_invalid|invalid_api_key/.test(code))
-    return "invalid_key";
+  if (/api_key_invalid|invalid_api_key/.test(code)) return "invalid_key";
   if (
     /organization_spend_limit_exceeded|project_spend_limit_exceeded|organization_usage_limit_exceeded/.test(
       code,
@@ -49,6 +48,9 @@ export function classifyHealthError(
     )
   )
     return "no_credits";
+  // Perplexity documents 401 for BOTH invalid keys and exhausted API credits.
+  if (provider === "perplexity" && status === 401) return "billing_limit";
+  if (status === 401 || status === 403) return "invalid_key";
   // insufficient_quota is ambiguous: prepaid balance OR enforced spending limit.
   if (code === "insufficient_quota" || type === "insufficient_quota") return "billing_limit";
   if (status === 429 || (provider === "gemini" && type === "resource_exhausted"))
@@ -63,7 +65,7 @@ const MESSAGES: Record<HealthStatus, string> = {
     "A conta tem saldo para chamadas. Consulta sem geração de texto; não testa os modelos individualmente.",
   no_credits: "Créditos insuficientes. Recarregue a conta no painel do provedor.",
   billing_limit:
-    "Verifique créditos e limites de cobrança no provedor. A resposta não confirma saldo zerado.",
+    "Verifique créditos da API, limites de cobrança e a chave do projeto no provedor. A resposta não confirma saldo zerado nem chave inválida.",
   quota_limited:
     "Limite de requisições ou cota atingido. Isso não confirma falta de créditos; confira os limites do provedor.",
   invalid_key: "Revise a chave, as permissões e as restrições de acesso no ambiente do servidor.",

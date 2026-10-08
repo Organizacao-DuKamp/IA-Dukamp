@@ -18,7 +18,7 @@ export const perplexity: AIProvider = {
       start = Date.now();
     const data = await post(
       "https://api.perplexity.ai/chat/completions",
-      { authorization: `Bearer ${runtime.env.PERPLEXITY_API_KEY}` },
+      { authorization: `Bearer ${runtime.env.PERPLEXITY_API_KEY?.trim()}` },
       {
         model,
         messages: [

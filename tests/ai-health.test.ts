@@ -41,6 +41,15 @@ test("classifica créditos, cobrança, autenticação e rate limit separadamente
     "quota_limited",
   );
   assert.equal(classifyHealthError("perplexity", 402, {}), "no_credits");
+  assert.equal(classifyHealthError("perplexity", 401, {}), "billing_limit");
+  assert.equal(
+    classifyHealthError("perplexity", 401, { error: { message: "Insufficient credits" } }),
+    "no_credits",
+  );
+  assert.equal(
+    classifyHealthError("perplexity", 401, { error: { code: "invalid_api_key" } }),
+    "invalid_key",
+  );
   assert.equal(classifyHealthError("deepseek", 401, {}), "invalid_key");
   assert.equal(classifyHealthError("gemini", 404, {}), "configuration_error");
   assert.equal(classifyHealthError("openai", 503, {}), "unavailable");
