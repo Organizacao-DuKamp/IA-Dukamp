@@ -29,6 +29,7 @@ import {
   type ProviderSpendAnalytics,
   type SpendSummary,
 } from "@/lib/ai/provider-summary";
+import { AIHealthCheck } from "@/components/admin/AIHealthCheck";
 import { WhatsAppFollowupPanel } from "@/components/admin/WhatsAppFollowupPanel";
 
 export const Route = createFileRoute("/_authenticated/admin/ia")({
@@ -376,7 +377,8 @@ function AdminAIAnalytics() {
               Uso real por usuário, conversa, modelo, pesquisa e base de conhecimento.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2 text-xs">
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <AIHealthCheck />
             <Link
               to="/admin/base-conhecimento"
               className="rounded-md border border-border px-3 py-1.5 hover:bg-accent"
