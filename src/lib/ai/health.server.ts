@@ -76,6 +76,14 @@ const MESSAGES: Record<HealthStatus, string> = {
     "Não foi possível confirmar disponibilidade (rede, timeout, erro do provedor ou resposta inesperada).",
 };
 
+// Match known fields internally; never expose the actual provider error payload.
+export function healthErrorDetail(status: number, body: unknown): string {
+  const error = record(record(body).error);
+  const text = JSON.stringify({ error, detail: record(body).detail }).toLowerCase();
+  const fields = ["max_tokens", "disable_search", "model"].filter((field) => text.includes(field));
+  return ` HTTP ${status}.${fields.length ? ` Verifique: ${fields.join(", ")}.` : ""}`;
+}
+
 export async function checkProviderHealth(
   provider: ProviderId,
   env: Env,
@@ -133,8 +141,11 @@ export async function checkProviderHealth(
       redirect: "error",
     });
     const data = record(await response.json().catch(() => null));
-    if (!response.ok || data.error || data.status === "failed")
-      return result(classifyHealthError(provider, response.status, data));
+    if (!response.ok || data.error || data.status === "failed") {
+      const failure = result(classifyHealthError(provider, response.status, data));
+      failure.message += healthErrorDetail(response.status, data);
+      return failure;
+    }
     if (provider === "deepseek") {
       if (typeof data.is_available !== "boolean" || !Array.isArray(data.balance_infos))
         return result("unavailable");

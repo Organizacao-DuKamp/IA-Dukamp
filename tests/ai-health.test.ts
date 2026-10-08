@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import {
   checkProviderHealth,
   classifyHealthError,
+  healthErrorDetail,
   createHealthChecker,
 } from "../src/lib/ai/health.server.ts";
 
@@ -14,6 +15,15 @@ const env = {
   PERPLEXITY_API_KEY: "secret-perplexity",
 };
 const response = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
+
+test("diagnóstico mostra HTTP e campos conhecidos sem vazar resposta do provedor", async () => {
+  const body = { error: { message: "max_tokens invalid, secret-private-value" } };
+  assert.equal(healthErrorDetail(400, body), " HTTP 400. Verifique: max_tokens.");
+  const result = await checkProviderHealth("perplexity", env, async () => response(body, 400));
+  assert.equal(result.status, "configuration_error");
+  assert.match(result.message, /HTTP 400/);
+  assert.doesNotMatch(JSON.stringify(result), /secret-private-value/);
+});
 
 test("classifica créditos, cobrança, autenticação e rate limit separadamente", () => {
   assert.equal(
