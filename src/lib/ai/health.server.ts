@@ -127,7 +127,7 @@ export async function checkProviderHealth(
     body = {
       model,
       messages: [{ role: "user", content: PROMPT }],
-      max_tokens: 1,
+      max_tokens: 16,
       stream: false,
       disable_search: true,
     };
@@ -164,7 +164,7 @@ export async function checkProviderHealth(
       });
       return result(data.is_available ? "balance_available" : "no_credits", balances);
     }
-    // Truncation is expected with a one-token test; require a real inference
+    // Truncation is expected with a small output limit; require a real inference
     // envelope, not just HTTP 200 (an empty response is not proof of operation).
     const valid =
       provider === "openai"

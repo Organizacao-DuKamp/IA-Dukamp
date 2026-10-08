@@ -115,7 +115,7 @@ test("testes mínimos não usam histórico, ferramentas, retries ou fallback", a
         assert.equal(body.generationConfig.maxOutputTokens, 1);
         return response({ candidates: [{ finishReason: "MAX_TOKENS" }] });
       }
-      assert.equal(body.max_tokens, 1);
+      assert.equal(body.max_tokens, 16);
       assert.equal(body.disable_search, true);
       return response({ choices: [{ finish_reason: "length" }] });
     });

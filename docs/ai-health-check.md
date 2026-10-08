@@ -5,7 +5,7 @@ O botão laranja **Verificar IA** no topo de `/admin/ia` abre um diálogo e cons
 - DeepSeek: `GET /user/balance`, sem geração de texto. Exibe o saldo informado em USD/CNY e o indicador de disponibilidade financeira. Não comprova funcionamento de um modelo específico.
 - OpenAI: modelo econômico configurado, prompt fixo `Reply OK.`, limite de 16 tokens de saída, sem ferramentas, histórico ou armazenamento.
 - Gemini: modelo econômico configurado e limite de 1 token de saída.
-- Perplexity: modelo econômico configurado, limite de 1 token e `disable_search: true`. Pode haver taxa mínima por requisição conforme a cobrança do provedor.
+- Perplexity: modelo econômico configurado, limite de 16 tokens e `disable_search: true`. O limite anterior de 1 token foi rejeitado com HTTP 400 mencionando `max_tokens`. Pode haver taxa mínima por requisição conforme a cobrança do provedor.
 
 Nenhum teste usa fallback ou retry automático. Cada chamada tem timeout de 12 segundos. Não há consulta não oficial de cobrança nem saldo deduzido a partir do gasto do painel. Os provedores sem consulta de saldo implementada mostram `não disponível` e um link para seu painel.
 
