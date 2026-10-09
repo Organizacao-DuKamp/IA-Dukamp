@@ -20,6 +20,12 @@ import { checkRateLimit } from "./rate-limit.server";
 import { productContextBlock, routeQuery } from "./query-router.server";
 import { assessEvidence, sourceDirective } from "./source-policy";
 import { classifyDomainIntent } from "./intent";
+import {
+  resolveAnimalRegistryTurn,
+  animalRegistryDirective,
+  validateAnimalRegistryReply,
+  animalRegistryUnconfirmedReply,
+} from "./animal-registry.ts";
 import { isConversationalTurn } from "./model-router";
 import { stripUnmappedCitations, validateGrounding } from "./response-validation";
 import { answerWeatherWithRecovery } from "./weather-response.server.ts";
@@ -281,11 +287,36 @@ async function runTurn(
 
   const lastAssistant = [...history].reverse().find((m) => m.role === "assistant");
   const lastUser = [...history].reverse().find((m) => m.role === "user");
+  const animalRegistry = resolveAnimalRegistryTurn(
+    text,
+    history,
+    stateBefore.current_topic === "identificação e registro genealógico bovino"
+      ? String(stateBefore.confirmed_data.animal_registry_codes ?? "")
+      : undefined,
+  );
 
   const analysis = classifyUserIntent(text, stateBefore);
   let domainIntent = classifyDomainIntent(text, history.length > 0);
+  if (animalRegistry.active) {
+    domainIntent = {
+      ...domainIntent,
+      intent: "animal_registry",
+      needs_internal_search: false,
+      needs_web_search: animalRegistry.registrations.length > 0,
+      entities: animalRegistry.registrations.map(({ code }) => code),
+    };
+  }
   const weatherTurn = resolveWeatherTurn(text, stateBefore, lastAssistant?.content ?? null);
   const state = applyUserTurn(stateBefore, text, analysis);
+  if (animalRegistry.active) {
+    state.current_topic = "identificação e registro genealógico bovino";
+    state.user_goal = text.slice(0, 300);
+    if (animalRegistry.registrations.length > 0) {
+      state.confirmed_data.animal_registry_codes = animalRegistry.registrations
+        .map(({ code }) => code)
+        .join("; ");
+    }
+  }
 
   const continuity =
     stateBefore.awaiting_user_response ||
@@ -353,7 +384,7 @@ async function runTurn(
   }
 
   let routed: Awaited<ReturnType<typeof routeQuery>>;
-  if (conversationalOnly || weatherLocationRequired) {
+  if (conversationalOnly || weatherLocationRequired || animalRegistry.active) {
     routed = { kind: "passthrough" as const };
   } else {
     try {
@@ -404,6 +435,10 @@ async function runTurn(
   const knowledgeScores: number[] = [];
   let weatherIntelligence: WeatherIntelligence | null = null;
   let weatherStructuredError: unknown = null;
+  if (animalRegistry.active) {
+    contextParts.push(animalRegistryDirective(animalRegistry.registrations));
+    retrieved.push("animal-registry:research-plan");
+  }
 
   if (conversationalOnly) {
     contextParts.push(
@@ -468,6 +503,7 @@ async function runTurn(
     !weatherLocation &&
     !weatherLocationRequired &&
     !conversationalOnly &&
+    !animalRegistry.active &&
     routed.kind !== "structural"
   ) {
     try {
@@ -549,6 +585,7 @@ async function runTurn(
   }
 
   const skipRag =
+    animalRegistry.active ||
     conversationalOnly ||
     weatherLocationRequired ||
     routed.kind === "structural" ||
@@ -620,15 +657,19 @@ async function runTurn(
       : "";
     const researchQuery = weatherLocation
       ? buildWeatherResearchQuery(text, weatherLocation)
-      : [
-          routerInput,
-          needsExternalProductFallback
-            ? "O catálogo vivo da DuKamp não trouxe uma opção adequada confirmada. Pesquise uma alternativa comercial externa tecnicamente pertinente e confiável; não a apresente como produto DuKamp."
-            : null,
-          currentMarketDetails ? `Contexto confirmado da cotação: ${currentMarketDetails}.` : null,
-        ]
-          .filter(Boolean)
-          .join("\n");
+      : animalRegistry.active
+        ? `${text}\n${animalRegistry.registrations.map(({ code }) => code).join("; ")}`
+        : [
+            routerInput,
+            needsExternalProductFallback
+              ? "O catálogo vivo da DuKamp não trouxe uma opção adequada confirmada. Pesquise uma alternativa comercial externa tecnicamente pertinente e confiável; não a apresente como produto DuKamp."
+              : null,
+            currentMarketDetails
+              ? `Contexto confirmado da cotação: ${currentMarketDetails}.`
+              : null,
+          ]
+            .filter(Boolean)
+            .join("\n");
 
     const researchPlan = await researchChatGPT(researchQuery, {
       currentMarketSearch: !weatherLocation && isCurrentMarketTurn,
@@ -690,7 +731,9 @@ async function runTurn(
         : sourceDirective(evidence);
     const sourcePolicy = weatherLocation
       ? `${baseSourcePolicy}\n${weatherSourceDirective(weatherLocation)}`
-      : baseSourcePolicy;
+      : animalRegistry.active
+        ? animalRegistryDirective(animalRegistry.registrations)
+        : baseSourcePolicy;
     const modelContext = contextParts.length > 0 ? contextParts.join("\n\n") : null;
     const modelKind = chatModelKindForChannel(input.channel);
     const promptTelemetry = {
@@ -717,6 +760,7 @@ async function runTurn(
       sourcePolicy,
       context: modelContext,
       researchDepth: requestedResearchDepth,
+      preserveSourceLinks: animalRegistry.active,
       stage: requestedResearchDepth === "none" ? "final_response" : "research_synthesis",
       telemetry: promptTelemetry,
     };
@@ -728,7 +772,29 @@ async function runTurn(
           weatherIntelligence,
         )
       : await askOpenAI(conversation, answerOptions);
-    reply = formatReplyForUser(reply, text);
+    if (animalRegistry.active && animalRegistry.registrations.length > 0) {
+      const registryIssues = (answer: string) =>
+        validateAnimalRegistryReply(
+          answer,
+          animalRegistry.registrations,
+          getAIUsageEvents()
+            .filter((event) => event.success !== false)
+            .flatMap((event) => event.citations?.map(({ url }) => url) ?? []),
+        );
+      const issues = registryIssues(reply);
+      if (issues.length > 0) {
+        reply = await askOpenAI(conversation, {
+          ...answerOptions,
+          sourcePolicy: `${sourcePolicy}\nCORREÇÃO DO REGISTRO: a resposta anterior falhou em ${issues.join(", ")}. Pesquise o código exato e inclua o link da evidência; se não houver confirmação, explique a limitação sem afirmar raça.`,
+          researchDepth: "high",
+          stage: "validation_retry_animal_registry",
+        });
+        if (registryIssues(reply).length > 0) {
+          reply = animalRegistryUnconfirmedReply(animalRegistry.registrations);
+        }
+      }
+    }
+    reply = formatReplyForUser(reply, text, { preserveSourceLinks: animalRegistry.active });
 
     let grounding = validateGrounding(reply, {
       commercial: hasCatalogEvidence || hasSiteEvidence || hasMarketEvidence,
@@ -794,7 +860,7 @@ async function runTurn(
       });
     }
 
-    reply = formatReplyForUser(reply, text);
+    reply = formatReplyForUser(reply, text, { preserveSourceLinks: animalRegistry.active });
 
     const finalState = applyAssistantTurn(
       state,
@@ -817,6 +883,25 @@ async function runTurn(
       ),
     };
   } catch (err) {
+    if (animalRegistry.active && animalRegistry.registrations.length > 0) {
+      const reply = animalRegistryUnconfirmedReply(animalRegistry.registrations);
+      const finalState = applyAssistantTurn(state, reply);
+      finalState.conversation_summary = updateSummary(finalState, windowed.dropped);
+      return {
+        reply,
+        state: finalState,
+        conversationId,
+        diagnostics: diag(
+          conversationId,
+          conversation,
+          windowed,
+          analysis,
+          stateBefore,
+          [...retrieved, "animal-registry:unconfirmed"],
+          "animal-registry:safe-fallback",
+        ),
+      };
+    }
     // Degradação técnica: se o GPT estiver indisponível mas a camada
     // meteorológica estruturada tiver dados válidos, não descartamos os fatos.
     if (err instanceof OpenAIError && weatherIntelligence) {

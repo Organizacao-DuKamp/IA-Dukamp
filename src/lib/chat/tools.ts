@@ -49,7 +49,8 @@ export const toolDefinitions: Record<ToolName, ToolDefinition> = {
   },
   search_current_information: {
     name: "search_current_information",
-    description: "Pesquisa informação externa temporal.",
+    description:
+      "Pesquisa informação externa verificável, incluindo registros genealógicos e fatos atuais.",
     schema: Query,
   },
   get_order_status: {
@@ -72,6 +73,7 @@ export function toolsForIntent(c: IntentClassification): ToolDefinition[] {
     internal_price: ["search_products", "get_product_details"],
     market_quote: ["search_market_prices"],
     current_research: ["search_current_information"],
+    animal_registry: ["search_current_information"],
     order: ["get_order_status", "handoff_to_human"],
     human_support: ["handoff_to_human"],
     nutrition: ["search_internal_documents"],

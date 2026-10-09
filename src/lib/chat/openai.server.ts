@@ -56,6 +56,7 @@ export interface OpenAIOptions {
   state?: string | null;
   directive?: string | null;
   sourcePolicy?: string | null;
+  preserveSourceLinks?: boolean;
   context?: string | null;
   timeoutMs?: number;
   fetchImpl?: typeof fetch;
@@ -197,7 +198,11 @@ type ResponsesPayload = {
   output_text?: string;
   output?: Array<{
     type?: string;
-    content?: Array<{ type?: string; text?: string }>;
+    content?: Array<{
+      type?: string;
+      text?: string;
+      annotations?: Array<{ type?: string; url?: string; title?: string }>;
+    }>;
     action?: { sources?: unknown[] };
   }>;
   status?: string;
@@ -218,6 +223,25 @@ function extractResponseText(data: ResponsesPayload): string | undefined {
 
 function countWebSearchCalls(data: ResponsesPayload): number {
   return data.output?.filter((item) => item.type === "web_search_call").length ?? 0;
+}
+
+function responseCitations(data: ResponsesPayload) {
+  const urls = new Map<string, string>();
+  for (const item of data.output ?? []) {
+    for (const content of item.content ?? []) {
+      for (const annotation of content.annotations ?? []) {
+        if (annotation.type !== "url_citation" || !annotation.url) continue;
+        try {
+          const url = new URL(annotation.url);
+          if (url.protocol === "https:" || url.protocol === "http:")
+            urls.set(annotation.url, annotation.title ?? url.hostname);
+        } catch {
+          /* Invalid provider URLs are not evidence. */
+        }
+      }
+    }
+  }
+  return [...urls].map(([url, title], index) => ({ id: index + 1, url, title }));
 }
 
 function countWebSearchSources(data: ResponsesPayload): number {
@@ -490,6 +514,7 @@ export async function askOpenAI(
         webSearchEnabled: plan.enabled,
         webSearchCalls: countWebSearchCalls(data),
         webSearchSources: countWebSearchSources(data),
+        citations: options.preserveSourceLinks ? responseCitations(data) : undefined,
         stage: options.stage ?? (plan.enabled ? "research_synthesis" : "final_response"),
         requestSequence: (requestSequence += 1),
         promptCacheKey,
@@ -608,5 +633,15 @@ export async function askOpenAI(
     usage: data.usage,
   });
 
+  if (options.preserveSourceLinks) {
+    const citations = responseCitations(data);
+    const allowed = new Set(citations.map(({ url }) => url));
+    text = text.replace(/https?:\/\/[^\s<>\])]+/g, (url) =>
+      allowed.has(url) ? url : "fonte não verificada",
+    );
+    const missing = citations.filter(({ url }) => !text?.includes(url)).slice(0, 3);
+    if (missing.length)
+      text += `\n\nFontes consultadas:\n${missing.map(({ url, title }) => `- [${title.replace(/[[\]]/g, "")}](${url})`).join("\n")}`;
+  }
   return text;
 }

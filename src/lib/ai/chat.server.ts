@@ -35,7 +35,8 @@ export function isSelfContainedCalculation(message: string): boolean {
     /\b(suger\w*|recomend\w*|indiqu\w*|qual (?:racao|suplemento|produto)|que (?:racao|suplemento|produto)|o que (?:usar|uso|dar|dou)|melhor (?:racao|suplemento|produto))\b/.test(
       text,
     );
-  const explicitCalculation = strongCalculation || (performanceCalculation && !recommendationRequest);
+  const explicitCalculation =
+    strongCalculation || (performanceCalculation && !recommendationRequest);
   const requiresFreshData =
     /\b(hoje|agora|atual|cotacao|preco atual|valor atual|mercado|pesquise|pesquisa|internet|noticias|ultima|ultimo|mais recente)\b/.test(
       text,
@@ -52,7 +53,8 @@ export async function askTpecAI(
 
   const currentUserMessage =
     [...history].reverse().find((message) => message.role === "user")?.content ?? "";
-  const selfContainedCalculation = isSelfContainedCalculation(currentUserMessage);
+  const selfContainedCalculation =
+    !options.preserveSourceLinks && isSelfContainedCalculation(currentUserMessage);
   const effectiveHistory: ChatMessage[] = selfContainedCalculation
     ? [{ role: "user", content: currentUserMessage }]
     : history;
@@ -93,12 +95,12 @@ export async function askTpecAI(
         state: selfContainedCalculation ? null : options.state,
         directive,
         sourcePolicy,
+        preserveSourceLinks: options.preserveSourceLinks,
         mode,
         webRequired,
         prohibitWeb: selfContainedCalculation ? true : options.researchDepth === "none",
         stage: selfContainedCalculation ? "calculation" : options.stage,
-        maxOutputTokens:
-          options.channel === "whatsapp" ? WHATSAPP_MAX_OUTPUT_TOKENS : undefined,
+        maxOutputTokens: options.channel === "whatsapp" ? WHATSAPP_MAX_OUTPUT_TOKENS : undefined,
       },
       { fetchImpl: whatsappFetch },
     );
