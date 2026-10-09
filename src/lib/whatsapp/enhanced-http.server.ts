@@ -402,18 +402,27 @@ async function deliverPendingReply(
   let delivery = await control({ action: "claim_delivery", messageId: message.messageId });
 
   if (delivery.kind === "missing" && fallbackReply?.trim()) {
-    await control({ action: "complete", messageId: message.messageId, reply: fallbackReply.trim() });
+    await control({
+      action: "complete",
+      messageId: message.messageId,
+      reply: fallbackReply.trim(),
+    });
     delivery = await control({ action: "claim_delivery", messageId: message.messageId });
   }
 
   if (delivery.kind === "processing" || delivery.kind === "delivered") return;
-  if (delivery.kind !== "claimed" || !delivery.reply) throw new Error("whatsapp_delivery_not_ready");
+  if (delivery.kind !== "claimed" || !delivery.reply)
+    throw new Error("whatsapp_delivery_not_ready");
 
   try {
     await sendWhatsAppText(message.phone, delivery.reply, env, fetchImpl);
   } catch (error) {
     try {
-      await control({ action: "release_delivery", messageId: message.messageId, reply: delivery.reply });
+      await control({
+        action: "release_delivery",
+        messageId: message.messageId,
+        reply: delivery.reply,
+      });
     } catch (releaseError) {
       console.error(`[whatsapp] failed to release delivery lease ${errorDetails(releaseError)}`);
     }
@@ -428,7 +437,9 @@ export async function handleEnhancedWhatsAppWebhookRequest(
   dependencies: EnhancedWhatsAppHttpDependencies = {},
 ): Promise<Response> {
   const env = envOf(dependencies);
-  const sleepImpl = dependencies.sleepImpl ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
+  const sleepImpl =
+    dependencies.sleepImpl ??
+    ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
 
   if (request.method === "GET") {
     const url = new URL(request.url);
@@ -436,7 +447,13 @@ export async function handleEnhancedWhatsAppWebhookRequest(
     const provided = url.searchParams.get("hub.verify_token") ?? "";
     const challenge = url.searchParams.get("hub.challenge") ?? "";
     const expected = env.WHATSAPP_VERIFY_TOKEN?.trim() ?? "";
-    if (mode === "subscribe" && expected && provided && safeEqual(expected, provided) && challenge) {
+    if (
+      mode === "subscribe" &&
+      expected &&
+      provided &&
+      safeEqual(expected, provided) &&
+      challenge
+    ) {
       return text(challenge, 200);
     }
     return text("Forbidden", 403);
@@ -454,7 +471,8 @@ export async function handleEnhancedWhatsAppWebhookRequest(
 
   const appSecret = env.WHATSAPP_APP_SECRET?.trim() ?? "";
   if (!appSecret) return json({ error: "whatsapp_not_configured" }, 503);
-  if (!verifyWebhookSignature(rawBody, request.headers.get("x-hub-signature-256"), appSecret)) return text("Unauthorized", 401);
+  if (!verifyWebhookSignature(rawBody, request.headers.get("x-hub-signature-256"), appSecret))
+    return text("Unauthorized", 401);
 
   let payload: unknown;
   try {
@@ -470,21 +488,38 @@ export async function handleEnhancedWhatsAppWebhookRequest(
   if (incoming.length === 0) return json({ received: true });
 
   const fetchImpl = dependencies.fetchImpl ?? fetch;
-  const control = dependencies.controlMessage ?? ((controlRequest: WhatsAppControlRequest) => controlWhatsAppMessage(controlRequest));
-  const dispatch = dependencies.dispatchChat ?? ((input: WhatsAppChatInput) => dispatchClaimedWhatsAppChat(input, { env, fetchImpl: dependencies.fetchImpl }));
+  const control =
+    dependencies.controlMessage ??
+    ((controlRequest: WhatsAppControlRequest) => controlWhatsAppMessage(controlRequest));
+  const dispatch =
+    dependencies.dispatchChat ??
+    ((input: WhatsAppChatInput) =>
+      dispatchClaimedWhatsAppChat(input, { env, fetchImpl: dependencies.fetchImpl }));
 
   for (const message of incoming) {
     let claim: WhatsAppControlResult;
     try {
-      claim = await control({ action: "claim", phone: message.phone, messageId: message.messageId });
+      claim = await control({
+        action: "claim",
+        phone: message.phone,
+        messageId: message.messageId,
+      });
     } catch (error) {
       console.error(`[whatsapp] durable claim failed ${errorDetails(error)}`);
-      await trySendWhatsAppText(message.phone, friendlyWhatsAppError(error), env, fetchImpl, "claim.failure.notice");
+      await trySendWhatsAppText(
+        message.phone,
+        friendlyWhatsAppError(error),
+        env,
+        fetchImpl,
+        "claim.failure.notice",
+      );
       continue;
     }
 
     if (claim.kind === "processing" || claim.kind === "delivered") {
-      console.info(`[whatsapp] duplicate ignored message_id=${message.messageId} state=${claim.kind}`);
+      console.info(
+        `[whatsapp] duplicate ignored message_id=${message.messageId} state=${claim.kind}`,
+      );
       continue;
     }
     if (claim.kind === "completed") {
@@ -514,9 +549,14 @@ export async function handleEnhancedWhatsAppWebhookRequest(
         buildWhatsAppProgressPlan(progressText, message.messageId),
         async () => {
           try {
-            const current = await control({ action: "claim_presence", messageId: message.messageId });
+            const current = await control({
+              action: "claim_presence",
+              messageId: message.messageId,
+            });
             if (current.kind !== "claimed") {
-              console.info(`[whatsapp] duplicate/stale presence suppressed message_id=${message.messageId} state=${current.kind}`);
+              console.info(
+                `[whatsapp] duplicate/stale presence suppressed message_id=${message.messageId} state=${current.kind}`,
+              );
               return;
             }
           } catch (error) {
@@ -527,9 +567,13 @@ export async function handleEnhancedWhatsAppWebhookRequest(
         },
         sleepImpl,
       );
-      console.info(`[whatsapp] claimed processing completed duration_ms=${Date.now() - started} has_reply=${Boolean(result.reply)}`);
+      console.info(
+        `[whatsapp] claimed processing completed duration_ms=${Date.now() - started} has_reply=${Boolean(result.reply)}`,
+      );
     } catch (error) {
-      console.error(`[whatsapp] claimed processing failed duration_ms=${Date.now() - started} ${errorDetails(error)}`);
+      console.error(
+        `[whatsapp] claimed processing failed duration_ms=${Date.now() - started} ${errorDetails(error)}`,
+      );
       const failure = friendlyWhatsAppError(error);
       try {
         await control({ action: "complete", messageId: message.messageId, reply: failure });

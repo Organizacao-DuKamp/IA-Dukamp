@@ -8,7 +8,10 @@
 // Manter os exports antigos evita quebrar rotas publicadas durante a migração
 // para a arquitetura ChatGPT-first.
 
+import { extractAnimalRegistrations, animalRegistryDirective } from "./animal-registry.ts";
+
 export type ResearchProfile =
+  | "animal_registry"
   | "weather"
   | "current_market"
   | "regulation"
@@ -52,6 +55,7 @@ export function researchProfileForQuery(
 ): ResearchProfile {
   if (options.weatherSearch) return "weather";
   if (options.currentMarketSearch) return "current_market";
+  if (extractAnimalRegistrations(query).length) return "animal_registry";
 
   const q = normalized(query);
 
@@ -127,6 +131,10 @@ export function researchDepthForQuery(query: string, options: ResearchOptions = 
 
 function sourceGuidance(profile: ResearchProfile, location?: string | null): string[] {
   switch (profile) {
+    case "animal_registry":
+      return [
+        "A identificação individual depende do registro exato, não da raça associada a um prefixo. Publicações históricas podem sustentar identidade, mas não dados atuais de propriedade/avaliação.",
+      ];
     case "weather":
       return [
         `Local prioritário: ${location || "o local informado pelo usuário"}.`,
@@ -192,6 +200,9 @@ export async function researchChatGPT(
     options.weatherLocation ? `TARGET: ${options.weatherLocation}` : null,
     "GOAL: pesquise na web antes de responder, valide os fatos relevantes e use somente a evidência necessária na resposta deste turno.",
     ...guidance.map((item) => `- ${item}`),
+    profile === "animal_registry"
+      ? animalRegistryDirective(extractAnimalRegistrations(cleanQuery))
+      : null,
   ]
     .filter(Boolean)
     .join("\n");

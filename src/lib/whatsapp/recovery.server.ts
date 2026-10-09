@@ -102,19 +102,16 @@ async function deliverRecoveredReply(
 
 async function emergencyAnswer(input: WhatsAppChatInput): Promise<string> {
   try {
-    return await askOpenAI(
-      [{ role: "user", content: input.text }],
-      {
-        model: "luna",
-        channel: "whatsapp",
-        timeoutMs: EMERGENCY_TIMEOUT_MS,
-        researchDepth: "none",
-        maxToolCalls: 0,
-        stage: "whatsapp_durable_rescue",
-        directive:
-          "MODO DE EMERGÊNCIA DO WHATSAPP: responda diretamente à pergunta do usuário em português, de forma útil e curta. Não use internet, não mencione falhas técnicas nem modelos. Se a pergunta depender de informação atual que você não consegue verificar, diga claramente essa limitação, mas ainda responda a parte estável que puder.",
-      },
-    );
+    return await askOpenAI([{ role: "user", content: input.text }], {
+      model: "luna",
+      channel: "whatsapp",
+      timeoutMs: EMERGENCY_TIMEOUT_MS,
+      researchDepth: "none",
+      maxToolCalls: 0,
+      stage: "whatsapp_durable_rescue",
+      directive:
+        "MODO DE EMERGÊNCIA DO WHATSAPP: responda diretamente à pergunta do usuário em português, de forma útil e curta. Não use internet, não mencione falhas técnicas nem modelos. Se a pergunta depender de informação atual que você não consegue verificar, diga claramente essa limitação, mas ainda responda a parte estável que puder.",
+    });
   } catch {
     return "Tive uma instabilidade para processar sua pergunta completa. Sua mensagem não foi ignorada. Por favor, envie a mesma pergunta novamente e eu vou tentar por uma rota alternativa.";
   }

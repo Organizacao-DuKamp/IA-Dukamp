@@ -31,7 +31,10 @@ test("quando o usuário pede links, mostra somente três fontes", () => {
 
 test("foto oficial pedida continua disponível para o envio como mídia", () => {
   const image = "https://dukamp.com.br/produtos/boi.webp";
-  const result = formatReplyForUser(`Aqui está a foto oficial:\n${image}`, "Mande a foto do produto");
+  const result = formatReplyForUser(
+    `Aqui está a foto oficial:\n${image}`,
+    "Mande a foto do produto",
+  );
   assert.match(result, /dukamp\.com\.br\/produtos\/boi\.webp/);
 });
 
@@ -46,7 +49,10 @@ test("link do produto pedido diretamente continua na resposta", () => {
 
 test("limpa citações numéricas de provedores sem alterar conteúdo técnico", () => {
   assert.equal(
-    formatReplyForUser("Segundo o INMET [1], há alerta de geada【2】 para 29/09/2026.", "Vai gear?"),
+    formatReplyForUser(
+      "Segundo o INMET [1], há alerta de geada【2】 para 29/09/2026.",
+      "Vai gear?",
+    ),
     "Segundo o INMET, há alerta de geada para 29/09/2026.",
   );
 });

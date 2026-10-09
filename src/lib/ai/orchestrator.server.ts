@@ -23,6 +23,7 @@ export interface OrchestrationInput extends RoutingInput {
   state?: string | null;
   directive?: string | null;
   sourcePolicy?: string | null;
+  preserveSourceLinks?: boolean;
   operation?: "chat" | "media_analysis";
   stage?: string;
   maxOutputTokens?: number;
@@ -251,7 +252,8 @@ export async function orchestrateAI(
       base,
       input.stage ?? (route.webRequired ? "research" : "response"),
     );
-    const showSourceLinks = userRequestedSourceLinks(input.message);
+    const showSourceLinks =
+      input.preserveSourceLinks === true || userRequestedSourceLinks(input.message);
     if (!route.synthesize || input.skipSynthesis)
       return {
         ...first,

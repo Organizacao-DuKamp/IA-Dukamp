@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { extractWeatherLocation, isWeatherRequest } from "./weather.ts";
+import { extractAnimalRegistrations, isAnimalRegistryRequest } from "./animal-registry.ts";
 
 export const IntentSchema = z.object({
   intent: z.enum([
@@ -14,6 +15,7 @@ export const IntentSchema = z.object({
     "management",
     "nutrition",
     "animal_health",
+    "animal_registry",
     "weather_forecast",
     "document_or_image",
     "current_research",
@@ -135,11 +137,13 @@ export function classifyDomainIntent(text: string, hasHistory = false): IntentCl
     /^(?:(?:manda|mande|mostra|mostre|quero|tem)\s+)?(?:a\s+)?(?:foto|imagem|descri[cç][aã]o|detalhes?)(?:\s+(?:dele|dela|desse|dessa|do produto))?\s*[?.!]*$/i.test(
       normalized,
     );
-  const hit = isWeatherRequest(normalized)
-    ? (["weather_forecast", /$^/, true, true] as const)
-    : productImageFollowUp
-      ? (["product", /$^/, true, false] as const)
-      : rules.find(([, pattern]) => pattern.test(normalized));
+  const hit = isAnimalRegistryRequest(normalized)
+    ? (["animal_registry", /$^/, false, extractAnimalRegistrations(normalized).length > 0] as const)
+    : isWeatherRequest(normalized)
+      ? (["weather_forecast", /$^/, true, true] as const)
+      : productImageFollowUp
+        ? (["product", /$^/, true, false] as const)
+        : rules.find(([, pattern]) => pattern.test(normalized));
   const followUp =
     hasHistory &&
     /^(e\s+)?(qual|quais|quanto|onde|quem|ness[ae]|dele|deles|esse|essa|aquele|aquela)/i.test(
@@ -158,7 +162,10 @@ export function classifyDomainIntent(text: string, hasHistory = false): IntentCl
     needs_web_search: web,
     needs_conversation_context: followUp,
     location,
-    entities: [],
+    entities:
+      intent === "animal_registry"
+        ? extractAnimalRegistrations(normalized).map(({ code }) => code)
+        : [],
     confidence: hit ? (followUp ? 0.84 : 0.9) : 0.65,
   });
 }

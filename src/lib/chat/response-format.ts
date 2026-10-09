@@ -30,8 +30,12 @@ function sourceLink(url: string): string | null {
 }
 
 /** Remove a bibliografia e as citações automáticas sem apagar fatos da resposta. */
-export function formatReplyForUser(reply: string, userMessage: string): string {
-  const showLinks = userRequestedSourceLinks(userMessage);
+export function formatReplyForUser(
+  reply: string,
+  userMessage: string,
+  options: { preserveSourceLinks?: boolean } = {},
+): string {
+  const showLinks = options.preserveSourceLinks === true || userRequestedSourceLinks(userMessage);
   const preserveRequestedLink = !showLinks && /\b(?:links?|urls?)\b/i.test(userMessage);
   const links = new Map<string, string>();
   const keepSource = (label: string, rawUrl: string) => {
@@ -42,7 +46,11 @@ export function formatReplyForUser(reply: string, userMessage: string): string {
   let inSources = false;
   const lines: string[] = [];
   for (const line of reply.split(/\r?\n/)) {
-    if (/^\s*(?:#{1,6}\s*)?(?:\*\*)?(?:fontes?|refer[eê]ncias?)(?:\s+(?:consultadas?|utilizadas?|pesquisadas?))?\s*:\s*(?:\*\*)?\s*$/i.test(line)) {
+    if (
+      /^\s*(?:#{1,6}\s*)?(?:\*\*)?(?:fontes?|refer[eê]ncias?)(?:\s+(?:consultadas?|utilizadas?|pesquisadas?))?\s*:\s*(?:\*\*)?\s*$/i.test(
+        line,
+      )
+    ) {
       inSources = true;
       continue;
     }
@@ -88,7 +96,10 @@ export function formatReplyForUser(reply: string, userMessage: string): string {
     }
   }
 
-  const body = lines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+  const body = lines
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
   if (!showLinks || links.size === 0) return body;
   const sources = [...links].map(([url, label]) => `- [${label}](${url})`).join("\n");
   return `${body}\n\nFontes:\n${sources}`;
