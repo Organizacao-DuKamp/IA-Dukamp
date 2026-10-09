@@ -88,7 +88,7 @@ const SELLER_RE =
   /\b(vendedor|vendedora|vendedores|representante|revenda|revendedor|distribuidor|consultor|contato|whats(app)?|telefone|falar\s+com|onde\s+comprar|quero\s+comprar|adquirir|fazer\s+(um\s+)?pedido|pedir|quem\s+atende)\b/i;
 const CATEGORY_RE = /\b(categorias?|linhas?\s+de\s+produtos?|cat[aá]logos?)\b/i;
 const PRODUCT_RE =
-  /\b(produtos?|suplementos?|ra[cç][aã]o|mineral|proteinado|dukamp|bezerro|recria|seca)\b/i;
+  /\b(produtos?|suplementos?|ra[cç](?:[aã]o|[oõ]es)|minera(?:l|is)|proteinados?|dukamp|bezerro|recria|seca)\b/i;
 const PRODUCT_ASSET_RE =
   /\b(foto|imagem|descri[cç][aã]o|detalhes?|ficha\s+t[eé]cnica|bula)\b.{0,40}\b(do|da|de|desse|dessa|sobre)\b.{1,100}/i;
 const LIST_RE = /\b(quais|liste|lista|todos|todas|cat[aá]logo|voc[eê]s\s+t[eê]m)\b/i;
@@ -118,6 +118,8 @@ const PRODUCT_SEARCH_STOPWORDS = new Set([
   "uma",
   "com",
   "voces",
+  "voce",
+  "informacoes",
   "liste",
   "lista",
   "todos",

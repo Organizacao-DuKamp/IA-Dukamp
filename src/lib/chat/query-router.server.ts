@@ -6,6 +6,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { normalizeName } from "@/lib/products/normalize";
 import { shouldSkipGenericProductLookup } from "./product-routing-guard";
+import { sanitizeRetrievedContent } from "./security";
 import {
   cleanContact,
   formatSellerList,
@@ -136,7 +137,9 @@ async function findProductByName(
   }
 
   const activeById = new Map(
-    (products ?? []).filter((p) => p.active && !p.is_duplicate).map((p) => [p.id, p]),
+    (products ?? [])
+      .filter((p) => p.active && !p.is_duplicate && !p.requires_review)
+      .map((p) => [p.id, p]),
   );
 
   const hits = new Set<string>();
@@ -223,14 +226,14 @@ async function countActive(
   }
 }
 
-async function listActive(species: SpeciesKey | null): Promise<string[]> {
+async function listActive(species: SpeciesKey | null, onlyFeed = false): Promise<string[]> {
   // Prioridade: catálogo próprio da marca DuKamp (base técnica). O catálogo do
   // site inclui itens de revenda da agropecuária, então só entra como reforço
   // (filtrado pela marca) ou como fallback quando a base própria está vazia.
   try {
     let q = supabaseAdmin
       .from("products")
-      .select("official_name")
+      .select("official_name, category")
       .eq("active", true)
       .eq("is_duplicate", false)
       .eq("requires_review", false)
@@ -238,7 +241,13 @@ async function listActive(species: SpeciesKey | null): Promise<string[]> {
       .limit(200);
     if (species) q = q.eq("species", species);
     const { data } = await q;
-    const names = (data ?? []).map((p) => p.official_name);
+    const names = (data ?? [])
+      .filter(
+        (p) =>
+          !onlyFeed ||
+          /\b(racao|racoes)\b/.test(normalizeName(`${p.official_name} ${p.category ?? ""}`)),
+      )
+      .map((p) => p.official_name);
     if (names.length > 0) return names;
   } catch (err) {
     console.warn("[router] local list skipped:", err instanceof Error ? err.message : err);
@@ -255,7 +264,8 @@ async function listActive(species: SpeciesKey | null): Promise<string[]> {
       .limit(300);
     let names = ((siteData ?? []) as Array<{ name: string }>)
       .map((p) => p.name)
-      .filter((n) => /kamp/i.test(n));
+      .filter((n) => /kamp/i.test(n))
+      .filter((n) => !onlyFeed || /\bracao\b/.test(normalizeName(n)));
     if (species) {
       const terms = SPECIES_LABELS[species];
       const filtered = names.filter((n) =>
@@ -790,7 +800,7 @@ export async function routeQuery(
   const hasPriceWord = PRICE_WORD_RE.test(userText);
   // Palavras que caracterizam consulta ao CATÁLOGO (e não uma pergunta técnica).
   const mentionsProdutoWord =
-    /\b(produtos?|cat[aá]logo|itens|mercadorias?|ra[cç][oõ]es?|suplementos?|minerais?|n[uú]cleos?|concentrados?|sal\s+mineral|mineraliza\w*|sku|estoque|verm[ií]fug\w*|carrapaticidas?|vacinas?)\b/i.test(
+    /\b(produtos?|cat[aá]logo|itens|mercadorias?|ra[cç](?:[aã]o|[oõ]es)|suplementos?|minerais?|n[uú]cleos?|concentrados?|sal\s+mineral|mineraliza\w*|sku|estoque|verm[ií]fug\w*|carrapaticidas?|vacinas?)\b/i.test(
       userText,
     );
   const marketQuoteIntent =
@@ -798,12 +808,38 @@ export async function routeQuery(
       userText,
     );
 
+  // Um produto identificado tem prioridade sobre listas genéricas e contexto
+  // de cotações de turnos anteriores.
+  const { exact, ambiguous } =
+    hasSellerWord || hasUnitWord
+      ? { exact: null, ambiguous: null }
+      : await findProductByName(userText);
+  if (ambiguous) {
+    const opts = ambiguous.candidates.map((c) => `- **${c.official_name}**`).join("\n");
+    return {
+      kind: "structural",
+      text: `Encontrei mais de um produto que pode se encaixar. A qual deles você se refere?\n\n${opts}`,
+    };
+  }
+  if (exact) return { kind: "passthrough", productHint: exact };
+
+  // Uma pergunta explícita de catálogo não é continuação de uma cotação,
+  // mesmo quando contém espécie, peso ou UF (ex.: "rações para bovinos em SP").
+  const catalogRequest =
+    !marketQuoteIntent && (mentionsProdutoWord || /\bdukamp\b/i.test(userText));
+
   // ---- Cotações pecuárias (base própria, cascata cidade→praça→região→UF) ----
-  const livestockResult = await import("@/lib/market/livestock.server")
-    .then((m) =>
-      m.livestockMarketAnswer(userText, conversation.history ?? [], conversation.livestock ?? null),
-    )
-    .catch(() => null);
+  const livestockResult = catalogRequest
+    ? null
+    : await import("@/lib/market/livestock.server")
+        .then((m) =>
+          m.livestockMarketAnswer(
+            userText,
+            conversation.history ?? [],
+            conversation.livestock ?? null,
+          ),
+        )
+        .catch(() => null);
   if (livestockResult) {
     return {
       kind: "passthrough",
@@ -1075,12 +1111,16 @@ export async function routeQuery(
     mentionsProdutoWord &&
     !marketQuoteIntent
   ) {
-    const items = await listActive(species);
+    const onlyFeed = /\bra[cç](?:[aã]o|[oõ]es)\b/i.test(userText);
+    const items = await listActive(species, onlyFeed);
     if (items.length === 0) return { kind: "structural", text: "Nenhum produto ativo encontrado." };
     // Filtro por finalidade/categoria citada na pergunta ("para bezerros",
     // "para vaca de leite"): evita despejar o catálogo inteiro.
     const filtered = filterCatalogByPurpose(items, userText);
-    const list = filtered.matched.length > 0 ? filtered.matched : items;
+    const list = (filtered.matched.length > 0 ? filtered.matched : items).sort(
+      (a, b) =>
+        Number(/dukamp/i.test(b)) - Number(/dukamp/i.test(a)) || a.localeCompare(b, "pt-BR"),
+    );
     const shown = list.slice(0, 40);
     const bullets = shown.map((n: string) => `- ${n}`).join("\n");
     const more =
@@ -1088,7 +1128,7 @@ export async function routeQuery(
     const header =
       filtered.matched.length > 0
         ? `Produtos DuKamp relacionados a **${filtered.label}**:`
-        : `Produtos ativos${species ? ` (${species === "ovinos_caprinos" ? "ovinos e caprinos" : species})` : ""}:`;
+        : `${onlyFeed ? "Rações cadastradas" : "Produtos ativos"}${species ? ` (${species === "ovinos_caprinos" ? "ovinos e caprinos" : species})` : ""}:`;
     const note =
       filtered.matched.length === 0 && filtered.label
         ? `\n\n_(não achei itens com o termo "${filtered.label}" no nome; segue a lista geral)_`
@@ -1098,17 +1138,6 @@ export async function routeQuery(
       text: `${header}\n\n${bullets}${more}${note}`,
     };
   }
-
-  // Name-based routing (local fichas técnicas)
-  const { exact, ambiguous } = await findProductByName(userText);
-  if (ambiguous) {
-    const opts = ambiguous.candidates.map((c) => `- **${c.official_name}**`).join("\n");
-    return {
-      kind: "structural",
-      text: `Encontrei mais de um produto que pode se encaixar. A qual deles você se refere?\n\n${opts}`,
-    };
-  }
-  if (exact) return { kind: "passthrough", productHint: exact };
 
   // Site product name fallback (when local fichas are empty).
   // Only trigger when the user shows explicit product/commercial intent — otherwise
@@ -1153,9 +1182,11 @@ export function productContextBlock(
   p: ProductMention["product"],
   options: ProductContextBlockOptions = {},
 ): string {
-  const rows: string[] = [`FICHA OFICIAL DO PRODUTO **${p.official_name}**`];
+  const rows: string[] = [
+    `FICHA OFICIAL DO PRODUTO **${sanitizeRetrievedContent(p.official_name, 200)}**`,
+  ];
   const push = (label: string, v: string | null) => {
-    if (v && v.trim()) rows.push(`- ${label}: ${v.trim()}`);
+    if (v && v.trim()) rows.push(`- ${label}: ${sanitizeRetrievedContent(v, 12_000)}`);
   };
   push("Espécie", p.species);
   push("Categoria", p.category);

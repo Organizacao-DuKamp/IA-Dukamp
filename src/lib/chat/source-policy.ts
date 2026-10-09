@@ -1,5 +1,11 @@
 export type EvidenceSource = "catalog" | "site" | "market" | "knowledge";
 
+export function catalogResponseDirective(productName?: string): string {
+  return productName
+    ? `PRODUTO IDENTIFICADO NO CATÁLOGO OFICIAL: ${productName}. Responda diretamente sobre esse produto com os fatos da ficha recuperada. Quando o pedido for de informações, apresente nome, finalidade/indicação, embalagem e os dados técnicos e de uso disponíveis, incluindo limites e adaptação informados na ficha. Não diga que falta ficha, indicação, consumo ou garantias quando esses dados estiverem no contexto e não peça foto do rótulo para repetir informações já confirmadas. Uma lacuna em um campo não invalida os demais dados. Não adapte a indicação da ficha ao assunto anterior: se a ficha indicar seca e o histórico mencionar águas, preserve a indicação oficial e explique a diferença. Preço e estoque exigem consulta comercial atual. Se o usuário pediu apenas preço, responda esse pedido sem despejar a ficha inteira.`
+    : "CATÁLOGO OFICIAL RECUPERADO: ao pedir quais produtos ou rações existem, o usuário quer os nomes reais dos itens cadastrados. Use a lista recuperada, priorize os produtos DuKamp e preserve a categoria solicitada. Não substitua nomes por tipos genéricos de alimentação nem exija dados do lote para mostrar o catálogo. Dados do lote só são necessários para recomendar uma opção adequada.";
+}
+
 export interface EvidenceAssessment {
   sources: EvidenceSource[];
   hasInternalEvidence: boolean;
