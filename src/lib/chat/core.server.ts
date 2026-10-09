@@ -18,7 +18,7 @@ import {
 import { researchChatGPT } from "./perplexity.server";
 import { checkRateLimit } from "./rate-limit.server";
 import { productContextBlock, routeQuery } from "./query-router.server";
-import { assessEvidence, sourceDirective } from "./source-policy";
+import { assessEvidence, catalogResponseDirective, sourceDirective } from "./source-policy";
 import { classifyDomainIntent } from "./intent";
 import { isConversationalTurn } from "./model-router";
 import { stripUnmappedCitations, validateGrounding } from "./response-validation";
@@ -394,6 +394,7 @@ async function runTurn(
   let hasCatalogEvidence = false;
   let hasSiteEvidence = false;
   let hasMarketEvidence = false;
+  let catalogPolicy: string | null = null;
   let needsExternalProductFallback = false;
   const requiresCurrentMarketSearch =
     routed.kind === "passthrough" &&
@@ -440,6 +441,7 @@ async function runTurn(
       hasSiteEvidence = true;
     } else {
       hasCatalogEvidence = true;
+      catalogPolicy = catalogResponseDirective();
     }
   }
   if (routed.kind !== "structural" && routed.marketContext) {
@@ -455,6 +457,12 @@ async function runTurn(
     );
     retrieved.push("produto");
     hasCatalogEvidence = true;
+    catalogPolicy = catalogResponseDirective(
+      sanitizeRetrievedContent(routed.productHint.product.official_name, 200),
+    );
+  }
+  if (hasCatalogEvidence && domainIntent.intent === "product") {
+    state.current_topic = "produtos DuKamp";
   }
 
   // Para busca de site/RAG, não precisamos enviar a pergunta duas vezes. O
@@ -552,6 +560,7 @@ async function runTurn(
     conversationalOnly ||
     weatherLocationRequired ||
     routed.kind === "structural" ||
+    (routed.kind === "passthrough" && !!routed.productHint && domainIntent.intent === "product") ||
     (domainIntent.intent === "internal_price" && !asksForTechnicalProductDetails(text)) ||
     (analysis.isShort &&
       (analysis.intent === "resposta_a_confirmacao" ||
@@ -688,9 +697,10 @@ async function runTurn(
       : weatherLocationRequired
         ? "CLIMA SEM LOCALIZAÇÃO: não use Web Search neste turno. Peça somente a localização necessária para consultar a previsão corretamente."
         : sourceDirective(evidence);
-    const sourcePolicy = weatherLocation
+    const turnSourcePolicy = weatherLocation
       ? `${baseSourcePolicy}\n${weatherSourceDirective(weatherLocation)}`
       : baseSourcePolicy;
+    const sourcePolicy = [turnSourcePolicy, catalogPolicy].filter(Boolean).join("\n\n");
     const modelContext = contextParts.length > 0 ? contextParts.join("\n\n") : null;
     const modelKind = chatModelKindForChannel(input.channel);
     const promptTelemetry = {

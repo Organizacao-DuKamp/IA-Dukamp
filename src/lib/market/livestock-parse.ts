@@ -57,7 +57,7 @@ export function hasPriceIntent(text: string): boolean {
 }
 
 const UF_RE =
-  /\b(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/;
+  /(?<![\p{L}\p{N}])(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)(?![\p{L}\p{N}])/u;
 
 const UF_NAMES: Record<string, string> = {
   "sao paulo": "SP",
@@ -81,7 +81,8 @@ const UF_NAMES: Record<string, string> = {
 export function detectUf(text: string, places: LivestockPlaceRow[]): string | null {
   const upper = text.toUpperCase();
   const m = upper.match(UF_RE);
-  // evita casar "SP" dentro de outra palavra já tratado pelo \b
+  // \b só reconhece letras ASCII: "rações" e "informações" casavam como ES.
+  // As bordas precisam considerar todas as letras Unicode.
   if (m) return m[1];
   const low = norm(text);
   for (const [name, uf] of Object.entries(UF_NAMES)) {

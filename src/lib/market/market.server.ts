@@ -117,7 +117,7 @@ export function detectMarketTargets(text: string): MarketTarget[] {
 }
 
 const UF_RE =
-  /\b(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/;
+  /(?<![\p{L}\p{N}])(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)(?![\p{L}\p{N}])/u;
 export function detectState(text: string): string | null {
   const m = text.toUpperCase().match(UF_RE);
   if (m) return m[1];

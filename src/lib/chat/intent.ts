@@ -116,7 +116,7 @@ const rules: Array<[IntentClassification["intent"], RegExp, boolean, boolean]> =
   ],
   [
     "product",
-    /\b(produtos?|cat[aá]logo|dukamp|ficha(?:\s+t[eé]cnica)?|composi[cç][aã]o|garantia)\b|\b(?:quais|liste|lista|mostre|voc[eê]s\s+t[eê]m|vendem?)\b.{0,50}\b(suplementos?|ra[cç][oõ]es?|minerais?|proteinados?)\b/i,
+    /\b(produtos?|cat[aá]logo|dukamp|ficha(?:\s+t[eé]cnica)?|composi[cç][aã]o|garantia)\b|\b(?:quais|liste|lista|mostre|ver|voc[eê]s\s+t[eê]m|vendem?)\b.{0,50}\b(suplementos?|ra[cç](?:[aã]o|[oõ]es)|minerais?|proteinados?)\b|\b(suplementos?|ra[cç](?:[aã]o|[oõ]es)|minerais?|proteinados?)\b.{0,50}\b(quais|t[eê]m|vendem?)\b/i,
     true,
     false,
   ],

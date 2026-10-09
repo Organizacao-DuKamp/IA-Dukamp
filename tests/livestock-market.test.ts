@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   parseLivestockQueryWithContext,
+  detectUf,
   type LivestockCategoryRow,
   type LivestockPlaceRow,
 } from "../src/lib/market/livestock-parse.ts";
@@ -10,7 +11,11 @@ import {
   selectLivestockCandidate,
 } from "../src/lib/market/livestock-ranking.ts";
 import { assessEvidence, sourceDirective } from "../src/lib/chat/source-policy.ts";
-import { isCurrentMarketQuote, marketQuoteAgeDays } from "../src/lib/market/market.server.ts";
+import {
+  detectState,
+  isCurrentMarketQuote,
+  marketQuoteAgeDays,
+} from "../src/lib/market/market.server.ts";
 
 const categories: LivestockCategoryRow[] = [
   "boi-gordo",
@@ -39,6 +44,32 @@ const places: LivestockPlaceRow[] = [
     apelidos: ["capital paulista"],
   },
 ];
+
+for (const question of [
+  "Você tem informações do dukamp proteico supremo?",
+  "So quero ver as rações, quais tem?",
+  "Quais opções vocês têm?",
+  "Quais as condições?",
+]) {
+  test(`Unicode words do not fabricate ES or reactivate previous livestock quotes: ${question}`, () => {
+    assert.equal(detectUf(question, places), null);
+    assert.equal(detectState(question), null);
+    assert.equal(
+      parseLivestockQueryWithContext(question, categories, places, {
+        previous: { categorySlug: "boi-gordo", uf: "SP", unit: "@" },
+      }),
+      null,
+    );
+  });
+}
+
+test("standalone state abbreviations still work with punctuation and accented neighbours", () => {
+  for (const question of ["cotação em ES?", "e em (ES)?", "Espírito Santo/ES", "e em MG?"]) {
+    const expected = question.includes("MG") ? "MG" : "ES";
+    assert.equal(detectUf(question, places), expected);
+    assert.equal(detectState(question), expected);
+  }
+});
 
 test("fresh statewide quote wins over a month-old exact-city quote", () => {
   const selected = selectLivestockCandidate([
