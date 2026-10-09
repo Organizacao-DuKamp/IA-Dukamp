@@ -437,9 +437,7 @@ function LandingPage() {
       <section className="poster poster-hero" id="inicio">
         <div className="poster-swoosh" aria-hidden="true" />
         <div className="hero-copy reference-copy">
-          <span className="reference-kicker">
-            TPEC - IA da pecuária
-          </span>
+          <span className="reference-kicker">TPEC - IA da pecuária</span>
           <h1>
             CAMPO +<br />
             INTELIGÊNCIA

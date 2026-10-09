@@ -9,10 +9,7 @@ export default async (request: Request): Promise<Response> => {
     return new Response("Follow-up not configured", { status: 503 });
   }
 
-  const backgroundUrl = new URL(
-    "/.netlify/functions/whatsapp-followup-background",
-    request.url,
-  );
+  const backgroundUrl = new URL("/.netlify/functions/whatsapp-followup-background", request.url);
 
   try {
     const response = await fetch(backgroundUrl, {

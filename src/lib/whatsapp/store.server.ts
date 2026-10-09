@@ -149,17 +149,19 @@ export async function claimWhatsAppMessage(
   requestPayload?: WhatsAppChatInput,
 ): Promise<WhatsAppMessageClaim> {
   const now = new Date().toISOString();
-  const { error: insertError } = await db().from("whatsapp_processed_messages").insert({
-    message_id: messageId,
-    phone_number: phone,
-    status: "processing",
-    reply: null,
-    delivered_at: null,
-    request_payload: requestPayload ?? null,
-    retry_count: 0,
-    last_error: null,
-    updated_at: now,
-  });
+  const { error: insertError } = await db()
+    .from("whatsapp_processed_messages")
+    .insert({
+      message_id: messageId,
+      phone_number: phone,
+      status: "processing",
+      reply: null,
+      delivered_at: null,
+      request_payload: requestPayload ?? null,
+      retry_count: 0,
+      last_error: null,
+      updated_at: now,
+    });
 
   if (!insertError) return { kind: "claimed" };
   if (insertError.code !== "23505") {
@@ -259,7 +261,10 @@ export async function claimStaleWhatsAppMessages(
   }));
 }
 
-export async function markWhatsAppRetryError(messageId: string, errorMessage: string): Promise<void> {
+export async function markWhatsAppRetryError(
+  messageId: string,
+  errorMessage: string,
+): Promise<void> {
   const { error } = await db()
     .from("whatsapp_processed_messages")
     .update({
