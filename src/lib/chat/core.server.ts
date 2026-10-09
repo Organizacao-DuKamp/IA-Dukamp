@@ -794,7 +794,7 @@ async function runTurn(
         }
       }
     }
-    reply = formatReplyForUser(reply, text, { preserveSourceLinks: animalRegistry.active });
+    reply = formatReplyForUser(reply, text);
 
     let grounding = validateGrounding(reply, {
       commercial: hasCatalogEvidence || hasSiteEvidence || hasMarketEvidence,
@@ -860,7 +860,7 @@ async function runTurn(
       });
     }
 
-    reply = formatReplyForUser(reply, text, { preserveSourceLinks: animalRegistry.active });
+    reply = formatReplyForUser(reply, text);
 
     const finalState = applyAssistantTurn(
       state,

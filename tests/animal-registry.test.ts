@@ -172,15 +172,15 @@ test("ausência pública oferece certificado e não afirma inexistência", () =>
   assert.doesNotMatch(reply, /Mufla|Tabapuã/);
 });
 
-test("WhatsApp conserva link de evidência mesmo sem pedido explícito de fontes", () => {
-  const reply = formatReplyForUser(
-    `${identified}\nFontes consultadas:\n- [Criatório](${source})`,
-    "GTRT 2551",
-    { preserveSourceLinks: true },
-  );
-  assert.match(reply, /Mufla/);
-  assert.ok(reply.includes(source));
-  assert.ok(!formatReplyForUser(`${identified} ${source}`, "GTRT 2551").includes(source));
+test("WhatsApp verifica evidência internamente e só mostra fontes quando solicitadas", () => {
+  const rawReply = `${identified}\nFontes consultadas:\n- [Criatório](${source})`;
+  assert.deepEqual(validateAnimalRegistryReply(rawReply, animal, [source]), []);
+  const reply = formatReplyForUser(rawReply, "GTRT 2551");
+  assert.equal(reply, identified);
+  assert.doesNotMatch(reply, /Fontes|https?:\/\//);
+  const requestedReply = formatReplyForUser(rawReply, "GTRT 2551, mostre as fontes");
+  assert.ok(requestedReply.includes(source));
+  assert.match(requestedReply, /Fontes:/);
 });
 
 test("fluxo OpenAI exige web e conserva anotações reais, sem aceitar URL inventada", async () => {

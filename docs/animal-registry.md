@@ -19,8 +19,9 @@ raça, sexo e categoria. Continuações de raça, sexo, nome e genealogia preser
 o registro sem pesquisar catálogo nem herdar o alvo em outro assunto.
 
 Identificações afirmativas devem conservar o código e pelo menos um link
-retornado nas citações do provedor. A formatação do WhatsApp conserva essas
-fontes. O guard valida formato/atribuição; a interpretação do conteúdo da fonte
+retornado nas citações do provedor para validação interna antes da formatação.
+A resposta ao usuário só mostra fontes quando solicitadas explicitamente.
+O guard valida formato/atribuição; a interpretação do conteúdo da fonte
 continua sendo responsabilidade do modelo, não uma verificação independente
 de todo o registro. Há uma correção limitada e resposta segura se persistir
 ambiguidade/falta de fonte ou ocorrer indisponibilidade.
