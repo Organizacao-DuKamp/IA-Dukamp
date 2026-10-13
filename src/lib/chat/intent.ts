@@ -74,6 +74,12 @@ const rules: Array<[IntentClassification["intent"], RegExp, boolean, boolean]> =
   ],
   [
     "current_research",
+    /\b(?:perspectiva|perpectiva|expectativa|cen[aá]rio|tend[eê]ncia|proje[cç][aã]o|mercado)\b.{0,100}\b(?:boi|gado|bovin\w*|arroba)\b|\b(?:boi|gado|bovin\w*|arroba)\b.{0,100}\b(?:perspectiva|perpectiva|expectativa|cen[aá]rio|tend[eê]ncia|proje[cç][aã]o|mercado)\b/i,
+    false,
+    true,
+  ],
+  [
+    "current_research",
     /\b(mercado|cen[aá]rio|setor|panorama|tend[eê]ncia)\b.{0,100}\b(carnes?|carne bovina|prote[ií]na animal|pecu[aá]ria|bovinos?|su[ií]nos?|frango|aves?|leite|soja|milho|gr[aã]os?)\b|\b(carnes?|carne bovina|prote[ií]na animal|pecu[aá]ria|bovinos?|su[ií]nos?|frango|aves?|leite|soja|milho|gr[aã]os?)\b.{0,100}\b(mercado|cen[aá]rio|setor|panorama|tend[eê]ncia)\b/i,
     false,
     true,

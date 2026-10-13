@@ -50,7 +50,7 @@ export type AIAnalyticsTurn = {
   client_message_id: string | null;
   user_text: string;
   assistant_text: string | null;
-  status: "completed" | "error";
+  status: "pending" | "completed" | "error";
   error_code: string | null;
   error_message: string | null;
   model: string | null;
@@ -210,7 +210,8 @@ function normalizeTurn(value: unknown): AIAnalyticsTurn {
   const channel = row.channel === "whatsapp" ? "whatsapp" : "web";
   const depth =
     row.research_depth === "high" || row.research_depth === "medium" ? row.research_depth : "none";
-  const status = row.status === "error" ? "error" : "completed";
+  const status =
+    row.status === "pending" ? "pending" : row.status === "error" ? "error" : "completed";
   return {
     id: String(row.id ?? ""),
     conversation_id: String(row.conversation_id ?? ""),

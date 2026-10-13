@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { supabaseAdmin } from "../../integrations/supabase/client.server.ts";
+import { createHash } from "node:crypto";
 import { logDiagnostic } from "./diagnostics.server.ts";
 import {
   aggregateAIUsage,
@@ -20,7 +21,7 @@ export interface AIChatTurnTelemetryInput {
   clientMessageId?: string;
   userText: string;
   assistantText?: string | null;
-  status: "completed" | "error";
+  status: "pending" | "completed" | "error";
   error?: unknown;
   diagnostics?: unknown;
   usageEvents?: AIUsageEvent[];
@@ -30,6 +31,11 @@ export interface AIChatTurnTelemetryInput {
 
 const VALID_RESPONSE_MODES = new Set(["standard", "quick", "knowledge", "deep_research", "mixed"]);
 let unavailableLogged = false;
+
+export function whatsAppTurnId(messageId: string): string {
+  const hex = createHash("sha256").update(`tpec-whatsapp:${messageId}`).digest("hex");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-5${hex.slice(13, 16)}-a${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
+}
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" ? (value as Record<string, unknown>) : {};
@@ -242,6 +248,9 @@ export async function recordAIChatTurn(input: AIChatTurnTelemetryInput): Promise
   const completedAt = input.status === "completed" ? new Date().toISOString() : null;
 
   const row = {
+    ...(channel === "whatsapp" && input.clientMessageId
+      ? { id: whatsAppTurnId(input.clientMessageId) }
+      : {}),
     conversation_id: input.conversationId.slice(0, 128),
     user_key: userKey,
     phone_number: phoneForUserKey(userKey, channel),
@@ -290,7 +299,10 @@ export async function recordAIChatTurn(input: AIChatTurnTelemetryInput): Promise
 
   try {
     const db = supabaseAdmin as any;
-    const { error } = await db.from("ai_chat_turns").insert(row);
+    const table = db.from("ai_chat_turns");
+    const { error } = row.id
+      ? await table.upsert(row, { onConflict: "id", ignoreDuplicates: input.status === "pending" })
+      : await table.insert(row);
     if (error) {
       logDiagnostic("error", "chat.analytics.persist_error", {
         provider: "supabase",

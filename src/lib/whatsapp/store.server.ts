@@ -261,6 +261,18 @@ export async function claimStaleWhatsAppMessages(
   }));
 }
 
+export async function claimPendingWhatsAppDeliveries(
+  limit = 5,
+): Promise<Array<{ messageId: string; phoneNumber: string; reply: string }>> {
+  const { data, error } = await db().rpc("claim_pending_whatsapp_deliveries", { p_limit: limit });
+  if (error) throw new Error(`whatsapp_pending_delivery_claim_failed:${error.code ?? "unknown"}`);
+  return (data ?? []).map((row: { message_id: string; phone_number: string; reply: string }) => ({
+    messageId: row.message_id,
+    phoneNumber: row.phone_number,
+    reply: row.reply,
+  }));
+}
+
 export async function markWhatsAppRetryError(
   messageId: string,
   errorMessage: string,

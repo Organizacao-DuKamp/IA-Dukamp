@@ -904,7 +904,11 @@ function AdminAIAnalytics() {
                                 : "bg-destructive/10 text-destructive"
                             }
                           >
-                            {turn.status === "completed" ? "concluída" : "erro"}
+                            {turn.status === "pending"
+                              ? "em processamento"
+                              : turn.status === "completed"
+                                ? "concluída"
+                                : "erro"}
                           </TurnBadge>
                         </div>
                       </div>
@@ -925,7 +929,9 @@ function AdminAIAnalytics() {
                           <p className="whitespace-pre-wrap break-words text-sm">
                             {turn.assistant_text ||
                               turn.error_message ||
-                              "Sem resposta registrada."}
+                              (turn.status === "pending"
+                                ? "Pergunta recebida; resposta em processamento."
+                                : "Sem resposta registrada.")}
                           </p>
                         </div>
                       </div>

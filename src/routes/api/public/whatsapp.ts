@@ -39,7 +39,7 @@ export function shouldUseWhatsAppBackground(env: EnvLike = process.env): boolean
 
   // Netlify injeta NETLIFY/CONTEXT no ambiente de deploy. Em desenvolvimento
   // local mantemos o handler síncrono para não exigir uma Function separada.
-  return env.NETLIFY === "true" || Boolean(env.CONTEXT?.trim());
+  return env.NODE_ENV === "production" || env.NETLIFY === "true" || Boolean(env.CONTEXT?.trim());
 }
 
 async function handleDirect(request: Request): Promise<Response> {

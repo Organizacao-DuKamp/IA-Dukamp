@@ -1,6 +1,8 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 import { controlWhatsAppMessage, dispatchClaimedWhatsAppChat } from "./backend.server.ts";
+import { answerWhatsAppEmergency } from "./emergency-answer.server.ts";
+import { recordAIChatTurn } from "../chat/analytics.server.ts";
 import {
   buildWhatsAppProgressPlan,
   emptyWhatsAppReply,
@@ -30,6 +32,7 @@ export interface EnhancedWhatsAppHttpDependencies {
   dispatchChat?: (input: WhatsAppChatInput) => Promise<WhatsAppChatResult>;
   controlMessage?: (request: WhatsAppControlRequest) => Promise<WhatsAppControlResult>;
   sleepImpl?: (ms: number) => Promise<void>;
+  emergencyAnswer?: typeof answerWhatsAppEmergency;
 }
 
 type IncomingWhatsAppMessage = WhatsAppChatInput & { phoneNumberId: string };
@@ -296,6 +299,7 @@ async function sendWhatsAppText(
           text: { preview_url: false, body: chunk },
         }),
         redirect: "error",
+        signal: AbortSignal.timeout(10_000),
       },
     );
     if (!response.ok) throw new Error(`whatsapp_send_failed:${response.status}`);
@@ -574,7 +578,21 @@ export async function handleEnhancedWhatsAppWebhookRequest(
       console.error(
         `[whatsapp] claimed processing failed duration_ms=${Date.now() - started} ${errorDetails(error)}`,
       );
-      const failure = friendlyWhatsAppError(error);
+      const failure = message.media
+        ? friendlyWhatsAppError(error)
+        : await (dependencies.emergencyAnswer ?? answerWhatsAppEmergency)(message.text, error);
+      await recordAIChatTurn({
+        channel: "whatsapp",
+        sessionId: `wa:${message.phone}`,
+        conversationId: `wa:${message.phone}`,
+        clientMessageId: message.messageId,
+        userText: message.text,
+        assistantText: failure,
+        status: "error",
+        error,
+        startedAt: new Date(started).toISOString(),
+        durationMs: Date.now() - started,
+      });
       try {
         await control({ action: "complete", messageId: message.messageId, reply: failure });
         await deliverPendingReply(message, failure, control, env, fetchImpl, sleepImpl);
