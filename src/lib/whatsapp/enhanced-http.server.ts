@@ -33,6 +33,7 @@ export interface EnhancedWhatsAppHttpDependencies {
   controlMessage?: (request: WhatsAppControlRequest) => Promise<WhatsAppControlResult>;
   sleepImpl?: (ms: number) => Promise<void>;
   emergencyAnswer?: typeof answerWhatsAppEmergency;
+  recordTurn?: typeof recordAIChatTurn;
 }
 
 type IncomingWhatsAppMessage = WhatsAppChatInput & { phoneNumberId: string };
@@ -581,7 +582,7 @@ export async function handleEnhancedWhatsAppWebhookRequest(
       const failure = message.media
         ? friendlyWhatsAppError(error)
         : await (dependencies.emergencyAnswer ?? answerWhatsAppEmergency)(message.text, error);
-      await recordAIChatTurn({
+      await (dependencies.recordTurn ?? recordAIChatTurn)({
         channel: "whatsapp",
         sessionId: `wa:${message.phone}`,
         conversationId: `wa:${message.phone}`,

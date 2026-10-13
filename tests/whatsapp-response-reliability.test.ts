@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import test from "node:test";
+import test, { before, after } from "node:test";
 import {
   answerWhatsAppEmergency,
   emergencyFallback,
@@ -12,6 +12,14 @@ import { repairMarketAnswer } from "../src/lib/chat/market-response.server.ts";
 import { recoverStaleWhatsAppMessages } from "../src/lib/whatsapp/recovery.server.ts";
 
 const question = "Gostaria de saber a perpectiva do mercado de boi para 2027";
+const originalServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+before(() => {
+  delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+});
+after(() => {
+  if (originalServiceKey === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+  else process.env.SUPABASE_SERVICE_ROLE_KEY = originalServiceKey;
+});
 
 test("validação reutiliza pesquisa inicial sem exigir outra pesquisa e recupera timeout", async () => {
   let recovered = false;
