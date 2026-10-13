@@ -66,6 +66,9 @@ import {
 } from "./types";
 import type { LivestockConversationContext } from "@/lib/market/livestock-parse";
 import { repairMarketAnswer } from "./market-response.server.ts";
+import { resolveProductNeed } from "./product-need.ts";
+import { dukampPriorityDirective, enforceDuKampPriority } from "./dukamp-priority.server.ts";
+import type { SiteProduct } from "../site/site-lookup.server.ts";
 
 function sanitize(text: string): string {
   return (
@@ -298,6 +301,15 @@ async function runTurn(
 
   const analysis = classifyUserIntent(text, stateBefore);
   let domainIntent = classifyDomainIntent(text, history.length > 0);
+  const productNeed = resolveProductNeed(text, history);
+  if (productNeed.active) {
+    domainIntent = {
+      ...domainIntent,
+      intent: "product_recommendation",
+      needs_internal_search: true,
+      needs_web_search: false,
+    };
+  }
   if (animalRegistry.active) {
     domainIntent = {
       ...domainIntent,
@@ -375,6 +387,7 @@ async function runTurn(
     lastUser?.content ?? null,
     lastAssistant?.content ?? null,
   );
+  if (productNeed.active && !productNeed.needsClarification) routerInput = productNeed.query;
   if (weatherLocation) {
     routerInput = weatherDddRegion
       ? `${text}\nReferência meteorológica regional inferida pelo DDD: ${weatherLocation}, Brasil.`.slice(
@@ -385,7 +398,12 @@ async function runTurn(
   }
 
   let routed: Awaited<ReturnType<typeof routeQuery>>;
-  if (conversationalOnly || weatherLocationRequired || animalRegistry.active) {
+  if (
+    conversationalOnly ||
+    weatherLocationRequired ||
+    animalRegistry.active ||
+    productNeed.active
+  ) {
     routed = { kind: "passthrough" as const };
   } else {
     try {
@@ -427,6 +445,8 @@ async function runTurn(
   let hasSiteEvidence = false;
   let hasMarketEvidence = false;
   let needsExternalProductFallback = false;
+  let priorityProducts: SiteProduct[] = [];
+  if (productNeed.needsClarification) contextParts.push(dukampPriorityDirective("clarify"));
   const requiresCurrentMarketSearch =
     routed.kind === "passthrough" &&
     (routed.marketFreshness === "stale" || routed.marketFreshness === "missing");
@@ -495,8 +515,9 @@ async function runTurn(
 
   // Para busca de site/RAG, não precisamos enviar a pergunta duas vezes. O
   // histórico e a pergunta completa continuam no contexto principal do GPT.
-  const lookupText =
-    routerInput.trim() === text.trim()
+  const lookupText = productNeed.active
+    ? productNeed.query
+    : routerInput.trim() === text.trim()
       ? text.slice(0, 1_200)
       : `${routerInput.trim()}\n${text.trim()}`.slice(0, 1_200);
 
@@ -505,6 +526,7 @@ async function runTurn(
     !weatherLocationRequired &&
     !conversationalOnly &&
     !animalRegistry.active &&
+    !productNeed.needsClarification &&
     routed.kind !== "structural"
   ) {
     try {
@@ -520,27 +542,17 @@ async function runTurn(
         retrieved.push(`site-products:${result.status}`);
       }
       if (domainIntent.intent === "product_recommendation") {
-        const liveMatch =
-          lookup.products?.some(
-            (product) =>
-              product.source !== "snapshot" && (product.stock == null || product.stock > 0),
-          ) ?? false;
         const productStatus = commercial.statuses.find((status) =>
           status.startsWith("site-products:"),
         );
-        if (liveMatch) {
-          contextParts.push(
-            "PRIORIDADE DUKAMP: há produto(s) oficial(is), ativo(s) e disponível(is) recuperado(s) do catálogo vivo. Se forem tecnicamente adequados ao objetivo informado, recomende primeiro a melhor opção da DuKamp e explique por quê. Não force uma opção inadequada apenas por ser da DuKamp.",
-          );
+        priorityProducts = lookup.products ?? [];
+        if (priorityProducts.length) {
+          contextParts.push(dukampPriorityDirective("matched", priorityProducts));
           retrieved.push("dukamp:priority-match");
         } else {
-          needsExternalProductFallback = true;
           const confirmedEmpty = productStatus === "site-products:empty_result";
-          contextParts.push(
-            confirmedEmpty
-              ? "FALLBACK COMERCIAL: o catálogo vivo da DuKamp foi consultado e não retornou produto adequado disponível para este objetivo. Pesquise na web uma alternativa externa confiável e deixe claro que ela NÃO é um produto DuKamp."
-              : "FALLBACK COMERCIAL: não foi possível confirmar uma opção adequada no catálogo vivo da DuKamp neste turno. Pesquise na web uma alternativa externa confiável, sem afirmar que a DuKamp não possui o produto e sem apresentar a alternativa como DuKamp.",
-          );
+          needsExternalProductFallback = confirmedEmpty;
+          contextParts.push(dukampPriorityDirective(confirmedEmpty ? "empty" : "unavailable"));
           retrieved.push(confirmedEmpty ? "dukamp:fallback-empty" : "dukamp:fallback-unavailable");
         }
       }
@@ -563,6 +575,7 @@ async function runTurn(
           domainIntent.intent === "product" ||
           asksForTechnicalProductDetails(lookupText));
       const block = siteBlock(lookup, {
+        recommendation: domainIntent.intent === "product_recommendation",
         includeDescriptions,
         includeMedia: hints,
         maxItems:
@@ -573,7 +586,7 @@ async function runTurn(
               : routed.productHint
                 ? 1
                 : 8,
-        maxDescriptionChars: includeDescriptions ? 2_200 : 800,
+        maxDescriptionChars: includeDescriptions ? (productNeed.active ? 3_600 : 2_200) : 800,
       });
       if (block) {
         contextParts.push(block);
@@ -582,10 +595,12 @@ async function runTurn(
       }
     } catch (err) {
       console.error("[site] lookup falhou:", err instanceof Error ? err.message : err);
+      if (productNeed.active) contextParts.push(dukampPriorityDirective("unavailable"));
     }
   }
 
   const skipRag =
+    productNeed.needsClarification ||
     animalRegistry.active ||
     conversationalOnly ||
     weatherLocationRequired ||
@@ -598,7 +613,13 @@ async function runTurn(
   if (!skipRag && !weatherLocation) {
     try {
       const { searchKnowledge } = await import("../rag/search.server");
-      const matches = await searchKnowledge(lookupText, 6);
+      const ragQuery = priorityProducts.length
+        ? `${priorityProducts
+            .slice(0, 2)
+            .map((product) => product.name)
+            .join("; ")}\n${lookupText}`
+        : lookupText;
+      const matches = await searchKnowledge(ragQuery, 6);
       // searchKnowledge já aplica o limiar forte da arquitetura ChatGPT-first.
       if (matches.length > 0) {
         knowledgeScores.push(...matches.map((match) => match.similarity));
@@ -850,6 +871,13 @@ async function runTurn(
     }
 
     reply = formatReplyForUser(reply, text);
+
+    if (priorityProducts.length) {
+      reply = formatReplyForUser(
+        await enforceDuKampPriority(reply, conversation, answerOptions, priorityProducts),
+        text,
+      );
+    }
 
     const finalState = applyAssistantTurn(
       state,
