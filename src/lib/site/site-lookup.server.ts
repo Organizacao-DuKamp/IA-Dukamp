@@ -7,6 +7,7 @@ import { matchSellerRequest } from "./seller-domain.ts";
 import type { IntentClassification } from "../chat/intent.ts";
 import { rankDuKampProductsForNeed } from "./dukamp-product-ranking.ts";
 import { DUKAMP_CATALOG_SNAPSHOT } from "./dukamp-catalog.snapshot.ts";
+import { productTechnicalExcerpt } from "./product-technical-text.ts";
 
 export type SiteQueryStatus =
   | "ok"
@@ -298,10 +299,8 @@ function enrichProductFromSnapshot(product: SiteProduct): SiteProduct {
   if (!snapshot) return { ...product, source: "live" };
   const liveDescription = product.description?.trim() ?? "";
   const snapshotDescription = snapshot.description?.trim() ?? "";
-  const description =
-    snapshotDescription.length > liveDescription.length
-      ? snapshotDescription
-      : liveDescription || null;
+  // Uma cópia antiga mais longa não pode substituir o rótulo atual nem suas restrições.
+  const description = liveDescription || snapshotDescription || null;
   const images = [
     ...new Set([...(product.images ?? []), ...(snapshot.images ?? [])].filter(Boolean)),
   ];
@@ -519,13 +518,44 @@ export async function queryRecommendedSiteProducts(
       .from("products")
       .select(PRODUCT_SELECT)
       .eq("active", true)
+      .order("id")
       .limit(500);
     if (response.error && classifyError(response.error).status === "schema_error") {
       response = await client
         .from("products")
         .select(PRODUCT_FALLBACK_SELECT)
         .eq("active", true)
+        .order("id")
         .limit(500);
+    }
+    // Não conclua que a DuKamp não atende tendo lido apenas os primeiros 500 itens.
+    if (!response.error && response.data?.length === 500) {
+      const rows = [...response.data];
+      for (let offset = 500; ; offset += 500) {
+        let page = await client
+          .from("products")
+          .select(PRODUCT_SELECT)
+          .eq("active", true)
+          .order("id")
+          .range(offset, offset + 499);
+        if (page.error && classifyError(page.error).status === "schema_error") {
+          page = await client
+            .from("products")
+            .select(PRODUCT_FALLBACK_SELECT)
+            .eq("active", true)
+            .order("id")
+            .range(offset, offset + 499);
+        }
+        if (page.error) {
+          response = { data: null, error: page.error };
+          break;
+        }
+        rows.push(...(page.data ?? []));
+        if ((page.data?.length ?? 0) < 500) {
+          response = { data: rows, error: null };
+          break;
+        }
+      }
     }
     if (response.error) {
       const snapshot = rankDuKampProductsForNeed(
@@ -575,14 +605,7 @@ export async function queryRecommendedSiteProducts(
       .map(enrichProductFromSnapshot);
     const ranked = rankDuKampProductsForNeed(products, query, limit);
     if (ranked.length) return finish(operation, started, ranked);
-    const snapshot = rankDuKampProductsForNeed(
-      snapshotProducts.map(snapshotToSiteProduct),
-      query,
-      limit,
-    );
-    return snapshot.length
-      ? finishSnapshot(operation, started, snapshot)
-      : finish(operation, started, []);
+    return finish(operation, started, []);
   } catch (error) {
     const snapshot = rankDuKampProductsForNeed(
       snapshotProducts.map(snapshotToSiteProduct),
@@ -778,6 +801,7 @@ function fmtPrice(n: number | null): string {
 }
 
 export interface SiteBlockOptions {
+  recommendation?: boolean;
   /** Inclui descrição técnica somente quando ela ajuda a responder o pedido. */
   includeDescriptions?: boolean;
   /** URLs de mídia só são necessárias quando o usuário pediu imagem/foto. */
@@ -820,7 +844,7 @@ export function siteBlock(look: SiteLookup, options: SiteBlockOptions = {}): str
       ].filter(Boolean);
       const officialDescription = includeDescriptions ? stripHtml(p.description?.trim() ?? "") : "";
       const description = officialDescription
-        ? `\n  descrição oficial: ${officialDescription.slice(0, maxDescriptionChars)}`
+        ? `\n  descrição oficial: ${options.recommendation ? productTechnicalExcerpt(p.description ?? "", maxDescriptionChars) : officialDescription.slice(0, maxDescriptionChars)}`
         : "";
       const images = includeMedia ? (p.images ?? []).filter(Boolean).slice(0, 1) : [];
       const imageLine = images.length ? `\n  imagem oficial: ${images[0]}` : "";

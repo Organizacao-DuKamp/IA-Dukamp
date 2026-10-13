@@ -1,3 +1,5 @@
+import { productPlainText, technicalProductSections } from "./product-technical-text.ts";
+
 export interface RankableDuKampProduct {
   name: string;
   slug?: string | null;
@@ -49,6 +51,21 @@ const STOPWORDS = new Set([
   "produto",
   "produtos",
   "dukamp",
+  "qual",
+  "quais",
+  "que",
+  "marca",
+  "marcas",
+  "indica",
+  "indique",
+  "indicar",
+  "sugere",
+  "sugestao",
+  "recomenda",
+  "recomendar",
+  "melhor",
+  "presciso",
+  "usar",
 ]);
 
 const GOAL_GROUPS: Array<{ trigger: RegExp; terms: string[] }> = [
@@ -79,7 +96,7 @@ const GOAL_GROUPS: Array<{ trigger: RegExp; terms: string[] }> = [
     trigger: /\b(equino|equinos|cavalo|cavalos)\b/,
     terms: ["equino", "equinos", "cavalo", "cavalos"],
   },
-  { trigger: /\b(proteinado|proteico)\b/, terms: ["proteinado", "proteico"] },
+  { trigger: /\b(proteinado|proteico)\b/, terms: ["proteinado", "proteico", "proteica"] },
   { trigger: /\b(mineral|mineralizacao)\b/, terms: ["mineral", "mineralizacao"] },
 ];
 
@@ -96,7 +113,7 @@ function termsForNeed(query: string): string[] {
   const normalized = normalizeDuKampNeed(query);
   const tokens = normalized
     .split(/\s+/)
-    .filter((token) => token.length >= 3 && !STOPWORDS.has(token));
+    .filter((token) => token.length >= 3 && !/^\d+$/.test(token) && !STOPWORDS.has(token));
   const expanded = [...tokens];
   for (const group of GOAL_GROUPS) {
     if (group.trigger.test(normalized)) expanded.push(...group.terms);
@@ -118,6 +135,75 @@ function fieldScore(field: string, term: string, weight: number): number {
   return 0;
 }
 
+export function isOwnDuKampBrand(product: RankableDuKampProduct): boolean {
+  return /\bdukamp\b/.test(normalizeDuKampNeed(`${product.brand ?? ""} ${product.name}`));
+}
+
+const SPECIES = [
+  { key: "bovinos", pattern: /\b(?:bovino\w*|gado|bois?|vaca\w*|nelore|novilh\w*|bezerro\w*)\b/ },
+  { key: "ovinos", pattern: /\b(?:ovino\w*|ovelh\w*|carneiro\w*)\b/ },
+  { key: "caprinos", pattern: /\b(?:caprino\w*|cabra\w*|bode\w*)\b/ },
+  { key: "equinos", pattern: /\b(?:equino\w*|equideo\w*|cavalo\w*|egua\w*|potro\w*)\b/ },
+];
+
+export function isDuKampProductCompatible(product: RankableDuKampProduct, query: string): boolean {
+  const need = normalizeDuKampNeed(query);
+  const name = normalizeDuKampNeed(product.name);
+  const sections = technicalProductSections(product.description ?? "");
+  const description = productPlainText(product.description ?? "");
+  const indication = Object.entries(sections).find(([key]) => key.startsWith("indicacoes"))?.[1];
+  const positive = normalizeDuKampNeed(indication ?? description.split(/\bn[aã]o\b/i)[0]);
+  const nutrition = /\b(?:suplement\w*|proteinado|proteico|racao|mineral|sal|nucleo|concentrado)\b/;
+  if (
+    /\b(?:proteinado|proteico)\b/.test(need) &&
+    !/\b(?:proteinado|proteico|proteica)\b/.test(`${name} ${positive}`)
+  )
+    return false;
+  if (nutrition.test(need) && !nutrition.test(`${name} ${positive}`) && !/proteica/.test(positive))
+    return false;
+  if (!nutrition.test(`${name} ${positive}`) && !/proteica/.test(positive)) return true;
+  const targets = SPECIES.filter((species) => species.pattern.test(need));
+  const label = description
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase();
+  const officialSpecies =
+    label.match(/especie animal a que se destina\s*:\s*([^\n]{1,120})/)?.[1] ?? positive;
+  const indicated = SPECIES.filter((species) => species.pattern.test(officialSpecies));
+  if (
+    targets.length &&
+    indicated.length &&
+    !targets.some((target) => indicated.some((item) => item.key === target.key))
+  )
+    return false;
+  const milkNeed = /\b(?:leite|leiteira\w*|lactacao|lactante)\b/.test(need);
+  if (milkNeed && /bovinos de corte/.test(positive) && !/leiteir|lactacao|leite/.test(positive))
+    return false;
+  {
+    // Use sentenças, sem arrastar a espécie da frase seguinte para uma restrição.
+    const warnings = description
+      .split(/\n|(?<=[.!?])\s+/)
+      .filter((sentence) => /n[aã]o (?:fornecer|usar|utilizar|administrar)/i.test(sentence));
+    if (
+      targets.some((target) =>
+        warnings.some((sentence) => {
+          const warning = normalizeDuKampNeed(sentence);
+          if (target.key === "bovinos" && /leiteir/.test(warning) && !milkNeed) return false;
+          return target.pattern.test(warning);
+        }),
+      )
+    )
+      return false;
+  }
+  const dry = /\b(?:seca|seco|estiagem)\b/.test(need);
+  const rainy = /\b(?:aguas|chuvoso|chuvosa|chuvas)\b/.test(need);
+  const indicatedDry = /\b(?:seca|seco|estiagem)\b/.test(indication ? positive : name);
+  const indicatedRainy = /\b(?:aguas|chuvoso|chuvosa|chuvas)\b/.test(indication ? positive : name);
+  if (dry && !rainy && indicatedRainy && !indicatedDry) return false;
+  if (rainy && !dry && indicatedDry && !indicatedRainy) return false;
+  return true;
+}
+
 export function rankDuKampProductsForNeed<T extends RankableDuKampProduct>(
   products: T[],
   query: string,
@@ -127,7 +213,10 @@ export function rankDuKampProductsForNeed<T extends RankableDuKampProduct>(
   if (!terms.length) return [];
 
   return products
-    .filter((product) => product.stock == null || product.stock > 0)
+    .filter(
+      (product) =>
+        (product.stock == null || product.stock > 0) && isDuKampProductCompatible(product, query),
+    )
     .map((product) => {
       const name = normalizeDuKampNeed(product.name);
       const slug = normalizeDuKampNeed(product.slug ?? "");
@@ -148,11 +237,12 @@ export function rankDuKampProductsForNeed<T extends RankableDuKampProduct>(
       }
       const normalizedQuery = normalizeDuKampNeed(query);
       if (name && normalizedQuery.includes(name)) score += 10;
-      return { product, score, matchedTerms };
+      return { product, score, matchedTerms, ownBrand: isOwnDuKampBrand(product) };
     })
     .filter(({ score, matchedTerms }) => score >= 1.5 && matchedTerms >= 1)
     .sort(
       (a, b) =>
+        Number(b.ownBrand) - Number(a.ownBrand) ||
         b.score - a.score ||
         b.matchedTerms - a.matchedTerms ||
         a.product.name.localeCompare(b.product.name, "pt-BR"),

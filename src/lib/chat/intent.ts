@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { extractWeatherLocation, isWeatherRequest } from "./weather.ts";
 import { extractAnimalRegistrations, isAnimalRegistryRequest } from "./animal-registry.ts";
+import { isProductRecommendationRequest } from "./product-need.ts";
 
 export const IntentSchema = z.object({
   intent: z.enum([
@@ -106,7 +107,7 @@ const rules: Array<[IntentClassification["intent"], RegExp, boolean, boolean]> =
   ],
   [
     "product_recommendation",
-    /\b(recomend\w*|qual produto|qual suplemento|melhor para|indiqu\w*|produto para)\b/i,
+    /\b(recomend\w*|qual produto|qual suplemento|melhor para|indiqu\w*|indica|que marca|qual marca|me sugere|produto para)\b/i,
     true,
     false,
   ],
@@ -149,7 +150,10 @@ export function classifyDomainIntent(text: string, hasHistory = false): IntentCl
       ? (["weather_forecast", /$^/, true, true] as const)
       : productImageFollowUp
         ? (["product", /$^/, true, false] as const)
-        : rules.find(([, pattern]) => pattern.test(normalized));
+        : (rules.find(([, pattern]) => pattern.test(normalized)) ??
+          (isProductRecommendationRequest(normalized)
+            ? (["product_recommendation", /$^/, true, false] as const)
+            : undefined));
   const followUp =
     hasHistory &&
     /^(e\s+)?(qual|quais|quanto|onde|quem|ness[ae]|dele|deles|esse|essa|aquele|aquela)/i.test(
