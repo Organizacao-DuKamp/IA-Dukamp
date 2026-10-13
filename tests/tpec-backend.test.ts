@@ -59,24 +59,55 @@ test("o dispatch não faz chamadas externas", async () => {
 });
 
 test("rota pública preserva status HTTP e serializa o estado opaco", async () => {
-  const response = await handlePublicChatRequest(
-    new Request("https://netlify.example/api/public/chat", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(input),
-    }),
-    localDeps(),
-  );
-  assert.equal(response.status, 200);
-  const body = (await response.json()) as { reply: string; state: string; conversationId: string };
-  assert.equal(body.reply, coreResult.reply);
-  assert.equal(body.conversationId, coreResult.conversationId);
-  assert.deepEqual(JSON.parse(body.state), coreResult.state);
+  const previous = process.env.TPEC_MULTIMODEL_ENABLED;
+  process.env.TPEC_MULTIMODEL_ENABLED = "false";
+  try {
+    const response = await handlePublicChatRequest(
+      new Request("https://netlify.example/api/public/chat", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(input),
+      }),
+      localDeps(),
+    );
+    assert.equal(response.status, 200);
+    const body = (await response.json()) as {
+      reply: string;
+      state: string;
+      conversationId: string;
+    };
+    assert.equal(body.reply, coreResult.reply);
+    assert.equal(body.conversationId, coreResult.conversationId);
+    assert.deepEqual(JSON.parse(body.state), coreResult.state);
+  } finally {
+    if (previous === undefined) delete process.env.TPEC_MULTIMODEL_ENABLED;
+    else process.env.TPEC_MULTIMODEL_ENABLED = previous;
+  }
 });
 
 test("código do navegador não referencia segredos de servidor", async () => {
   const source = await readFile("src/lib/chat/web-adapter.ts", "utf8");
   for (const forbidden of ["SUPABASE_SERVICE_ROLE_KEY", "OPENAI_API_KEY", "PERPLEXITY_API_KEY"]) {
     assert.equal(source.includes(forbidden), false, forbidden);
+  }
+});
+
+test("rota multimodel exige autenticação mesmo com backend de teste", async () => {
+  const previous = process.env.TPEC_MULTIMODEL_ENABLED;
+  process.env.TPEC_MULTIMODEL_ENABLED = "true";
+  try {
+    const response = await handlePublicChatRequest(
+      new Request("https://netlify.example/api/public/chat", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(input),
+      }),
+      localDeps(),
+    );
+    assert.equal(response.status, 401);
+    assert.equal((await response.json()).code, "unauthorized");
+  } finally {
+    if (previous === undefined) delete process.env.TPEC_MULTIMODEL_ENABLED;
+    else process.env.TPEC_MULTIMODEL_ENABLED = previous;
   }
 });
