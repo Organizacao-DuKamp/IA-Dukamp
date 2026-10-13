@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "../../integrations/supabase/client.server.ts";
 import type { WhatsAppChatInput } from "./types.ts";
+import { recordAIChatTurn } from "../chat/analytics.server.ts";
 
 function db() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -12,6 +13,17 @@ function db() {
  * solicitação sem depender de um novo webhook da Meta.
  */
 export async function persistWhatsAppRetryPayload(input: WhatsAppChatInput): Promise<void> {
+  await recordAIChatTurn({
+    channel: "whatsapp",
+    sessionId: `wa:${input.phone}`,
+    conversationId: `wa:${input.phone}`,
+    clientMessageId: input.messageId,
+    userText: input.text,
+    status: "pending",
+    startedAt: new Date().toISOString(),
+    durationMs: 0,
+    usageEvents: [],
+  });
   const { error } = await db()
     .from("whatsapp_processed_messages")
     .update({ request_payload: input })

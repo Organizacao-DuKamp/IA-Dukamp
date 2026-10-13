@@ -31,7 +31,11 @@ export type UserIntent =
 export type ConversationStatus = "idle" | "active";
 
 export type AssistantIntent =
-  "request_confirmation" | "request_data" | "offer_options" | "answer" | "none";
+  | "request_confirmation"
+  | "request_data"
+  | "offer_options"
+  | "answer"
+  | "none";
 
 export interface ConversationSummary {
   user_goal: string;

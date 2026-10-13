@@ -1,7 +1,9 @@
-import { askOpenAI } from "../chat/openai.server.ts";
+import { answerWhatsAppEmergency } from "./emergency-answer.server.ts";
+import { recordAIChatTurn } from "../chat/analytics.server.ts";
 import { dispatchClaimedWhatsAppChat } from "./backend.server.ts";
 import {
   claimStaleWhatsAppMessages,
+  claimPendingWhatsAppDeliveries,
   claimWhatsAppDelivery,
   completeWhatsAppMessage,
   markWhatsAppMessageDelivered,
@@ -14,7 +16,6 @@ import { WhatsAppChatInputSchema, type WhatsAppChatInput } from "./types.ts";
 const MAX_RECOVERY_BATCH = 5;
 const MAX_AUTOMATIC_RETRIES = 3;
 const STALE_AFTER_SECONDS = 105;
-const EMERGENCY_TIMEOUT_MS = 12_000;
 const MAX_OUTBOUND_CHARS = 3500;
 const OUTBOUND_CHUNK_BODY_CHARS = 3450;
 
@@ -100,23 +101,6 @@ async function deliverRecoveredReply(
   await markWhatsAppMessageDelivered(input.messageId, delivery.reply);
 }
 
-async function emergencyAnswer(input: WhatsAppChatInput): Promise<string> {
-  try {
-    return await askOpenAI([{ role: "user", content: input.text }], {
-      model: "luna",
-      channel: "whatsapp",
-      timeoutMs: EMERGENCY_TIMEOUT_MS,
-      researchDepth: "none",
-      maxToolCalls: 0,
-      stage: "whatsapp_durable_rescue",
-      directive:
-        "MODO DE EMERGÊNCIA DO WHATSAPP: responda diretamente à pergunta do usuário em português, de forma útil e curta. Não use internet, não mencione falhas técnicas nem modelos. Se a pergunta depender de informação atual que você não consegue verificar, diga claramente essa limitação, mas ainda responda a parte estável que puder.",
-    });
-  } catch {
-    return "Tive uma instabilidade para processar sua pergunta completa. Sua mensagem não foi ignorada. Por favor, envie a mesma pergunta novamente e eu vou tentar por uma rota alternativa.";
-  }
-}
-
 async function recoverOne(
   row: StaleWhatsAppMessage,
   env: EnvLike,
@@ -152,7 +136,19 @@ async function recoverOne(
 
     // Última barreira contra silêncio: pula RAG, roteamento e demais etapas e
     // tenta uma resposta curta diretamente no modelo econômico da OpenAI.
-    const fallbackReply = await emergencyAnswer(input);
+    const fallbackReply = await answerWhatsAppEmergency(input.text, error);
+    await recordAIChatTurn({
+      channel: "whatsapp",
+      sessionId: `wa:${input.phone}`,
+      conversationId: `wa:${input.phone}`,
+      clientMessageId: input.messageId,
+      userText: input.text,
+      assistantText: fallbackReply,
+      status: "error",
+      error,
+      startedAt: new Date().toISOString(),
+      durationMs: 0,
+    });
     try {
       await completeWhatsAppMessage(input.messageId, fallbackReply);
       await deliverRecoveredReply(input, fallbackReply, env, fetchImpl);
@@ -176,21 +172,53 @@ export interface WhatsAppRecoverySummary {
 }
 
 export async function recoverStaleWhatsAppMessages(
-  dependencies: { env?: EnvLike; fetchImpl?: typeof fetch } = {},
+  dependencies: {
+    env?: EnvLike;
+    fetchImpl?: typeof fetch;
+    claimPending?: typeof claimPendingWhatsAppDeliveries;
+    claimStale?: typeof claimStaleWhatsAppMessages;
+    markDelivered?: typeof markWhatsAppMessageDelivered;
+    releaseDelivery?: typeof releaseWhatsAppDelivery;
+  } = {},
 ): Promise<WhatsAppRecoverySummary> {
   const env = dependencies.env ?? process.env;
   const fetchImpl = dependencies.fetchImpl ?? fetch;
-  const rows = await claimStaleWhatsAppMessages(
+  // O claim já reserva a entrega. Não chamar claimWhatsAppDelivery de novo.
+  const pending = await (dependencies.claimPending ?? claimPendingWhatsAppDeliveries)(
+    MAX_RECOVERY_BATCH,
+  );
+  let delivered = 0;
+  let deliveryFailed = 0;
+  for (const row of pending) {
+    try {
+      await sendWhatsAppText(row.phoneNumber, row.reply, env, fetchImpl);
+    } catch {
+      deliveryFailed++;
+      await (dependencies.releaseDelivery ?? releaseWhatsAppDelivery)(
+        row.messageId,
+        row.reply,
+      ).catch(() => undefined);
+      continue;
+    }
+    // Após aceite da Graph, preserve o lease se o ACK falhar: evita reenvio imediato.
+    try {
+      await (dependencies.markDelivered ?? markWhatsAppMessageDelivered)(row.messageId, row.reply);
+      delivered++;
+    } catch {
+      deliveryFailed++;
+    }
+  }
+  const rows = await (dependencies.claimStale ?? claimStaleWhatsAppMessages)(
     MAX_RECOVERY_BATCH,
     STALE_AFTER_SECONDS,
     MAX_AUTOMATIC_RETRIES,
   );
   const summary: WhatsAppRecoverySummary = {
-    claimed: rows.length,
-    recovered: 0,
+    claimed: rows.length + pending.length,
+    recovered: delivered,
     deferred: 0,
     invalid: 0,
-    failed: 0,
+    failed: deliveryFailed,
   };
 
   for (const row of rows) {

@@ -7,6 +7,8 @@ import type { WhatsAppChatInput, WhatsAppChatResult } from "./types.ts";
 import { multimodelEnabled } from "../ai/config.server.ts";
 import { checkRateLimit } from "../chat/rate-limit.server.ts";
 import { observeWhatsAppInboundForMemory } from "./proactive.server.ts";
+import { answerWhatsAppEmergency } from "./emergency-answer.server.ts";
+import { friendlyWhatsAppError } from "./presence.ts";
 
 const MAX_HISTORY_MESSAGES = 40;
 const MEMORY_CONVERSATION_TTL_MS = 6 * 60 * 60_000;
@@ -70,6 +72,7 @@ export interface WhatsAppConversationDependencies {
   saveConversation?: (phone: string, snapshot: WhatsAppConversationSnapshot) => Promise<void>;
   executeChat?: (input: ChatInput) => Promise<{ status: number; body: unknown }>;
   resolveUserText?: (input: WhatsAppChatInput, history?: ChatMessage[]) => Promise<string>;
+  emergencyAnswer?: typeof answerWhatsAppEmergency;
 }
 
 function cloneSnapshot(snapshot: WhatsAppConversationSnapshot): WhatsAppConversationSnapshot {
@@ -402,6 +405,7 @@ export async function processClaimedWhatsAppChat(
     let conversationId = `wa:${input.phone}`;
     let chatInvoked = false;
     let telemetryRecorded = false;
+    let snapshot: WhatsAppConversationSnapshot | null = null;
 
     try {
       if (input.media && !checkRateLimit(`media:${input.phone}`).ok)
@@ -415,6 +419,7 @@ export async function processClaimedWhatsAppChat(
           })()
         : await Promise.all([deps.loadConversation(input.phone), deps.resolveUserText(input)]);
       userText = resolvedUserText;
+      snapshot = previous;
       conversationId = previous?.conversationId ?? `wa:${input.phone}`;
       try {
         await observeWhatsAppInboundForMemory(input, userText);
@@ -489,22 +494,31 @@ export async function processClaimedWhatsAppChat(
       if (!core.reply.trim()) throw new Error("empty_chat_reply");
       const nextHistory = appendTurn(previous?.history ?? [], userText, core.reply);
 
-      await deps.saveConversation(input.phone, {
-        conversationId: core.conversationId,
-        state: core.state,
-        history: nextHistory,
-      });
+      try {
+        await deps.saveConversation(input.phone, {
+          conversationId: core.conversationId,
+          state: core.state,
+          history: nextHistory,
+        });
+      } catch {
+        console.error("[whatsapp] history persistence failed; preserving generated reply");
+      }
       await deps.completeMessage(input.messageId, core.reply);
 
       return { reply: core.reply, duplicate: false, shouldSend: true };
     } catch (error) {
-      if (!chatInvoked && !telemetryRecorded) {
+      const reply =
+        input.media && !chatInvoked
+          ? friendlyWhatsAppError(error)
+          : await (dependencies.emergencyAnswer ?? answerWhatsAppEmergency)(userText, error);
+      if (!telemetryRecorded) {
         await recordAIChatTurn({
           channel: "whatsapp",
           sessionId: `wa:${input.phone}`,
           conversationId,
           clientMessageId: input.messageId,
           userText,
+          assistantText: reply,
           status: "error",
           error,
           usageEvents: [...usageEvents],
@@ -512,7 +526,17 @@ export async function processClaimedWhatsAppChat(
           durationMs: Date.now() - startedMs,
         });
       }
-      throw error;
+      try {
+        await deps.saveConversation(input.phone, {
+          conversationId,
+          state: snapshot?.state,
+          history: appendTurn(snapshot?.history ?? [], userText, reply),
+        });
+      } catch {
+        console.error("[whatsapp] emergency history persistence failed");
+      }
+      await deps.completeMessage(input.messageId, reply);
+      return { reply, duplicate: false, shouldSend: true };
     }
   });
 }
@@ -534,7 +558,9 @@ export async function processWhatsAppChat(
     return await processClaimedWhatsAppChat(input, dependencies);
   } catch (error) {
     try {
-      await releaseWhatsAppInboundMessage(input.messageId, dependencies);
+      // Preserve payload/lease for the durable watcher; deleting it loses the question.
+      if (stateStoreMode() === "memory")
+        await releaseWhatsAppInboundMessage(input.messageId, dependencies);
     } catch {
       console.error("[whatsapp] failed to release message claim");
     }

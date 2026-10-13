@@ -65,6 +65,7 @@ import {
   type IncomingMessage,
 } from "./types";
 import type { LivestockConversationContext } from "@/lib/market/livestock-parse";
+import { repairMarketAnswer } from "./market-response.server.ts";
 
 function sanitize(text: string): string {
   return (
@@ -806,20 +807,8 @@ async function runTurn(
       (issue) => issue.startsWith("market_price_") || issue === "deferred_current_market_lookup",
     );
     if (marketIssues.length > 0) {
-      reply = await askOpenAI(conversation, {
-        model: modelKind,
-        channel: input.channel,
-        summary: renderSummaryForModel(state.conversation_summary, state),
-        state: renderStateForModel(state),
-        directive,
-        sourcePolicy:
-          `${sourcePolicy}\nCORREÇÃO OBRIGATÓRIA ANTES DE RESPONDER: a tentativa anterior não pode ser enviada porque falhou em: ${marketIssues.join(", ")}. ` +
-          "Use a pesquisa web já habilitada neste turno e entregue a publicação confiável mais recente. Todo preço precisa trazer unidade, praça, data explícita com ano e fonte identificada. Não ofereça pesquisar depois.",
-        context: modelContext,
-        researchDepth: "high",
-        stage: "validation_retry_market",
-        telemetry: promptTelemetry,
-      });
+      reply = await repairMarketAnswer(conversation, answerOptions, reply, marketIssues);
+      retrieved.push("market:validation-repair");
       reply = formatReplyForUser(reply, text);
       grounding = validateGrounding(reply, {
         commercial: hasCatalogEvidence || hasSiteEvidence || hasMarketEvidence,
@@ -1012,7 +1001,11 @@ function chatTelemetryFlags(retrieved: string[]) {
     route_reason:
       [...new Set(chatEvents.map((event) => event.routeReason).filter(Boolean))].join(", ") || null,
     response_mode: (modes.length > 1 ? "mixed" : (modes[0] ?? "standard")) as
-      "standard" | "quick" | "knowledge" | "deep_research" | "mixed",
+      | "standard"
+      | "quick"
+      | "knowledge"
+      | "deep_research"
+      | "mixed",
   };
 }
 

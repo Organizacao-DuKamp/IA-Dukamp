@@ -512,6 +512,8 @@ test("falha do backend vira uma única resposta visível e concluída", async ()
       env,
       fetchImpl: graphCapture(sent),
       controlMessage: lifecycle.control,
+      emergencyAnswer: async (_text, error) => friendlyWhatsAppError(error),
+      recordTurn: async () => {},
       dispatchChat: async () => {
         throw timeout;
       },
