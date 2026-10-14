@@ -3,7 +3,7 @@ import test from "node:test";
 import { findControlledIdentityMatches, type Match } from "../src/lib/rag/search.server.ts";
 import { matchControlledProducts } from "../src/lib/chat/dukamp-control.ts";
 import { dukampSafetySnapshot } from "../src/seed/dukamp-control.ts";
-import type { CatalogEnvelope } from "../src/lib/rag/dukamp-package.ts";
+import { DUKAMP_CATEGORY, type CatalogEnvelope } from "../src/lib/rag/dukamp-package.ts";
 
 const question = "Posso usar Dukamp 60/S nos meus ovinos?";
 const product = matchControlledProducts(question, dukampSafetySnapshot)[0];
@@ -13,7 +13,7 @@ function section(entry: CatalogEnvelope): Match {
     content: "Indicação documental para bovinos; sem liberação operacional.",
     title: entry.product.nome_comercial_documental + " - Indicação e restrições",
     filename: `dukamp_section_${entry.product.produto_id}-${source.source_id}-S01.json`,
-    category: "dukamp_controlled",
+    category: DUKAMP_CATEGORY,
     subcategory: "section",
     similarity: 0,
     metadata: {
@@ -95,9 +95,11 @@ test("hash diferente, identidade errada e registro de apoio não viram evidênci
   wrongProduct.metadata!.dukamp!.produto_id = "P999";
   const support = section(product);
   support.filename = "dukamp_catalog_P039.json";
+  const foreign = section(product);
+  foreign.category = "pecuaria";
   assert.deepEqual(
     await findControlledIdentityMatches(
-      database([wrongHash, wrongProduct, support]),
+      database([wrongHash, wrongProduct, support, foreign]),
       question,
       dukampSafetySnapshot,
     ),

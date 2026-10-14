@@ -6,6 +6,7 @@ import { embeddingProvider, embedQuery, toPgVector } from "./embeddings.server.t
 import { filterControlledMatches, loadDuKampControl } from "../chat/dukamp-control.server.ts";
 import { matchControlledProducts } from "../chat/dukamp-control.ts";
 import type { CatalogEnvelope } from "./dukamp-package.ts";
+import { DUKAMP_CATEGORY } from "./dukamp-package.ts";
 import type { KnowledgeDatabase } from "./dukamp-import.server.ts";
 
 export interface Match {
@@ -50,6 +51,7 @@ export async function findControlledIdentityMatches(
           const meta = row.metadata?.dukamp;
           const source = entry.product.fontes.find((s) => s.source_id === meta?.source_id);
           return (
+            row.category === DUKAMP_CATEGORY &&
             row.filename.startsWith("dukamp_section_") &&
             meta?.produto_id === entry.product.produto_id &&
             !!source &&
