@@ -37,6 +37,8 @@ test("GMD follow-up retains cows, weight and forage from user turns only", () =>
   assert.match(need.query, /350kg/);
   assert.doesNotMatch(need.query, /inventada/);
   assert.equal(assessProducerNeed(text, history).weightKg, 350);
+  assert.equal(assessProducerNeed("Quero GMD de 1,2 kg/dia", history).weightKg, 350);
+  assert.equal(assessProducerNeed("Quero GMD de 1,2 kg", history).weightKg, 350);
   assert.equal(
     resolveProductNeed("Quero GMD de 1,2 kg/dia", [
       { role: "user", content: "mudando de assunto: vai chover?" },

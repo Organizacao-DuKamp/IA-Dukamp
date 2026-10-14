@@ -83,7 +83,16 @@ export function assessProducerNeed(text: string, userHistory: string[] = []): Pr
   const currentSpecies = speciesPatterns.filter(([, p]) => p.test(current)).map(([s]) => s);
   const ageMatches = [...numericalContext.matchAll(/\b(\d+(?:[.,]\d+)?)\s*(mes(?:es)?|anos?)\b/g)];
   const age = ageMatches.at(-1);
-  const weights = [...numericalContext.matchAll(/\b(\d+(?:[.,]\d+)?)\s*(?:kg|quilos)\b/g)];
+  const weights = [...numericalContext.matchAll(/\b(\d+(?:[.,]\d+)?)\s*(?:kg|quilos)\b/g)].filter(
+    (match) => {
+      const after = numericalContext.slice(match.index! + match[0].length);
+      const before = numericalContext.slice(Math.max(0, match.index! - 45), match.index!);
+      return (
+        !/^\s*(?:\/\s*(?:cab|dia)|por\s+(?:cabeca|dia))/.test(after) &&
+        !/\b(?:gmd|ganho medio diario)\s*(?:de|:)?\s*$/.test(before)
+      );
+    },
+  );
   const clinical =
     /intoxic|tremor|convuls|espumando|caindo|nao consegue levantar|morrendo|comeu.*(?:racao|ureia|produto)|ingeriu/.test(
       current,
