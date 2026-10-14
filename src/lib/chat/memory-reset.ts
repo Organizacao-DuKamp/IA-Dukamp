@@ -60,7 +60,10 @@ export function prepareWebMemory(input: ChatInput): ChatInput {
     ...input,
     history: marker?.history ?? [],
     state: marker ? objectState(input.state) : undefined,
-    conversationId: marker ? input.conversationId : crypto.randomUUID(),
+    // A retry of the first request must keep the same idempotency namespace.
+    conversationId: marker
+      ? input.conversationId
+      : `${(input.conversationId || input.sessionId).slice(-28)}:${USER_MEMORY_EPOCH}`,
   };
 }
 export function currentMemoryInboxText(value: string): string | null {

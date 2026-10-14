@@ -27,6 +27,11 @@ test("primeiro pedido descarta histórico, resumo, fatos confirmados e identidad
   assert.notEqual(clean.conversationId, legacy.conversationId);
   assert.equal(clean.text, "Olá");
 });
+test("retry da primeira mensagem conserva o identificador da nova geração", () => {
+  const request = { ...legacy, clientMessageId: "same-message" };
+  assert.equal(prepareWebMemory(request).conversationId, prepareWebMemory(request).conversationId);
+  assert.notEqual(prepareWebMemory(request).conversationId, legacy.conversationId);
+});
 test("aba antiga não reintroduz o prefixo antigo nem quando sua janela de histórico desliza", () => {
   const history = [
     { role: "user" as const, content: "Agora tenho 5 bezerros" },
