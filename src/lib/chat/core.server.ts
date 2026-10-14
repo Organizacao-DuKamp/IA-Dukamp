@@ -67,6 +67,8 @@ import {
 import type { LivestockConversationContext } from "@/lib/market/livestock-parse";
 import { repairMarketAnswer } from "./market-response.server.ts";
 import { resolveProductNeed } from "./product-need.ts";
+import { resolveControlledTurn, enforceControlledReply } from "./dukamp-control.server.ts";
+import { approvedProductContext } from "./dukamp-control.ts";
 import { dukampPriorityDirective, enforceDuKampPriority } from "./dukamp-priority.server.ts";
 import type { SiteProduct } from "../site/site-lookup.server.ts";
 
@@ -380,6 +382,31 @@ async function runTurn(
 
   state.conversation_summary = updateSummary(state, windowed.dropped);
 
+  // Product approval and safety are independent of retrieval, model instructions and aliases.
+  const controlled = await resolveControlledTurn(
+    text,
+    history.filter((message) => message.role === "user").map((message) => message.content),
+    productNeed.active,
+  );
+  if (controlled.reply) {
+    const finalState = applyAssistantTurn(state, controlled.reply);
+    finalState.conversation_summary = updateSummary(finalState, windowed.dropped);
+    return {
+      reply: controlled.reply,
+      state: finalState,
+      conversationId,
+      diagnostics: diag(
+        conversationId,
+        [...history, { role: "user", content: text }],
+        windowed,
+        analysis,
+        stateBefore,
+        ["dukamp:technical-control"],
+        "dukamp:technical-control",
+      ),
+    };
+  }
+
   let routerInput = resolveLookupText(
     text,
     analysis,
@@ -440,6 +467,13 @@ async function runTurn(
   // A partir daqui, respostas estruturais são contexto para o GPT; não existe
   // mais retorno SQL direto ao usuário.
   const contextParts: string[] = [];
+  if (controlled.allowOperationalModel) {
+    contextParts.push(
+      controlled.selected
+        .map((entry) => sanitizeRetrievedContent(approvedProductContext(entry), 20_000))
+        .join("\n\n"),
+    );
+  }
   const retrieved: string[] = [];
   let hasCatalogEvidence = false;
   let hasSiteEvidence = false;
@@ -627,7 +661,7 @@ async function runTurn(
           .map((m, i) => `[TRECHO ${i + 1}]\n${sanitizeRetrievedContent(m.content, 1_600)}`)
           .join("\n\n---\n\n");
         contextParts.push(
-          `TRECHOS TÉCNICOS DA BASE INTERNA (uso interno; NÃO cite fontes, arquivos nem porcentagens; use só o que servir ao pedido atual):\n\n${rag}`,
+          `TRECHOS TÉCNICOS DA BASE INTERNA (${controlled.active ? "produto com controle técnico; mantenha referência à versão aprovada" : "uso interno; NÃO cite fontes, arquivos nem porcentagens"}; use só o que servir ao pedido atual):\n\n${rag}`,
         );
         retrieved.push(`rag:${matches.length}`);
       }
@@ -879,6 +913,15 @@ async function runTurn(
       );
     }
 
+    if (controlled.active || productNeed.active || /dukamp/i.test(reply)) {
+      reply = await enforceControlledReply(
+        reply,
+        text,
+        history.filter((message) => message.role === "user").map((message) => message.content),
+        productNeed.active,
+      );
+    }
+
     const finalState = applyAssistantTurn(
       state,
       reply,
@@ -1029,11 +1072,7 @@ function chatTelemetryFlags(retrieved: string[]) {
     route_reason:
       [...new Set(chatEvents.map((event) => event.routeReason).filter(Boolean))].join(", ") || null,
     response_mode: (modes.length > 1 ? "mixed" : (modes[0] ?? "standard")) as
-      | "standard"
-      | "quick"
-      | "knowledge"
-      | "deep_research"
-      | "mixed",
+      "standard" | "quick" | "knowledge" | "deep_research" | "mixed",
   };
 }
 
