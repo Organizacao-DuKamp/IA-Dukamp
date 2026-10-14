@@ -77,6 +77,9 @@ export async function filterControlledMatches<T extends ControlledMatch>(
     return matches;
   const { catalog, available } = await loadDuKampControl();
   const historical = assessProducerNeed(query).historic;
+  const namedProducts = new Set(
+    matchControlledProducts(query, catalog).map((e) => e.product.produto_id),
+  );
   const byId = new Map(catalog.map((e) => [e.product.produto_id, e]));
   return matches.flatMap((match) => {
     const meta = match.metadata?.dukamp;
@@ -91,6 +94,7 @@ export async function filterControlledMatches<T extends ControlledMatch>(
     }
     const entry = byId.get(meta.produto_id);
     if (!entry) return [];
+    if (namedProducts.size && !namedProducts.has(meta.produto_id)) return [];
     const historicalSource =
       meta.versao_papel === "historico_obsoleto" ||
       ["historico_obsoleto", "nao_lancado"].includes(entry.product.status_vigencia);
