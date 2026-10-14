@@ -3,6 +3,7 @@
 import { logDiagnostic } from "../chat/diagnostics.server.ts";
 import { classifyDomainIntent } from "../chat/intent.ts";
 import { embeddingProvider, embedQuery, toPgVector } from "./embeddings.server.ts";
+import { filterControlledMatches } from "../chat/dukamp-control.server.ts";
 
 export interface Match {
   content: string;
@@ -12,6 +13,14 @@ export interface Match {
   subcategory: string | null;
   similarity: number;
   retrieval?: "semantic" | "lexical";
+  metadata?: {
+    dukamp?: {
+      produto_id: string;
+      source_id: string;
+      versao_papel: string;
+      referencias?: unknown[];
+    };
+  };
 }
 
 function minimumExplicitSimilarity(): number {
@@ -164,7 +173,7 @@ export async function searchKnowledge(query: string, matchCount = 6): Promise<Ma
       requested_matches: matchCount,
       returned_matches: cached.value.length,
     });
-    return cached.value;
+    return filterControlledMatches(cached.value, query);
   }
   if (cached) ragCache.delete(key);
 
@@ -245,7 +254,31 @@ export async function searchKnowledge(query: string, matchCount = 6): Promise<Ma
   // A busca semântica mantém um limiar alto; a lexical usa sua escala nativa.
   // Assim, um termo exato de ficha técnica pode ser usado sem rebaixar a
   // segurança do limiar de cosseno aplicado aos embeddings.
-  const candidates = [...byKey.values()].sort((a, b) => b.similarity - a.similarity);
+  let candidates = [...byKey.values()].sort((a, b) => b.similarity - a.similarity);
+  const filenames = [
+    ...new Set(
+      candidates
+        .filter((match) => match.filename.startsWith("dukamp_"))
+        .map((match) => match.filename),
+    ),
+  ];
+  if (filenames.length) {
+    const metadataResult = await supabaseAdmin
+      .from("knowledge_chunks")
+      .select("filename,content,metadata")
+      .in("filename", filenames)
+      .limit(200);
+    if (!metadataResult.error) {
+      const metadata = new Map(
+        (metadataResult.data ?? []).map((row) => [`${row.filename}:${row.content}`, row.metadata]),
+      );
+      candidates = candidates.map((match) => ({
+        ...match,
+        metadata: metadata.get(`${match.filename}:${match.content}`) as Match["metadata"],
+      }));
+    }
+  }
+  candidates = await filterControlledMatches(candidates, query);
   const matches = selectKnowledgeMatches(
     candidates,
     query,

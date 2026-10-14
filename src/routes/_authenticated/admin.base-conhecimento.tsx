@@ -1,7 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { importDuKampBatch, uploadDuKampOriginal } from "@/lib/dukamp-knowledge.functions";
+import { planDuKampImport, parseJsonLines } from "@/lib/rag/dukamp-package";
+import { DuKampReviewPanel } from "@/components/dukamp-review-panel";
 import {
   knowledgeStats,
   listKnowledgeDocs,
@@ -41,6 +44,7 @@ type Doc = {
   chunk_count: number;
   error_message: string | null;
   updated_at: string;
+  file_type?: string | null;
 };
 type Stats = {
   docs: {
@@ -75,6 +79,8 @@ function AdminKnowledgeBase() {
   const processOne = useServerFn(processNextPending);
   const reprocess = useServerFn(reprocessDocument);
   const uploadZip = useServerFn(uploadKnowledgeZip);
+  const importControlled = useServerFn(importDuKampBatch);
+  const uploadOriginal = useServerFn(uploadDuKampOriginal);
 
   const [docs, setDocs] = useState<Doc[]>([]);
   const [statData, setStatData] = useState<Stats | null>(null);
@@ -85,7 +91,7 @@ function AdminKnowledgeBase() {
   const [error, setError] = useState<string | null>(null);
   const [replaceAll, setReplaceAll] = useState(false);
 
-  async function refresh() {
+  const refresh = useCallback(async () => {
     try {
       const [d, s] = await Promise.all([list(), stats()]);
       setDocs(d as Doc[]);
@@ -94,11 +100,11 @@ function AdminKnowledgeBase() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar dados.");
     }
-  }
+  }, [list, stats]);
 
   useEffect(() => {
-    refresh();
-  }, []);
+    void refresh();
+  }, [refresh]);
 
   async function waitWithCountdown(ms: number, message: string) {
     const endsAt = Date.now() + ms;
@@ -167,10 +173,18 @@ function AdminKnowledgeBase() {
               title: string;
               chunks?: number;
               error?: string;
+              halt?: boolean;
             };
 
         if (r.done) {
           setLog((l) => ["✅ Todos os pendentes foram processados.", ...l]);
+          break;
+        }
+        if (r.halt) {
+          setError(
+            r.error ??
+              "O processamento foi interrompido. Os trechos e as restrições continuam preservados; confira o erro antes de retomar.",
+          );
           break;
         }
 
@@ -232,6 +246,62 @@ function AdminKnowledgeBase() {
     setError(null);
     try {
       const buf = await file.arrayBuffer();
+      const JSZip = (await import("jszip")).default;
+      const archive = await JSZip.loadAsync(buf);
+      const catalogPath = Object.keys(archive.files).find((name) =>
+        name.endsWith("dados/catalogo_produtos.json"),
+      );
+      if (catalogPath) {
+        if (replaceAll)
+          throw new Error(
+            "O pacote Dukamp deve ser mesclado à base existente. Desmarque a substituição completa.",
+          );
+        const prefix = catalogPath.slice(0, -"dados/catalogo_produtos.json".length);
+        const read = async (name: string) => {
+          const entry = archive.file(prefix + name);
+          if (!entry) throw new Error(`Arquivo necessário ausente: ${name}`);
+          return entry.async("string");
+        };
+        setProcessingNote("Validando produtos, versões e referências…");
+        const plan = await planDuKampImport({
+          catalog: JSON.parse(await read("dados/catalogo_produtos.json")),
+          sections: parseJsonLines(await read("dados/trechos_rag.jsonl"), "trechos"),
+          questions: parseJsonLines(await read("dados/perguntas_respostas.jsonl"), "perguntas"),
+          sources: JSON.parse(await read("dados/fontes.json")),
+          evaluations: parseJsonLines(await read("dados/avaliacao.jsonl"), "avaliação"),
+        });
+        const toBase64 = (input: Uint8Array) => {
+          let binary = "";
+          for (let i = 0; i < input.length; i += 0x8000)
+            binary += String.fromCharCode(...input.subarray(i, i + 0x8000));
+          return btoa(binary);
+        };
+        for (const [i, source] of plan.originals.entries()) {
+          const original = archive.file(prefix + source.package_path);
+          if (!original) throw new Error(`Original ausente: ${source.package_path}`);
+          setProcessingNote(`Preservando originais ${i + 1}/${plan.originals.length}…`);
+          await uploadOriginal({
+            data: { ...source, base64: toBase64(await original.async("uint8array")) },
+          });
+        }
+        const totals = { inserted: 0, changed: 0, unchanged: 0 };
+        for (let i = 0; i < plan.documents.length; i += 15) {
+          setProcessingNote(
+            `Registrando a base ${Math.min(i + 15, plan.documents.length)}/${plan.documents.length}…`,
+          );
+          const result = await importControlled({
+            data: { documents: plan.documents.slice(i, i + 15) },
+          });
+          for (const key of ["inserted", "changed", "unchanged"] as const)
+            totals[key] += result[key];
+        }
+        setLog((l) => [
+          `Base Dukamp registrada: ${plan.counts.products} produtos/variantes, ${plan.counts.sourceVersions} versões, ${plan.counts.questions} perguntas e ${plan.counts.sections} trechos. ${totals.unchanged} registros já estavam iguais. Os vetores ainda precisam ser processados e a revisão técnica permanece pendente.`,
+          ...l,
+        ]);
+        await refresh();
+        return;
+      }
       // Convert ArrayBuffer -> base64 in chunks to avoid stack overflow.
       const bytes = new Uint8Array(buf);
       let binary = "";
@@ -253,6 +323,8 @@ function AdminKnowledgeBase() {
       setError(err instanceof Error ? err.message : "Falha ao enviar ZIP.");
     } finally {
       setBusy(null);
+      setProcessingNote(null);
+      setProcessingNote(null);
     }
   }
 
@@ -330,7 +402,9 @@ function AdminKnowledgeBase() {
             <p className="text-xs text-muted-foreground">
               Envie o <code>base-conhecimento.zip</code> atualizado. O sistema descompacta, preserva
               a estrutura de pastas como categoria/subcategoria e enfileira os documentos para
-              reprocessamento. Aceita arquivos <code>.txt</code> e <code>.md</code>.
+              reprocessamento. O pacote <code>DUKAMP_BASE_TPEC_IA.zip</code> importa os dados
+              estruturados, preserva os originais e mantém a revisão técnica separada da geração de
+              vetores.
             </p>
           </div>
           <label className="flex items-center gap-2 text-xs">
@@ -358,6 +432,8 @@ function AdminKnowledgeBase() {
             )}
           </div>
         </div>
+
+        <DuKampReviewPanel key={docs.length} />
 
         <div className="flex flex-wrap items-center gap-2">
           <button
@@ -428,19 +504,30 @@ function AdminKnowledgeBase() {
                     {d.subcategory ? ` / ${d.subcategory}` : ""}
                   </td>
                   <td className="px-3 py-2">
-                    <StatusBadge status={d.status} chunkCount={d.chunk_count} />
+                    {["dukamp_catalog", "dukamp_questions", "dukamp_manifest"].includes(
+                      d.file_type ?? "",
+                    ) ? (
+                      <span className="text-xs text-muted-foreground">
+                        Registro de apoio / revisão
+                      </span>
+                    ) : (
+                      <StatusBadge status={d.status} chunkCount={d.chunk_count} />
+                    )}
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums">{d.chunk_count}</td>
                   <td className="px-3 py-2 text-right">
-                    {(d.status === "concluido" || d.status === "erro") && (
-                      <button
-                        onClick={() => handleReprocess(d.id)}
-                        disabled={running}
-                        className="text-xs text-primary hover:underline disabled:opacity-50"
-                      >
-                        reprocessar
-                      </button>
-                    )}
+                    {(d.status === "concluido" || d.status === "erro") &&
+                      !["dukamp_catalog", "dukamp_questions", "dukamp_manifest"].includes(
+                        d.file_type ?? "",
+                      ) && (
+                        <button
+                          onClick={() => handleReprocess(d.id)}
+                          disabled={running}
+                          className="text-xs text-primary hover:underline disabled:opacity-50"
+                        >
+                          reprocessar
+                        </button>
+                      )}
                   </td>
                 </tr>
               ))}

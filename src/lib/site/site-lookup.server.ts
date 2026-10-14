@@ -532,7 +532,7 @@ export async function queryRecommendedSiteProducts(
     if (!response.error && response.data?.length === 500) {
       const rows = [...response.data];
       for (let offset = 500; ; offset += 500) {
-        let page = await client
+        let page: { data: unknown[] | null; error: unknown } = await client
           .from("products")
           .select(PRODUCT_SELECT)
           .eq("active", true)

@@ -25,16 +25,12 @@ export const listKnowledgeDocs = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
-    const { data, error } = await context.supabase
-      .from("knowledge_documents")
-      .select(
-        "id, title, filename, category, subcategory, status, chunk_count, error_message, updated_at",
-      )
-      .order("category", { ascending: true })
-      .order("subcategory", { ascending: true })
-      .order("title", { ascending: true });
-    if (error) throw new Error(error.message);
-    return data ?? [];
+    const { readKnowledgeDocumentPages } = await import("./rag/dukamp-import.server.ts");
+    return readKnowledgeDocumentPages<{
+      id: string; title: string; filename: string; category: string; subcategory: string;
+      status: string; chunk_count: number; error_message: string | null; updated_at: string;
+      file_type: string | null; requires_review: boolean;
+    }>(context.supabase, "id, title, filename, category, subcategory, status, chunk_count, error_message, updated_at, file_type, requires_review", ["category","subcategory","title","id"]);
   });
 
 export const knowledgeStats = createServerFn({ method: "GET" })
@@ -43,12 +39,15 @@ export const knowledgeStats = createServerFn({ method: "GET" })
     await assertAdmin(context);
     const { getPrivilegedClient } = await import("@/lib/privileged.server");
     const supabaseAdmin = await getPrivilegedClient(context.supabase);
-    const [docsQ, chunksQ] = await Promise.all([
-      supabaseAdmin.from("knowledge_documents").select("status", { count: "exact", head: false }),
+    const { readKnowledgeDocumentPages } = await import("./rag/dukamp-import.server.ts");
+    const [documentRows, chunksQ] = await Promise.all([
+      readKnowledgeDocumentPages<{status:string;file_type:string|null}>(supabaseAdmin,"status,file_type"),
       supabaseAdmin.from("knowledge_chunks").select("id", { count: "exact", head: true }),
     ]);
+    if (chunksQ.error) throw new Error(chunksQ.error.message);
     const status = { aguardando: 0, processando: 0, concluido: 0, erro: 0, total: 0 };
-    for (const row of (docsQ.data ?? []) as { status: keyof typeof status }[]) {
+    for (const row of documentRows as { status: keyof typeof status; file_type: string | null }[]) {
+      if (["dukamp_catalog", "dukamp_questions", "dukamp_manifest"].includes(row.file_type ?? "")) continue;
       status[row.status] = (status[row.status] ?? 0) + 1;
       status.total++;
     }
@@ -102,7 +101,7 @@ export const processNextPending = createServerFn({ method: "POST" })
 
     const { data: doc, error } = await supabaseAdmin
       .from("knowledge_documents")
-      .select("id, title, filename, category, subcategory, source_path, content")
+      .select("id, title, filename, category, subcategory, source_path, content, file_type")
       .eq("status", "aguardando")
       .order("category", { ascending: true })
       .limit(1)
@@ -124,6 +123,20 @@ export const processNextPending = createServerFn({ method: "POST" })
         if (!seed)
           throw new Error("Conteúdo do documento não encontrado (nem no upload nem no seed).");
         text = await seed.load();
+      }
+      const { parseEnvelope } = await import("./rag/dukamp-package.ts");
+      const controlled = parseEnvelope(text);
+      if (controlled && controlled.kind !== "section") throw new Error("Registro de apoio e revisão não deve ser vetorizado.");
+      if (controlled?.kind === "section") {
+        const { data: pending, error: pendingError } = await supabaseAdmin.from("knowledge_documents")
+          .select("id,title,filename,content").eq("file_type", "dukamp_section").eq("status", "aguardando")
+          .order("source_path").limit(9);
+        if (pendingError) throw new Error(pendingError.message);
+        const { processControlledBatch } = await import("./rag/dukamp-import.server.ts");
+        const embeddings = await import("./rag/embeddings.server.ts");
+        const batch = [{ ...doc, content: text }, ...(pending ?? [])].filter((entry) => entry.content) as Array<{ id: string; title: string; filename: string; content: string }>;
+        const count = await processControlledBatch(supabaseAdmin, batch, embeddings);
+        return { done: false as const, id: doc.id, title: `${count} seções técnicas Dukamp`, chunks: count };
       }
       const count = await ingestDocument(
         {
@@ -147,11 +160,11 @@ export const processNextPending = createServerFn({ method: "POST" })
       await supabaseAdmin
         .from("knowledge_documents")
         .update({ 
-          status: "erro", 
+          status: doc.file_type === "dukamp_section" ? "aguardando" : "erro",
           error_message: isRateLimit ? `[Rate Limit] ${msg}` : msg 
         })
         .eq("id", doc.id);
-      return { done: false as const, id: doc.id, title: doc.title, error: msg };
+      return { done: false as const, id: doc.id, title: doc.title, error: msg, halt: doc.file_type === "dukamp_section" && !isRateLimit };
     }
   });
 
@@ -163,6 +176,12 @@ export const reprocessDocument = createServerFn({ method: "POST" })
     await assertAdmin(context);
     const { getPrivilegedClient } = await import("@/lib/privileged.server");
     const supabaseAdmin = await getPrivilegedClient(context.supabase);
+    const { data: target, error: targetError } = await supabaseAdmin.from("knowledge_documents")
+      .select("file_type").eq("id", data.id).maybeSingle();
+    if (targetError) throw new Error(targetError.message);
+    if (!target || ["dukamp_catalog", "dukamp_questions", "dukamp_manifest"].includes(target.file_type ?? "")) {
+      throw new Error("Selecione um documento técnico processável.");
+    }
     await supabaseAdmin
       .from("knowledge_documents")
       .update({ status: "aguardando", error_message: null, chunk_count: 0 })
