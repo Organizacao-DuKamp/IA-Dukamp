@@ -106,16 +106,27 @@ export const testDuKampQuestion = createServerFn({ method: "POST" })
       channel: "web",
     });
     const { searchKnowledge } = await import("./rag/search.server.ts");
+    const { loadDuKampControl } = await import("./chat/dukamp-control.server.ts");
+    const registry = await loadDuKampControl();
+    const diagnostics = {
+      service_role_configured: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()),
+      live_catalog_available: registry.available,
+      catalog_products: registry.catalog.length,
+    };
     let retrieval: unknown;
     try {
-      retrieval = (await searchKnowledge(data.question, 5)).map((m) => ({
+      const matches = (await searchKnowledge(data.question, 5)).map((m) => ({
         filename: m.filename,
         title: m.title,
         metadata: m.metadata,
         retrieval: m.retrieval,
       }));
+      retrieval = { matches, diagnostics };
     } catch (error) {
-      retrieval = { error: error instanceof Error ? error.message : "Busca indisponível" };
+      retrieval = {
+        error: error instanceof Error ? error.message : "Busca indisponível",
+        diagnostics,
+      };
     }
     return JSON.stringify({
       question: data.question,
