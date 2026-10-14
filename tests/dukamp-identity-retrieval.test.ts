@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { findControlledIdentityMatches, type Match } from "../src/lib/rag/search.server.ts";
 import { matchControlledProducts } from "../src/lib/chat/dukamp-control.ts";
+import { filterControlledMatches } from "../src/lib/chat/dukamp-control.server.ts";
 import { dukampSafetySnapshot } from "../src/seed/dukamp-control.ts";
 import { DUKAMP_CATEGORY, type CatalogEnvelope } from "../src/lib/rag/dukamp-package.ts";
 
@@ -114,5 +115,23 @@ test("falha no banco não é representada como evidência recuperada", async () 
       dukampSafetySnapshot,
     ),
     /Database timeout/,
+  );
+});
+
+test("pergunta por uma variante exclui evidência de outra variante mesmo com alta similaridade", async () => {
+  const other = matchControlledProducts("Dukamp 80/S", dukampSafetySnapshot)[0];
+  const matches = await filterControlledMatches([section(product), section(other)], question);
+  assert.deepEqual(
+    matches.map((m) => m.metadata!.dukamp!.produto_id),
+    [product.product.produto_id],
+  );
+});
+test("comparação explícita preserva as duas variantes com suas próprias fontes", async () => {
+  const query = "Compare Dukamp 60/S e Dukamp 80/S";
+  const named = matchControlledProducts(query, dukampSafetySnapshot);
+  const matches = await filterControlledMatches(named.map(section), query);
+  assert.deepEqual(
+    new Set(matches.map((m) => m.metadata!.dukamp!.source_id)),
+    new Set(named.map((e) => e.product.fontes[0].source_id)),
   );
 });
