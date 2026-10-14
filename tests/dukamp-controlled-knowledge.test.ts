@@ -28,6 +28,7 @@ import {
   readKnowledgeDocumentPages,
   saveTechnicalReview,
 } from "../src/lib/rag/dukamp-import.server.ts";
+import { auditDuKampImport } from "../src/lib/rag/dukamp-audit.server.ts";
 import type { CatalogEnvelope } from "../src/lib/rag/dukamp-package.ts";
 
 const product = (id: string) =>
@@ -46,10 +47,19 @@ class MemoryDb {
     let action = "read";
     let values: any;
     let singular = false;
+    let countOnly = false;
+    let hasEmbedding = false;
     let page: [number, number] | null = null;
     const filters: Array<[string, unknown]> = [];
     const query: any = {
-      select: () => query,
+      select: (_columns: string, options?: { head?: boolean }) => {
+        countOnly = options?.head === true;
+        return query;
+      },
+      not: () => {
+        hasEmbedding = true;
+        return query;
+      },
       order: () => query,
       limit: () => query,
       range: (from: number, to: number) => {
@@ -89,6 +99,8 @@ class MemoryDb {
           const get = (row: any, key: string) =>
             key.includes("->") ? row.metadata?.dukamp?.fingerprint : row[key];
           let matches = rows.filter((r) => filters.every(([k, v]) => get(r, k) === v));
+          if (hasEmbedding)
+            matches = matches.filter((r) => r.embedding !== null && r.embedding !== undefined);
           if (page) matches = matches.slice(page[0], page[1] + 1);
           if (action === "upsert") {
             const old = rows.find((r) => r.source_path === values.source_path);
@@ -105,7 +117,11 @@ class MemoryDb {
           if (action === "update")
             for (const row of matches) Object.assign(row, structuredClone(values));
           if (action === "delete") db.tables[name] = rows.filter((r) => !matches.includes(r));
-          resolve({ data: singular ? (matches[0] ?? null) : matches, error: null });
+          resolve({
+            data: countOnly ? null : singular ? (matches[0] ?? null) : matches,
+            count: matches.length,
+            error: null,
+          });
         } catch (error) {
           reject(error);
         }
@@ -546,4 +562,75 @@ test("failed live retrieval and missing registry access preserve species restric
     if (saved === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY;
     else process.env.SUPABASE_SERVICE_ROLE_KEY = saved;
   }
+});
+
+test("live audit counts only persisted records, originals and actual non-null vectors", async () => {
+  const db = new MemoryDb(),
+    entry = product("P072"),
+    docs = await documentsFor(entry);
+  await importControlledDocuments(db, docs);
+  const source = entry.product.fontes[0];
+  const questions = await makeDocument(
+    {
+      schema: DUKAMP_SCHEMA,
+      kind: "questions",
+      produto_id: "P072",
+      questions: [
+        {
+          qa_id: "qa-test",
+          produto_id: "P072",
+          source_id: source.source_id,
+          pergunta: "Pergunta",
+          resposta: "Resposta",
+          tipo_resposta: "documental",
+          referencias: [],
+          observacao: null,
+        },
+      ],
+    },
+    "questions/P072",
+    "Perguntas",
+  );
+  const manifest = await makeDocument(
+    {
+      schema: DUKAMP_SCHEMA,
+      kind: "manifest",
+      sources: [{ sha256: source.sha256, bytes: 10 }],
+      counts: {
+        products: 1,
+        sourceVersions: 1,
+        originalFiles: 1,
+        questions: 1,
+        sections: 1,
+        evaluationCases: 0,
+      },
+    },
+    "manifest/sources",
+    "Manifesto",
+  );
+  await importControlledDocuments(db, [questions, manifest]);
+  db.storage = {
+    from: () => ({
+      list: async () => ({
+        data: [{ name: source.sha256 + ".doc", metadata: { size: 10 } }],
+        error: null,
+      }),
+    }),
+  };
+  const pending = await auditDuKampImport(db);
+  assert.equal(pending.products, 1);
+  assert.equal(pending.documents, 4);
+  assert.equal(pending.questions, 1);
+  assert.equal(pending.sections, 1);
+  assert.equal(pending.lexical_chunks, 1);
+  assert.equal(pending.embeddings_completed, 0);
+  assert.equal(pending.embeddings_pending, 1);
+  assert.equal(pending.originals_preserved, 1);
+  assert.equal(pending.operational_reviews, 0);
+  db.tables.knowledge_chunks[0].embedding = "fixture-vector";
+  db.tables.knowledge_documents.find((d) => d.file_type === "dukamp_section")!.status = "concluido";
+  const complete = await auditDuKampImport(db);
+  assert.equal(complete.embeddings_completed, 1);
+  assert.equal(complete.section_documents_completed, 1);
+  assert.equal(complete.embeddings_pending, 0);
 });
