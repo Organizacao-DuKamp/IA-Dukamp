@@ -5,6 +5,7 @@ import test from "node:test";
 import { dispatchChat, type TpecBackendDependencies } from "../src/lib/chat/backend.server.ts";
 import { handlePublicChatRequest } from "../src/lib/chat/http.server.ts";
 import type { ChatCoreResult, ChatInput } from "../src/lib/chat/input.ts";
+import { currentMemoryMarker } from "../src/lib/chat/memory-reset.ts";
 
 const input: ChatInput = {
   sessionId: "session-1",
@@ -68,7 +69,16 @@ test("rota pública preserva status HTTP e serializa o estado opaco", async () =
         headers: { "content-type": "application/json" },
         body: JSON.stringify(input),
       }),
-      localDeps(),
+      {
+        loadLocalBackend: async () => ({
+          handleIncoming: async (received) => {
+            assert.deepEqual(received.history, []);
+            assert.equal(received.state, undefined);
+            assert.notEqual(received.conversationId, input.conversationId);
+            return coreResult;
+          },
+        }),
+      },
     );
     assert.equal(response.status, 200);
     const body = (await response.json()) as {
@@ -78,7 +88,13 @@ test("rota pública preserva status HTTP e serializa o estado opaco", async () =
     };
     assert.equal(body.reply, coreResult.reply);
     assert.equal(body.conversationId, coreResult.conversationId);
-    assert.deepEqual(JSON.parse(body.state), coreResult.state);
+    const state = JSON.parse(body.state);
+    assert.equal(state.current_topic, "vendedores");
+    assert.equal(state.turn_count, 2);
+    assert.deepEqual(currentMemoryMarker(state)?.history, [
+      { role: "user", content: input.text },
+      { role: "assistant", content: coreResult.reply },
+    ]);
   } finally {
     if (previous === undefined) delete process.env.TPEC_MULTIMODEL_ENABLED;
     else process.env.TPEC_MULTIMODEL_ENABLED = previous;

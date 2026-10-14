@@ -1,6 +1,7 @@
 import type { ChatMessage } from "../chat/types.ts";
 import { supabaseAdmin } from "../../integrations/supabase/client.server.ts";
 import type { WhatsAppChatInput } from "./types.ts";
+import { currentMemoryMarker, stampMemoryState } from "../chat/memory-reset.ts";
 
 export interface WhatsAppConversationSnapshot {
   conversationId: string;
@@ -46,12 +47,13 @@ function db() {
   return supabaseAdmin as any;
 }
 
-async function syncPendingProactiveHistory(phone: string): Promise<void> {
+async function syncPendingProactiveHistory(phone: string, since: string): Promise<void> {
   const pending = await db()
     .from("whatsapp_proactive_queue")
     .select("id")
     .eq("phone_number", phone)
     .eq("status", "sent")
+    .gte("created_at", since)
     .is("history_synced_at", null)
     .order("sent_at", { ascending: true })
     .limit(8);
@@ -106,8 +108,6 @@ export async function loadWhatsAppConversation(
 ): Promise<WhatsAppConversationSnapshot | null> {
   // Se um envio proativo foi confirmado mas a primeira gravação do histórico
   // falhou, reconcilie antes de entregar o contexto para o modelo.
-  await syncPendingProactiveHistory(phone);
-
   const { data, error } = await db()
     .from("whatsapp_conversations")
     .select("conversation_id,state,history")
@@ -116,11 +116,23 @@ export async function loadWhatsAppConversation(
 
   if (error) throw new Error(`whatsapp_conversation_load_failed:${error.code ?? "unknown"}`);
   if (!data) return null;
+  const marker = currentMemoryMarker(data.state);
+  if (!marker) return null;
+  await syncPendingProactiveHistory(phone, marker.started_at);
+  const refreshed = await db()
+    .from("whatsapp_conversations")
+    .select("conversation_id,state,history")
+    .eq("phone_number", phone)
+    .maybeSingle();
+  if (refreshed.error)
+    throw new Error(`whatsapp_conversation_load_failed:${refreshed.error.code ?? "unknown"}`);
+  const current = refreshed.data ?? data;
+  if (!currentMemoryMarker(current.state)) return null;
 
   return {
-    conversationId: String(data.conversation_id),
-    history: normalizeHistory(data.history),
-    state: data.state ?? undefined,
+    conversationId: String(current.conversation_id),
+    history: normalizeHistory(current.history),
+    state: current.state ?? undefined,
   };
 }
 
@@ -131,7 +143,7 @@ export async function saveWhatsAppConversation(
   const payload = {
     phone_number: phone,
     conversation_id: snapshot.conversationId,
-    state: snapshot.state ?? null,
+    state: stampMemoryState(snapshot.state, snapshot.history),
     history: normalizeHistory(snapshot.history),
     updated_at: new Date().toISOString(),
   };

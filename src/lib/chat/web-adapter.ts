@@ -4,8 +4,9 @@
 // reload não perca o contexto nem a confirmação pendente.
 
 import type { ChannelAdapter, ChatMessage, OutgoingMessage } from "./types";
+import { MEMORY_STORAGE_KEY } from "./memory-reset.ts";
 
-const STORAGE_KEY = "tpec-ia:conversation:v1";
+const STORAGE_KEY = MEMORY_STORAGE_KEY;
 
 export interface PersistedConversation {
   conversationId: string;

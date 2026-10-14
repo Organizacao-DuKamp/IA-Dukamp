@@ -6,11 +6,13 @@ import { ChatInputSchema } from "./chat/input";
 import { getRequest } from "@tanstack/react-start/server";
 import { conversationIdFor } from "./ai/context";
 import { TpecBackendError } from "./chat/backend.server";
+import { prepareWebMemory, stampMemoryState } from "./chat/memory-reset.ts";
 
 export const sendChatMessage = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => ChatInputSchema.parse(data))
   .handler(async ({ data }) => {
     try {
+      data = prepareWebMemory(data);
       if (process.env.TPEC_MULTIMODEL_ENABLED === "true") {
         const { authenticatedChatUser } = await import("./ai/auth.server");
         const userId = await authenticatedChatUser(getRequest());
@@ -37,7 +39,13 @@ export const sendChatMessage = createServerFn({ method: "POST" })
       return {
         reply: body.reply,
         conversationId: body.conversationId,
-        state: JSON.stringify(body.state),
+        state: JSON.stringify(
+          stampMemoryState(body.state, [
+            ...data.history,
+            { role: "user", content: data.text },
+            { role: "assistant", content: body.reply },
+          ]),
+        ),
       };
     } catch (error) {
       return {

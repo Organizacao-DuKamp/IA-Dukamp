@@ -8,6 +8,7 @@ import {
   releaseWhatsAppInboundMessage,
 } from "../src/lib/whatsapp/conversation.server.ts";
 import type { ChatCoreResult, ChatInput } from "../src/lib/chat/input.ts";
+import { currentMemoryMarker } from "../src/lib/chat/memory-reset.ts";
 
 test("WhatsApp usa memória quando SUPABASE_SERVICE_ROLE_KEY não está configurada", async () => {
   const previousKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -50,7 +51,10 @@ test("WhatsApp usa memória quando SUPABASE_SERVICE_ROLE_KEY não está configur
     );
     assert.equal(second.reply, "Continuando a conversa.");
     assert.equal(seen[1]?.channel, "whatsapp");
-    assert.deepEqual(seen[1]?.state, { current_topic: "teste", turn_count: 1 });
+    const saved = seen[1]?.state as { current_topic: string; turn_count: number };
+    assert.equal(saved.current_topic, "teste");
+    assert.equal(saved.turn_count, 1);
+    assert.ok(currentMemoryMarker(saved));
     assert.deepEqual(seen[1]?.history, [
       { role: "user", content: "Quero saber sobre suplemento para bezerros" },
       { role: "assistant", content: "Claro, vou verificar." },
