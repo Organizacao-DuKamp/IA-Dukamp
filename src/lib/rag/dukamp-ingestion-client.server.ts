@@ -15,10 +15,20 @@ export async function duKampIngestionClient(fallback: unknown) {
       fetch: (input, init) => {
         const headers = new Headers(input instanceof Request ? input.headers : undefined);
         new Headers(init?.headers).forEach((value, name) => headers.set(name, value));
-        if (/^sb_(?:publishable|secret)_/.test(key) && headers.get("authorization") === `Bearer ${key}`)
+        if (
+          /^sb_(?:publishable|secret)_/.test(key) &&
+          headers.get("authorization") === `Bearer ${key}`
+        )
           headers.delete("authorization");
         headers.set("apikey", key);
-        return fetch(input, { ...init, headers, signal: AbortSignal.any([AbortSignal.timeout(20_000), ...(init?.signal ? [init.signal] : [])]) });
+        return fetch(input, {
+          ...init,
+          headers,
+          signal: AbortSignal.any([
+            AbortSignal.timeout(20_000),
+            ...(init?.signal ? [init.signal] : []),
+          ]),
+        });
       },
     },
   });
