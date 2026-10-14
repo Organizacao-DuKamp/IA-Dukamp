@@ -5,6 +5,11 @@ import { supabaseAdmin } from "../../integrations/supabase/client.server.ts";
 import type { WhatsAppChatInput } from "./types.ts";
 import { syncWhatsAppProactiveHistory } from "./store.server.ts";
 import {
+  USER_MEMORY_EPOCH,
+  MEMORY_INBOX_PREFIX,
+  currentMemoryInboxText,
+} from "../chat/memory-reset.ts";
+import {
   buildDailyFollowupSchedule,
   localDateForTimeZone,
   parseFollowupPreference,
@@ -271,17 +276,19 @@ export async function observeWhatsAppInboundForMemory(
   const userText = resolvedUserText.trim().slice(0, 16_000);
   if (userText.length < 2) return { queued: false, preference };
 
-  const inbox = await db().from("whatsapp_memory_inbox").upsert(
-    {
-      message_id: input.messageId,
-      phone_number: phone,
-      user_text: userText,
-      status: "pending",
-      last_error: null,
-      updated_at: now,
-    },
-    { onConflict: "message_id", ignoreDuplicates: true },
-  );
+  const inbox = await db()
+    .from("whatsapp_memory_inbox")
+    .upsert(
+      {
+        message_id: input.messageId,
+        phone_number: phone,
+        user_text: MEMORY_INBOX_PREFIX + userText,
+        status: "pending",
+        last_error: null,
+        updated_at: now,
+      },
+      { onConflict: "message_id", ignoreDuplicates: true },
+    );
   if (inbox.error) {
     throw new Error("whatsapp_memory_inbox_enqueue_failed:" + (inbox.error.code ?? "unknown"));
   }
@@ -296,6 +303,7 @@ async function activeFacts(phone: string): Promise<WhatsAppMemoryFact[]> {
     .eq("phone_number", phone)
     .eq("status", "active")
     .eq("follow_up_relevant", true)
+    .contains("metadata", { memory_epoch: USER_MEMORY_EPOCH })
     .order("importance", { ascending: false })
     .order("last_seen_at", { ascending: false })
     .limit(MAX_FACTS_FOR_PROMPT);
@@ -495,11 +503,13 @@ async function applyMemoryActions(item: MemoryInboxItem, actions: MemoryAction[]
           resolved_at: now,
           last_seen_at: now,
           metadata: {
+            memory_epoch: USER_MEMORY_EPOCH,
             resolution: action.resolution ?? "Situação informada como resolvida pelo usuário.",
           },
           updated_at: now,
         })
         .eq("phone_number", item.phoneNumber)
+        .contains("metadata", { memory_epoch: USER_MEMORY_EPOCH })
         .eq("status", "active");
       if (action.factId) query = query.eq("id", action.factId);
       else if (action.factKey) query = query.eq("fact_key", action.factKey);
@@ -512,7 +522,7 @@ async function applyMemoryActions(item: MemoryInboxItem, actions: MemoryAction[]
 
     const existing = await db()
       .from("whatsapp_user_memory_facts")
-      .select("id")
+      .select("id,metadata")
       .eq("phone_number", item.phoneNumber)
       .eq("fact_key", action.factKey)
       .maybeSingle();
@@ -532,6 +542,10 @@ async function applyMemoryActions(item: MemoryInboxItem, actions: MemoryAction[]
       last_seen_at: now,
       resolved_at: null,
       updated_at: now,
+      metadata: { memory_epoch: USER_MEMORY_EPOCH },
+      ...(existing.data?.metadata?.memory_epoch === USER_MEMORY_EPOCH
+        ? {}
+        : { first_seen_at: now }),
     };
 
     const result = existing.data?.id
@@ -559,6 +573,7 @@ async function applyMemoryActions(item: MemoryInboxItem, actions: MemoryAction[]
     .select("id", { count: "exact", head: true })
     .eq("phone_number", item.phoneNumber)
     .eq("status", "active")
+    .contains("metadata", { memory_epoch: USER_MEMORY_EPOCH })
     .eq("follow_up_relevant", true);
   if (count.error) {
     throw new Error("whatsapp_memory_count_failed:" + (count.error.code ?? "unknown"));
@@ -578,6 +593,9 @@ async function applyMemoryActions(item: MemoryInboxItem, actions: MemoryAction[]
 }
 
 async function processMemoryItem(item: MemoryInboxItem): Promise<void> {
+  const currentText = currentMemoryInboxText(item.userText);
+  if (currentText === null) return;
+  item = { ...item, userText: currentText };
   const existing = await activeFacts(item.phoneNumber);
   let actions: MemoryAction[] = [];
   try {
@@ -930,6 +948,13 @@ async function processQueueItem(item: QueueClaim): Promise<ManualFollowupResult>
     .select("message_text")
     .eq("phone_number", phone)
     .eq("status", "sent")
+    .gte(
+      "created_at",
+      facts.reduce(
+        (oldest, fact) => (fact.firstSeenAt < oldest ? fact.firstSeenAt : oldest),
+        new Date().toISOString(),
+      ),
+    )
     .order("sent_at", { ascending: false })
     .limit(MAX_RECENT_MESSAGES);
   if (recent.error) {
@@ -1153,6 +1178,7 @@ export async function getWhatsAppFollowupDetail(
       .from("whatsapp_user_memory_facts")
       .select("*")
       .eq("phone_number", phone)
+      .contains("metadata", { memory_epoch: USER_MEMORY_EPOCH })
       .order("status", { ascending: true })
       .order("last_seen_at", { ascending: false })
       .limit(50),
@@ -1174,7 +1200,13 @@ export async function getWhatsAppFollowupDetail(
   }
 
   return {
-    profile: profile.data ? mapProfile(profile.data) : null,
+    profile: profile.data
+      ? {
+          ...mapProfile(profile.data),
+          memoryCount: (facts.data ?? []).filter((f: any) => f.status === "active").length,
+          lastMemoryAt: (facts.data ?? []).length ? mapProfile(profile.data).lastMemoryAt : null,
+        }
+      : null,
     facts: (facts.data ?? []).map(mapFact),
     queue: (queue.data ?? []).map(mapQueue),
   };

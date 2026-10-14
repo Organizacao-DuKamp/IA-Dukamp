@@ -7,6 +7,7 @@ import { planDuKampImport, parseJsonLines } from "@/lib/rag/dukamp-package";
 import { retryDuKampImportStep } from "@/lib/rag/dukamp-import-retry";
 import { DuKampAuditPanel } from "@/components/dukamp-audit-panel";
 import { DuKampReviewPanel } from "@/components/dukamp-review-panel";
+import { MemoryResetAuditPanel } from "@/components/memory-reset-audit-panel";
 import {
   knowledgeStats,
   listKnowledgeDocs,
@@ -399,6 +400,7 @@ function AdminKnowledgeBase() {
       </header>
 
       <main className="mx-auto max-w-5xl space-y-6 px-4 py-6">
+        <MemoryResetAuditPanel />
         {error && (
           <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
             {error}

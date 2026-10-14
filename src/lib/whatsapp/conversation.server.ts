@@ -9,6 +9,7 @@ import { checkRateLimit } from "../chat/rate-limit.server.ts";
 import { observeWhatsAppInboundForMemory } from "./proactive.server.ts";
 import { answerWhatsAppEmergency } from "./emergency-answer.server.ts";
 import { friendlyWhatsAppError } from "./presence.ts";
+import { currentMemoryMarker, stampMemoryState } from "../chat/memory-reset.ts";
 
 const MAX_HISTORY_MESSAGES = 40;
 const MEMORY_CONVERSATION_TTL_MS = 6 * 60 * 60_000;
@@ -207,7 +208,7 @@ async function memoryReleaseDelivery(messageId: string, reply: string): Promise<
 async function memoryLoadConversation(phone: string): Promise<WhatsAppConversationSnapshot | null> {
   gcMemory();
   const entry = memoryConversations.get(phone);
-  return entry ? cloneSnapshot(entry.snapshot) : null;
+  return entry && currentMemoryMarker(entry.snapshot.state) ? cloneSnapshot(entry.snapshot) : null;
 }
 
 async function memorySaveConversation(
@@ -216,7 +217,10 @@ async function memorySaveConversation(
 ): Promise<void> {
   memoryConversations.delete(phone);
   memoryConversations.set(phone, {
-    snapshot: cloneSnapshot(snapshot),
+    snapshot: cloneSnapshot({
+      ...snapshot,
+      state: stampMemoryState(snapshot.state, snapshot.history),
+    }),
     updatedAt: Date.now(),
   });
   trimOldest(memoryConversations, MAX_MEMORY_CONVERSATIONS);
