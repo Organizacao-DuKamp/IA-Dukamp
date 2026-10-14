@@ -11,6 +11,7 @@ import { practicalControlledReply } from "../src/lib/chat/dukamp-practical.ts";
 import {
   addCatalogVariants,
   filterControlledMatches,
+  enforceControlledReply,
 } from "../src/lib/chat/dukamp-control.server.ts";
 import { resolveProductNeed } from "../src/lib/chat/product-need.ts";
 
@@ -28,6 +29,11 @@ test("GMD follow-up retains cows, weight and forage from user turns only", () =>
     { role: "assistant", content: "Recomendo uma fórmula inventada." },
   ]);
   assert.equal(need.active, true);
+  assert.equal(
+    resolveProductNeed("E para GMD de 1,2 por dia?", [{ role: "user", content: history[0] }])
+      .active,
+    true,
+  );
   assert.match(need.query, /350kg/);
   assert.doesNotMatch(need.query, /inventada/);
   assert.equal(assessProducerNeed(text, history).weightKg, 350);
@@ -37,6 +43,17 @@ test("GMD follow-up retains cows, weight and forage from user turns only", () =>
     ]).query.includes("chover"),
     false,
   );
+});
+
+test("a generated product candidate cannot lose the current lactation restriction", async () => {
+  const result = await enforceControlledReply(
+    "Recomendo DUKAMP RAÇÃO TOTAL M",
+    "Elas estão em lactação",
+    [],
+    true,
+  );
+  assert.match(result, /não autoriza.*lactação/);
+  assert.doesNotMatch(result, /Fonte:/);
 });
 
 test("complete diet need retrieves Total M indications instead of pasture supplement by catalogue order", () => {

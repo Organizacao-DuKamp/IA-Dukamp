@@ -25,7 +25,11 @@ const SPECIES_CONTEXT = [
 
 export function isProductRecommendationRequest(text: string): boolean {
   const normalized = norm(text);
-  return RECOMMEND.test(normalized) || GOAL_REQUEST.test(normalized);
+  return (
+    RECOMMEND.test(normalized) ||
+    GOAL_REQUEST.test(normalized) ||
+    /\b(?:gmd|ganho medio diario)\b.{0,35}\d/.test(normalized)
+  );
 }
 
 export interface ProductNeed {

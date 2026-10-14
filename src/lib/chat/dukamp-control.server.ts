@@ -81,6 +81,7 @@ export async function addCatalogVariants(
     recommendation &&
     needsCompleteDiet(context) &&
     turn.selected.length > 0 &&
+    turn.selected.every((e) => /sem volumoso/.test(normalized(e.product.descricao_documental))) &&
     /O relatório descreve:/.test(turn.reply ?? "");
   if (need.clinical || need.historic || (!explicitVariant && !general)) return turn;
   const unavailableVariant: ControlledTurn = {
@@ -252,7 +253,7 @@ export async function enforceControlledReply(
     const blocked = decideControlledTurn(
       `Como usar ${pendingGenerated[0].product.nome_comercial_documental}?`,
       registry.catalog,
-      { userHistory, catalogAvailable: registry.available },
+      { userHistory: [...userHistory, text], catalogAvailable: registry.available },
     );
     return (
       (blocked.reply ? practicalControlledReply(blocked, text, userHistory) : null) ??
