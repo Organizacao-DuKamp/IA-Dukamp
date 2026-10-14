@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { findControlledIdentityMatches, type Match } from "../src/lib/rag/search.server.ts";
+import {
+  findControlledIdentityMatches,
+  shouldSkipCurrentKnowledgeSearch,
+  type Match,
+} from "../src/lib/rag/search.server.ts";
 import { matchControlledProducts } from "../src/lib/chat/dukamp-control.ts";
 import { filterControlledMatches } from "../src/lib/chat/dukamp-control.server.ts";
 import { dukampSafetySnapshot } from "../src/seed/dukamp-control.ts";
@@ -133,5 +137,20 @@ test("comparação explícita preserva as duas variantes com suas próprias font
   assert.deepEqual(
     new Set(matches.map((m) => m.metadata!.dukamp!.source_id)),
     new Set(named.map((e) => e.product.fontes[0].source_id)),
+  );
+});
+
+test("comparar versão antiga e atual de um produto identificado conserva a busca interna", () => {
+  assert.equal(
+    shouldSkipCurrentKnowledgeSearch(
+      "Vi uma versão antiga de Horse Power Gold que permite top dress. Vale para o núcleo atual?",
+    ),
+    false,
+  );
+});
+test("cotação atual sem um produto identificado continua no fluxo de pesquisa externa", () => {
+  assert.equal(
+    shouldSkipCurrentKnowledgeSearch("Qual a cotação da arroba do boi hoje em São Paulo?"),
+    true,
   );
 });

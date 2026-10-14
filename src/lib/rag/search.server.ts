@@ -8,6 +8,7 @@ import { matchControlledProducts } from "../chat/dukamp-control.ts";
 import type { CatalogEnvelope } from "./dukamp-package.ts";
 import { DUKAMP_CATEGORY } from "./dukamp-package.ts";
 import type { KnowledgeDatabase } from "./dukamp-import.server.ts";
+import { dukampSafetySnapshot } from "../../seed/dukamp-control.ts";
 
 export interface Match {
   content: string;
@@ -177,16 +178,22 @@ function remember(key: string, value: Match[]): void {
   }
 }
 
+export function shouldSkipCurrentKnowledgeSearch(query: string): boolean {
+  const domainIntent = classifyDomainIntent(query);
+  return (
+    !domainIntent.needs_internal_search &&
+    (domainIntent.intent === "current_research" || domainIntent.intent === "market_quote") &&
+    matchControlledProducts(query, dukampSafetySnapshot).length === 0
+  );
+}
+
 export async function searchKnowledge(query: string, matchCount = 6): Promise<Match[]> {
   // Perguntas cujo objetivo é informação atual e que não pedem pesquisa interna
   // devem ir direto para a pesquisa web. Além de poupar uma geração de
   // embedding + RPCs no Supabase, isso evita material histórico concorrendo
   // com evidência atual.
   const domainIntent = classifyDomainIntent(query);
-  if (
-    !domainIntent.needs_internal_search &&
-    (domainIntent.intent === "current_research" || domainIntent.intent === "market_quote")
-  ) {
+  if (shouldSkipCurrentKnowledgeSearch(query)) {
     logDiagnostic("info", "rag.search.skipped", {
       reason: "current_web_research_only",
       intent: domainIntent.intent,
