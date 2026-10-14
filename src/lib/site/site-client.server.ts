@@ -15,10 +15,7 @@ let _client: SupabaseClient | undefined;
 
 export type SiteConfigurationStatus = "ok" | "not_configured" | "invalid_url";
 export type SiteConfigurationSource =
-  | "server_env"
-  | "vite_env_alias"
-  | "public_fallback"
-  | "missing";
+  "server_env" | "vite_env_alias" | "public_fallback" | "missing";
 
 export interface ResolvedSiteConfiguration {
   url: string | undefined;
