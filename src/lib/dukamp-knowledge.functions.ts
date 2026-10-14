@@ -11,8 +11,9 @@ async function admin(context: {
     "has_role" as never,
     { _user_id: context.userId, _role: "admin" } as never,
   );
-  if (result.error || result.data !== true)
-    throw new Error("Acesso restrito a administradores autenticados.");
+  if (result.error)
+    throw new Error("Não foi possível verificar a permissão administrativa. Tente novamente.");
+  if (result.data !== true) throw new Error("Acesso restrito a administradores autenticados.");
 }
 const ImportBatch = z.object({
   documents: z
@@ -25,9 +26,9 @@ export const importDuKampBatch = createServerFn({ method: "POST" })
   .validator((value: unknown) => ImportBatch.parse(value))
   .handler(async ({ context, data }) => {
     await admin(context);
-    const { getPrivilegedClient } = await import("./privileged.server");
+    const { duKampIngestionClient } = await import("./rag/dukamp-ingestion-client.server.ts");
     const { importControlledDocuments } = await import("./rag/dukamp-import.server.ts");
-    return importControlledDocuments(await getPrivilegedClient(context.supabase), data.documents);
+    return importControlledDocuments(await duKampIngestionClient(context.supabase), data.documents);
   });
 
 const OriginalInput = z.object({
@@ -41,11 +42,11 @@ export const uploadDuKampOriginal = createServerFn({ method: "POST" })
   .validator((value: unknown) => OriginalInput.parse(value))
   .handler(async ({ context, data }) => {
     await admin(context);
-    const { getPrivilegedClient } = await import("./privileged.server");
+    const { duKampIngestionClient } = await import("./rag/dukamp-ingestion-client.server.ts");
     const { uploadControlledOriginal } = await import("./rag/dukamp-import.server.ts");
     const decoded = atob(data.base64);
     const bytes = Uint8Array.from(decoded, (character) => character.charCodeAt(0));
-    return uploadControlledOriginal(await getPrivilegedClient(context.supabase), data, bytes);
+    return uploadControlledOriginal(await duKampIngestionClient(context.supabase), data, bytes);
   });
 
 export const listDuKampReviews = createServerFn({ method: "GET" })
@@ -80,5 +81,46 @@ export const reviewDuKampProduct = createServerFn({ method: "POST" })
     return saveTechnicalReview(await getPrivilegedClient(context.supabase), data, {
       userId: context.userId,
       isAdmin: true,
+    });
+  });
+
+export const auditDuKampKnowledge = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await admin(context);
+    const { duKampIngestionClient } = await import("./rag/dukamp-ingestion-client.server.ts");
+    const { auditDuKampImport } = await import("./rag/dukamp-audit.server.ts");
+    return JSON.stringify(await auditDuKampImport(await duKampIngestionClient(context.supabase)));
+  });
+export const testDuKampQuestion = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((value: unknown) => z.object({ question: z.string().min(3).max(2000) }).parse(value))
+  .handler(async ({ context, data }) => {
+    await admin(context);
+    const { handleIncoming } = await import("./chat/core.server.ts");
+    const result = await handleIncoming({
+      sessionId: `dukamp-qa:${context.userId}`,
+      conversationId: `dukamp-qa:${context.userId}:${Date.now()}`,
+      text: data.question,
+      history: [],
+      channel: "web",
+    });
+    const { searchKnowledge } = await import("./rag/search.server.ts");
+    let retrieval: unknown;
+    try {
+      retrieval = (await searchKnowledge(data.question, 5)).map((m) => ({
+        filename: m.filename,
+        title: m.title,
+        metadata: m.metadata,
+        retrieval: m.retrieval,
+      }));
+    } catch (error) {
+      retrieval = { error: error instanceof Error ? error.message : "Busca indisponível" };
+    }
+    return JSON.stringify({
+      question: data.question,
+      reply: result.reply,
+      retrieval,
+      checked_at: new Date().toISOString(),
     });
   });

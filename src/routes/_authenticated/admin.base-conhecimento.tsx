@@ -4,6 +4,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { importDuKampBatch, uploadDuKampOriginal } from "@/lib/dukamp-knowledge.functions";
 import { planDuKampImport, parseJsonLines } from "@/lib/rag/dukamp-package";
+import { retryDuKampImportStep } from "@/lib/rag/dukamp-import-retry";
+import { DuKampAuditPanel } from "@/components/dukamp-audit-panel";
 import { DuKampReviewPanel } from "@/components/dukamp-review-panel";
 import {
   knowledgeStats,
@@ -242,6 +244,11 @@ function AdminKnowledgeBase() {
   }
 
   async function handleUploadZip(file: File) {
+    let phase = "Lendo o pacote";
+    const setPhase = (label: string) => {
+      phase = label;
+      setProcessingNote(label);
+    };
     setBusy("upload");
     setError(null);
     try {
@@ -262,7 +269,7 @@ function AdminKnowledgeBase() {
           if (!entry) throw new Error(`Arquivo necessário ausente: ${name}`);
           return entry.async("string");
         };
-        setProcessingNote("Validando produtos, versões e referências…");
+        setPhase("Validando produtos, versões e referências…");
         const plan = await planDuKampImport({
           catalog: JSON.parse(await read("dados/catalogo_produtos.json")),
           sections: parseJsonLines(await read("dados/trechos_rag.jsonl"), "trechos"),
@@ -279,19 +286,39 @@ function AdminKnowledgeBase() {
         for (const [i, source] of plan.originals.entries()) {
           const original = archive.file(prefix + source.package_path);
           if (!original) throw new Error(`Original ausente: ${source.package_path}`);
-          setProcessingNote(`Preservando originais ${i + 1}/${plan.originals.length}…`);
-          await uploadOriginal({
-            data: { ...source, base64: toBase64(await original.async("uint8array")) },
-          });
+          setPhase(`Preservando originais ${i + 1}/${plan.originals.length}…`);
+          const originalBase64 = toBase64(await original.async("uint8array"));
+          await retryDuKampImportStep(
+            () =>
+              uploadOriginal({
+                data: { ...source, base64: originalBase64 },
+              }),
+            (attempt) =>
+              setPhase(
+                `Preservando originais ${i + 1}/${plan.originals.length} — tentativa ${attempt}`,
+              ),
+          );
+          if ((i + 1) % 25 === 0 || i + 1 === plan.originals.length)
+            setLog((l) => [
+              `Originais conferidos e preservados: ${i + 1}/${plan.originals.length}.`,
+              ...l,
+            ]);
         }
         const totals = { inserted: 0, changed: 0, unchanged: 0 };
-        for (let i = 0; i < plan.documents.length; i += 15) {
-          setProcessingNote(
-            `Registrando a base ${Math.min(i + 15, plan.documents.length)}/${plan.documents.length}…`,
+        for (let i = 0; i < plan.documents.length; i += 5) {
+          setPhase(
+            `Registrando a base ${Math.min(i + 5, plan.documents.length)}/${plan.documents.length}…`,
           );
-          const result = await importControlled({
-            data: { documents: plan.documents.slice(i, i + 15) },
-          });
+          const result = await retryDuKampImportStep(
+            () =>
+              importControlled({
+                data: { documents: plan.documents.slice(i, i + 5) },
+              }),
+            (attempt) =>
+              setPhase(
+                `Registrando a base ${Math.min(i + 5, plan.documents.length)}/${plan.documents.length} — tentativa ${attempt}`,
+              ),
+          );
           for (const key of ["inserted", "changed", "unchanged"] as const)
             totals[key] += result[key];
         }
@@ -320,7 +347,7 @@ function AdminKnowledgeBase() {
       ]);
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao enviar ZIP.");
+      setError(`${phase}: ${err instanceof Error ? err.message : "Falha ao enviar ZIP."}`);
     } finally {
       setBusy(null);
       setProcessingNote(null);
@@ -428,11 +455,14 @@ function AdminKnowledgeBase() {
               className="text-xs file:mr-2 file:rounded-md file:border file:border-border file:bg-background file:px-3 file:py-1.5 file:text-xs file:text-foreground hover:file:bg-secondary"
             />
             {busy === "upload" && (
-              <span className="text-xs text-muted-foreground">Enviando e descompactando…</span>
+              <span role="status" className="text-xs text-muted-foreground">
+                {processingNote ?? "Enviando e descompactando…"}
+              </span>
             )}
           </div>
         </div>
 
+        <DuKampAuditPanel />
         <DuKampReviewPanel key={docs.length} />
 
         <div className="flex flex-wrap items-center gap-2">

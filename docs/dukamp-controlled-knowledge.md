@@ -6,7 +6,7 @@ A base estruturada preserva 116 identidades de produtos/variantes, 120 versões 
 
 O pacote fica fora do Git. MD, documentos originais e respostas do FAQ não são indexados novamente como evidências independentes. Cada seção documental é um documento e um chunk canônico com produto, variante, fonte, hash, seção, versão, restrições e status. As perguntas ficam em registros de apoio por produto e acrescentam vocabulário de busca às seções referenciadas. `avaliacao.jsonl` é exclusivamente um conjunto de testes.
 
-A aplicação administrativa reconhece o ZIP estruturado, valida o conjunto e envia os originais com hash para caminhos imutáveis `dukamp/originals/<sha256>.<ext>` no bucket privado existente. Depois importa o catálogo, perguntas, manifesto e seções em lotes de 15 registros. São 2.195 documentos planejados: 1.962 seções, 116 fichas, 116 registros de perguntas e um manifesto. A seção mantém seu conteúdo completo, tabela e unidades; as restrições da mesma versão ficam também nos metadados.
+A aplicação administrativa reconhece o ZIP estruturado, valida o conjunto e envia os originais com hash para caminhos imutáveis `dukamp/originals/<sha256>.<ext>` no bucket privado existente. Depois importa o catálogo, perguntas, manifesto e seções em lotes de cinco registros. São 2.195 documentos planejados: 1.962 seções, 116 fichas, 116 registros de perguntas e um manifesto. A seção mantém seu conteúdo completo, tabela e unidades; as restrições da mesma versão ficam também nos metadados.
 
 Identidade de documento usa UUIDv5 do caminho canônico. Um reenvio igual preserva vetores e revisão humana; mudança da ficha invalida a liberação e conserva seu histórico. Um envio interrompido pode ser repetido para reparar seções sem chunk. Importar flags, aliases ou texto alegando aprovação não concede liberação.
 
@@ -43,6 +43,12 @@ O painel aparece na administração da base. Reutiliza a autorização `admin` e
 O registro preserva os campos de `REVISAO_DUKAMP.json`: produto, vigência, fonte aprovada, evidência atual, responsável, data, bloqueios resolvidos, campos corrigidos com evidência, liberação e observações. `resolucoes` e `campos_validados` oferecem a representação detalhada desses campos; hash da fonte, fingerprint da ficha, espécies, disponibilidade e usuário autenticado reforçam a validação. Nenhuma revisão do arquivo recebido é aplicada automaticamente.
 
 Liberar exige todos os campos, resolução de todas as divergências, disponibilidade atual confirmada e fonte compatível. Uma revisão incompleta não libera. Revisões e revogações preservam o histórico; alterações concorrentes são rejeitadas pelo número da versão. Informação recuperada ou mensagem de usuário não registra revisão.
+
+## Conferência administrativa e retomada
+
+O painel mostra a etapa e a contagem durante a importação. Falhas transitórias têm até três tentativas idempotentes; recusa de autorização ou diferença de hash não é repetida automaticamente. O envio usa o mesmo Supabase e as mesmas credenciais existentes com prazo de 20 segundos para I/O administrativo, preservando o prazo de oito segundos do cliente conversacional.
+
+A conferência administrativa lê os registros efetivamente salvos e compara originais, seções, perguntas, documentos e vetores não nulos. Os testes de perguntas executam o fluxo real do backend e mostram também a busca com fontes, sem alterar aprovações técnicas. Todos os botões exigem a sessão administrativa existente.
 
 ## Verificações e limites
 
