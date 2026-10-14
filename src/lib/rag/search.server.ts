@@ -3,7 +3,10 @@
 import { logDiagnostic } from "../chat/diagnostics.server.ts";
 import { classifyDomainIntent } from "../chat/intent.ts";
 import { embeddingProvider, embedQuery, toPgVector } from "./embeddings.server.ts";
-import { filterControlledMatches } from "../chat/dukamp-control.server.ts";
+import { filterControlledMatches, loadDuKampControl } from "../chat/dukamp-control.server.ts";
+import { matchControlledProducts } from "../chat/dukamp-control.ts";
+import type { CatalogEnvelope } from "./dukamp-package.ts";
+import type { KnowledgeDatabase } from "./dukamp-import.server.ts";
 
 export interface Match {
   content: string;
@@ -12,15 +15,55 @@ export interface Match {
   category: string;
   subcategory: string | null;
   similarity: number;
-  retrieval?: "semantic" | "lexical";
+  retrieval?: "semantic" | "lexical" | "identity";
   metadata?: {
     dukamp?: {
       produto_id: string;
       source_id: string;
       versao_papel: string;
+      source_sha256?: string;
       referencias?: unknown[];
     };
   };
+}
+
+/** Exact product identity resolves canonical sections even when the whole-question RPC misses.
+ * The score denotes identity, never cosine similarity or technical approval.
+ * The caller still applies the fresh review/version and historical filters.
+ */
+export async function findControlledIdentityMatches(
+  db: Pick<KnowledgeDatabase, "from">,
+  query: string,
+  catalog: CatalogEnvelope[],
+): Promise<Match[]> {
+  const named = matchControlledProducts(query, catalog).slice(0, 3);
+  const results = await Promise.all(
+    named.map(async (entry) => {
+      const result = await db
+        .from("knowledge_chunks")
+        .select("content,title,filename,category,subcategory,metadata")
+        .contains("metadata", { dukamp: { produto_id: entry.product.produto_id } })
+        .limit(128);
+      if (result.error) throw new Error(result.error.message);
+      return ((result.data ?? []) as Match[])
+        .filter((row) => {
+          const meta = row.metadata?.dukamp;
+          const source = entry.product.fontes.find((s) => s.source_id === meta?.source_id);
+          return (
+            row.filename.startsWith("dukamp_section_") &&
+            meta?.produto_id === entry.product.produto_id &&
+            !!source &&
+            source.sha256 === meta.source_sha256 &&
+            source.versao_papel === meta.versao_papel
+          );
+        })
+        .map((row) => ({ ...row, similarity: 1, retrieval: "identity" as const }));
+    }),
+  );
+  return results.flat().sort((a, b) => {
+    const priority = (m: Match) => (/indica[cç]|restri|modo|adapta/i.test(m.title) ? 0 : 1);
+    return priority(a) - priority(b) || a.filename.localeCompare(b.filename);
+  });
 }
 
 function minimumExplicitSimilarity(): number {
@@ -241,24 +284,31 @@ export async function searchKnowledge(query: string, matchCount = 6): Promise<Ma
     });
   }
 
-  if (byKey.size === 0 && errors.length === 2) {
-    logDiagnostic("error", "rag.search.failed", {
-      duration_ms: Date.now() - totalStarted,
-      errors,
-      query_chars: query.length,
-      requested_matches: matchCount,
-    });
-    throw new Error(`buscas da base indisponíveis (${errors.join("; ")})`);
-  }
-
   // A busca semântica mantém um limiar alto; a lexical usa sua escala nativa.
   // Assim, um termo exato de ficha técnica pode ser usado sem rebaixar a
   // segurança do limiar de cosseno aplicado aos embeddings.
+  try {
+    const registry = await loadDuKampControl();
+    for (const match of await findControlledIdentityMatches(
+      supabaseAdmin,
+      query,
+      registry.catalog,
+    )) {
+      byKey.set(`${match.filename}:${match.content}`, match);
+    }
+  } catch (error) {
+    logDiagnostic("warn", "rag.search.identity.error", {
+      error_message: error instanceof Error ? error.message : "Identity lookup unavailable",
+    });
+  }
+  if (byKey.size === 0 && errors.length === 2) {
+    throw new Error(`buscas da base indisponíveis (${errors.join("; ")})`);
+  }
   let candidates = [...byKey.values()].sort((a, b) => b.similarity - a.similarity);
   const filenames = [
     ...new Set(
       candidates
-        .filter((match) => match.filename.startsWith("dukamp_"))
+        .filter((match) => match.filename.startsWith("dukamp_") && !match.metadata)
         .map((match) => match.filename),
     ),
   ];
@@ -274,7 +324,9 @@ export async function searchKnowledge(query: string, matchCount = 6): Promise<Ma
       );
       candidates = candidates.map((match) => ({
         ...match,
-        metadata: metadata.get(`${match.filename}:${match.content}`) as Match["metadata"],
+        metadata:
+          match.metadata ??
+          (metadata.get(`${match.filename}:${match.content}`) as Match["metadata"]),
       }));
     }
   }
