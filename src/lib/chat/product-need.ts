@@ -8,11 +8,11 @@ function norm(text: string): string {
     .toLowerCase();
 }
 const PRODUCT_CONTEXT =
-  /\b(?:produto|marca|suplement\w*|proteinado|proteico|mineral|racao|sal|nucleo|concentrado|engord\w*|ganho de peso|gmd|recria|cria|confinamento|pasto|pastagem|bezerro\w*|nelore|bois?|gado|bovino\w*|ovino\w*|ovelha\w*|cavalo\w*|equino\w*|leite|cerca|arame|utensilio\w*|adubo|semente\w*|fertilizante|dukamp)\b/;
+  /\b(?:produto|marca|suplement\w*|proteinado|proteico|mineral|racao|sal|nucleo|concentrado|engord\w*|ganho de peso|gmd|recria|cria|confinamento|pasto|pastagem|volumoso|bagaco|bagacinho|bezerro\w*|nelore|bois?|vaca\w*|novilha\w*|gado|bovino\w*|ovino\w*|ovelha\w*|cavalo\w*|equino\w*|leite|cerca|arame|utensilio\w*|adubo|semente\w*|fertilizante|dukamp)\b/;
 const RECOMMEND =
   /\b(?:recomend\w*|indic(?:a|ar|aria|acao|acoes|am|e|o)|suger\w*|sugest\w*|qual (?:a )?marca|que marca|melhor (?:produto|marca|suplemento|racao)|o que (?:usar|dar|comprar))\b/;
 const GOAL_REQUEST =
-  /\b(?:quero|preciso|presciso|procuro|busco)\b.{0,100}\b(?:engord\w*|suplement\w*|proteinado|proteico|racao|mineral|ganhar peso|produto|cerca|arame|utensilio\w*|adubo|semente\w*|fertilizante)\b/;
+  /\b(?:quero|quiser|preciso|presciso|procuro|busco)\b.{0,100}\b(?:gmd|ganho medio diario|engord\w*|suplement\w*|proteinado|proteico|racao|mineral|ganhar peso|produto|cerca|arame|utensilio\w*|adubo|semente\w*|fertilizante)\b/;
 const CONTEXT_CHANGE =
   /\b(?:mudando de assunto|outro assunto|previsao|vai chover|cotacao|mercado do boi|titulo de eleitor|programacao|impressora)\b/;
 const ACK = /^(?:sim|nao|ok|entendi|hmm+|obrigad[oa]|valeu|bom dia|boa tarde|boa noite)[!.? ]*$/;

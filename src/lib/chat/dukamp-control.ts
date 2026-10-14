@@ -29,7 +29,7 @@ const speciesPatterns: Array<[string, RegExp]> = [
 const goalPatterns: Array<[string, RegExp]> = [
   ["cria", /\bcria\b|bezerro|aleitamento/],
   ["recria", /recria|crescimento|desenvolvimento/],
-  ["engorda", /engorda|terminacao|acabamento|ganho de peso|ganhar peso|gmd/],
+  ["engorda", /engorda|terminacao|acabamento|ganho de peso|ganhar peso|gmd|ganho medio diario/],
   ["leite", /lactacao|leiteir|litros de leite/],
   ["reproducao", /reproducao|reprodutor|gestacao|gestante|prenhez|fertilidade|iatf/],
   ["pre_parto", /pre parto|antecede o parto|antes do parto/],
@@ -133,13 +133,31 @@ export function assessProducerNeed(text: string, userHistory: string[] = []): Pr
 function containsAlias(text: string, alias: string): boolean {
   return ` ${text} `.includes(` ${alias} `);
 }
+/** Feeding-system evidence, never a performance promise or a rule based on a product name. */
+export function needsCompleteDiet(text: string): boolean {
+  const query = normalized(text);
+  return (
+    (/bagac(?:o|inho)|bagacinho/.test(query) && /somente|\bso\b|apenas|unico/.test(query)) ||
+    /dieta (?:completa|total)|sem volumoso|\bconfinamento\b/.test(query)
+  );
+}
 export function matchControlledProducts(
   text: string,
   catalog: CatalogEnvelope[],
   recommendation = false,
+  ignorePreviousNames = false,
 ): CatalogEnvelope[] {
   const query = normalized(text);
+  // A percentage is part of variant identity, not an interchangeable dose or alias.
+  const variant = /\btotal\s+m\b/i.test(query)
+    ? text.match(/\b(\d+(?:[.,]\d+)?)\s*%/)?.[1]
+    : undefined;
   const named = catalog
+    .filter(
+      (entry) =>
+        !variant ||
+        entry.product.nome_comercial_documental.match(/\b(\d+(?:[.,]\d+)?)\s*%/)?.[1] === variant,
+    )
     .map((entry) => {
       const compactNucleus = normalized(entry.product.nome_comercial_documental).match(
         /nucleo.*\b(\d+)\s+([bi])$/,
@@ -177,7 +195,7 @@ export function matchControlledProducts(
     })
     .filter((match) => match.length > 0)
     .sort((a, b) => b.length - a.length);
-  if (named.length) {
+  if (named.length && !ignorePreviousNames) {
     return named
       .filter(
         (m) =>
@@ -190,29 +208,51 @@ export function matchControlledProducts(
   }
   if (!recommendation) return [];
   const need = assessProducerNeed(text);
-  if (need.species.length !== 1 || need.objective.length === 0) return [];
+  const completeDiet = needsCompleteDiet(text);
+  if (need.species.length !== 1 || (!need.objective.length && !completeDiet)) return [];
   const candidates = catalog
     .filter((e) => !["historico_obsoleto", "nao_lancado"].includes(e.product.status_vigencia))
     .filter((e) => speciesFromIndication(e.product).includes(need.species[0]))
+    .filter((e) => incompatibilities(e, need, text).length === 0)
+    .filter(
+      (e) =>
+        need.category !== "lactacao" ||
+        !/bovinos de corte/.test(normalized(e.product.descricao_documental)) ||
+        /leite|lactacao/.test(normalized(e.product.descricao_documental)),
+    )
     .map((entry) => {
-      const indication = normalized(entry.product.descricao_documental);
+      const indication = normalized(
+        entry.product.classificacao_documental + " " + entry.product.descricao_documental,
+      );
       const goals = goalPatterns.filter(
         ([name, pattern]) => need.objective.includes(name) && pattern.test(indication),
       ).length;
-      const seasonMatches =
-        need.season === "seca"
+      const seasonMatches = !/seca|chuvos|aguas|primavera/.test(indication)
+        ? true
+        : need.season === "seca"
           ? /seca/.test(indication)
           : need.season === "aguas"
             ? /chuvosa|aguas|primavera/.test(indication)
             : true;
-      return { entry, score: goals + (seasonMatches && need.season ? 2 : 0), goals, seasonMatches };
+      const ration =
+        /racao/.test(indication) &&
+        /confinamento/.test(indication) &&
+        /sem volumoso/.test(indication);
+      return {
+        entry,
+        score: goals + (seasonMatches && need.season ? 2 : 0) + (completeDiet && ration ? 10 : 0),
+        goals,
+        seasonMatches,
+        ration,
+      };
     })
-    .filter((m) => m.goals > 0 && m.seasonMatches)
+    .filter((m) => (m.goals > 0 || (completeDiet && m.ration)) && m.seasonMatches)
+    .filter((m) => !completeDiet || m.ration)
     .sort(
       (a, b) =>
         b.score - a.score || a.entry.product.produto_id.localeCompare(b.entry.product.produto_id),
     );
-  return candidates.slice(0, 3).map((c) => c.entry);
+  return candidates.slice(0, completeDiet ? 2 : 3).map((c) => c.entry);
 }
 export function sourceLabel(
   product: ControlledProduct,
@@ -248,6 +288,14 @@ export function incompatibilities(
   if (need.species.length && need.species.some((s) => !declared.includes(s)))
     reasons.push(
       `A indicação documental não autoriza este produto para ${need.species.filter((s) => !declared.includes(s)).join(", ")}.`,
+    );
+  if (
+    need.category === "lactacao" &&
+    /bovinos de corte/.test(normalized(p.descricao_documental)) &&
+    !/leite|lactacao/.test(normalized(p.descricao_documental))
+  )
+    reasons.push(
+      "A indicação é para bovinos de corte; não autoriza este uso em vacas em lactação.",
     );
   if (need.ageMonths !== null) {
     const indication = normalized(p.descricao_documental + " " + p.modo_de_usar_documental);
@@ -291,6 +339,8 @@ export interface ControlledTurn {
   reply: string | null;
   allowOperationalModel: boolean;
   historical: boolean;
+  catalogVariants?: import("./dukamp-practical.ts").CatalogVariant[];
+  catalogOnly?: boolean;
 }
 export function decideControlledTurn(
   text: string,
@@ -303,10 +353,12 @@ export function decideControlledTurn(
 ): ControlledTurn {
   const need = assessProducerNeed(text, options.userHistory);
   const context = [...(options.userHistory ?? []).slice(-6), text].join("\n");
-  const currentMatches = matchControlledProducts(text, catalog, options.recommendation);
+  const currentMatches = matchControlledProducts(text, catalog);
   const selected = currentMatches.length
     ? currentMatches
-    : matchControlledProducts(context, catalog, options.recommendation);
+    : options.recommendation
+      ? matchControlledProducts(context, catalog, true, true)
+      : matchControlledProducts(context, catalog);
   const none: ControlledTurn = {
     active: false,
     selected: [],
