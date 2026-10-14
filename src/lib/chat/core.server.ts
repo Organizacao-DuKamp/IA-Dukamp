@@ -69,6 +69,7 @@ import { repairMarketAnswer } from "./market-response.server.ts";
 import { resolveProductNeed } from "./product-need.ts";
 import { resolveControlledTurn, enforceControlledReply } from "./dukamp-control.server.ts";
 import { approvedProductContext } from "./dukamp-control.ts";
+import { practicalControlledReply, DUKAMP_PRACTICAL_DIRECTIVE } from "./dukamp-practical.ts";
 import { dukampPriorityDirective, enforceDuKampPriority } from "./dukamp-priority.server.ts";
 import type { SiteProduct } from "../site/site-lookup.server.ts";
 
@@ -389,10 +390,15 @@ async function runTurn(
     productNeed.active,
   );
   if (controlled.reply) {
-    const finalState = applyAssistantTurn(state, controlled.reply);
+    const reply = practicalControlledReply(
+      controlled,
+      text,
+      history.filter((m) => m.role === "user").map((m) => m.content),
+    );
+    const finalState = applyAssistantTurn(state, reply);
     finalState.conversation_summary = updateSummary(finalState, windowed.dropped);
     return {
-      reply: controlled.reply,
+      reply,
       state: finalState,
       conversationId,
       diagnostics: diag(
@@ -401,7 +407,17 @@ async function runTurn(
         windowed,
         analysis,
         stateBefore,
-        ["dukamp:technical-control"],
+        [
+          "dukamp:technical-control",
+          ...controlled.selected.flatMap((e) =>
+            e.product.fontes.map(
+              (s) => `dukamp:source:${e.product.produto_id}:${s.source_id}:${s.sha256}`,
+            ),
+          ),
+          ...(controlled.catalogVariants ?? []).map(
+            (p) => `dukamp:catalog:${p.id}:${p.code ?? ""}:${p.source}`,
+          ),
+        ],
         "dukamp:technical-control",
       ),
     };
@@ -789,7 +805,7 @@ async function runTurn(
       ? `${baseSourcePolicy}\n${weatherSourceDirective(weatherLocation)}`
       : animalRegistry.active
         ? animalRegistryDirective(animalRegistry.registrations)
-        : baseSourcePolicy;
+        : `${baseSourcePolicy}\n${DUKAMP_PRACTICAL_DIRECTIVE}`;
     const modelContext = contextParts.length > 0 ? contextParts.join("\n\n") : null;
     const modelKind = chatModelKindForChannel(input.channel);
     const promptTelemetry = {

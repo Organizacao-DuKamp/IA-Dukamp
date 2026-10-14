@@ -3,6 +3,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { auditDuKampKnowledge, testDuKampQuestion } from "@/lib/dukamp-knowledge.functions";
 
 const questions = [
+  "Tenho vacas de 350 kg e somente bagacinho como volumoso. Quero GMD de 1,2 kg por dia. Quais opções Dukamp posso avaliar?",
+  "Qual a dose da Dukamp Total M 1%?",
   "Posso dar Dukamp Protéico Seca para um bezerro de dois meses?",
   "Posso usar Dukamp 60/S nos meus ovinos?",
   "Posso colocar Núcleo Dukamp Confinamento 200 B puro no cocho?",
