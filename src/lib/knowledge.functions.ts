@@ -171,7 +171,7 @@ export const processNextPending = createServerFn({ method: "POST" })
 const ReprocessInput = z.object({ id: z.string().uuid() });
 export const reprocessDocument = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => ReprocessInput.parse(d))
+  .validator((d: unknown) => ReprocessInput.parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
     const { getPrivilegedClient } = await import("@/lib/privileged.server");
@@ -198,7 +198,7 @@ const SUPPORTED = /\.(txt|md|pdf|docx|xls|xlsx|csv)$/i;
 
 export const uploadKnowledgeZip = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => UploadInput.parse(d))
+  .validator((d: unknown) => UploadInput.parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
     const { getPrivilegedClient } = await import("@/lib/privileged.server");
@@ -384,7 +384,7 @@ const FileInput = z.object({
 });
 export const uploadKnowledgeFile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => FileInput.parse(d))
+  .validator((d: unknown) => FileInput.parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
     const { getPrivilegedClient } = await import("@/lib/privileged.server");

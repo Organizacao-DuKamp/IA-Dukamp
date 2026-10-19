@@ -20,7 +20,7 @@ jobs:
         with:
           node-version: 22
       - name: Install dependencies
-        run: npm install
+        run: npm ci --include=dev
       - name: Audit privileged imports
         run: npm run audit:privileged
       - name: Test

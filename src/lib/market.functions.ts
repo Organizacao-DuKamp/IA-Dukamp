@@ -40,7 +40,7 @@ export const listSources = createServerFn({ method: "GET" })
 
 export const listQuotes = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         slug: z.string().max(80).optional(),
@@ -81,9 +81,7 @@ const manualQuote = z.object({
 /** Lançamento manual de cotações (planilha/observação de campo). */
 export const saveQuotes = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
-    z.object({ quotes: z.array(manualQuote).min(1).max(200) }).parse(d),
-  )
+  .validator((d: unknown) => z.object({ quotes: z.array(manualQuote).min(1).max(200) }).parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
     const { upsertQuotes } = await import("./market/ingest.server");
@@ -92,7 +90,7 @@ export const saveQuotes = createServerFn({ method: "POST" })
 
 export const deleteQuote = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
     const { getPrivilegedClient } = await import("@/lib/privileged.server");
@@ -141,7 +139,7 @@ export const listLivestockCatalog = createServerFn({ method: "GET" })
 
 export const listLivestockQuotes = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         categoria: z.string().max(60).optional(),
@@ -166,9 +164,7 @@ export const listLivestockQuotes = createServerFn({ method: "GET" })
 
 export const saveLivestockQuotes = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
-    z.object({ quotes: z.array(livestockQuote).min(1).max(200) }).parse(d),
-  )
+  .validator((d: unknown) => z.object({ quotes: z.array(livestockQuote).min(1).max(200) }).parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
     const { upsertLivestockQuotes } = await import("./market/livestock-ingest.server");
@@ -177,7 +173,7 @@ export const saveLivestockQuotes = createServerFn({ method: "POST" })
 
 export const deleteLivestockQuote = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
     const { getPrivilegedClient } = await import("@/lib/privileged.server");

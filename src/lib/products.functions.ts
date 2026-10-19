@@ -31,7 +31,7 @@ export const listProducts = createServerFn({ method: "GET" })
 
 export const listProductAliases = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ product_id: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ product_id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
     const { getPrivilegedClient } = await import("@/lib/privileged.server");
@@ -68,7 +68,7 @@ const UpdateSchema = z.object({
 });
 export const updateProduct = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => UpdateSchema.parse(d))
+  .validator((d: unknown) => UpdateSchema.parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
     const { getPrivilegedClient } = await import("@/lib/privileged.server");
@@ -91,7 +91,7 @@ const AliasAddSchema = z.object({
 });
 export const addProductAlias = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => AliasAddSchema.parse(d))
+  .validator((d: unknown) => AliasAddSchema.parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
     const { getPrivilegedClient } = await import("@/lib/privileged.server");
@@ -108,7 +108,7 @@ export const addProductAlias = createServerFn({ method: "POST" })
 
 export const deleteProductAlias = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
     const { getPrivilegedClient } = await import("@/lib/privileged.server");
@@ -141,7 +141,7 @@ const ResolveSchema = z.object({
 });
 export const resolveReview = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => ResolveSchema.parse(d))
+  .validator((d: unknown) => ResolveSchema.parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
     const { getPrivilegedClient } = await import("@/lib/privileged.server");
@@ -172,7 +172,7 @@ export const listImportReports = createServerFn({ method: "GET" })
 
 export const getImportReportItems = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ report_id: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ report_id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
     const { getPrivilegedClient } = await import("@/lib/privileged.server");
@@ -193,7 +193,7 @@ const ExtractSchema = z.object({
 });
 export const extractProductsFromKnowledge = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => ExtractSchema.parse(d))
+  .validator((d: unknown) => ExtractSchema.parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
     const { getPrivilegedClient } = await import("@/lib/privileged.server");
@@ -373,7 +373,7 @@ const CountSchema = z.object({
   active_only: z.boolean().default(true),
 });
 export const countProducts = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => CountSchema.parse(d))
+  .validator((d: unknown) => CountSchema.parse(d))
   .handler(async ({ data }) => {
     const { createClient } = await import("@supabase/supabase-js");
     const key =
@@ -412,7 +412,7 @@ const ListSchema = z.object({
   limit: z.number().min(1).max(200).default(100),
 });
 export const listPublicProducts = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => ListSchema.parse(d))
+  .validator((d: unknown) => ListSchema.parse(d))
   .handler(async ({ data }) => {
     const { createClient } = await import("@supabase/supabase-js");
     const key =

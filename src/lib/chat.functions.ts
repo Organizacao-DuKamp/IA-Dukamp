@@ -9,7 +9,7 @@ import { TpecBackendError } from "./chat/backend.server";
 import { prepareWebMemory, stampMemoryState } from "./chat/memory-reset.ts";
 
 export const sendChatMessage = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => ChatInputSchema.parse(data))
+  .validator((data: unknown) => ChatInputSchema.parse(data))
   .handler(async ({ data }) => {
     try {
       data = prepareWebMemory(data);
