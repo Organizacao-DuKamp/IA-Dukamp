@@ -263,7 +263,7 @@ function applyDateRange(query: any, range: { from: string | null; to: string | n
 
 export const aiAnalyticsOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => RangeInput.parse(d ?? {}))
+  .validator((d: unknown) => RangeInput.parse(d ?? {}))
   .handler(async ({ context, data }) => {
     await assertAdmin(context as AdminContext);
     const { getPrivilegedClient } = await import("@/lib/privileged.server");
@@ -280,7 +280,7 @@ export const aiAnalyticsOverview = createServerFn({ method: "GET" })
 
 export const aiAnalyticsUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => UsersInput.parse(d ?? {}))
+  .validator((d: unknown) => UsersInput.parse(d ?? {}))
   .handler(async ({ context, data }) => {
     await assertAdmin(context as AdminContext);
     const { getPrivilegedClient } = await import("@/lib/privileged.server");
@@ -298,7 +298,7 @@ export const aiAnalyticsUsers = createServerFn({ method: "GET" })
 
 export const aiChatHistory = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => HistoryInput.parse(d))
+  .validator((d: unknown) => HistoryInput.parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context as AdminContext);
     const { getPrivilegedClient } = await import("@/lib/privileged.server");
@@ -320,7 +320,7 @@ export const aiChatHistory = createServerFn({ method: "GET" })
 
 export const aiUserAnalytics = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => UserInput.parse(d))
+  .validator((d: unknown) => UserInput.parse(d))
   .handler(async ({ context, data }): Promise<AIUserAnalytics> => {
     await assertAdmin(context as AdminContext);
     const { getPrivilegedClient } = await import("@/lib/privileged.server");
@@ -372,7 +372,7 @@ export const aiUserAnalytics = createServerFn({ method: "GET" })
 
 export const aiProviderAnalytics = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => RangeInput.parse(d ?? {}))
+  .validator((d: unknown) => RangeInput.parse(d ?? {}))
   .handler(async ({ context, data }) => {
     await assertAdmin(context as AdminContext);
     const { getPrivilegedClient } = await import("@/lib/privileged.server");

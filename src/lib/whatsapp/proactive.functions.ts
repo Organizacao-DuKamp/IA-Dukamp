@@ -26,7 +26,7 @@ async function assertAdmin(ctx: AdminContext) {
 
 export const whatsappFollowupDetail = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => PhoneInput.parse(data))
+  .validator((data: unknown) => PhoneInput.parse(data))
   .handler(async ({ context, data }) => {
     await assertAdmin(context as AdminContext);
     const proactive = await import("./proactive.server.ts");
@@ -35,7 +35,7 @@ export const whatsappFollowupDetail = createServerFn({ method: "GET" })
 
 export const forceWhatsAppFollowup = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => PhoneInput.parse(data))
+  .validator((data: unknown) => PhoneInput.parse(data))
   .handler(async ({ context, data }) => {
     await assertAdmin(context as AdminContext);
     const proactive = await import("./proactive.server.ts");
@@ -44,7 +44,7 @@ export const forceWhatsAppFollowup = createServerFn({ method: "POST" })
 
 export const setWhatsAppFollowupEnabled = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => ToggleInput.parse(data))
+  .validator((data: unknown) => ToggleInput.parse(data))
   .handler(async ({ context, data }) => {
     await assertAdmin(context as AdminContext);
     const proactive = await import("./proactive.server.ts");
