@@ -103,8 +103,9 @@ diretamente da Meta, valida formato, tamanho e integridade, extrai um texto
 seguro e só então chama o núcleo da TPEC-IA com o histórico existente.
 
 - Áudios são transcritos; imagens e documentos são analisados pelo modelo multimodal.
-- Vídeos usam a legenda e a transcrição da faixa de áudio; o arquivo visual completo não é enviado ao modelo.
+- Vídeos têm até 16 quadros distribuídos pela duração analisados visualmente, junto da legenda e da transcrição da faixa de áudio extraída em MP3. Vídeos sem som ou com falha na transcrição continuam sendo analisados pelas imagens. A amostragem é informada ao modelo e pode não capturar movimentos rápidos entre quadros.
 - Cada arquivo pode ter até 25 MB. O conteúdo bruto não é salvo no histórico.
+- Vídeos podem ter até 10 minutos; arquivos maiores ou mais longos recebem orientação para envio de um trecho menor. MP4, 3GP, MOV, MPEG e WebM são aceitos. FFmpeg é executado somente no servidor, com limites de tempo, sem acesso a protocolos remotos, e seus arquivos temporários são removidos ao final.
 - São aceitas imagens JPG, PNG, WebP e GIF; áudios/vídeos AAC, FLAC, M4A, MP3, MP4, MPEG, OGG, WAV e WebM; e documentos comuns como PDF, Word, Excel, PowerPoint, CSV e texto.
 
 `WHATSAPP_ACCESS_TOKEN` precisa existir como segredo server-only na Netlify para
@@ -113,6 +114,14 @@ receber, baixar e enviar mídias. Os modelos opcionais são
 (padrão `gpt-4o-mini-transcribe`). `OPENAI_MEDIA_IMAGE_DETAIL` aceita `low`,
 `high` ou `auto`; sem configuração, fotos comuns usam `low` e pedidos de leitura
 de texto, tela ou tabela usam `high`.
+
+A análise de vídeo funciona também com `TPEC_MULTIMODEL_ENABLED=false`, usando a
+chave OpenAI existente. No modo multimodelo, os quadros são compatíveis com Gemini
+e com a alternativa OpenAI; o processamento não depende de enviar o vídeo bruto
+inline nem falha por ausência de chave Gemini. O pacote `ffmpeg-static` é incluído
+no handler Nitro e nos workers de processamento/recuperação da Netlify. Instale as
+dependências com scripts habilitados (não use `--ignore-scripts`): o instalador
+obtém o binário da plataforma durante o build.
 
 Quando uma consulta demora, o webhook usa uma única reserva durável para exibir
 o indicador nativo de digitação do WhatsApp. Nenhuma mensagem textual de

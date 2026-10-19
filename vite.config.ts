@@ -47,7 +47,9 @@ export default defineConfig(({ command, mode }) => {
         },
         server: { entry: "server" },
       }),
-      ...(command === "build" ? [nitro({ preset: process.env.NITRO_PRESET || "netlify" })] : []),
+      ...(command === "build"
+        ? [nitro({ preset: process.env.NITRO_PRESET || "netlify", traceDeps: ["ffmpeg-static*"] })]
+        : []),
       react(),
     ],
     server: {
