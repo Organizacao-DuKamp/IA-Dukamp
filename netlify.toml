@@ -16,6 +16,9 @@
   included_files = ["node_modules/ffmpeg-static/ffmpeg"]
 
 [build.environment]
+  # O projeto usa Vite, Nitro e ESLint durante o build, mesmo quando a UI
+  # define NODE_ENV=production. Preserve essas dependências na instalação.
+  NPM_FLAGS = "--include=dev"
   # Mantém o handler SSR/server do TanStack Start gerado pelo Nitro para Netlify.
   NITRO_PRESET = "netlify"
   NODE_VERSION = "22"
