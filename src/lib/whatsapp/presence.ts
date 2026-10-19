@@ -227,6 +227,12 @@ export function friendlyWhatsAppError(error: unknown): string {
   const status = typeof candidate?.status === "number" ? candidate.status : 0;
   const searchable = `${message} ${code}`;
 
+  if (code === "whatsapp_video_too_long") {
+    return "Esse vídeo passou do limite de 10 minutos. Envie um trecho menor com a parte que você quer analisar.";
+  }
+  if (code === "invalid_whatsapp_video") {
+    return "Não consegui ler as imagens desse vídeo. Tente reenviar em MP4 ou envie um trecho menor com a parte que você quer analisar.";
+  }
   if (status === 413 || /media_too_large|maior que o limite/i.test(searchable)) {
     return "Esse arquivo passou do limite de 25 MB que eu consigo analisar. Envie uma versão menor ou divida o conteúdo em mais de uma mensagem.";
   }

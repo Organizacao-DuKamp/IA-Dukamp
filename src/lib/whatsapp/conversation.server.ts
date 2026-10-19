@@ -415,7 +415,9 @@ export async function processClaimedWhatsAppChat(
       if (input.media && !checkRateLimit(`media:${input.phone}`).ok)
         throw new Error("Limite de solicitações de mídia atingido. Aguarde um minuto.");
       // Visual/document specialists need history; legacy/audio retain parallel loading.
-      const needsHistory = multimodelEnabled() && input.media && input.media.type !== "audio";
+      const needsHistory =
+        input.media &&
+        (input.media.type === "video" || (multimodelEnabled() && input.media.type !== "audio"));
       const [previous, resolvedUserText] = needsHistory
         ? await (async () => {
             const snapshot = await deps.loadConversation(input.phone);

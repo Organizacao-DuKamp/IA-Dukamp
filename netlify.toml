@@ -6,7 +6,19 @@
   # O deploy preview funciona como CI desta integração.
   command = "npm run audit:privileged && npm test && npm run lint && npm run build"
 
+[functions]
+  external_node_modules = ["ffmpeg-static"]
+
+[functions."whatsapp-process-background"]
+  included_files = ["node_modules/ffmpeg-static/ffmpeg"]
+
+[functions."whatsapp-retry-background"]
+  included_files = ["node_modules/ffmpeg-static/ffmpeg"]
+
 [build.environment]
+  # O projeto usa Vite, Nitro e ESLint durante o build, mesmo quando a UI
+  # define NODE_ENV=production. Preserve essas dependências na instalação.
+  NPM_FLAGS = "--include=dev"
   # Mantém o handler SSR/server do TanStack Start gerado pelo Nitro para Netlify.
   NITRO_PRESET = "netlify"
   NODE_VERSION = "22"

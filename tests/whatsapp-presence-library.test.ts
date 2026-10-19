@@ -3,8 +3,22 @@ import test from "node:test";
 
 import {
   buildWhatsAppProgressPlan,
+  friendlyWhatsAppError,
   WHATSAPP_PROGRESS_TEMPLATE_COUNT,
 } from "../src/lib/whatsapp/presence.ts";
+
+test("erros de vídeo diferenciam duração, arquivo inválido e tamanho", () => {
+  assert.match(
+    friendlyWhatsAppError({ code: "whatsapp_video_too_long", status: 413 }),
+    /10 minutos/,
+  );
+  assert.doesNotMatch(
+    friendlyWhatsAppError({ code: "whatsapp_video_too_long", status: 413 }),
+    /25 MB/,
+  );
+  assert.match(friendlyWhatsAppError({ code: "invalid_whatsapp_video", status: 422 }), /MP4/);
+  assert.match(friendlyWhatsAppError({ code: "whatsapp_media_too_large", status: 413 }), /25 MB/);
+});
 
 test("biblioteca de presença contém exatamente 60 templates", () => {
   assert.equal(WHATSAPP_PROGRESS_TEMPLATE_COUNT, 60);
