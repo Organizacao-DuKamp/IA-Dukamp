@@ -31,6 +31,7 @@ import {
 } from "@/lib/ai/provider-summary";
 import { AIHealthCheck } from "@/components/admin/AIHealthCheck";
 import { WhatsAppFollowupPanel } from "@/components/admin/WhatsAppFollowupPanel";
+import { ResetWhatsAppConversationButton } from "@/components/admin/ResetWhatsAppConversationButton";
 
 export const Route = createFileRoute("/_authenticated/admin/ia")({
   head: () => ({
@@ -244,6 +245,7 @@ function AdminAIAnalytics() {
   const [loading, setLoading] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [memoryVersion, setMemoryVersion] = useState(0);
 
   async function refresh() {
     detailRequest.current += 1;
@@ -608,12 +610,20 @@ function AdminAIAnalytics() {
                           </div>
                         </td>
                         <td className="px-4 py-3 text-right">
-                          <button
-                            onClick={() => void openUser(user)}
-                            className="rounded-md border border-primary px-3 py-1.5 text-xs text-primary hover:bg-primary/10"
-                          >
-                            Analisar usuário
-                          </button>
+                          <div className="flex flex-col items-end gap-2">
+                            <button
+                              onClick={() => void openUser(user)}
+                              className="rounded-md border border-primary px-3 py-1.5 text-xs text-primary hover:bg-primary/10"
+                            >
+                              Analisar usuário
+                            </button>
+                            {user.channel === "whatsapp" && user.phone_number && (
+                              <ResetWhatsAppConversationButton
+                                phone={user.phone_number}
+                                onReset={() => setMemoryVersion((version) => version + 1)}
+                              />
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -849,7 +859,16 @@ function AdminAIAnalytics() {
 
             {selected.channel === "whatsapp" && selected.phone_number && (
               <div className="border-b border-border p-4">
-                <WhatsAppFollowupPanel phone={selected.phone_number} />
+                <div className="space-y-3">
+                  <ResetWhatsAppConversationButton
+                    phone={selected.phone_number}
+                    onReset={() => setMemoryVersion((version) => version + 1)}
+                  />
+                  <WhatsAppFollowupPanel
+                    key={selected.phone_number + memoryVersion}
+                    phone={selected.phone_number}
+                  />
+                </div>
               </div>
             )}
 

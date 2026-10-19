@@ -51,6 +51,18 @@ export const setWhatsAppFollowupEnabled = createServerFn({ method: "POST" })
     return proactive.setWhatsAppFollowupsEnabled(data.phone, data.enabled);
   });
 
+export const resetWhatsAppConversation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((data: unknown) => PhoneInput.parse(data))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context as AdminContext);
+    const { getPrivilegedClient, hasServiceRole } = await import("@/lib/privileged.server");
+    if (!hasServiceRole()) throw new Error("O serviço de memória está indisponível.");
+    const client = await getPrivilegedClient(null);
+    const { resetConversationMemory } = await import("./reset.server.ts");
+    return resetConversationMemory(client, data.phone);
+  });
+
 export type {
   ManualFollowupResult,
   WhatsAppFollowupDetail,
