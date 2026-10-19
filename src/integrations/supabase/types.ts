@@ -900,6 +900,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      reset_whatsapp_conversation: {
+        Args: { p_phone: string; p_epoch: string };
+        Returns: string;
+      };
       admin_ai_chat_overview: {
         Args: { p_from?: string; p_to?: string };
         Returns: {
