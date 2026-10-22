@@ -581,7 +581,9 @@ export async function handleEnhancedWhatsAppWebhookRequest(
       );
       const failure = message.media
         ? friendlyWhatsAppError(error)
-        : await (dependencies.emergencyAnswer ?? answerWhatsAppEmergency)(message.text, error);
+        : await (dependencies.emergencyAnswer ?? answerWhatsAppEmergency)(message.text, error, {
+            phone: message.phone,
+          });
       await (dependencies.recordTurn ?? recordAIChatTurn)({
         channel: "whatsapp",
         sessionId: `wa:${message.phone}`,

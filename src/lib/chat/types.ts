@@ -19,6 +19,9 @@ export interface IncomingMessage {
   clientMessageId?: string;
   /** Canal confiável definido pelo adaptador server-side. */
   channel?: ChatChannel;
+  /** Retrieved only by the trusted channel adapter; never accepted from a public payload. */
+  channelEvidence?: { text: string; kind: string };
+  conversationRecall?: import("./context/types.ts").ConversationRecall;
   /** Raw user text. Chat Core will validate/sanitize. */
   text: string;
   /** Prior turns for this session (channel keeps ephemeral context only). */

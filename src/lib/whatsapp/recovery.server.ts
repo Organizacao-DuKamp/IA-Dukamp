@@ -136,7 +136,7 @@ async function recoverOne(
 
     // Última barreira contra silêncio: pula RAG, roteamento e demais etapas e
     // tenta uma resposta curta diretamente no modelo econômico da OpenAI.
-    const fallbackReply = await answerWhatsAppEmergency(input.text, error);
+    const fallbackReply = await answerWhatsAppEmergency(input.text, error, { phone: input.phone });
     await recordAIChatTurn({
       channel: "whatsapp",
       sessionId: `wa:${input.phone}`,

@@ -1,3 +1,4 @@
+import { referencesPriorContext } from "../chat/context/recall.ts";
 import { askOpenAI, type OpenAIOptions } from "../chat/openai.server.ts";
 import type { ChatMessage } from "../chat/types.ts";
 import { multimodelEnabled } from "./config.server.ts";
@@ -42,7 +43,12 @@ export function isSelfContainedCalculation(message: string): boolean {
       text,
     );
 
-  return explicitCalculation && numbers.length >= 2 && !requiresFreshData;
+  return (
+    explicitCalculation &&
+    numbers.length >= 2 &&
+    !requiresFreshData &&
+    !referencesPriorContext(message)
+  );
 }
 
 export async function askTpecAI(

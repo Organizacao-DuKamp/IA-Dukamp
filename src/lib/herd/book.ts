@@ -56,10 +56,19 @@ export function isExplicitAnimalLookup(text: string): boolean {
     ) && !/\b(nao|sem)\b.{0,45}(pesquis|consult|busc|identifi)|so (?:marca|anota|registr)/.test(t)
   );
 }
+export function isHerdSummary(text: string): boolean {
+  const t = fold(text);
+  return (
+    /\b(quantos?|quantas?|total|soma|media|contagem)\b/.test(t) &&
+    /\b(animais|gado|rebanho|lote|machos?|femeas?|pesos?|pesag\w*|pesad\w*)\b/.test(t) &&
+    !/\b(preco|produto|vendedor|racao|suplemento|dose|leite|producao|ganho|gmd)\b/.test(t)
+  );
+}
 export function isHerdReport(text: string): boolean {
   const t = fold(text);
   return (
-    /\b(list(?:a|agem)|relatorio|balanco|resumo|consolidado)\b/.test(t) &&
+    (/\b(list(?:a|agem)|relatorio|balanco|resumo|consolidado|planilha|pdf|excel)\b/.test(t) ||
+      isHerdSummary(text)) &&
     !/\b(preco|produto|vendedor|racao|suplemento)\b/.test(t)
   );
 }
@@ -303,8 +312,19 @@ export function reduceHerdTurn(
     );
   }
   if (isHerdReport(text) && !/(?:essa|esta) lista vai ser|se colocar sim/.test(t)) {
-    if (/femea|macho/.test(t) && last() && !/\d/.test(t))
-      last()!.sex = /femea/.test(t) ? "fêmea" : "macho";
+    if (isHerdSummary(text)) return done(herdSummary(book));
+    const declaresSex = /\b(?:e|era|sexo|ela e|ele e) (?:uma? )?(?:femea|macho)\b/.test(t);
+    if (declaresSex && last() && !/\d/.test(t)) last()!.sex = /femea/.test(t) ? "fêmea" : "macho";
+    else if (/\b(?:machos?|femeas?)\b/.test(t) && !(/macho/.test(t) && /femea/.test(t))) {
+      const sex: Sex = /femea/.test(t) ? "fêmea" : "macho";
+      return done(
+        `Filtro: ${sex === "macho" ? "machos" : "fêmeas"}.\n` +
+          renderHerdReport(
+            { ...book, entries: book.entries.filter((entry) => entry.sex === sex) },
+            day,
+          ),
+      );
+    }
     return done(renderHerdReport(book, day));
   }
   if (herdSessionStart(text)) book.active = true;

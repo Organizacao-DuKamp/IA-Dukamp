@@ -19,7 +19,10 @@ export const ChatInputSchema = z.object({
   state: z.unknown().optional(),
 });
 
-export type ChatInput = z.infer<typeof ChatInputSchema>;
+export type ChatInput = z.infer<typeof ChatInputSchema> & {
+  channelEvidence?: { text: string; kind: string };
+  conversationRecall?: import("./context/types.ts").ConversationRecall;
+};
 
 /** Resposta completa produzida por handleIncoming no backend privilegiado. */
 export const ChatCoreResultSchema = z.object({
