@@ -357,3 +357,22 @@ test("switching topic clears the herd report date so a later PDF request follows
   );
   assert.equal((saved?.state as { last_herd_day?: string })?.last_herd_day, undefined);
 });
+
+test("media context is budgeted before rendering so coverage and later corrections survive", async () => {
+  const turns = Array.from({ length: 200 }, (_, i) => ({
+    id: String(i),
+    created_at: new Date(Date.parse("2026-10-21T10:00:00Z") + i * 60000).toISOString(),
+    user_text: `Animal ${i}: anotação extensa ${"peso 200 kg ".repeat(10)}`,
+    assistant_text: "Anotado",
+  }));
+  turns.at(-1)!.user_text = "Corrija o DUKN 405 para 697 kg";
+  const recall = await recallWhatsAppContext(
+    { phone: "5517999991111", text: "Use estes dados e os de ontem", maxContextChars: 14000 },
+    { now, store: async () => ({ ...empty, turns, total: 200 }) },
+  );
+  assert.equal(recall.partial, true);
+  assert.match(recall.context, /PARCIAL/);
+  assert.match(recall.context, /697 kg/);
+  assert.ok(recall.context.length < 16000);
+  assert.ok(recall.includedTurns < 200);
+});
