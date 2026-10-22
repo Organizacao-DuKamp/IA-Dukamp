@@ -11,6 +11,9 @@ import { answerWhatsAppEmergency } from "./emergency-answer.server.ts";
 import { friendlyWhatsAppError } from "./presence.ts";
 import { currentMemoryMarker, stampMemoryState } from "../chat/memory-reset.ts";
 
+import type { ConversationRecall } from "../chat/context/types.ts";
+import { recallWhatsAppContext } from "../chat/context/whatsapp.server.ts";
+
 const MAX_HISTORY_MESSAGES = 40;
 const MEMORY_CONVERSATION_TTL_MS = 6 * 60 * 60_000;
 const MEMORY_MESSAGE_TTL_MS = 24 * 60 * 60_000;
@@ -74,12 +77,14 @@ export interface WhatsAppConversationDependencies {
   executeChat?: (input: ChatInput) => Promise<{ status: number; body: unknown }>;
   resolveUserText?: (input: WhatsAppChatInput, history?: ChatMessage[]) => Promise<string>;
   emergencyAnswer?: typeof answerWhatsAppEmergency;
+  recallContext?: typeof recallWhatsAppContext;
   processHerd?: (input: {
     phone: string;
     messageId: string;
     text: string;
     mediaType?: string;
     requestText?: string;
+    previousDay?: string;
   }) => Promise<{ reply: string; day: string } | null>;
 }
 
@@ -418,6 +423,7 @@ export async function processClaimedWhatsAppChat(
     let telemetryRecorded = false;
     let snapshot: WhatsAppConversationSnapshot | null = null;
     let herdReply: string | null = null;
+    let conversationRecall: ConversationRecall | undefined;
 
     try {
       if (input.media && !checkRateLimit(`media:${input.phone}`).ok)
@@ -448,6 +454,7 @@ export async function processClaimedWhatsAppChat(
             text: userText,
             mediaType: input.media?.type,
             requestText: input.media?.caption || input.text,
+            previousDay: (previous?.state as { last_herd_day?: string } | undefined)?.last_herd_day,
           })
         : null;
       if (herd) {
@@ -469,7 +476,10 @@ export async function processClaimedWhatsAppChat(
         try {
           await deps.saveConversation(input.phone, {
             conversationId,
-            state: previous?.state,
+            state: {
+              ...(previous?.state && typeof previous.state === "object" ? previous.state : {}),
+              last_herd_day: herd.day,
+            },
             history: appendTurn(previous?.history ?? [], userText, herd.reply.slice(0, 8000)),
           });
         } catch {
@@ -525,14 +535,34 @@ export async function processClaimedWhatsAppChat(
         return { reply: casualGreeting, duplicate: false, shouldSend: true };
       }
 
+      const recall =
+        dependencies.recallContext ??
+        (!dependencies.executeChat && process.env.SUPABASE_SERVICE_ROLE_KEY
+          ? recallWhatsAppContext
+          : null);
+      if (recall)
+        conversationRecall = await recall({
+          phone: input.phone,
+          text: userText,
+          history: previous?.history,
+        });
       const chatInput: ChatInput = {
         sessionId: `wa:${input.phone}`,
         conversationId,
         clientMessageId: input.messageId,
         channel: "whatsapp",
-        text: userText,
+        text:
+          input.media && userText.length > 2000
+            ? (
+                input.media.caption ||
+                input.text ||
+                "Analise a mídia enviada no contexto desta conversa."
+              ).slice(0, 2000)
+            : userText,
+        ...(input.media ? { channelEvidence: { text: userText, kind: input.media.type } } : {}),
         history: previous?.history ?? [],
         state: previous?.state,
+        ...(conversationRecall ? { conversationRecall } : {}),
       };
 
       chatInvoked = true;
@@ -554,7 +584,13 @@ export async function processClaimedWhatsAppChat(
       try {
         await deps.saveConversation(input.phone, {
           conversationId: core.conversationId,
-          state: core.state,
+          // Core normalizes domain state; keep channel metadata outside that normalization.
+          state: {
+            ...(core.state && typeof core.state === "object" ? core.state : {}),
+            ...(currentMemoryMarker(previous?.state)
+              ? { memory_reset: currentMemoryMarker(previous?.state) }
+              : {}),
+          },
           history: nextHistory,
         });
       } catch {
@@ -568,7 +604,10 @@ export async function processClaimedWhatsAppChat(
         herdReply ??
         (input.media && !chatInvoked
           ? friendlyWhatsAppError(error)
-          : await (dependencies.emergencyAnswer ?? answerWhatsAppEmergency)(userText, error));
+          : await (dependencies.emergencyAnswer ?? answerWhatsAppEmergency)(userText, error, {
+              history: snapshot?.history,
+              conversationRecall,
+            }));
       if (!telemetryRecorded) {
         await recordAIChatTurn({
           channel: "whatsapp",
@@ -585,11 +624,12 @@ export async function processClaimedWhatsAppChat(
         });
       }
       try {
-        await deps.saveConversation(input.phone, {
-          conversationId,
-          state: snapshot?.state,
-          history: appendTurn(snapshot?.history ?? [], userText, reply),
-        });
+        if (snapshot || chatInvoked)
+          await deps.saveConversation(input.phone, {
+            conversationId,
+            state: snapshot?.state,
+            history: appendTurn(snapshot?.history ?? [], userText, reply),
+          });
       } catch {
         console.error("[whatsapp] emergency history persistence failed");
       }

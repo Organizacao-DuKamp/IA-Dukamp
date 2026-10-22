@@ -1,3 +1,4 @@
+import { recallPeriod, localDay } from "../chat/context/recall.ts";
 import { recoverHerdSources } from "./recover.ts";
 import {
   emptyBook,
@@ -5,6 +6,7 @@ import {
   herdSessionStart,
   isExplicitAnimalLookup,
   isHerdReport,
+  isHerdSummary,
   reduceHerdTurn,
   parseHerdEntry,
   entryLine,
@@ -46,6 +48,7 @@ export async function handleHerdMessage(
     text: string;
     mediaType?: string;
     requestText?: string;
+    previousDay?: string;
   },
   deps: { store?: HerdStore; now?: Date } = {},
 ): Promise<HerdHandled | null> {
@@ -56,16 +59,23 @@ export async function handleHerdMessage(
     )
   )
     return null;
-  const currentDay = herdDay(deps.now ?? new Date());
-  // Explicit date selects a report only; a date in a pasted table must never redirect writes.
+  const now = deps.now ?? new Date();
+  const currentDay = localDay(now);
   const readAnimal = /\b(historico|evolucao|compare|comparar|qual.*peso|peso d[ao])\b/.test(
     fold(input.text),
   );
-  const specified =
-    isHerdReport(input.text) || readAnimal || /importacao/.test(fold(input.text))
-      ? input.text.match(/\b(\d{2})\/(\d{2})\/(20\d{2})\b/)
-      : null;
-  const day = specified ? `${specified[3]}-${specified[2]}-${specified[1]}` : currentDay;
+  const reads = isHerdReport(input.text) || readAnimal || /importacao/.test(fold(input.text));
+  const period = reads ? recallPeriod(input.text, now) : null;
+  // Historical selection is read-only; new entries always go to today's book.
+  const followup =
+    reads &&
+    !period &&
+    /^\d{4}-\d{2}-\d{2}$/.test(input.previousDay ?? "") &&
+    /\b(dess[ea]|ess[ea]|mesm[ao]|em pdf|em excel|confirmar importacao|cancelar importacao)\b/.test(
+      fold(input.text),
+    );
+  const day = period?.startDay ?? (followup ? input.previousDay! : currentDay);
+  if (period && Date.parse(period.endDay) - Date.parse(period.startDay) > 86400000) return null;
   if (!/^\d{6,20}$/.test(input.phone)) throw new Error("invalid_herd_owner");
   const store = deps.store ?? durableHerdStore;
   try {
@@ -74,6 +84,23 @@ export async function handleHerdMessage(
     for (let attempt = 0; attempt < 4; attempt++) {
       const saved = await store.load(input.phone, day);
       const book = saved?.data ?? emptyBook();
+      const herdSubject =
+        isHerdSummary(input.text) ||
+        /\b(gado|rebanho|animais|animal|bovin\w*|pesag\w*|pesad\w*|brincos?|lote|vacas?)\b/.test(
+          fold(input.text),
+        );
+      const genericHerdReport =
+        /^(?:(?:faca|mostre|mande|envie) (?:a |o )?)?(?:lista geral|listagem|relatorio geral|resumo geral)(?: de \d{1,2}\/\d{1,2}(?:\/20\d{2})?)?[.!? ]*$/.test(
+          fold(input.text),
+        );
+      if (
+        !input.mediaType &&
+        isHerdReport(input.text) &&
+        !herdSubject &&
+        !followup &&
+        !genericHerdReport
+      )
+        return null;
       if (readAnimal && store.animalHistory && !input.mediaType) {
         const target = parseHerdEntry(input.text, book, input.messageId);
         if (target) {
@@ -185,11 +212,8 @@ export async function handleHerdMessage(
           throw new Error("herd_commit_unconfirmed");
         }
       }
-      if (!saved && isHerdReport(input.text))
-        return {
-          reply: `Não há uma listagem estruturada salva para ${day.split("-").reverse().join("/")}. Mensagens antigas não equivalem a um cadastro conferido. Não vou apresentar totais antigos como validados.`,
-          day,
-        };
+      // The general recall layer may find narrative notes or documents that the strict parser cannot read.
+      if (!saved && isHerdReport(input.text)) return null;
       const turn = reduceHerdTurn(
         book,
         input.text.replace(

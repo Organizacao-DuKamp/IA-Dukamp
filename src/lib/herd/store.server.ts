@@ -34,7 +34,7 @@ export const durableHerdStore: HerdStore = {
     const { data, error } = await (
       await db()
     )
-      .from("whatsapp_herd_books")
+      .from("whatsapp_herd_visible_books")
       .select("record_date,data")
       .eq("phone_number", phone)
       .lte("record_date", throughDay)
@@ -51,6 +51,12 @@ export const durableHerdStore: HerdStore = {
   async sources(phone, day) {
     const start = new Date(`${day}T00:00:00-03:00`),
       end = new Date(start.getTime() + 86400000);
+    const client = await db();
+    const boundary = await client.rpc("whatsapp_context_boundary", { p_phone: phone });
+    if (boundary.error || typeof boundary.data !== "string")
+      throw new Error("herd_history_boundary_unavailable");
+    if (Date.parse(boundary.data) >= end.getTime()) return [];
+    const from = new Date(Math.max(start.getTime(), Date.parse(boundary.data)));
     const rows: HerdSourceTurn[] = [];
     for (let offset = 0; offset < 10000; offset += 500) {
       const { data, error } = await (
@@ -60,7 +66,7 @@ export const durableHerdStore: HerdStore = {
         .select("id,user_text")
         .eq("phone_number", phone)
         .eq("channel", "whatsapp")
-        .gte("created_at", start.toISOString())
+        .gte("created_at", from.toISOString())
         .lt("created_at", end.toISOString())
         .order("created_at")
         .order("id")
@@ -73,7 +79,7 @@ export const durableHerdStore: HerdStore = {
   },
   async load(phone, day) {
     const { data, error } = await (await db())
-      .from("whatsapp_herd_books")
+      .from("whatsapp_herd_visible_books")
       .select("version,data")
       .eq("phone_number", phone)
       .eq("record_date", day)
@@ -85,7 +91,7 @@ export const durableHerdStore: HerdStore = {
   },
   async receipt(phone, messageId) {
     const { data, error } = await (await db())
-      .from("whatsapp_herd_events")
+      .from("whatsapp_herd_visible_events")
       .select("reply")
       .eq("phone_number", phone)
       .eq("message_id", messageId)

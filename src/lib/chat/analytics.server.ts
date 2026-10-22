@@ -256,7 +256,7 @@ export async function recordAIChatTurn(input: AIChatTurnTelemetryInput): Promise
     phone_number: phoneForUserKey(userKey, channel),
     channel,
     client_message_id: text(input.clientMessageId, 128),
-    user_text: text(input.userText, 8_000) ?? "",
+    user_text: text(input.userText, 60_000) ?? "",
     assistant_text: text(input.assistantText, 120_000),
     status: input.status,
     error_code: input.status === "error" ? errorCode(input.error) : null,
