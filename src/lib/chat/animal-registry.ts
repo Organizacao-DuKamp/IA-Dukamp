@@ -1,3 +1,4 @@
+import { isExplicitAnimalLookup } from "../herd/book.ts";
 import type { ChatMessage } from "./types.ts";
 
 export const ABCZ_PUBLIC_CONSULTATION =
@@ -124,7 +125,22 @@ export function extractAnimalRegistrations(text: string): AnimalRegistration[] {
   return [...found.values()];
 }
 
+/** Weight/sex/collection entries are not requests for a public genealogy lookup. */
+export function isAnimalRecordNotation(text: string): boolean {
+  if (isExplicitAnimalLookup(text)) return false;
+  if (extractAnimalRegistrations(text).length && /\d\s*(?:kg|kilos?|quilos?)\b/i.test(text))
+    return true;
+  return (
+    extractAnimalRegistrations(text).length > 0 &&
+    (/\b(peso|kg|kilos?|quilos?|macho|f[eê]mea|anot\w*|registr\w*|vacin\w*|marca[cç][aã]o)\b/i.test(
+      text,
+    ) ||
+      /^\s*[a-z]{2,6}\s*\d+\s+\d+(?:[.,]\d+)?\s*$/i.test(text))
+  );
+}
+
 export function isAnimalRegistryRequest(text: string): boolean {
+  if (isAnimalRecordNotation(text)) return false;
   return (
     extractAnimalRegistrations(text).length > 0 ||
     /\b(?:abcz|rgn|rgd|registro\s+geneal[oó]gico|pedigree|genealogia|s[eé]rie\s+(?:[uú]nica|alfab[eé]tica))\b/i.test(
@@ -142,6 +158,7 @@ export function resolveAnimalRegistryTurn(
   history: ChatMessage[] = [],
   activeCodes?: string,
 ): { active: boolean; registrations: AnimalRegistration[] } {
+  if (isAnimalRecordNotation(text)) return { active: false, registrations: [] };
   const direct = extractAnimalRegistrations(text);
   if (direct.length) return { active: true, registrations: direct };
   const followText = normalize(text.trim());
