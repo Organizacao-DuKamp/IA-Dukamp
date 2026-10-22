@@ -20,7 +20,7 @@ const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const OPENAI_TRANSCRIPTIONS_URL = "https://api.openai.com/v1/audio/transcriptions";
 const MAX_MEDIA_BYTES = 25 * 1024 * 1024;
 const MEDIA_TIMEOUT_MS = 20_000;
-const MAX_RESOLVED_TEXT_CHARS = 2000;
+const MAX_RESOLVED_TEXT_CHARS = 60000;
 
 const IMAGE_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 const AUDIO_MIME_TYPES = new Set([
@@ -76,6 +76,7 @@ interface MetaMediaMetadata {
 }
 
 interface ResponsesPayload {
+  status?: string;
   output_text?: string;
   output?: Array<{ content?: Array<{ type?: string; text?: string }> }>;
   usage?: unknown;
@@ -344,6 +345,12 @@ async function downloadWhatsAppMedia(
 }
 
 function extractResponseText(data: ResponsesPayload): string {
+  if (data.status === "incomplete")
+    throw new WhatsAppMediaError(
+      "A leitura não foi concluída. Envie a mídia em partes menores; nenhum trecho foi confirmado como completo.",
+      413,
+      "whatsapp_media_text_incomplete",
+    );
   return (
     data.output_text?.trim() ||
     data.output
@@ -434,7 +441,17 @@ ${
     instructions:
       "Você é um extrator seguro de conteúdo multimídia da TPEC-IA. Produza somente observações verificáveis para uso interno.",
     input: [{ role: "user", content }],
-    max_output_tokens: video ? 1200 : 800,
+    max_output_tokens: video
+      ? 1200
+      : /tabel|lista|anota|cadern|registro|pesag|gado|\b[A-Z]{2,6}\s*\d/.test(
+            userText +
+              (dependencies.history ?? [])
+                .slice(-6)
+                .map((m) => m.content)
+                .join("\n"),
+          ) || media.type === "document"
+        ? 8000
+        : 800,
     store: false,
   };
   if (supportsReasoningConfig(model)) body.reasoning = { effort: "minimal" };
@@ -596,11 +613,14 @@ async function transcribeAudioOrVideo(
 }
 
 function compactText(value: string, maxChars: number): string {
-  const normalized = value.replace(/\s+/g, " ").trim();
-  if (normalized.length <= maxChars) return normalized;
-  const firstLength = Math.floor(maxChars * 0.62);
-  const lastLength = maxChars - firstLength - 22;
-  return `${normalized.slice(0, firstLength)} … [trecho reduzido] … ${normalized.slice(-lastLength)}`;
+  const normalized = value.trim();
+  if (normalized.length > maxChars)
+    throw new WhatsAppMediaError(
+      "O conteúdo excede o limite para leitura completa. Envie em partes menores; nenhum trecho será omitido silenciosamente.",
+      413,
+      "whatsapp_media_text_too_large",
+    );
+  return normalized;
 }
 
 function mediaLabel(type: WhatsAppMedia["type"]): string {
@@ -695,8 +715,8 @@ ${audioText}`;
         stage: "media_analysis",
         prohibitWeb: true,
         sourcePolicy:
-          "Analise o conteúdo efetivamente fornecido para auxiliar a resposta da TPEC-IA. Preserve fatos observáveis, números, unidades e limitações. Não invente o que não é legível. Não faça diagnóstico definitivo por imagem. Produza resumo técnico de até 1400 caracteres sem perder ressalvas importantes.",
-        maxOutputTokens: 2000,
+          "Analise o conteúdo efetivamente fornecido para auxiliar a resposta da TPEC-IA. Preserve fatos observáveis, números, unidades e limitações. Não invente o que não é legível. Não faça diagnóstico definitivo por imagem. Em tabelas e listas, transcreva todas as linhas legíveis preservando separadamente código, peso, sexo, data e observações; não resuma nem recalcule totais. Marque dados ilegíveis e limites da leitura explicitamente. Não preencha lacunas.",
+        maxOutputTokens: 8000,
       },
       { env: envOf(dependencies), fetchImpl: dependencies.fetchImpl },
     );

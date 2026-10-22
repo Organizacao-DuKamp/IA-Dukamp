@@ -38,7 +38,7 @@ export const WhatsAppControlRequestSchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("complete"),
     messageId: z.string().min(1).max(128),
-    reply: z.string().min(1).max(12_000),
+    reply: z.string().min(1).max(120_000),
   }),
   z.object({
     action: z.literal("release"),
@@ -55,12 +55,12 @@ export const WhatsAppControlRequestSchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("delivered"),
     messageId: z.string().min(1).max(128),
-    reply: z.string().min(1).max(12_000),
+    reply: z.string().min(1).max(120_000),
   }),
   z.object({
     action: z.literal("release_delivery"),
     messageId: z.string().min(1).max(128),
-    reply: z.string().min(1).max(12_000),
+    reply: z.string().min(1).max(120_000),
   }),
 ]);
 

@@ -74,6 +74,13 @@ export interface WhatsAppConversationDependencies {
   executeChat?: (input: ChatInput) => Promise<{ status: number; body: unknown }>;
   resolveUserText?: (input: WhatsAppChatInput, history?: ChatMessage[]) => Promise<string>;
   emergencyAnswer?: typeof answerWhatsAppEmergency;
+  processHerd?: (input: {
+    phone: string;
+    messageId: string;
+    text: string;
+    mediaType?: string;
+    requestText?: string;
+  }) => Promise<{ reply: string; day: string } | null>;
 }
 
 function cloneSnapshot(snapshot: WhatsAppConversationSnapshot): WhatsAppConversationSnapshot {
@@ -410,6 +417,7 @@ export async function processClaimedWhatsAppChat(
     let chatInvoked = false;
     let telemetryRecorded = false;
     let snapshot: WhatsAppConversationSnapshot | null = null;
+    let herdReply: string | null = null;
 
     try {
       if (input.media && !checkRateLimit(`media:${input.phone}`).ok)
@@ -427,6 +435,49 @@ export async function processClaimedWhatsAppChat(
       userText = resolvedUserText;
       snapshot = previous;
       conversationId = previous?.conversationId ?? `wa:${input.phone}`;
+      // Persistent husbandry operations precede general AI routing and do not depend on the short history.
+      const herdHandler =
+        dependencies.processHerd ??
+        (!dependencies.executeChat
+          ? (await import("../herd/handler.server.ts")).handleHerdMessage
+          : null);
+      const herd = herdHandler
+        ? await herdHandler({
+            phone: input.phone,
+            messageId: input.messageId,
+            text: userText,
+            mediaType: input.media?.type,
+            requestText: input.media?.caption || input.text,
+          })
+        : null;
+      if (herd) {
+        herdReply = herd.reply;
+        await recordAIChatTurn({
+          channel: "whatsapp",
+          sessionId: `wa:${input.phone}`,
+          conversationId,
+          clientMessageId: input.messageId,
+          userText,
+          assistantText: herd.reply,
+          status: "completed",
+          diagnostics: { retrieved_blocks: ["herd:durable-records"], response_mode: "knowledge" },
+          usageEvents: [...usageEvents],
+          startedAt,
+          durationMs: Date.now() - startedMs,
+        });
+        telemetryRecorded = true;
+        try {
+          await deps.saveConversation(input.phone, {
+            conversationId,
+            state: previous?.state,
+            history: appendTurn(previous?.history ?? [], userText, herd.reply.slice(0, 8000)),
+          });
+        } catch {
+          /* The authoritative transaction and reply are already durable. */
+        }
+        await deps.completeMessage(input.messageId, herd.reply);
+        return { reply: herd.reply, duplicate: false, shouldSend: true };
+      }
       try {
         await observeWhatsAppInboundForMemory(input, userText);
       } catch (error) {
@@ -514,9 +565,10 @@ export async function processClaimedWhatsAppChat(
       return { reply: core.reply, duplicate: false, shouldSend: true };
     } catch (error) {
       const reply =
-        input.media && !chatInvoked
+        herdReply ??
+        (input.media && !chatInvoked
           ? friendlyWhatsAppError(error)
-          : await (dependencies.emergencyAnswer ?? answerWhatsAppEmergency)(userText, error);
+          : await (dependencies.emergencyAnswer ?? answerWhatsAppEmergency)(userText, error));
       if (!telemetryRecorded) {
         await recordAIChatTurn({
           channel: "whatsapp",
