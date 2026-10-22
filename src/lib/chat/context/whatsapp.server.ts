@@ -135,7 +135,7 @@ export function renderRecall(
   };
 }
 export async function recallWhatsAppContext(
-  input: { phone: string; text: string; history?: ChatMessage[] },
+  input: { phone: string; text: string; history?: ChatMessage[]; maxContextChars?: number },
   deps: { store?: RecallStore; now?: Date } = {},
 ): Promise<ConversationRecall> {
   if (!/^\d{6,20}$/.test(input.phone)) throw new Error("invalid_recall_owner");
@@ -149,7 +149,12 @@ export async function recallWhatsAppContext(
       end: period ? `${period.endDay}T00:00:00-03:00` : null,
       before: now.toISOString(),
     });
-    return renderRecall(archive, period, now);
+    return renderRecall(
+      archive,
+      period,
+      now,
+      Math.max(8000, Math.min(CONTEXT_BUDGET, input.maxContextChars ?? CONTEXT_BUDGET)),
+    );
   } catch {
     return {
       context:

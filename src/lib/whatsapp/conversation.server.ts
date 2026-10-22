@@ -545,6 +545,7 @@ export async function processClaimedWhatsAppChat(
           phone: input.phone,
           text: userText,
           history: previous?.history,
+          maxContextChars: input.media ? 14_000 : undefined,
         });
       const chatInput: ChatInput = {
         sessionId: `wa:${input.phone}`,
