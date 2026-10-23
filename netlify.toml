@@ -21,7 +21,7 @@
   NPM_FLAGS = "--include=dev"
   # Mantém o handler SSR/server do TanStack Start gerado pelo Nitro para Netlify.
   NITRO_PRESET = "netlify"
-  NODE_VERSION = "22"
+  NODE_VERSION = "24.22.1"
   # Tarifas de referência em USD por 1 milhão de tokens.
   # São valores públicos de configuração; chaves de API continuam no painel da Netlify.
   OPENAI_TPEC_LUNA_INPUT_USD_PER_1M = "0.20"
