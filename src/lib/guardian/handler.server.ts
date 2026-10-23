@@ -22,6 +22,7 @@ Comece: “cadastrar fazenda Boa Vista em Monte Aprazível/SP”. Depois, confir
 • “Peso do animal 10 450 kg”
 • “Minhas tarefas”, “resumo financeiro deste mês”, “histórico do lote 2”
 • “Minhas fazendas” e “usar fazenda Boa Vista”
+• “Usar anotações anteriores” retoma o caderno individual já existente no WhatsApp; os dados antigos não são compartilhados automaticamente com uma fazenda.
 Avisos só começam com “ativar avisos da guardiã”. Ajuste com “horário dos avisos das 8 às 18”, “2 avisos por dia” e “temas dos avisos tarefas, clima”. Para parar: “parar mensagens”. Você pode pedir “relatório semanal” da fazenda selecionada; para interromper os relatórios, “parar relatórios”.
 Para compartilhar: “convidar 5517999999999 como funcionário”. O convite precisa ser aceito pelo número convidado. Nenhuma mensagem será enviada em seu nome.
 Para consultar/exportar no painel, entre na sua conta e vincule o WhatsApp pelo código exibido.`;
@@ -37,6 +38,7 @@ export interface GuardianHandled {
   reply: string | null;
   context?: string;
   activeProperty: boolean;
+  persisted?: boolean;
 }
 export interface GuardianDependencies {
   store?: GuardianStore;
@@ -114,6 +116,16 @@ export async function handleGuardianMessage(
   input: GuardianInput,
   deps: GuardianDependencies = {},
 ): Promise<GuardianHandled | null> {
+  if (input.mediaType === "audio")
+    input = {
+      ...input,
+      text: input.text
+        .replace(
+          /^\[Mensagem recebida por áudio[^\]]*\]\s*Pedido do usuário:[\s\S]*?Transcrição do áudio:\s*/i,
+          "",
+        )
+        .trim(),
+    };
   if (!deps.store && process.env.TPEC_GUARDIAN_ENABLED?.trim() !== "true") return null;
   if (!/^\d{6,20}$/.test(input.phone) || !input.messageId || input.messageId.length > 128)
     throw new Error("invalid_guardian_sender");
@@ -126,14 +138,16 @@ export async function handleGuardianMessage(
     .slice(0, 10)
     .toUpperCase();
   let extracted: GuardianAction | null | undefined;
+  let attempted = false;
   try {
     const previous = await store.receipt(input.phone, input.messageId);
-    if (previous) return { reply: previous, activeProperty: false };
+    if (previous) return { reply: previous, activeProperty: false, persisted: true };
     for (let attempt = 0; attempt < 4; attempt++) {
       const snapshot = await store.load(input.phone);
       const link = input.text.trim().match(/^vincular painel\s+([a-f0-9]{32})[.! ]*$/i);
       let request: GuardianRequest | null =
         deps.request ?? parseGuardianRequest(input.text, snapshot, now);
+      if (request || link) attempted = true;
       if (!request && !link)
         return {
           reply: null,
@@ -172,6 +186,14 @@ export async function handleGuardianMessage(
       }
       if (!link && request) {
         switch (request.kind) {
+          case "legacy":
+            base.operation = "select";
+            base.propertyId = null;
+            base.propertyVersion = null;
+            base.pending = null;
+            base.reply =
+              "Caderno individual anterior selecionado. As anotações já existentes do WhatsApp continuam disponíveis. Para voltar a uma propriedade compartilhada, diga “minhas fazendas” e “usar fazenda” com o nome ou código.";
+            break;
           case "help":
             base.reply = GUARDIAN_HELP;
             break;
@@ -384,24 +406,33 @@ export async function handleGuardianMessage(
         return {
           reply: base.reply,
           activeProperty: !!snapshot.active || base.operation === "create",
+          persisted: true,
         };
       if (saved.startsWith("replay:"))
-        return { reply: saved.slice(7), activeProperty: !!snapshot.active };
+        return { reply: saved.slice(7), activeProperty: !!snapshot.active, persisted: true };
       throw new Error("guardian_commit_unconfirmed");
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
     // Expected domain validation can be explained. Database/provider payloads never reach users/logs.
     const safe =
-      /^(Não encontrei|Já há uma pesagem|Escolha uma data|O novo horário|Essa tarefa já|Uma pesagem|O nascimento|Seu perfil|Seu acesso|Convite inválido|O volume atingiu)/.test(
+      /^(Não encontrei|Já há uma pesagem|Escolha uma data|O novo horário|Essa tarefa já|Uma pesagem|O nascimento|A data de um|Seu perfil|Seu acesso|Convite inválido|O volume atingiu)/.test(
         message,
       );
     return {
-      reply: safe ? message : guardianCandidate(input.text) ? unavailable : null,
+      reply:
+        error instanceof z.ZodError
+          ? "Há um dado inválido na proposta. Confira identificação, datas e valores antes de enviar novamente. Nenhum novo registro está confirmado."
+          : safe
+            ? message
+            : attempted || guardianCandidate(input.text)
+              ? unavailable
+              : null,
+      persisted: false,
       context:
         "O caderno da Guardiã está temporariamente indisponível. Não confirme registros nem deduza dados de fazendas; use somente o histórico disponível.",
       activeProperty: true,
     };
   }
-  return { reply: unavailable, activeProperty: false };
+  return { reply: unavailable, activeProperty: false, persisted: false };
 }

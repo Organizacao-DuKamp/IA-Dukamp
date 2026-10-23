@@ -8,6 +8,8 @@ END $$;
 REVOKE ALL ON FUNCTION public.guardian_record_event_history() FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.guardian_record_event_history() TO service_role;
 CREATE TRIGGER guardian_event_status_history AFTER INSERT OR UPDATE OF status ON public.guardian_events FOR EACH ROW EXECUTE FUNCTION public.guardian_record_event_history();
+CREATE INDEX guardian_events_leases_idx ON public.guardian_events(claimed_at) WHERE status IN ('claimed','dispatching');
+CREATE INDEX guardian_events_expiry_idx ON public.guardian_events(expires_at) WHERE status IN ('pending','retry','claimed');
 
 CREATE FUNCTION public.guardian_claim_events(p_limit integer DEFAULT 5) RETURNS SETOF public.guardian_events
 LANGUAGE plpgsql SECURITY INVOKER SET search_path='' AS $$
@@ -46,6 +48,11 @@ CREATE FUNCTION public.guardian_begin_delivery(p_id uuid,p_lock uuid) RETURNS js
 LANGUAGE plpgsql SECURITY INVOKER SET search_path='' AS $$
 DECLARE e public.guardian_events; a public.guardian_accounts; b jsonb; inbound timestamptz; h integer;
 BEGIN
+  SELECT * INTO e FROM public.guardian_events WHERE id=p_id AND lock_token=p_lock AND status='claimed';
+  IF NOT FOUND THEN RETURN NULL; END IF;
+  -- Same property -> event lock order as a record edit/cancellation.
+  SELECT book INTO b FROM public.guardian_properties WHERE id=e.property_id FOR UPDATE;
+  IF NOT FOUND THEN RETURN NULL; END IF;
   SELECT * INTO e FROM public.guardian_events WHERE id=p_id AND lock_token=p_lock AND status='claimed' FOR UPDATE;
   IF NOT FOUND THEN RETURN NULL; END IF;
   SELECT * INTO a FROM public.guardian_accounts WHERE phone_number=e.recipient;
@@ -57,7 +64,6 @@ BEGIN
   IF h<(a.preferences->>'startHour')::int OR h>=(a.preferences->>'endHour')::int THEN
     UPDATE public.guardian_events SET status='retry',available_at=now()+interval '1 hour',last_error='quiet_hours',updated_at=now() WHERE id=e.id;RETURN NULL;
   END IF;
-  SELECT book INTO b FROM public.guardian_properties WHERE id=e.property_id;
   IF e.type='report' AND (a.preferences->>'reportCadence' IS DISTINCT FROM e.evidence->>'cadence' OR a.active_property_id IS DISTINCT FROM e.property_id) THEN
     UPDATE public.guardian_events SET status='cancelled',last_error='report_preference_changed',updated_at=now() WHERE id=e.id; RETURN NULL;
   END IF;

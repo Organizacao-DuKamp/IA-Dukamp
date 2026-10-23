@@ -5,6 +5,12 @@ CREATE TABLE public.guardian_properties (
   book jsonb NOT NULL CHECK (book->>'schema' = '1' AND jsonb_typeof(book->'animals') = 'array' AND jsonb_typeof(book->'tasks') = 'array' AND jsonb_typeof(book->'ledger') = 'array' AND jsonb_typeof(book->'records') = 'array' AND length(book->>'name') BETWEEN 1 AND 160 AND octet_length(book::text) <= 10000000),
   created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now()
 );
+ALTER TABLE public.guardian_properties ADD CONSTRAINT guardian_book_required_fields CHECK (
+  book ?& ARRAY['schema','name','city','uf','profile','animals','tasks','ledger','records']
+  AND jsonb_typeof(book->'profile')='object' AND jsonb_typeof(book->'name')='string'
+  AND jsonb_typeof(book->'city')='string' AND jsonb_typeof(book->'uf')='string'
+  AND length(book->>'city') BETWEEN 1 AND 160 AND book->>'uf' ~ '^[A-Z]{2}$'
+);
 CREATE TABLE public.guardian_accounts (
   phone_number text PRIMARY KEY CHECK (phone_number ~ '^[0-9]{6,20}$'),
   user_id uuid UNIQUE REFERENCES auth.users(id) ON DELETE SET NULL,
@@ -27,6 +33,7 @@ CREATE TABLE public.guardian_members (
 );
 CREATE INDEX guardian_members_user_idx ON public.guardian_members(user_id,property_id) WHERE active;
 CREATE INDEX guardian_members_phone_idx ON public.guardian_members(phone_number,property_id) WHERE active;
+CREATE INDEX guardian_accounts_property_idx ON public.guardian_accounts(active_property_id) WHERE active_property_id IS NOT NULL;
 CREATE TABLE public.guardian_invitations (
   token_hash text PRIMARY KEY, property_id uuid NOT NULL REFERENCES public.guardian_properties(id) ON DELETE CASCADE,
   phone_number text NOT NULL, role text NOT NULL CHECK (role IN ('manager','worker','technician')),
@@ -37,6 +44,8 @@ CREATE TABLE public.guardian_web_links (
   token_hash text PRIMARY KEY, user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   expires_at timestamptz NOT NULL, consumed_at timestamptz
 );
+CREATE INDEX guardian_invitations_property_idx ON public.guardian_invitations(property_id,phone_number);
+CREATE INDEX guardian_web_links_user_idx ON public.guardian_web_links(user_id,expires_at);
 CREATE TABLE public.guardian_turn_receipts (
   phone_number text NOT NULL, message_id text NOT NULL,
   property_id uuid REFERENCES public.guardian_properties(id) ON DELETE CASCADE,
@@ -46,6 +55,7 @@ CREATE TABLE public.guardian_audit (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(), property_id uuid REFERENCES public.guardian_properties(id) ON DELETE CASCADE,
   actor text NOT NULL, message_id text NOT NULL, action text NOT NULL, details jsonb NOT NULL DEFAULT '{}', created_at timestamptz NOT NULL DEFAULT now()
 );
+CREATE INDEX guardian_receipts_property_idx ON public.guardian_turn_receipts(property_id) WHERE property_id IS NOT NULL;
 CREATE INDEX guardian_audit_property_idx ON public.guardian_audit(property_id,created_at DESC);
 CREATE TABLE public.guardian_events (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(), property_id uuid NOT NULL REFERENCES public.guardian_properties(id) ON DELETE CASCADE,
@@ -82,16 +92,16 @@ REVOKE ALL ON public.guardian_properties,public.guardian_accounts,public.guardia
 GRANT ALL ON public.guardian_properties,public.guardian_accounts,public.guardian_members,public.guardian_invitations,public.guardian_web_links,public.guardian_turn_receipts,public.guardian_audit,public.guardian_events,public.guardian_event_history TO service_role;
 GRANT USAGE,SELECT ON SEQUENCE public.guardian_event_history_id_seq TO service_role;
 GRANT SELECT ON public.guardian_properties,public.guardian_members,public.guardian_accounts,public.guardian_audit,public.guardian_events TO authenticated;
-CREATE POLICY guardian_members_read ON public.guardian_members FOR SELECT TO authenticated USING (user_id=(SELECT auth.uid()) OR public.has_role((SELECT auth.uid()),'admin'));
-CREATE POLICY guardian_accounts_read ON public.guardian_accounts FOR SELECT TO authenticated USING (user_id=(SELECT auth.uid()) OR public.has_role((SELECT auth.uid()),'admin'));
+CREATE POLICY guardian_members_read ON public.guardian_members FOR SELECT TO authenticated USING (user_id=(SELECT auth.uid()) OR (SELECT public.has_role(auth.uid(),'admin')));
+CREATE POLICY guardian_accounts_read ON public.guardian_accounts FOR SELECT TO authenticated USING (user_id=(SELECT auth.uid()) OR (SELECT public.has_role(auth.uid(),'admin')));
 CREATE POLICY guardian_properties_read ON public.guardian_properties FOR SELECT TO authenticated USING (
-  public.has_role((SELECT auth.uid()),'admin') OR EXISTS(SELECT 1 FROM public.guardian_members m WHERE m.property_id=id AND m.user_id=(SELECT auth.uid()) AND m.active)
+  (SELECT public.has_role(auth.uid(),'admin')) OR EXISTS(SELECT 1 FROM public.guardian_members m WHERE m.property_id=id AND m.user_id=(SELECT auth.uid()) AND m.active)
 );
 CREATE POLICY guardian_events_read ON public.guardian_events FOR SELECT TO authenticated USING (
-  public.has_role((SELECT auth.uid()),'admin') OR EXISTS(SELECT 1 FROM public.guardian_members m WHERE m.property_id=guardian_events.property_id AND m.user_id=(SELECT auth.uid()) AND m.active)
+  (SELECT public.has_role(auth.uid(),'admin')) OR EXISTS(SELECT 1 FROM public.guardian_members m WHERE m.property_id=guardian_events.property_id AND m.user_id=(SELECT auth.uid()) AND m.active)
 );
 CREATE POLICY guardian_audit_read ON public.guardian_audit FOR SELECT TO authenticated USING (
-  public.has_role((SELECT auth.uid()),'admin') OR EXISTS(SELECT 1 FROM public.guardian_members m WHERE m.property_id=guardian_audit.property_id AND m.user_id=(SELECT auth.uid()) AND m.active)
+  (SELECT public.has_role(auth.uid(),'admin')) OR EXISTS(SELECT 1 FROM public.guardian_members m WHERE m.property_id=guardian_audit.property_id AND m.user_id=(SELECT auth.uid()) AND m.active)
 );
 
 CREATE FUNCTION public.guardian_snapshot(p_phone text) RETURNS jsonb

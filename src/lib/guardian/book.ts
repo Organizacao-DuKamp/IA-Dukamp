@@ -119,12 +119,20 @@ export function applyFarmAction(
       break;
     }
     case "ledger": {
+      if (action.date > localDay)
+        throw new Error(
+          "A data de um lançamento realizado não pode estar no futuro. Use uma tarefa para programar uma atividade futura.",
+        );
       const { kind: _kind, ...entry } = action;
       book.ledger.push({ ...entry, id, source });
       result = `Lançamento ${id} salvo: ${action.direction === "expense" ? "despesa" : "receita"} de ${money(action.amountCents)}.`;
       break;
     }
     case "record": {
+      if (action.date > localDay)
+        throw new Error(
+          "A data de um registro realizado não pode estar no futuro. Use uma tarefa para programar uma atividade futura.",
+        );
       const { kind: _kind, ...entry } = action;
       book.records.push({ ...entry, id, source });
       result = `Anotação ${id} salva no caderno de campo.`;

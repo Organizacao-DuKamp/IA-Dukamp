@@ -8,7 +8,7 @@ import { parseFollowupPreference } from "../whatsapp/proactive.ts";
 
 export type GuardianRequest =
   | { kind: "action"; action: GuardianAction }
-  | { kind: "confirm" | "cancel" | "help" | "properties" | "export" }
+  | { kind: "confirm" | "cancel" | "help" | "properties" | "export" | "legacy" }
   | { kind: "select"; property: string }
   | { kind: "accept"; token: string }
   | {
@@ -97,7 +97,7 @@ export function guardianCandidate(text: string, snapshot?: GuardianSnapshot | nu
     /\b(guardia|caderno de campo|cadastrar fazenda|criar fazenda|minhas fazendas|usar fazenda|selecionar fazenda|aceitar convite|convidar|revogar acesso|ativar avisos|parar mensagens|parar avisos|pausar avisos|desativar avisos|horario dos avisos|avisos por dia|temas dos avisos|exportar dados|excluir fazenda)\b/.test(
       t,
     ) ||
-    /\b(me lembr[ae]|crie? uma tarefa|criar tarefa|agende|agendar|concluir tarefa|cancelar tarefa|reagendar tarefa|minhas tarefas|tarefas pendentes|registrar despesa|registrar receita|despesa de|receita de|anote|anotar|registre|registrar|comprei|nasceram|transferimos|vacinamos|vacinacao do lote|hoje pesei|cadastre o animal|cadastrar animal|pesagem do animal|peso do animal|corrija o peso)\b/.test(
+    /\b(me lembr[ae]|crie? uma tarefa|criar tarefa|agende|agendar|concluir tarefa|cancelar tarefa|reagendar tarefa|minhas tarefas|tarefas pendentes|registrar despesa|registrar receita|despesa|receita|anote|anotar|registre|registrar|comprei|nasceram|transferimos|vacinamos|vacinacao do lote|hoje pesei|cadastre o animal|cadastrar animal|pesagem do animal|peso do animal|corrija o peso)\b/.test(
       t,
     ) ||
     /\b(gmd|ganho medio diario|conversao alimentar|custo por kg|simular alimentacao|calcular materia seca)\b/.test(
@@ -120,6 +120,25 @@ export function parseGuardianRequest(
   const t = fold(text),
     day = localDateForTimeZone(now),
     lot = text.match(/\blote\s+([\p{L}\d_-]+)/iu)?.[1];
+  const period = recallPeriod(text, now);
+  const explicitDay = t.match(/\b(20\d{2}-\d{2}-\d{2})\b/)?.[1];
+  const reportedDay =
+    explicitDay ??
+    (period && Date.parse(period.endDay) - Date.parse(period.startDay) === 86400000
+      ? period.startDay
+      : day);
+  const ambiguousRecordDate =
+    !!period && Date.parse(period.endDay) - Date.parse(period.startDay) !== 86400000;
+  if (
+    /^como (?:ativar|registrar|cadastrar|usar).*(?:avisos|tarefas|fazenda|guardia|caderno)/.test(t)
+  )
+    return { kind: "help" };
+  if (
+    /^(?:o que e|o que significa|como calcular|explique|qual a formula).*(?:gmd|ganho medio diario)/.test(
+      t,
+    )
+  )
+    return null;
   const calculation = parseCalculation(text, snapshot?.lastCalculation ?? undefined);
   if (calculation) return { kind: "calculation", calculation };
   const corrected = t.match(
@@ -156,6 +175,7 @@ export function parseGuardianRequest(
   )
     return { kind: "help" };
   if (/\bminhas fazendas|listar fazendas\b/.test(t)) return { kind: "properties" };
+  if (/^usar anotacoes anteriores[.! ]*$/.test(t)) return { kind: "legacy" };
   if (/\bexportar (?:meus )?dados\b/.test(t)) return { kind: "export" };
   const accept = t.match(/^aceitar convite\s+([a-f0-9]{32})[.! ]*$/);
   if (accept) return { kind: "accept", token: accept[1] };
@@ -305,13 +325,19 @@ export function parseGuardianRequest(
     /^(?:registrar?\s+)?(despesa|receita)(?:\s+de)?\s*(?:R\$\s*)?([\d.,]+)\s*(?:com|de|por|[-–:])?\s*(.+)$/i,
   );
   if (finance) {
+    if (ambiguousRecordDate)
+      return {
+        kind: "clarify",
+        reply:
+          "Qual foi o dia desse lançamento? Preciso de uma data, não apenas de um mês ou semana, para salvar o financeiro corretamente.",
+      };
     const amount = brazilNumber(finance[2]);
     const a = ActionSchema.safeParse({
       kind: "ledger",
       direction: fold(finance[1]) === "despesa" ? "expense" : "income",
       amountCents: Math.round(amount * 100),
       description: finance[3].trim(),
-      date: day,
+      date: reportedDay,
       ...(lot ? { lot } : {}),
     });
     return a.success
@@ -361,7 +387,6 @@ export function parseGuardianRequest(
             "Informe código, peso positivo em kg (até 2.000 kg) e uma data válida. Exemplo: peso do animal 10 450 kg.",
         };
   }
-  const period = recallPeriod(text, now);
   if (
     /\b(minhas tarefas|tarefas pendentes|resumo financeiro|relatorio financeiro|quantas vacas|quantos animais|qual animal ganhou|historico do lote|historico d[oa] animal|resumo da fazenda|relatorio da fazenda|quantos bezerros nasceram|caderno de campo)\b/.test(
       t,
@@ -381,20 +406,19 @@ export function parseGuardianRequest(
       ...(period ? { start: period.startDay, end: period.endDay } : {}),
       ...(lot ? { lot } : {}),
     };
-  const gmd = t.match(
-    /\b(?:gmd|ganho medio diario).*?([\d.,]+)\s*kg.*?([\d.,]+)\s*kg.*?(\d+)\s*dias?\b/,
-  );
-  if (gmd)
-    return {
-      kind: "calculation",
-      calculation: {
-        kind: "gmd",
-        initialKg: brazilNumber(gmd[1]),
-        finalKg: brazilNumber(gmd[2]),
-        days: Number(gmd[3]),
-      },
-    };
   const birth = t.match(/\bnasceram (\d+) bezerros?\b/);
+  if (
+    ambiguousRecordDate &&
+    (birth ||
+      /^(?:anote|anotar|registre|registrar|hoje pesei|transferimos|vacinamos|fizemos a vacinacao)\b/.test(
+        t,
+      ))
+  )
+    return {
+      kind: "clarify",
+      reply:
+        "Em qual dia isso aconteceu? Preciso da data do registro; um mês ou semana ainda deixa o dia indefinido.",
+    };
   if (birth)
     return {
       kind: "action",
@@ -402,7 +426,7 @@ export function parseGuardianRequest(
         kind: "record",
         type: "birth",
         description: text,
-        date: day,
+        date: reportedDay,
         count: Number(birth[1]),
         ...(lot ? { lot } : {}),
       },
@@ -422,7 +446,7 @@ export function parseGuardianRequest(
             ? "movement"
             : "management",
         description: text,
-        date: day,
+        date: reportedDay,
         ...(lot ? { lot } : {}),
       },
     };

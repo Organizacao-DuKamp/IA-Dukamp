@@ -163,6 +163,66 @@ test("real SQL: knowledge replacement rolls back every chunk on failure and reje
     await db.close();
   }
 });
+
+test("real SQL: one-time web pairing binds the verified sender and expires, with no client-writable membership", async () => {
+  const { db, store, send } = await setup();
+  try {
+    await send("cadastrar fazenda Boa Vista em Monte Aprazível/SP");
+    await send("confirmar");
+    const token = "1234567890abcdef1234567890abcdef";
+    await db.query(
+      "insert into guardian_web_links(token_hash,user_id,expires_at) values(encode(sha256(convert_to($1,'UTF8')),'hex'),$2,now()+interval '10 minutes')",
+      [token, user],
+    );
+    assert.match((await send(`vincular painel ${token}`))!.reply!, /vinculado/);
+    assert.equal(
+      (
+        await db.query<{ user_id: string }>(
+          "select user_id from guardian_members where phone_number=$1",
+          [phone],
+        )
+      ).rows[0].user_id,
+      user,
+    );
+    const s = await store.load(other);
+    await assert.rejects(
+      store.commit({
+        phone: other,
+        messageId: "reuse-link",
+        accountVersion: s.accountVersion,
+        propertyId: null,
+        propertyVersion: null,
+        operation: "link",
+        pending: null,
+        details: { token },
+        reply: "ok",
+      }),
+      /invalid_guardian_web_link/,
+    );
+    await send("usar anotações anteriores");
+    assert.equal((await store.load(phone)).active, null);
+    assert.equal((await store.load(phone)).properties.length, 1);
+    const rows = (
+      await db.query<{ relname: string; relrowsecurity: boolean }>(
+        "select relname,relrowsecurity from pg_class where relname like 'guardian_%' and relkind='r'",
+      )
+    ).rows;
+    assert.ok(rows.length >= 9);
+    assert.ok(rows.every((r) => r.relrowsecurity));
+    const functions = (
+      await db.query<{ proname: string; prosecdef: boolean; proconfig: string[] }>(
+        "select proname,prosecdef,proconfig from pg_proc where proname like 'guardian_%' or proname='replace_knowledge_document_chunks'",
+      )
+    ).rows;
+    assert.ok(
+      functions.every(
+        (f) => !f.prosecdef && f.proconfig?.some((p) => p.startsWith("search_path=")),
+      ),
+    );
+  } finally {
+    await db.close();
+  }
+});
 test("real SQL: tenant isolation, anonymous denial, phone-bound invite, revocation and web RLS", async () => {
   const { db, store, send } = await setup();
   try {

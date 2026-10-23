@@ -306,7 +306,10 @@ async function runTurn(
   );
 
   const analysis = classifyUserIntent(text, stateBefore);
-  const verifiedCalculation = parseCalculation(text);
+  const verifiedCalculation = parseCalculation(
+    text,
+    lastUser ? (parseCalculation(lastUser.content) ?? undefined) : undefined,
+  );
   if (verifiedCalculation) {
     const reply = renderCalculation(calculate(verifiedCalculation));
     const state = applyAssistantTurn(applyUserTurn(stateBefore, text, analysis), reply);

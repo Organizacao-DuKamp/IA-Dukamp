@@ -218,6 +218,7 @@ export const guardianSubmitAction = createServerFn({ method: "POST" })
       { request: data.action ? { kind: "action", action: data.action } : { kind: data.command! } },
     );
     if (!result?.reply) throw new Error("Não foi possível processar a operação.");
+    if (result.persisted === false) throw new Error(result.reply);
     return { reply: result.reply, snapshot: await guardianStore.load(account.phone_number) } as {
       reply: string;
       snapshot: GuardianSnapshot;
@@ -265,5 +266,6 @@ export const guardianUpdatePreferences = createServerFn({ method: "POST" })
       { request: { kind: "preferences", ...preferences } },
     );
     if (!result?.reply) throw new Error("Não foi possível salvar as preferências.");
+    if (result.persisted === false) throw new Error(result.reply);
     return { reply: result.reply };
   });

@@ -22,9 +22,6 @@ export function GuardianPreferences({
   const topics: Array<[Preferences["topics"][number], string]> = [
     ["tasks", "Tarefas"],
     ["weather", "Clima"],
-    ["health", "Sanidade"],
-    ["performance", "Desempenho"],
-    ["finance", "Financeiro"],
     ["reports", "Relatórios"],
   ];
   return (

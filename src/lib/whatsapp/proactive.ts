@@ -142,7 +142,7 @@ export function withinCustomerServiceWindow(
   const inbound = Date.parse(lastInboundAt);
   if (!Number.isFinite(inbound)) return false;
   const delta = now.getTime() - inbound;
-  return delta >= 0 && delta <= CUSTOMER_SERVICE_WINDOW_MS;
+  return delta >= 0 && delta < CUSTOMER_SERVICE_WINDOW_MS;
 }
 
 export function sanitizeMemoryFactKey(value: string): string {
