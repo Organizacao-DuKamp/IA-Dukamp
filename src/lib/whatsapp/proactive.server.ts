@@ -659,14 +659,17 @@ export async function runWhatsAppFollowupMaintenance() {
     return { enabled: false };
   }
   const { runGuardianMaintenance } = await import("../guardian/maintenance.server.ts");
-  const [memory, guardian] = await Promise.allSettled([
+  const { processPrivateSemanticMemory } = await import("../chat/context/semantic.server.ts");
+  const [memory, guardian, semantic] = await Promise.allSettled([
     processPendingWhatsAppMemories(16),
     runGuardianMaintenance(),
+    processPrivateSemanticMemory(),
   ]);
   return {
     enabled: true,
     memory: memory.status === "fulfilled" ? memory.value : { failed: true },
     guardian: guardian.status === "fulfilled" ? guardian.value : { failed: true },
+    semantic: semantic.status === "fulfilled" ? semantic.value : { failed: true },
   };
 }
 

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile, readdir } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
+import { vector } from "@electric-sql/pglite-pgvector";
 import {
   guardianRpcArgs,
   mapSnapshot,
@@ -17,8 +18,8 @@ const admin = "00000000-0000-4000-8000-000000000001",
   user = "00000000-0000-4000-8000-000000000002",
   user2 = "00000000-0000-4000-8000-000000000003";
 async function setup() {
-  const db = new PGlite();
-  await db.exec(`CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role BYPASSRLS;
+  const db = new PGlite({ extensions: { vector } });
+  await db.exec(`CREATE EXTENSION vector; CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role BYPASSRLS;
     CREATE SCHEMA auth;CREATE TABLE auth.users(id uuid PRIMARY KEY);
     INSERT INTO auth.users VALUES('${admin}'),('${user}'),('${user2}');
     CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
@@ -27,7 +28,7 @@ async function setup() {
     CREATE TABLE public.whatsapp_followup_profiles(phone_number text PRIMARY KEY,followups_enabled boolean DEFAULT true,last_inbound_at timestamptz);
     CREATE TABLE public.whatsapp_proactive_queue(status text,last_error text,updated_at timestamptz);
     CREATE TABLE public.knowledge_documents(id uuid PRIMARY KEY,version integer NOT NULL DEFAULT 1,content_hash text);
-    CREATE TABLE public.knowledge_chunks(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),document_id uuid NOT NULL REFERENCES public.knowledge_documents(id),chunk_index integer NOT NULL,content text NOT NULL,embedding text,metadata jsonb,category text NOT NULL,subcategory text,filename text NOT NULL,title text NOT NULL);
+    CREATE TABLE public.knowledge_chunks(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),document_id uuid NOT NULL REFERENCES public.knowledge_documents(id),chunk_index integer NOT NULL,content text NOT NULL,embedding public.vector(3072),metadata jsonb,category text NOT NULL,subcategory text,filename text NOT NULL,title text NOT NULL);
     GRANT SELECT ON public.whatsapp_followup_profiles TO service_role;
     INSERT INTO public.whatsapp_followup_profiles VALUES('${phone}',true,now());
     INSERT INTO public.whatsapp_proactive_queue VALUES('pending',NULL,now());`);
@@ -128,7 +129,7 @@ test("real SQL: knowledge replacement rolls back every chunk on failure and reje
       document_id: id,
       chunk_index: 0,
       content: "Original confiável",
-      embedding: "[1]",
+      embedding: `[${Array.from({ length: 3072 }, (_, i) => (i === 0 ? 1 : 0)).join(",")}]`,
       metadata: { embedding_provider: "test" },
       category: "technical",
       subcategory: null,
