@@ -25,6 +25,7 @@ import {
   guardianPropertyDetail,
   guardianCreateWebLink,
   guardianSubmitAction,
+  guardianEventHistory,
   type GuardianDetail,
   type PropertySummary,
 } from "@/lib/guardian.functions";
@@ -61,7 +62,8 @@ function GuardianPage() {
   const overviewFn = useServerFn(guardianOverview),
     detailFn = useServerFn(guardianPropertyDetail),
     linkFn = useServerFn(guardianCreateWebLink),
-    submitFn = useServerFn(guardianSubmitAction);
+    submitFn = useServerFn(guardianSubmitAction),
+    historyFn = useServerFn(guardianEventHistory);
   const [overview, setOverview] = useState<Awaited<ReturnType<typeof guardianOverview>> | null>(
       null,
     ),
@@ -393,6 +395,7 @@ function GuardianPage() {
                 onPropose={propose}
                 busy={busy || !overview?.enabled || !overview?.account}
                 ownPhone={overview?.account?.phone_number}
+                loadEventHistory={(eventId) => historyFn({ data: { eventId } })}
               />
             ) : (
               <Empty>

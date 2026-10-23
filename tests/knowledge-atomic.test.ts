@@ -9,7 +9,7 @@ const doc = {
   category: "Técnico",
   subcategory: null,
 };
-function database() {
+function database(rpcError: { code: string } | null = null) {
   const calls: Array<{ name: string; args?: unknown }> = [];
   const db = {
     from: () => ({
@@ -21,7 +21,7 @@ function database() {
     }),
     rpc: async (name: string, args: unknown) => {
       calls.push({ name, args });
-      return { data: 1, error: null };
+      return { data: rpcError ? null : 1, error: rpcError };
     },
   };
   return { db: db as never, calls };
@@ -63,4 +63,16 @@ test("atomic indexing has version/hash fencing and source provenance", async () 
   assert.equal(a.p_expected_version, 2);
   assert.equal(a.p_expected_hash, "hash");
   assert.match(a.p_chunks[0].metadata.provenance.text_sha256, /^[a-f0-9]{64}$/);
+});
+test("an unmigrated deployment refuses reindexing without deleting the existing generation", async () => {
+  const { db, calls } = database({ code: "PGRST202" });
+  const v = Array.from({ length: 3072 }, (_, i) => (i === 0 ? 1 : 0));
+  await assert.rejects(
+    ingestDocument(doc, "Conteúdo técnico válido", db, { embed: async () => [v] }),
+    /migração de indexação transacional ainda não está disponível/,
+  );
+  assert.deepEqual(
+    calls.map((c) => c.name),
+    ["replace_knowledge_document_chunks"],
+  );
 });

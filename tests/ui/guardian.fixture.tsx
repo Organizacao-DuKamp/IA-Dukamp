@@ -68,7 +68,7 @@ const detail: GuardianDetail = {
   audit: [],
   events: [
     {
-      id: "e1",
+      id: "00000000-0000-4000-8000-000000000002",
       type: "task_due",
       topic: "tasks",
       status: "pending",
@@ -126,6 +126,26 @@ export function Preview() {
           onPropose={onPropose}
           busy={false}
           ownPhone={source.actor}
+          loadEventHistory={async (eventId) => ({
+            partial: false,
+            entries: [
+              { id: 1, event_id: eventId, status: "pending", reason: null, created_at: source.at },
+              {
+                id: 2,
+                event_id: eventId,
+                status: "claimed",
+                reason: null,
+                created_at: "2026-10-23T12:01:00Z",
+              },
+              {
+                id: 3,
+                event_id: eventId,
+                status: "retry",
+                reason: "provider_rate_limited",
+                created_at: "2026-10-23T12:02:00Z",
+              },
+            ],
+          })}
         />
         <GuardianActionForm hasProperty busy={false} onPropose={onPropose} />
         <output aria-label="Proposta capturada" className="block break-all text-sm">

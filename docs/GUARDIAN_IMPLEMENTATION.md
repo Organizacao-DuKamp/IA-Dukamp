@@ -1,6 +1,6 @@
 # Guardiã da Fazenda — implementação e homologação
 
-Esta entrega acrescenta um caderno de propriedades e avisos por eventos à arquitetura existente. Os recursos são gratuitos. É uma implementação de desenvolvimento; a homologação do ambiente integrado e a autorização de produção são etapas separadas.
+Esta entrega acrescenta um caderno de propriedades e avisos por eventos à arquitetura existente. Os recursos são gratuitos. A integração do código à `main` foi autorizada em 23/10/2026; a homologação do ambiente integrado e a ativação dos novos serviços ainda precisam ser concluídas.
 
 ## Arquitetura e integração
 
@@ -63,7 +63,7 @@ Administradores do sistema têm leitura pela política administrativa. Esta entr
 - `429` permite retry com backoff e limite de tentativas. Rejeição definitiva da Meta termina em falha. Timeout, resposta ambígua ou perda de recibo após despacho ficam incertos, sem reenvio automático.
 - Uma chamada aceita precisa fornecer ID de mensagem da Meta. “Aceito pela Meta” não é confirmação de leitura ou entrega ao aparelho.
 - A janela de serviço usa a última entrada real do WhatsApp. Fora dela, o envio exige o template configurado e aprovado. Não é permitido converter silenciosamente um template ausente em texto livre.
-- O histórico de estados fica em `guardian_event_history`; o painel mostra eventos, estados atuais, tentativas, motivos e evidências. A timeline completa por tentativa ainda não tem uma visualização específica no painel.
+- O histórico de estados fica em `guardian_event_history`; o painel mostra eventos, estados atuais, tentativas, motivos, evidências e a sequência cronológica de processamento de cada aviso. A consulta é feita sob a sessão autenticada e RLS do evento; revogar acesso também bloqueia novas consultas ao histórico. Históricos acima de 200 mudanças indicam explicitamente a cobertura parcial.
 - O cancelamento não pode desfazer uma requisição já iniciada junto ao provedor. O fluxo evita reenvios automáticos após resultado incerto; não promete entrega exatamente uma vez através de uma rede externa.
 
 Os avisos de clima novos usam boletins oficiais com fonte, localidade, data e vigência. Não foram criados limiares próprios que declarem geada, estresse térmico, doença ou seca a partir de informação insuficiente. Os modelos de previsão existentes continuam disponíveis nas consultas gerais.
@@ -76,8 +76,9 @@ Aplicar na ordem, primeiro em homologação isolada:
 2. `20261023202236_guardian_durable_events.sql`: histórico de processamento, claims, fencing, início/finalização de envio, recuperação de leases, cancelamento e coleta de clima.
 3. `20261023203738_guardian_optional_reports.sql`: coleta de relatórios opcionais com cursor persistente.
 4. `20261023203952_knowledge_atomic_replacement.sql`: substituição transacional dos trechos de um documento.
+5. `20261023213658_guardian_event_history_access.sql`: leitura do histórico de avisos sob a mesma autorização e RLS do evento da propriedade, sem escrita pelo cliente.
 
-São adições ao esquema existente. A primeira migração desativa os acompanhamentos antigos e marca sua fila pendente como substituída, preservando o histórico. Essa mudança operacional exige revisão antes de produção. A migração de conhecimento deve acompanhar a nova versão do código que a invoca.
+São adições ao esquema existente. A primeira migração desativa os acompanhamentos antigos e marca sua fila pendente como substituída, preservando o histórico. Essa mudança operacional exige revisão antes de produção. A migração de conhecimento deve acompanhar a nova versão do código que a invoca: sem a RPC no PostgREST, a reindexação retorna uma orientação de migração e preserva os trechos existentes. As consultas aos documentos já indexados continuam no caminho existente.
 
 Não remover tabelas para voltar uma versão depois que existirem registros reais. O rollback operacional recomendado é desativar as flags, cancelar os envios novos que ainda não iniciaram e preservar os dados para correção. Para remoção integral do esquema, preparar backup e uma revisão específica; não há script destrutivo automático nesta entrega.
 
@@ -99,22 +100,22 @@ Configurar variáveis de execução no painel/API da Netlify, nos escopos e cont
 Sequência recomendada:
 
 1. Criar ambiente Supabase de homologação separado; não usar dados reais nos testes.
-2. Aplicar e revisar as quatro migrações, permissões e advisors nesse ambiente.
+2. Aplicar e revisar as cinco migrações, permissões e advisors nesse ambiente.
 3. Verificar os endpoints reais via PostgREST e autenticação, inclusive tentativa de outra propriedade e revogação com uma sessão existente.
 4. Validar os provedores, o telefone de teste da Meta e o template, inclusive fora da janela de atendimento.
 5. Fazer um ensaio controlado do agendador, da falha de provedor e da retomada, com números autorizados para teste.
-6. Revisar e autorizar merge/deploy e migrações de produção separadamente. Só depois ativar as flags e recolher consentimento dos produtores.
+6. A autorização de integração à `main` já foi concedida. Aplicar as migrações de produção e ativar as flags somente após a homologação e a autorização correspondente; recolher o consentimento dos produtores antes de avisos.
 
 ## Validação executada
 
-- Suíte Node: 753 testes aprovados, zero falhas, incluindo os testes anteriores.
-- Testes novos de banco: execução das migrações em PostgreSQL local via PGlite, sem conectar a uma base de produção. Verificam RLS, papéis, acesso anônimo, isolamento, convite vinculado ao telefone, revogação, vínculo web de uso único, recibos, CAS, fila, cancelamento e rollback da indexação.
+- Suíte Node: 755 testes aprovados, zero falhas, incluindo os testes anteriores.
+- Testes novos de banco: execução das migrações em PostgreSQL local via PGlite, sem conectar a uma base de produção. Verificam RLS, papéis, acesso anônimo, isolamento, convite vinculado ao telefone, revogação inclusive do histórico de avisos, vínculo web de uso único, recibos, CAS, fila, cancelamento e rollback da indexação.
 - Testes de cálculos: unidades, fórmulas, zero, ganho negativo, entradas inválidas, estimativas e cenários.
 - Testes de WhatsApp: transcrição/confirmar, contexto da fazenda, não cair em outro caderno, falha de gravação, replay e expiração de proposta.
 - Build, typecheck, importação dos cinco módulos de rota e varredura de segredos no bundle cliente aprovados.
 - Auditoria de imports privilegiados aprovada.
 - Lint: zero erros; avisos preexistentes de hooks/fast refresh permanecem em arquivos legados.
-- UI local em Chromium: desktop 1440×1050 e celular 390×844, oito áreas, ausência de overflow horizontal do documento, cálculo, entrada inválida e formulário que apenas prepara uma proposta. Foram usados somente dados sintéticos e bloqueadas requisições externas.
+- UI local em Chromium: desktop 1440×1050 e celular 390×844, oito áreas, ausência de overflow horizontal do documento, histórico de processamento e sua atualização, cálculo, entrada inválida e formulário que apenas prepara uma proposta. Foram usados somente dados sintéticos e bloqueadas requisições externas.
 
 Limites dessa validação: o runtime local era Node 24.19.0; o projeto/CI continuam fixados em 24.22.1. Não foi executado CI remoto, homologação da Meta/Supabase, teste multissessão de locks num servidor Postgres separado ou avaliação veterinária. O teste da indexação verificou formato dos vetores em código e transação SQL, mas não substitui a homologação com a extensão pgvector do ambiente real.
 

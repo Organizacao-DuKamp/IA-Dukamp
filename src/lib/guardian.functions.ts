@@ -42,6 +42,13 @@ export interface GuardianAuditView {
   created_at: string;
   details: GuardianJson;
 }
+export interface GuardianEventHistoryView {
+  id: number;
+  event_id: string;
+  status: string;
+  reason: string | null;
+  created_at: string;
+}
 export interface GuardianDetail {
   id: string;
   version: number;
@@ -50,6 +57,32 @@ export interface GuardianDetail {
   audit: GuardianAuditView[];
   members: Array<{ phone_number: string; role: string; active: boolean }>;
 }
+export const guardianEventHistory = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) => z.object({ eventId: z.uuid() }).strict().parse(d))
+  .handler(async ({ context, data }) => {
+    const ctx = context as Context;
+    // Read with the authenticated caller. Both parent event and history use RLS;
+    // a stale open panel cannot retain access after membership revocation.
+    const event = await ctx.supabase
+      .from("guardian_events")
+      .select("id")
+      .eq("id", data.eventId)
+      .maybeSingle();
+    if (event.error || !event.data)
+      throw new Error("Aviso indisponível ou sem permissão de acesso.");
+    const { data: rows, error } = await ctx.supabase
+      .from("guardian_event_history")
+      .select("id,event_id,status,reason,created_at")
+      .eq("event_id", data.eventId)
+      .order("id", { ascending: false })
+      .limit(201);
+    if (error) throw new Error("Não foi possível consultar o histórico deste aviso.");
+    return {
+      entries: (rows ?? []).slice(0, 200).reverse() as GuardianEventHistoryView[],
+      partial: (rows?.length ?? 0) > 200,
+    };
+  });
 export const guardianOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {

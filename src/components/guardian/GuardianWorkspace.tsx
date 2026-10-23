@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   ArrowDownToLine,
   Check,
@@ -10,7 +10,7 @@ import {
   Wallet,
   X,
 } from "lucide-react";
-import type { GuardianDetail } from "@/lib/guardian.functions";
+import type { GuardianDetail, GuardianEventHistoryView } from "@/lib/guardian.functions";
 import type { GuardianAction } from "@/lib/guardian/schema";
 import { GuardianCalculator } from "./GuardianCalculator";
 import { farmCsv } from "@/lib/guardian/export";
@@ -71,18 +71,105 @@ function Badge({ value }: { value: string }) {
   );
 }
 
+type HistoryLoader = (eventId: string) => Promise<{
+  entries: GuardianEventHistoryView[];
+  partial: boolean;
+}>;
+function EventTimeline({ eventId, load }: { eventId: string; load: HistoryLoader }) {
+  const [result, setResult] = useState<Awaited<ReturnType<HistoryLoader>> | null>(null),
+    [loading, setLoading] = useState(false),
+    [error, setError] = useState("");
+  const inFlight = useRef(false);
+  async function refresh() {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    setLoading(true);
+    setError("");
+    // Clear the old result on refresh so a revoked session cannot keep showing it.
+    setResult(null);
+    try {
+      setResult(await load(eventId));
+    } catch {
+      setError("Não foi possível consultar o histórico. Confira seu acesso e tente novamente.");
+    } finally {
+      inFlight.current = false;
+      setLoading(false);
+    }
+  }
+  return (
+    <details
+      className="mt-4 border-t border-border pt-3"
+      onToggle={(e) => {
+        if (e.currentTarget.open && !result) void refresh();
+      }}
+    >
+      <summary className="cursor-pointer text-xs font-semibold text-emerald-700">
+        Histórico de processamento
+      </summary>
+      {loading && (
+        <p role="status" className="mt-3 text-xs">
+          Consultando o histórico…
+        </p>
+      )}
+      {error && (
+        <p role="alert" className="mt-3 text-xs text-destructive">
+          {error}
+        </p>
+      )}
+      {result && (
+        <>
+          {result.partial && (
+            <p className="mt-3 text-xs text-muted-foreground">
+              Histórico parcial: exibindo as 200 mudanças mais recentes.
+            </p>
+          )}
+          <ol
+            aria-label="Mudanças de estado do aviso"
+            className="mt-3 space-y-3 border-l-2 border-emerald-700/25 pl-4"
+          >
+            {result.entries.map((h) => (
+              <li key={h.id} className="space-y-1 text-xs">
+                <p className="text-muted-foreground">{when(h.created_at)}</p>
+                <Badge value={h.status} />
+                {h.reason && (
+                  <p className="break-words text-muted-foreground">Motivo: {h.reason}</p>
+                )}
+              </li>
+            ))}
+          </ol>
+          {!result.entries.length && (
+            <p className="mt-3 text-xs text-muted-foreground">
+              Nenhuma mudança de estado registrada.
+            </p>
+          )}
+        </>
+      )}
+      {!loading && (
+        <button
+          onClick={() => void refresh()}
+          className="mt-3 text-xs font-semibold text-emerald-700"
+        >
+          {error ? "Tentar novamente" : "Atualizar histórico"}
+        </button>
+      )}
+    </details>
+  );
+}
+
 export function GuardianWorkspace({
   detail,
   tab,
   onPropose,
   busy,
   ownPhone,
+  loadEventHistory,
 }: {
   detail: GuardianDetail;
   tab: Tab;
   onPropose: (a: GuardianAction) => Promise<void>;
   busy: boolean;
   ownPhone?: string;
+  loadEventHistory: HistoryLoader;
 }) {
   const book = detail.book,
     [start, setStart] = useState(""),
@@ -474,6 +561,7 @@ export function GuardianWorkspace({
                     {JSON.stringify(e.evidence, null, 2)}
                   </pre>
                 </details>
+                <EventTimeline key={e.id} eventId={e.id} load={loadEventHistory} />
               </article>
             ))}
             {!detail.events.length && (

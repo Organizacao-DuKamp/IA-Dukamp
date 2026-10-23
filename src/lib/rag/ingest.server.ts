@@ -80,6 +80,10 @@ export async function ingestDocument(
       p_chunks: rows,
     },
   );
+  if (error?.code === "PGRST202" || error?.code === "42883")
+    throw new Error(
+      "A migração de indexação transacional ainda não está disponível. Aplique a migração de conhecimento e atualize o schema do PostgREST antes de reindexar. Os trechos anteriores foram preservados.",
+    );
   if (error || count !== chunks.length)
     throw new Error(
       "Não foi possível substituir a indexação com segurança. A transação preservou os trechos anteriores.",

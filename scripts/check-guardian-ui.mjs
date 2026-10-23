@@ -69,6 +69,18 @@ try {
       await page.locator("body").evaluate((el) => el.scrollWidth <= innerWidth + 1),
       `Horizontal overflow in ${area}`,
     );
+    if (area === "Eventos") {
+      await page.getByText("Histórico de processamento", { exact: true }).click();
+      const timeline = page.getByRole("list", { name: "Mudanças de estado do aviso" });
+      await timeline.waitFor();
+      assert.equal(await timeline.getByRole("listitem").count(), 3);
+      assert.match(
+        await timeline.innerText(),
+        /Na fila[\s\S]*Em processamento[\s\S]*Nova tentativa/,
+      );
+      await page.getByRole("button", { name: "Atualizar histórico", exact: true }).click();
+      await timeline.waitFor();
+    }
   }
   await page
     .getByRole("navigation")
@@ -108,7 +120,7 @@ try {
   });
   assert.deepEqual(errors, []);
   console.log(
-    "Guardian UI: desktop/mobile, 8 areas, deterministic calculator, invalid input and review-only form passed. No external requests allowed.",
+    "Guardian UI: desktop/mobile, 8 areas, event timeline, deterministic calculator, invalid input and review-only form passed. No external requests allowed.",
   );
 } finally {
   await browser?.close();

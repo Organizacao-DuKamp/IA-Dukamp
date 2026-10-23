@@ -36,6 +36,7 @@ async function setup() {
     "guardian_durable_events.sql",
     "guardian_optional_reports.sql",
     "knowledge_atomic_replacement.sql",
+    "guardian_event_history_access.sql",
   ]) {
     const file = (await readdir(new URL("../supabase/migrations/", import.meta.url))).find((f) =>
       f.endsWith(suffix),
@@ -323,6 +324,38 @@ test("real SQL: compare-and-swap prevents lost updates and task completion cance
     assert.equal(rows[0].status, "cancelled");
     s = await store.load(phone);
     assert.equal(s.active!.book.tasks[0].status, "done");
+  } finally {
+    await db.close();
+  }
+});
+test("real SQL: event history follows parent RLS and becomes unreadable immediately after revocation", async () => {
+  const { db, store, send } = await setup();
+  try {
+    await send("cadastrar fazenda Boa Vista em Monte Aprazível/SP");
+    await send("confirmar");
+    await send("me lembra de pesar o lote 2 na sexta às 8h");
+    await send("confirmar");
+    const prop = (await store.load(phone)).active!.id;
+    await db.query(
+      "insert into guardian_members(property_id,phone_number,user_id,role,active) values($1,$2,$3,'worker',true)",
+      [prop, other, user],
+    );
+    await db.query("select set_config('request.jwt.claim.sub',$1,false)", [user]);
+    await db.exec("SET ROLE authenticated");
+    assert.equal((await db.query("select * from guardian_event_history")).rows.length, 1);
+    await assert.rejects(db.query("delete from guardian_event_history"), /permission denied/);
+    await db.exec("RESET ROLE");
+    await db.query("select set_config('request.jwt.claim.sub',$1,false)", [user2]);
+    await db.exec("SET ROLE authenticated");
+    assert.equal((await db.query("select * from guardian_event_history")).rows.length, 0);
+    await db.exec("RESET ROLE");
+    await send(`revogar acesso ${other}`);
+    await send("confirmar");
+    await db.query("select set_config('request.jwt.claim.sub',$1,false)", [user]);
+    await db.exec("SET ROLE authenticated");
+    assert.equal((await db.query("select * from guardian_event_history")).rows.length, 0);
+    await db.exec("RESET ROLE; SET ROLE anon");
+    await assert.rejects(db.query("select * from guardian_event_history"), /permission denied/);
   } finally {
     await db.close();
   }
