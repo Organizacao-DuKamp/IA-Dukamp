@@ -171,7 +171,11 @@ export async function recallWhatsAppContext(
     };
     const [lexical, semantic] = await Promise.allSettled([
       (deps.store ?? loadArchive)(request),
-      (deps.semantic ?? recallPrivateSemantic)({ ...input, now }),
+      // An injected archive is a complete test/offline boundary; don't silently
+      // add a real provider/database call when runtime flags happen to be enabled.
+      deps.store && !deps.semantic
+        ? Promise.resolve({ status: "skipped" as const })
+        : (deps.semantic ?? recallPrivateSemantic)({ ...input, now }),
     ]);
     const sem =
       semantic.status === "fulfilled" ? semantic.value : { status: "unavailable" as const };

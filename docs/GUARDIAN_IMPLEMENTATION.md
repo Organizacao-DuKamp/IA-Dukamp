@@ -124,7 +124,7 @@ Sequência recomendada:
 ## Validação executada
 
 - Suíte Node: 770 testes aprovados, zero falhas, incluindo os testes anteriores.
-- A suíte completa também passou com `CONTEXT=deploy-preview`. Os testes injetam explicitamente o contexto necessário ao processamento sintético e verificam que o agendador real permanece desabilitado em previews.
+- A suíte completa também passou com `CONTEXT=deploy-preview` e a flag semântica habilitada. Adaptadores de teste não acionam provedores ou bancos reais implicitamente. Os testes injetam explicitamente o contexto necessário ao processamento sintético e verificam que o agendador real permanece desabilitado em previews.
 - Testes novos de banco: execução das migrações em PostgreSQL local via PGlite, sem conectar a uma base de produção. Verificam RLS, papéis, acesso anônimo, isolamento, convite vinculado ao telefone, revogação inclusive do histórico de avisos, vínculo web de uso único, recibos, CAS, fila, cancelamento e rollback da indexação.
 - Testes de cálculos: unidades, fórmulas, zero, ganho negativo, entradas inválidas, estimativas e cenários.
 - Testes de WhatsApp: transcrição/confirmar, contexto da fazenda, não cair em outro caderno, falha de gravação, replay e expiração de proposta.
