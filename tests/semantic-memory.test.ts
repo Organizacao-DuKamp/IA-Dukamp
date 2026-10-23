@@ -106,6 +106,16 @@ test("disabled, dated and unrelated recall makes no private provider call", asyn
       "skipped",
     );
   assert.equal(calls, 0);
+  assert.deepEqual(
+    await processPrivateSemanticMemory({
+      enabled: true,
+      deploymentContext: "deploy-preview",
+      store,
+      embed,
+    }),
+    { enabled: false },
+  );
+  assert.equal(calls, 0);
 });
 test("private provider or vector failure degrades to lexical originals without saying that history was never sent", async () => {
   const unavailable = await recallPrivateSemantic(
@@ -193,6 +203,7 @@ test("hybrid entity ranking distinguishes lote 2 from lote 20 without fuzzy nume
 test("batch indexing has bounded calls and discarded completion cannot claim a successful save", async () => {
   const result = await processPrivateSemanticMemory({
     enabled: true,
+    deploymentContext: "production",
     limit: 500,
     dailyBudget: 99,
     embed: async (texts, purpose) => {
@@ -217,6 +228,7 @@ test("embedding failure records a retry outcome without leaking provider text or
     saved: number[] | null | undefined;
   const result = await processPrivateSemanticMemory({
     enabled: true,
+    deploymentContext: "production",
     embed: async () => {
       calls++;
       throw new Error("PRIVATE DATA");

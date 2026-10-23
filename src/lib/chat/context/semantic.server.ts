@@ -211,11 +211,13 @@ export async function processPrivateSemanticMemory(
     enabled?: boolean;
     limit?: number;
     dailyBudget?: number;
+    deploymentContext?: string;
   } = {},
 ) {
   if (
     !(deps.enabled ?? process.env.WHATSAPP_SEMANTIC_MEMORY_ENABLED === "true") ||
-    (process.env.CONTEXT && process.env.CONTEXT !== "production")
+    ((deps.deploymentContext ?? process.env.CONTEXT) &&
+      (deps.deploymentContext ?? process.env.CONTEXT) !== "production")
   )
     return { enabled: false as const };
   const store = deps.store ?? semanticMemoryStore,
