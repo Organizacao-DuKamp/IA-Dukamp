@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ExclusaoDeDadosRouteImport } from './routes/exclusao-de-dados'
 import { Route as PoliticaDePrivacidadeRouteImport } from './routes/politica-de-privacidade'
 import { Route as TermosDeUsoRouteImport } from './routes/termos-de-uso'
+import { Route as AuthenticatedGuardiaRouteImport } from './routes/_authenticated/guardia'
 import { Route as AuthenticatedAdminBaseConhecimentoRouteImport } from './routes/_authenticated/admin.base-conhecimento'
 import { Route as AuthenticatedAdminCotacoesRouteImport } from './routes/_authenticated/admin.cotacoes'
 import { Route as AuthenticatedAdminIaRouteImport } from './routes/_authenticated/admin.ia'
@@ -53,6 +54,11 @@ const TermosDeUsoRoute = TermosDeUsoRouteImport.update({
   id: '/termos-de-uso',
   path: '/termos-de-uso',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedGuardiaRoute = AuthenticatedGuardiaRouteImport.update({
+  id: '/guardia',
+  path: '/guardia',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAdminBaseConhecimentoRoute =
   AuthenticatedAdminBaseConhecimentoRouteImport.update({
@@ -109,6 +115,7 @@ export interface FileRoutesByFullPath {
   '/exclusao-de-dados': typeof ExclusaoDeDadosRoute
   '/politica-de-privacidade': typeof PoliticaDePrivacidadeRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
+  '/guardia': typeof AuthenticatedGuardiaRoute
   '/admin/base-conhecimento': typeof AuthenticatedAdminBaseConhecimentoRoute
   '/admin/cotacoes': typeof AuthenticatedAdminCotacoesRoute
   '/admin/ia': typeof AuthenticatedAdminIaRoute
@@ -125,6 +132,7 @@ export interface FileRoutesByTo {
   '/exclusao-de-dados': typeof ExclusaoDeDadosRoute
   '/politica-de-privacidade': typeof PoliticaDePrivacidadeRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
+  '/guardia': typeof AuthenticatedGuardiaRoute
   '/admin/base-conhecimento': typeof AuthenticatedAdminBaseConhecimentoRoute
   '/admin/cotacoes': typeof AuthenticatedAdminCotacoesRoute
   '/admin/ia': typeof AuthenticatedAdminIaRoute
@@ -143,6 +151,7 @@ export interface FileRoutesById {
   '/exclusao-de-dados': typeof ExclusaoDeDadosRoute
   '/politica-de-privacidade': typeof PoliticaDePrivacidadeRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
+  '/_authenticated/guardia': typeof AuthenticatedGuardiaRoute
   '/_authenticated/admin/base-conhecimento': typeof AuthenticatedAdminBaseConhecimentoRoute
   '/_authenticated/admin/cotacoes': typeof AuthenticatedAdminCotacoesRoute
   '/_authenticated/admin/ia': typeof AuthenticatedAdminIaRoute
@@ -161,6 +170,7 @@ export interface FileRouteTypes {
     | '/exclusao-de-dados'
     | '/politica-de-privacidade'
     | '/termos-de-uso'
+    | '/guardia'
     | '/admin/base-conhecimento'
     | '/admin/cotacoes'
     | '/admin/ia'
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/exclusao-de-dados'
     | '/politica-de-privacidade'
     | '/termos-de-uso'
+    | '/guardia'
     | '/admin/base-conhecimento'
     | '/admin/cotacoes'
     | '/admin/ia'
@@ -194,6 +205,7 @@ export interface FileRouteTypes {
     | '/exclusao-de-dados'
     | '/politica-de-privacidade'
     | '/termos-de-uso'
+    | '/_authenticated/guardia'
     | '/_authenticated/admin/base-conhecimento'
     | '/_authenticated/admin/cotacoes'
     | '/_authenticated/admin/ia'
@@ -263,6 +275,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermosDeUsoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/guardia': {
+      id: '/_authenticated/guardia'
+      path: '/guardia'
+      fullPath: '/guardia'
+      preLoaderRoute: typeof AuthenticatedGuardiaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/base-conhecimento': {
       id: '/_authenticated/admin/base-conhecimento'
       path: '/admin/base-conhecimento'
@@ -330,6 +349,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedGuardiaRoute: typeof AuthenticatedGuardiaRoute
   AuthenticatedAdminBaseConhecimentoRoute: typeof AuthenticatedAdminBaseConhecimentoRoute
   AuthenticatedAdminCotacoesRoute: typeof AuthenticatedAdminCotacoesRoute
   AuthenticatedAdminIaRoute: typeof AuthenticatedAdminIaRoute
@@ -337,6 +357,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedGuardiaRoute: AuthenticatedGuardiaRoute,
   AuthenticatedAdminBaseConhecimentoRoute:
     AuthenticatedAdminBaseConhecimentoRoute,
   AuthenticatedAdminCotacoesRoute: AuthenticatedAdminCotacoesRoute,

@@ -7,7 +7,13 @@ import { pathToFileURL } from "node:url";
 // before authentication or any handler has a chance to run.
 const root = resolve(".netlify/functions-internal/server/_ssr");
 const files = await readdir(root);
-const routes = ["admin.base-conhecimento", "admin.ia", "admin.produtos", "admin.cotacoes"];
+const routes = [
+  "admin.base-conhecimento",
+  "admin.ia",
+  "admin.produtos",
+  "admin.cotacoes",
+  "guardia",
+];
 
 for (const route of routes) {
   const file = files.find((name) => name.startsWith(`${route}-`) && name.endsWith(".mjs"));

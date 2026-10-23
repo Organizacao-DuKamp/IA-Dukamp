@@ -13,6 +13,7 @@ import { currentMemoryMarker, stampMemoryState } from "../chat/memory-reset.ts";
 
 import type { ConversationRecall } from "../chat/context/types.ts";
 import { recallWhatsAppContext } from "../chat/context/whatsapp.server.ts";
+import type { GuardianHandled, GuardianInput } from "../guardian/handler.server.ts";
 
 const MAX_HISTORY_MESSAGES = 40;
 const MEMORY_CONVERSATION_TTL_MS = 6 * 60 * 60_000;
@@ -78,6 +79,7 @@ export interface WhatsAppConversationDependencies {
   resolveUserText?: (input: WhatsAppChatInput, history?: ChatMessage[]) => Promise<string>;
   emergencyAnswer?: typeof answerWhatsAppEmergency;
   recallContext?: typeof recallWhatsAppContext;
+  processGuardian?: (input: GuardianInput) => Promise<GuardianHandled | null>;
   processHerd?: (input: {
     phone: string;
     messageId: string;
@@ -441,22 +443,74 @@ export async function processClaimedWhatsAppChat(
       userText = resolvedUserText;
       snapshot = previous;
       conversationId = previous?.conversationId ?? `wa:${input.phone}`;
+      // Every inbound updates the service window and stop preference, including structured operations.
+      try {
+        await observeWhatsAppInboundForMemory(input, userText);
+      } catch {
+        console.error("[whatsapp-memory] inbound observation unavailable");
+      }
+      const guardianHandler =
+        dependencies.processGuardian ??
+        (!dependencies.executeChat
+          ? (await import("../guardian/handler.server.ts")).handleGuardianMessage
+          : null);
+      const guardian = guardianHandler
+        ? await guardianHandler({
+            phone: input.phone,
+            messageId: input.messageId,
+            text: userText,
+            mediaType: input.media?.type,
+          })
+        : null;
+      if (guardian?.reply) {
+        herdReply = guardian.reply;
+        await recordAIChatTurn({
+          channel: "whatsapp",
+          sessionId: `wa:${input.phone}`,
+          conversationId,
+          clientMessageId: input.messageId,
+          userText,
+          assistantText: guardian.reply,
+          status: "completed",
+          diagnostics: {
+            retrieved_blocks: ["guardian:confirmed-operations"],
+            response_mode: "knowledge",
+          },
+          usageEvents: [...usageEvents],
+          startedAt,
+          durationMs: Date.now() - startedMs,
+        });
+        telemetryRecorded = true;
+        try {
+          await deps.saveConversation(input.phone, {
+            conversationId,
+            state: previous?.state,
+            history: appendTurn(previous?.history ?? [], userText, guardian.reply.slice(0, 8000)),
+          });
+        } catch {
+          /* Authoritative receipt is already persisted. */
+        }
+        await deps.completeMessage(input.messageId, guardian.reply);
+        return { reply: guardian.reply, duplicate: false, shouldSend: true };
+      }
       // Persistent husbandry operations precede general AI routing and do not depend on the short history.
       const herdHandler =
         dependencies.processHerd ??
         (!dependencies.executeChat
           ? (await import("../herd/handler.server.ts")).handleHerdMessage
           : null);
-      const herd = herdHandler
-        ? await herdHandler({
-            phone: input.phone,
-            messageId: input.messageId,
-            text: userText,
-            mediaType: input.media?.type,
-            requestText: input.media?.caption || input.text,
-            previousDay: (previous?.state as { last_herd_day?: string } | undefined)?.last_herd_day,
-          })
-        : null;
+      const herd =
+        herdHandler && !guardian?.activeProperty
+          ? await herdHandler({
+              phone: input.phone,
+              messageId: input.messageId,
+              text: userText,
+              mediaType: input.media?.type,
+              requestText: input.media?.caption || input.text,
+              previousDay: (previous?.state as { last_herd_day?: string } | undefined)
+                ?.last_herd_day,
+            })
+          : null;
       if (herd) {
         herdReply = herd.reply;
         await recordAIChatTurn({
@@ -487,15 +541,6 @@ export async function processClaimedWhatsAppChat(
         }
         await deps.completeMessage(input.messageId, herd.reply);
         return { reply: herd.reply, duplicate: false, shouldSend: true };
-      }
-      try {
-        await observeWhatsAppInboundForMemory(input, userText);
-      } catch (error) {
-        // A memória é complementar e nunca deve impedir a resposta principal.
-        console.error(
-          "[whatsapp-memory] inbound observation failed " +
-            (error instanceof Error ? error.message : "unknown_error"),
-        );
       }
       const casualGreeting = greetingReply(userText, Boolean(previous?.history.length));
 
@@ -547,6 +592,16 @@ export async function processClaimedWhatsAppChat(
           history: previous?.history,
           maxContextChars: input.media ? 14_000 : undefined,
         });
+      if (guardian?.context)
+        conversationRecall = {
+          context: [guardian.context, conversationRecall?.context ?? ""].join("\n\n"),
+          sourceIds: conversationRecall?.sourceIds ?? [],
+          status: conversationRecall?.status ?? "available",
+          totalTurns: conversationRecall?.totalTurns ?? 0,
+          includedTurns: conversationRecall?.includedTurns ?? 0,
+          partial: conversationRecall?.partial ?? false,
+          period: conversationRecall?.period ?? null,
+        };
       const chatInput: ChatInput = {
         sessionId: `wa:${input.phone}`,
         conversationId,

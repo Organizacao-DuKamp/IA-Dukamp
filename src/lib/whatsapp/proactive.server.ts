@@ -3,24 +3,15 @@ import { askOpenAI } from "../chat/openai.server.ts";
 import type { ChatMessage } from "../chat/types.ts";
 import { supabaseAdmin } from "../../integrations/supabase/client.server.ts";
 import type { WhatsAppChatInput } from "./types.ts";
-import { syncWhatsAppProactiveHistory } from "./store.server.ts";
 import {
   USER_MEMORY_EPOCH,
   MEMORY_INBOX_PREFIX,
   currentMemoryInboxText,
 } from "../chat/memory-reset.ts";
-import {
-  buildDailyFollowupSchedule,
-  localDateForTimeZone,
-  parseFollowupPreference,
-  sanitizeMemoryFactKey,
-  withinCustomerServiceWindow,
-} from "./proactive.ts";
+import { parseFollowupPreference, sanitizeMemoryFactKey } from "./proactive.ts";
 
 const DEFAULT_TIME_ZONE = "America/Sao_Paulo";
 const MAX_FACTS_FOR_PROMPT = 20;
-const MAX_RECENT_MESSAGES = 8;
-const MAX_GENERATED_MESSAGE = 900;
 
 export type MemoryFactStatus = "active" | "resolved";
 
@@ -89,16 +80,6 @@ interface MemoryInboxItem {
   attempts: number;
 }
 
-interface QueueClaim {
-  id: string;
-  phoneNumber: string;
-  localDate: string;
-  slotNo: number | null;
-  source: "scheduled" | "manual";
-  scheduledFor: string;
-  attempts: number;
-}
-
 type MemoryAction =
   | {
       op: "upsert";
@@ -137,7 +118,7 @@ function normalizedPhone(value: string): string {
 function mapProfile(row: any): WhatsAppFollowupProfile {
   return {
     phoneNumber: String(row.phone_number),
-    followupsEnabled: row.followups_enabled !== false,
+    followupsEnabled: row.followups_enabled === true,
     optedOutAt: typeof row.opted_out_at === "string" ? row.opted_out_at : null,
     timeZone: typeof row.timezone === "string" && row.timezone ? row.timezone : DEFAULT_TIME_ZONE,
     lastInboundAt: typeof row.last_inbound_at === "string" ? row.last_inbound_at : null,
@@ -231,7 +212,7 @@ async function ensureProfile(
     .from("whatsapp_followup_profiles")
     .insert({
       phone_number: phone,
-      followups_enabled: true,
+      followups_enabled: false,
       timezone: DEFAULT_TIME_ZONE,
       last_inbound_at: lastInboundAt ?? null,
       memory_count: 0,
@@ -261,7 +242,7 @@ export async function observeWhatsAppInboundForMemory(
     const preferenceUpdate =
       preference === "disable"
         ? { followups_enabled: false, opted_out_at: now, updated_at: now }
-        : { followups_enabled: true, opted_out_at: null, updated_at: now };
+        : { followups_enabled: false, opted_out_at: null, updated_at: now };
     const prefResult = await db()
       .from("whatsapp_followup_profiles")
       .update(preferenceUpdate)
@@ -663,490 +644,50 @@ export async function processPendingWhatsAppMemories(limit = 12) {
   return { claimed: rows.length, completed, failed };
 }
 
-export async function seedDailyWhatsAppFollowups(now = new Date()): Promise<number> {
-  if (!hasDurableStore()) return 0;
-  const profiles = await db()
-    .from("whatsapp_followup_profiles")
-    .select("phone_number,timezone,memory_count")
-    .eq("followups_enabled", true)
-    .gt("memory_count", 0)
-    .limit(2000);
-  if (profiles.error) {
-    throw new Error("whatsapp_followup_seed_profiles_failed:" + (profiles.error.code ?? "unknown"));
-  }
-
-  const rows: Record<string, unknown>[] = [];
-  for (const profile of profiles.data ?? []) {
-    const phone = String(profile.phone_number);
-    const timeZone =
-      typeof profile.timezone === "string" && profile.timezone
-        ? profile.timezone
-        : DEFAULT_TIME_ZONE;
-    const localDate = localDateForTimeZone(now, timeZone);
-    for (const slot of buildDailyFollowupSchedule(phone, localDate, timeZone)) {
-      if (Date.parse(slot.scheduledFor) < now.getTime() - 5 * 60_000) continue;
-      rows.push({
-        phone_number: phone,
-        local_date: localDate,
-        slot_no: slot.slot,
-        source: "scheduled",
-        scheduled_for: slot.scheduledFor,
-        status: "pending",
-        attempts: 0,
-        updated_at: now.toISOString(),
-      });
-    }
-  }
-
-  if (rows.length === 0) return 0;
-  const insert = await db().from("whatsapp_proactive_queue").upsert(rows, {
-    onConflict: "phone_number,local_date,slot_no",
-    ignoreDuplicates: true,
-  });
-  if (insert.error) {
-    throw new Error("whatsapp_followup_seed_failed:" + (insert.error.code ?? "unknown"));
-  }
-  return rows.length;
+/** Legacy slots are retained only for history compatibility. New notifications require events. */
+export async function seedDailyWhatsAppFollowups(_now = new Date()): Promise<number> {
+  return 0;
 }
 
-function recentMessageText(rows: any[]): string[] {
-  return rows
-    .map((row) => (typeof row.message_text === "string" ? row.message_text.trim() : ""))
-    .filter(Boolean)
-    .slice(0, MAX_RECENT_MESSAGES);
-}
-
-async function generateProactiveMessage(
-  facts: WhatsAppMemoryFact[],
-  recentMessages: string[],
-  source: "scheduled" | "manual",
-  slotNo: number | null,
-): Promise<string> {
-  const location = facts.find(
-    (fact) =>
-      /location|localiza|propriedade/i.test(fact.category) ||
-      /location|localiza/i.test(fact.factKey),
-  );
-  const factsPayload = facts.map((fact) => ({
-    category: fact.category,
-    subject: fact.subject,
-    value: fact.valueText,
-    importance: fact.importance,
-  }));
-
-  const prompt =
-    "Escreva UMA mensagem proativa curta da TPEC-IA para o produtor no WhatsApp.\n" +
-    "Use apenas os fatos abaixo. Escolha um ou dois que façam sentido acompanhar agora.\n" +
-    "Se houver um caso de saúde animal ativo, pergunte de forma natural se houve melhora.\n" +
-    "Se houver localização da propriedade, você pode consultar a situação meteorológica atual somente se isso trouxer um alerta ou dica realmente útil para hoje.\n" +
-    "Não diga que existe memória, banco, ficha, automação ou agendamento.\n" +
-    "Não invente fatos, diagnóstico, tratamento, clima, preço ou urgência.\n" +
-    "Evite repetir o mesmo assunto das mensagens recentes.\n" +
-    "Tom brasileiro, humano e profissional. Prefira 1 a 3 frases, sem cabeçalho e sem links.\n\n" +
-    "Fatos ativos:\n" +
-    JSON.stringify(factsPayload) +
-    "\n\nMensagens proativas recentes:\n" +
-    JSON.stringify(recentMessages) +
-    "\n\nOrigem: " +
-    source +
-    "; slot: " +
-    String(slotNo ?? "manual") +
-    ". Retorne somente a mensagem final.";
-
-  let message = await askOpenAI([{ role: "user", content: prompt }], {
-    model: "luna",
-    channel: "whatsapp",
-    researchDepth: location ? "medium" : "none",
-    maxToolCalls: location ? 1 : undefined,
-    reasoningEffort: "low",
-    timeoutMs: location ? 30_000 : 20_000,
-    sourcePolicy: location
-      ? "CONTATO PROATIVO: use Web Search somente se necessário para checar clima atual relacionado ao local salvo: " +
-        location.valueText +
-        ". Não inclua URL na mensagem e não invente dado temporal."
-      : "CONTATO PROATIVO: não pesquise na web. Use somente os fatos fornecidos.",
-    stage: "whatsapp_proactive_message",
-  });
-
-  message = stripCodeFence(message);
-  if (!message) throw new Error("empty_proactive_message");
-  message = Array.from(message).slice(0, MAX_GENERATED_MESSAGE).join("").trim();
-
-  if (
-    source === "scheduled" &&
-    slotNo === 1 &&
-    !message.toLocaleLowerCase("pt-BR").includes("parar acompanhamento")
-  ) {
-    message += "\n\nSe quiser pausar esse acompanhamento, responda “parar acompanhamento”.";
-  }
-  return message;
-}
-
-function fallbackMessage(
-  facts: WhatsAppMemoryFact[],
-  source: "scheduled" | "manual",
-  slotNo: number | null,
-) {
-  const fact = facts[0];
-  let message = "Oi! Passando para acompanhar como estão as coisas na propriedade.";
-  if (fact?.category.match(/health|saude|sanidade/i)) {
-    message =
-      "Oi! Queria acompanhar " +
-      fact.subject +
-      ": " +
-      fact.valueText +
-      " Como ele está agora, melhorou?";
-  } else if (fact?.category.match(/herd|rebanho/i)) {
-    message =
-      "Oi! Como está o manejo do seu rebanho? Você comentou que " +
-      fact.valueText.toLocaleLowerCase("pt-BR") +
-      " Teve alguma mudança importante?";
-  } else if (fact) {
-    message =
-      "Oi! Queria acompanhar uma coisa que você comentou: " +
-      fact.valueText +
-      " Como está isso hoje?";
-  }
-  if (source === "scheduled" && slotNo === 1) {
-    message += "\n\nSe quiser pausar esse acompanhamento, responda “parar acompanhamento”.";
-  }
-  return Array.from(message).slice(0, MAX_GENERATED_MESSAGE).join("");
-}
-
-async function graphSend(
-  phone: string,
-  message: string,
-  mode: "text" | "template",
-): Promise<{ status: "sent" | "failed" | "uncertain"; error: string | null }> {
-  const token = process.env.WHATSAPP_ACCESS_TOKEN?.trim();
-  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID?.trim();
-  const version = (process.env.WHATSAPP_GRAPH_API_VERSION?.trim() || "v25.0").replace(
-    /^\/+|\/+$/g,
-    "",
-  );
-  if (!token || !phoneNumberId) {
-    return { status: "failed", error: "whatsapp_credentials_missing" };
-  }
-  if (!/^v\d+\.\d+$/.test(version)) {
-    return { status: "failed", error: "invalid_whatsapp_graph_api_version" };
-  }
-
-  let payload: Record<string, unknown>;
-  if (mode === "template") {
-    const name = process.env.WHATSAPP_PROACTIVE_TEMPLATE_NAME?.trim();
-    const language = process.env.WHATSAPP_PROACTIVE_TEMPLATE_LANGUAGE?.trim() || "pt_BR";
-    if (!name) return { status: "failed", error: "approved_template_not_configured" };
-    payload = {
-      messaging_product: "whatsapp",
-      recipient_type: "individual",
-      to: phone,
-      type: "template",
-      template: {
-        name,
-        language: { code: language },
-        components: [
-          {
-            type: "body",
-            parameters: [{ type: "text", text: message }],
-          },
-        ],
-      },
-    };
-  } else {
-    payload = {
-      messaging_product: "whatsapp",
-      recipient_type: "individual",
-      to: phone,
-      type: "text",
-      text: { preview_url: false, body: message },
-    };
-  }
-
-  try {
-    const response = await fetch(
-      "https://graph.facebook.com/" +
-        version +
-        "/" +
-        encodeURIComponent(phoneNumberId) +
-        "/messages",
-      {
-        method: "POST",
-        headers: {
-          authorization: "Bearer " + token,
-          "content-type": "application/json",
-        },
-        body: JSON.stringify(payload),
-        redirect: "error",
-        signal: AbortSignal.timeout(15_000),
-      },
-    );
-    if (response.ok) return { status: "sent", error: null };
-    const raw = await response.text().catch(() => "");
-    const detail = "whatsapp_proactive_send_failed:" + response.status + ":" + raw.slice(0, 300);
-    if (response.status >= 500) return { status: "uncertain", error: detail };
-    return { status: "failed", error: detail };
-  } catch (error) {
-    return { status: "uncertain", error: errorMessage(error) };
-  }
-}
-
-async function processQueueItem(item: QueueClaim): Promise<ManualFollowupResult> {
-  const phone = normalizedPhone(item.phoneNumber);
-  const profileResult = await db()
-    .from("whatsapp_followup_profiles")
-    .select("*")
-    .eq("phone_number", phone)
-    .maybeSingle();
-  if (profileResult.error) {
-    throw new Error(
-      "whatsapp_followup_profile_load_failed:" + (profileResult.error.code ?? "unknown"),
-    );
-  }
-
-  const profile = profileResult.data ? mapProfile(profileResult.data) : await ensureProfile(phone);
-  if (!profile.followupsEnabled) {
-    await db()
-      .from("whatsapp_proactive_queue")
-      .update({
-        status: "skipped",
-        last_error: "followups_disabled",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", item.id);
-    return {
-      status: "skipped",
-      message: null,
-      deliveryMode: null,
-      reason: "followups_disabled",
-    };
-  }
-
-  const facts = await activeFacts(phone);
-  if (facts.length === 0) {
-    await db()
-      .from("whatsapp_followup_profiles")
-      .update({ memory_count: 0, updated_at: new Date().toISOString() })
-      .eq("phone_number", phone);
-    await db()
-      .from("whatsapp_proactive_queue")
-      .update({
-        status: "skipped",
-        last_error: "no_active_memory",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", item.id);
-    return {
-      status: "skipped",
-      message: null,
-      deliveryMode: null,
-      reason: "no_active_memory",
-    };
-  }
-
-  const recent = await db()
-    .from("whatsapp_proactive_queue")
-    .select("message_text")
-    .eq("phone_number", phone)
-    .eq("status", "sent")
-    .gte(
-      "created_at",
-      facts.reduce(
-        (oldest, fact) => (fact.firstSeenAt < oldest ? fact.firstSeenAt : oldest),
-        new Date().toISOString(),
-      ),
-    )
-    .order("sent_at", { ascending: false })
-    .limit(MAX_RECENT_MESSAGES);
-  if (recent.error) {
-    throw new Error("whatsapp_followup_recent_failed:" + (recent.error.code ?? "unknown"));
-  }
-
-  let message: string;
-  try {
-    message = await generateProactiveMessage(
-      facts,
-      recentMessageText(recent.data ?? []),
-      item.source,
-      item.slotNo,
-    );
-  } catch (error) {
-    console.error("[whatsapp-followup] generation failed " + errorMessage(error));
-    message = fallbackMessage(facts, item.source, item.slotNo);
-  }
-
-  const mode = withinCustomerServiceWindow(profile.lastInboundAt) ? "text" : "template";
-  if (mode === "template" && !process.env.WHATSAPP_PROACTIVE_TEMPLATE_NAME?.trim()) {
-    await db()
-      .from("whatsapp_proactive_queue")
-      .update({
-        status: "skipped",
-        message_text: message,
-        delivery_mode: mode,
-        last_error: "approved_template_not_configured",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", item.id);
-    return {
-      status: "skipped",
-      message,
-      deliveryMode: mode,
-      reason: "approved_template_not_configured",
-    };
-  }
-
-  const delivery = await graphSend(phone, message, mode);
-  const now = new Date().toISOString();
-  const queueStatus =
-    delivery.status === "sent" ? "sent" : delivery.status === "uncertain" ? "uncertain" : "failed";
-  const update = await db()
-    .from("whatsapp_proactive_queue")
-    .update({
-      status: queueStatus,
-      message_text: message,
-      delivery_mode: mode,
-      last_error: delivery.error,
-      sent_at: delivery.status === "sent" ? now : null,
-      updated_at: now,
-    })
-    .eq("id", item.id);
-  if (update.error) {
-    throw new Error("whatsapp_followup_result_save_failed:" + (update.error.code ?? "unknown"));
-  }
-
-  if (delivery.status === "sent") {
-    try {
-      await syncWhatsAppProactiveHistory(item.id);
-    } catch (error) {
-      // O envio já foi aceito pela Meta. Não reenvie por falha de persistência:
-      // a próxima entrada do usuário fará a reconciliação antes do chat.
-      console.error("[whatsapp-followup] history sync failed " + errorMessage(error));
-    }
-
-    const profileUpdate = await db()
-      .from("whatsapp_followup_profiles")
-      .update({ last_proactive_at: now, updated_at: now })
-      .eq("phone_number", phone);
-    if (profileUpdate.error) {
-      console.error(
-        "[whatsapp-followup] profile timestamp failed " + (profileUpdate.error.code ?? "unknown"),
-      );
-    }
-  }
-
-  return {
-    status: delivery.status,
-    message,
-    deliveryMode: mode,
-    reason: delivery.error,
-  };
-}
-
-export async function processDueWhatsAppFollowups(limit = 10) {
-  if (!hasDurableStore()) {
-    return { claimed: 0, sent: 0, skipped: 0, failed: 0, uncertain: 0 };
-  }
-  const claimed = await db().rpc("claim_due_whatsapp_proactive", {
-    p_limit: Math.max(1, Math.min(50, Math.trunc(limit))),
-  });
-  if (claimed.error) {
-    throw new Error("whatsapp_followup_claim_failed:" + (claimed.error.code ?? "unknown"));
-  }
-
-  const rows: QueueClaim[] = (claimed.data ?? []).map((row: any) => ({
-    id: String(row.id),
-    phoneNumber: String(row.phone_number),
-    localDate: String(row.local_date),
-    slotNo: row.slot_no === null || row.slot_no === undefined ? null : Number(row.slot_no),
-    source: row.source === "manual" ? "manual" : "scheduled",
-    scheduledFor: String(row.scheduled_for),
-    attempts: Number(row.attempts ?? 0),
-  }));
-  const summary = { claimed: rows.length, sent: 0, skipped: 0, failed: 0, uncertain: 0 };
-
-  for (const item of rows) {
-    try {
-      const result = await processQueueItem(item);
-      summary[result.status] += 1;
-    } catch (error) {
-      summary.failed += 1;
-      await db()
-        .from("whatsapp_proactive_queue")
-        .update({
-          status: item.attempts >= 3 ? "dead" : "failed",
-          last_error: errorMessage(error),
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", item.id);
-    }
-  }
-  return summary;
+/** No legacy automatic or ad-hoc generation is dispatched. */
+export async function processDueWhatsAppFollowups(_limit = 10) {
+  return { claimed: 0, sent: 0, skipped: 0, failed: 0, uncertain: 0 };
 }
 
 export async function runWhatsAppFollowupMaintenance() {
   if (process.env.WHATSAPP_PROACTIVE_ENABLED?.trim().toLowerCase() !== "true") {
     return { enabled: false };
   }
-  const memory = await processPendingWhatsAppMemories(16);
-  const seeded = await seedDailyWhatsAppFollowups();
-  const proactive = await processDueWhatsAppFollowups(12);
-  return { enabled: true, memory, seeded, proactive };
+  const { runGuardianMaintenance } = await import("../guardian/maintenance.server.ts");
+  const [memory, guardian] = await Promise.allSettled([
+    processPendingWhatsAppMemories(16),
+    runGuardianMaintenance(),
+  ]);
+  return {
+    enabled: true,
+    memory: memory.status === "fulfilled" ? memory.value : { failed: true },
+    guardian: guardian.status === "fulfilled" ? guardian.value : { failed: true },
+  };
 }
 
-export async function forceWhatsAppFollowup(phoneValue: string): Promise<ManualFollowupResult> {
-  if (!hasDurableStore()) {
-    return {
-      status: "failed",
-      message: null,
-      deliveryMode: null,
-      reason: "durable_store_not_configured",
-    };
-  }
-  const phone = normalizedPhone(phoneValue);
-  const profile = await ensureProfile(phone);
-  if (!profile.followupsEnabled) {
-    return {
-      status: "skipped",
-      message: null,
-      deliveryMode: null,
-      reason: "followups_disabled",
-    };
-  }
-
-  const now = new Date();
-  const inserted = await db()
-    .from("whatsapp_proactive_queue")
-    .insert({
-      phone_number: phone,
-      local_date: localDateForTimeZone(now, profile.timeZone),
-      slot_no: null,
-      source: "manual",
-      scheduled_for: now.toISOString(),
-      status: "processing",
-      attempts: 1,
-      claimed_at: now.toISOString(),
-      updated_at: now.toISOString(),
-    })
-    .select("id,phone_number,local_date,slot_no,source,scheduled_for,attempts")
-    .single();
-  if (inserted.error) {
-    throw new Error("whatsapp_manual_followup_create_failed:" + (inserted.error.code ?? "unknown"));
-  }
-
-  return processQueueItem({
-    id: String(inserted.data.id),
-    phoneNumber: String(inserted.data.phone_number),
-    localDate: String(inserted.data.local_date),
-    slotNo: null,
-    source: "manual",
-    scheduledFor: String(inserted.data.scheduled_for),
-    attempts: Number(inserted.data.attempts ?? 1),
-  });
+/** Administrators cannot substitute for the recipient's consent or a verifiable event. */
+export async function forceWhatsAppFollowup(_phoneValue: string): Promise<ManualFollowupResult> {
+  return {
+    status: "skipped",
+    message: null,
+    deliveryMode: null,
+    reason: "use_guardian_verified_events",
+  };
 }
 
 export async function setWhatsAppFollowupsEnabled(
   phoneValue: string,
   enabled: boolean,
 ): Promise<WhatsAppFollowupProfile> {
+  if (enabled)
+    throw new Error(
+      "A ativação de avisos exige consentimento do produtor pelo WhatsApp da Guardiã.",
+    );
   const phone = normalizedPhone(phoneValue);
   await ensureProfile(phone);
   const now = new Date().toISOString();
