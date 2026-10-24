@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { BellRing, PauseCircle, PlayCircle, RefreshCw, Send } from "lucide-react";
+import { BellRing, RefreshCw } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import {
-  forceWhatsAppFollowup,
-  setWhatsAppFollowupEnabled,
   whatsappFollowupDetail,
-  type ManualFollowupResult,
   type WhatsAppFollowupDetail,
 } from "@/lib/whatsapp/proactive.functions";
 
@@ -20,36 +18,10 @@ function formatDate(value: string | null | undefined): string {
   }).format(date);
 }
 
-function resultText(result: ManualFollowupResult | null): string | null {
-  if (!result) return null;
-  if (result.status === "sent") {
-    return (
-      "Mensagem enviada" +
-      (result.deliveryMode === "template" ? " pelo modelo aprovado da Meta." : ".")
-    );
-  }
-  if (result.reason === "approved_template_not_configured") {
-    return "O contato está fora da janela de 24 horas e o modelo aprovado da Meta ainda não foi configurado.";
-  }
-  if (result.reason === "no_active_memory") {
-    return "Esse usuário ainda não tem informação relevante ativa para gerar o acompanhamento.";
-  }
-  if (result.reason === "followups_disabled") {
-    return "O acompanhamento está pausado para este usuário.";
-  }
-  if (result.status === "uncertain") {
-    return "A entrega ficou incerta. O sistema não reenviará automaticamente para evitar duplicação.";
-  }
-  return result.reason ? "Não foi possível enviar: " + result.reason : "Não foi possível enviar.";
-}
-
 export function WhatsAppFollowupPanel({ phone }: { phone: string }) {
   const detailFn = useServerFn(whatsappFollowupDetail);
-  const forceFn = useServerFn(forceWhatsAppFollowup);
-  const toggleFn = useServerFn(setWhatsAppFollowupEnabled);
   const [detail, setDetail] = useState<WhatsAppFollowupDetail | null>(null);
   const [loading, setLoading] = useState(false);
-  const [actionLoading, setActionLoading] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
 
   async function load(resetFeedback = true) {
@@ -69,36 +41,6 @@ export function WhatsAppFollowupPanel({ phone }: { phone: string }) {
     void load();
   }, [phone]);
 
-  async function forceSend() {
-    setActionLoading(true);
-    setFeedback(null);
-    try {
-      const result = (await forceFn({ data: { phone } })) as ManualFollowupResult;
-      await load(false);
-      setFeedback(resultText(result));
-    } catch (error) {
-      setFeedback(error instanceof Error ? error.message : "Não foi possível enviar.");
-    } finally {
-      setActionLoading(false);
-    }
-  }
-
-  async function toggle() {
-    const enabled = detail?.profile?.followupsEnabled !== false;
-    setActionLoading(true);
-    setFeedback(null);
-    try {
-      await toggleFn({ data: { phone, enabled: !enabled } });
-      await load(false);
-      setFeedback(!enabled ? "Acompanhamento reativado." : "Acompanhamento pausado.");
-    } catch (error) {
-      setFeedback(error instanceof Error ? error.message : "Não foi possível alterar.");
-    } finally {
-      setActionLoading(false);
-    }
-  }
-
-  const enabled = detail?.profile?.followupsEnabled !== false;
   const activeFacts = detail?.facts.filter((fact) => fact.status === "active") ?? [];
   const resolvedFacts = detail?.facts.filter((fact) => fact.status === "resolved") ?? [];
   const recentQueue = detail?.queue.slice(0, 8) ?? [];
@@ -112,13 +54,13 @@ export function WhatsAppFollowupPanel({ phone }: { phone: string }) {
             <h3 className="text-sm font-semibold">Memória e acompanhamento pelo WhatsApp</h3>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            Fatos relevantes são atualizados conforme a conversa e alimentam dois contatos
-            automáticos em horários diferentes do dia.
+            Memórias extraídas ajudam a recuperar o contexto e precisam ser conferidas com as
+            mensagens originais. Avisos agora dependem de eventos e autorização na Guardiã.
           </p>
         </div>
         <button
           onClick={() => void load()}
-          disabled={loading || actionLoading}
+          disabled={loading}
           className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1.5 text-xs hover:bg-accent disabled:opacity-50"
         >
           <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
@@ -135,10 +77,10 @@ export function WhatsAppFollowupPanel({ phone }: { phone: string }) {
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
         <div className="rounded-lg border border-border bg-background p-3">
           <p className="text-[11px] uppercase text-muted-foreground">Acompanhamento</p>
-          <p className="mt-1 text-sm font-medium">{enabled ? "Ativo" : "Pausado"}</p>
+          <p className="mt-1 text-sm font-medium">Slots diários desativados</p>
         </div>
         <div className="rounded-lg border border-border bg-background p-3">
-          <p className="text-[11px] uppercase text-muted-foreground">Memórias ativas</p>
+          <p className="text-[11px] uppercase text-muted-foreground">Memórias extraídas</p>
           <p className="mt-1 text-sm font-medium">{activeFacts.length}</p>
         </div>
         <div className="rounded-lg border border-border bg-background p-3">
@@ -147,29 +89,14 @@ export function WhatsAppFollowupPanel({ phone }: { phone: string }) {
         </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        <button
-          onClick={() => void forceSend()}
-          disabled={actionLoading || loading || !enabled}
-          className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground disabled:opacity-50"
-        >
-          <Send size={14} />
-          {actionLoading ? "Processando…" : "Enviar acompanhamento agora"}
-        </button>
-        <button
-          onClick={() => void toggle()}
-          disabled={actionLoading || loading}
-          className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-xs hover:bg-accent disabled:opacity-50"
-        >
-          {enabled ? <PauseCircle size={14} /> : <PlayCircle size={14} />}
-          {enabled ? "Pausar acompanhamento" : "Reativar acompanhamento"}
-        </button>
-      </div>
+      <Link to="/guardia" className="mt-4 inline-block text-sm font-semibold text-primary">
+        Abrir Guardiã da Fazenda
+      </Link>
 
       <div className="mt-5 grid gap-4 lg:grid-cols-2">
         <div>
           <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Informações guardadas
+            Informações extraídas (não são cadastros confirmados)
           </h4>
           <div className="mt-2 space-y-2">
             {activeFacts.map((fact) => (
@@ -213,7 +140,7 @@ export function WhatsAppFollowupPanel({ phone }: { phone: string }) {
 
         <div>
           <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Envios e agenda
+            Histórico dos envios anteriores
           </h4>
           <div className="mt-2 space-y-2">
             {recentQueue.map((item) => (

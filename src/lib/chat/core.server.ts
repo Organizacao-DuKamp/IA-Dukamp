@@ -1,4 +1,6 @@
 import { referencesPriorContext } from "./context/recall.ts";
+import { parseCalculation } from "../guardian/calculation-intent.ts";
+import { calculate, renderCalculation } from "../guardian/calculators.ts";
 // Chat Core — orquestração agnóstica de canal, com contexto em camadas.
 //
 // Regra central da arquitetura ChatGPT-first: ferramentas, SQL, RAG, mercado,
@@ -304,6 +306,29 @@ async function runTurn(
   );
 
   const analysis = classifyUserIntent(text, stateBefore);
+  const verifiedCalculation = parseCalculation(
+    text,
+    lastUser ? (parseCalculation(lastUser.content) ?? undefined) : undefined,
+  );
+  if (verifiedCalculation) {
+    const reply = renderCalculation(calculate(verifiedCalculation));
+    const state = applyAssistantTurn(applyUserTurn(stateBefore, text, analysis), reply);
+    state.conversation_summary = updateSummary(state, windowed.dropped);
+    return {
+      reply,
+      state,
+      conversationId,
+      diagnostics: diag(
+        conversationId,
+        [...history, { role: "user", content: text }],
+        windowed,
+        analysis,
+        stateBefore,
+        [`calculator:${verifiedCalculation.kind}`],
+        "deterministic",
+      ),
+    };
+  }
   let domainIntent = classifyDomainIntent(text, history.length > 0);
   const productNeed = resolveProductNeed(text, history);
   if (productNeed.active) {

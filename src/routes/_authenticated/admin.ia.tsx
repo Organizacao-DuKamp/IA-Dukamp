@@ -382,6 +382,12 @@ function AdminAIAnalytics() {
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <AIHealthCheck />
             <Link
+              to="/guardia"
+              className="rounded-md border border-border px-3 py-1.5 hover:bg-accent"
+            >
+              Guardiã da Fazenda
+            </Link>
+            <Link
               to="/admin/base-conhecimento"
               className="rounded-md border border-border px-3 py-1.5 hover:bg-accent"
             >

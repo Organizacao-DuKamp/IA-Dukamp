@@ -39,7 +39,7 @@ function localParts(date: Date, timeZone: string) {
   };
 }
 
-function localDateTimeToUtc(localDate: string, minutes: number, timeZone: string): Date {
+export function localDateTimeToUtc(localDate: string, minutes: number, timeZone: string): Date {
   const match = localDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!match) throw new Error("invalid_local_date");
   const year = Number(match[1]);
@@ -142,7 +142,7 @@ export function withinCustomerServiceWindow(
   const inbound = Date.parse(lastInboundAt);
   if (!Number.isFinite(inbound)) return false;
   const delta = now.getTime() - inbound;
-  return delta >= 0 && delta <= CUSTOMER_SERVICE_WINDOW_MS;
+  return delta >= 0 && delta < CUSTOMER_SERVICE_WINDOW_MS;
 }
 
 export function sanitizeMemoryFactKey(value: string): string {
