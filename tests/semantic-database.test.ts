@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
 import { vector } from "@electric-sql/pglite-pgvector";
 const phone = "5517999991111",
@@ -18,11 +18,12 @@ async function setup() {
     REVOKE ALL ON FUNCTION public.whatsapp_context_boundary(text) FROM PUBLIC,anon,authenticated;
     GRANT EXECUTE ON FUNCTION public.whatsapp_context_boundary(text) TO service_role;
     GRANT SELECT ON public.ai_chat_turns TO service_role;`);
+  const migration = (await readdir(new URL("../supabase/migrations/", import.meta.url))).find(
+    (file) => file.endsWith("_private_semantic_memory.sql"),
+  );
+  assert.ok(migration, "Private semantic memory migration must exist");
   await db.exec(
-    await readFile(
-      new URL("../supabase/migrations/20261023214657_private_semantic_memory.sql", import.meta.url),
-      "utf8",
-    ),
+    await readFile(new URL(`../supabase/migrations/${migration}`, import.meta.url), "utf8"),
   );
   const add = async (owner: string, text: string, age = "1 hour") =>
     (
