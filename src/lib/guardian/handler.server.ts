@@ -260,6 +260,9 @@ export async function handleGuardianMessage(
                 : request.enabled === true
                   ? "Avisos da Guardiã ativados com sua autorização. Só enviarei quando houver um evento válido, nos horários e temas permitidos. Diga “parar mensagens” para interromper."
                   : "Preferências dos avisos salvas. Alterar horários ou temas não ativa mensagens sem sua autorização.";
+            if (parsed.data.enabled && !process.env.WHATSAPP_GUARDIAN_TEMPLATE_NAME)
+              base.reply +=
+                "\n\nPor enquanto, os avisos automáticos só podem ser enviados até 24 horas após sua última mensagem. Avisos para depois desse período ainda aguardam liberação.";
             break;
           }
           case "cancel":

@@ -104,6 +104,7 @@ export const guardianOverview = createServerFn({ method: "GET" })
       return {
         configured: false,
         enabled: false,
+        templateConfigured: false,
         isAdmin: false,
         properties: [] as PropertySummary[],
         partial: false,
@@ -114,6 +115,7 @@ export const guardianOverview = createServerFn({ method: "GET" })
     return {
       configured: true,
       enabled: process.env.TPEC_GUARDIAN_ENABLED === "true",
+      templateConfigured: Boolean(process.env.WHATSAPP_GUARDIAN_TEMPLATE_NAME),
       isAdmin: role.data === true,
       properties: (properties.data ?? []).slice(0, 100) as unknown as PropertySummary[],
       partial: (properties.data?.length ?? 0) > 100,

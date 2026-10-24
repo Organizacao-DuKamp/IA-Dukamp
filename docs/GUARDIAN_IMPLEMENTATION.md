@@ -1,6 +1,19 @@
 # Guardiã da Fazenda — implementação e homologação
 
-Esta entrega acrescenta um caderno de propriedades e avisos por eventos à arquitetura existente. Os recursos são gratuitos. A integração do código à `main` foi autorizada em 23/10/2026; a homologação do ambiente integrado e a ativação dos novos serviços ainda precisam ser concluídas.
+Esta entrega acrescenta um caderno de propriedades e avisos por eventos à arquitetura existente. Os recursos são gratuitos. O código foi integrado à `main` e as seis migrações foram aplicadas ao projeto Supabase TPEC-IA em 24/10/2026, após autorização explícita. A Guardiã e a memória semântica foram configuradas para o site principal, com limites técnicos de consumo e avisos sujeitos ao consentimento do destinatário.
+
+## Publicação e validação do ambiente real
+
+- Projeto conferido: `cawgzodelwchccilqeqr` (TPEC-IA). Onze tabelas novas estão com RLS; as treze funções novas/relevantes usam `SECURITY INVOKER`, `search_path` fixo e não permitem execução por clientes anônimos ou autenticados.
+- As seis migrações estão registradas no banco. Os nomes dos arquivos foram sincronizados com as versões atribuídas pelo Supabase, preservando integralmente o SQL já revisado e testado.
+- A primeira migração pausou os 51 perfis legados habilitados e retirou os oito envios pendentes da fila. O histórico foi preservado. Nenhum desses registros foi transformado em consentimento novo.
+- `scripts/guardian-live-validation.sql` passou no PostgreSQL/pgvector real: criação, recibo idempotente, leitura por integrante, isolamento de terceiros, revogação imediata, restrição de RPCs/vetores, busca semântica, mudança da origem, reset e rollback da reindexação. As linhas sintéticas, inclusive usuários Auth temporários, foram revertidas. A verificação posterior encontrou zero resíduos.
+- O PostgREST real respondeu com sucesso às RPCs autorizadas e recusou o acesso público às tabelas e funções privadas. A RPC vetorial aceitou a representação usada pelo servidor.
+- O provedor OpenAI gerou dois vetores sintéticos de 3.072 dimensões, com 29 tokens de entrada. A Graph API da Meta confirmou acesso ao telefone configurado. Nenhuma mensagem de WhatsApp foi enviada nos testes.
+- No site oficial `www.tpecia.com.br`, `TPEC_GUARDIAN_ENABLED=true`, `WHATSAPP_SEMANTIC_MEMORY_ENABLED=true` e orçamento global de 200 indexações por dia foram configurados no contexto de produção. São flags não secretas, sem prefixo `VITE_`; as integrações e credenciais continuam exclusivas do servidor. Uma nova publicação da Netlify é necessária para incorporar alterações de ambiente.
+- Os avisos fora da janela de atendimento dependem de um template aprovado e compatível com um parâmetro de corpo. A validação de transporte e credenciais não comprova a aprovação de um template nem a entrega a um aparelho.
+- O token atual acessa o telefone, mas não retornou contas WABA atribuídas. Identificadores antigos do histórico não foram confirmados como a conta desse telefone. Nenhum nome de template foi inventado ou configurado sem validação. Enquanto essa configuração faltar, o painel e a confirmação de preferências no WhatsApp informam o limite de 24 horas.
+- Os advisors não apontaram novas advertências de segurança nos objetos entregues. As tabelas privadas sem políticas de cliente geram avisos informativos intencionais; não se deve criar políticas públicas para silenciá-los. As advertências legadas sobre extensão `vector` em `public`, a função de papéis e proteção contra senhas vazadas exigem revisão própria.
 
 ## Arquitetura e integração
 
@@ -80,18 +93,18 @@ Os avisos de clima novos usam boletins oficiais com fonte, localidade, data e vi
 - Tabelas e RPCs vetoriais são exclusivas do servidor, com RLS e permissões revogadas para clientes. Nenhuma mensagem privada entra na base técnica compartilhada, em erros do provedor ou em logs novos. Os eventos de uso das consultas preservam apenas metadados e contadores.
 - Os testes usam vetores sintéticos em pgvector real/PGlite e avaliações determinísticas de conversa. A relevância com embeddings do provedor e o desempenho na escala de produção ainda precisam de homologação; não há garantia de recuperar todo episódio antigo.
 
-## Migrações novas
+## Migrações publicadas
 
-Aplicar na ordem, primeiro em homologação isolada:
+Aplicadas na ordem abaixo em 24/10/2026. Não reaplicar arquivos antigos com os prefixos anteriores à publicação. Para ambientes novos, respeitar a sequência e validar as dependências existentes:
 
-1. `20261023201318_guardian_farm_foundation.sql`: tabelas, índices, RLS, vínculos, convites, snapshot, transação de gravação e pausa dos slots proativos antigos.
-2. `20261023202236_guardian_durable_events.sql`: histórico de processamento, claims, fencing, início/finalização de envio, recuperação de leases, cancelamento e coleta de clima.
-3. `20261023203738_guardian_optional_reports.sql`: coleta de relatórios opcionais com cursor persistente.
-4. `20261023203952_knowledge_atomic_replacement.sql`: substituição transacional dos trechos de um documento.
-5. `20261023213658_guardian_event_history_access.sql`: leitura do histórico de avisos sob a mesma autorização e RLS do evento da propriedade, sem escrita pelo cliente.
-6. `20261023214657_private_semantic_memory.sql`: vetores privados, orçamento de indexação, claims, busca por similaridade com isolamento por remetente e expurgo dos derivados após reset/exclusão.
+1. `20261024230929_guardian_farm_foundation.sql`: tabelas, índices, RLS, vínculos, convites, snapshot, transação de gravação e pausa dos slots proativos antigos.
+2. `20261024231010_guardian_durable_events.sql`: histórico de processamento, claims, fencing, início/finalização de envio, recuperação de leases, cancelamento e coleta de clima.
+3. `20261024231016_guardian_optional_reports.sql`: coleta de relatórios opcionais com cursor persistente.
+4. `20261024231045_knowledge_atomic_replacement.sql`: substituição transacional dos trechos de um documento.
+5. `20261024231051_guardian_event_history_access.sql`: leitura do histórico de avisos sob a mesma autorização e RLS do evento da propriedade, sem escrita pelo cliente.
+6. `20261024231120_private_semantic_memory.sql`: vetores privados, orçamento de indexação, claims, busca por similaridade com isolamento por remetente e expurgo dos derivados após reset/exclusão.
 
-São adições ao esquema existente. A primeira migração desativa os acompanhamentos antigos e marca sua fila pendente como substituída, preservando o histórico. Essa mudança operacional exige revisão antes de produção. A migração de conhecimento deve acompanhar a nova versão do código que a invoca: sem a RPC no PostgREST, a reindexação retorna uma orientação de migração e preserva os trechos existentes. As consultas aos documentos já indexados continuam no caminho existente.
+São adições ao esquema existente. A primeira migração desativou os acompanhamentos antigos e marcou sua fila pendente como substituída, preservando o histórico. A RPC transacional de conhecimento já está disponível no projeto principal. Em outro ambiente ainda não migrado, a reindexação retorna uma orientação de migração e preserva os trechos existentes. As consultas aos documentos já indexados continuam no caminho existente.
 
 Não remover tabelas para voltar uma versão depois que existirem registros reais. O rollback operacional recomendado é desativar as flags, cancelar os envios novos que ainda não iniciaram e preservar os dados para correção. Para remoção integral do esquema, preparar backup e uma revisão específica; não há script destrutivo automático nesta entrega.
 
@@ -112,14 +125,13 @@ Não remover tabelas para voltar uma versão depois que existirem registros reai
 
 Configurar variáveis de execução no painel/API da Netlify, nos escopos e contextos adequados. Variáveis de build no `netlify.toml` não substituem a configuração das funções em execução. A manutenção da Guardiã também rejeita contexto de deploy diferente de produção quando `CONTEXT` estiver presente.
 
-Sequência recomendada:
+Para completar a operação e repetir a implantação em outro ambiente:
 
-1. Criar ambiente Supabase de homologação separado; não usar dados reais nos testes.
-2. Aplicar e revisar as seis migrações, permissões e advisors nesse ambiente.
-3. Verificar os endpoints reais via PostgREST e autenticação, inclusive tentativa de outra propriedade e revogação com uma sessão existente.
-4. Validar os provedores, o telefone de teste da Meta e o template, inclusive fora da janela de atendimento.
-5. Fazer um ensaio controlado do agendador, da falha de provedor e da retomada, com números autorizados para teste.
-6. A autorização de integração à `main` já foi concedida. Aplicar as migrações de produção e ativar as flags somente após a homologação e a autorização correspondente; recolher o consentimento dos produtores antes de avisos.
+1. Validar o esquema com dados sintéticos e transações reversíveis; a suíte local e o script de banco real já passaram no projeto principal.
+2. Em ambientes novos, aplicar as migrações correspondentes e conferir RLS, permissões, advisors e endpoints reais. As seis migrações já foram aplicadas no projeto principal.
+3. Publicar a revisão com as configurações de produção e conferir a rota autenticada `/guardia`, o processamento agendado e os contadores de indexação.
+4. Configurar e confirmar a aprovação do template da Meta; fazer um ensaio de envio apenas com um número explicitamente autorizado para teste.
+5. Recolher consentimento do produtor antes dos avisos. Manter pausa, horários, frequência, expiração e bloqueio de reenvio incerto.
 
 ## Validação executada
 
@@ -134,13 +146,13 @@ Sequência recomendada:
 - Lint: zero erros; avisos preexistentes de hooks/fast refresh permanecem em arquivos legados.
 - UI local em Chromium: desktop 1440×1050 e celular 390×844, oito áreas, ausência de overflow horizontal do documento, histórico de processamento e sua atualização, cálculo, entrada inválida e formulário que apenas prepara uma proposta. Foram usados somente dados sintéticos e bloqueadas requisições externas.
 
-Limites dessa validação: o runtime local era Node 24.19.0; o projeto/CI continuam fixados em 24.22.1. Os resultados remotos de cada revisão estão no [PR #74](https://github.com/Organizacao-DuKamp/IA-Dukamp/pull/74). Permanecem pendentes a homologação da Meta/Supabase/PostgREST, teste multissessão de locks num servidor Postgres separado e avaliação veterinária. Os testes exercitam pgvector local e as transações, mas não substituem a validação das permissões, versão da extensão, relevância dos embeddings e carga do ambiente real.
+Limites dessa validação: o runtime local era Node 24.19.0; o projeto/CI continuam fixados em 24.22.1. Os resultados da implementação inicial estão no [PR #74](https://github.com/Organizacao-DuKamp/IA-Dukamp/pull/74). Supabase/PostgREST, permissões e vetores foram validados no ambiente real em 24/10/2026, sem persistir as linhas sintéticas. Permanecem pendentes um ensaio de envio autorizado na Meta, testes multissessão de locks e de carga, calibração de relevância com o acervo autorizado e avaliação veterinária.
 
 ## Escopo ainda não concluído do plano TPEC-IA 2.0
 
 Esta entrega não conclui integralmente as seis etapas do plano mestre. Permanecem:
 
-- Calibração da relevância semântica com o provedor e o acervo autorizado, testes de carga e ampliação dos cenários de memória de longo prazo. A busca híbrida privada e suas avaliações determinísticas já estão implementadas; a indexação tem limites explícitos e ainda precisa ser habilitada após homologação.
+- Calibração da relevância semântica com o acervo autorizado, testes de carga e ampliação dos cenários de memória de longo prazo. A busca híbrida privada, suas avaliações determinísticas e a configuração de produção estão implementadas; a indexação mantém limites explícitos.
 - Importação em massa, revisada, de planilhas/PDFs/fotos para o novo caderno, e migração explícita do rebanho individual para uma propriedade compartilhada.
 - Formulação nutricional, exigências de BR-CORTE/NASEM/CQBAL e estimativas de desempenho validadas por especialistas. As oito ferramentas entregues são aritméticas e não formulam uma dieta.
 - Nova coleção científica com licenças, edições, revisão e ingestão de documentos efetivamente autorizados. O pipeline foi reforçado; novos acervos não foram baixados nem incorporados automaticamente.

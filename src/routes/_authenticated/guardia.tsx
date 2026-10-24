@@ -301,6 +301,13 @@ function GuardianPage() {
               liberados após a ativação.
             </p>
           )}
+          {overview?.enabled && !overview.templateConfigured && (
+            <p className="rounded-xl border border-amber-600/30 bg-amber-500/5 p-4 text-sm">
+              Os avisos automáticos pelo WhatsApp só estão disponíveis até 24 horas após sua última
+              mensagem. Avisos para depois desse período ainda aguardam liberação. Você já pode
+              registrar atividades e consultar seu caderno.
+            </p>
+          )}
           {overview?.enabled && !overview.account && (
             <section className="rounded-2xl border border-border bg-card p-5">
               <h2 className="font-semibold">Vincule seu WhatsApp</h2>
