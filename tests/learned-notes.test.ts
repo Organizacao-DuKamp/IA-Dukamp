@@ -20,6 +20,7 @@ import { PreferencesSchema, emptyFarm, type GuardianSnapshot } from "../src/lib/
 import type { GuardianStore } from "../src/lib/guardian/store.server.ts";
 import { processClaimedWhatsAppChat } from "../src/lib/whatsapp/conversation.server.ts";
 import { USER_MEMORY_EPOCH } from "../src/lib/chat/memory-reset.ts";
+import { renderRecall } from "../src/lib/chat/context/whatsapp.server.ts";
 
 const phone = "5517999991111",
   now = new Date("2026-10-25T14:00:00Z");
@@ -373,4 +374,76 @@ test("memory outage does not stop the conversation or invoke an emergency answer
     },
   );
   assert.equal(called, true);
+});
+
+test("audio retains original historical turns alongside new memory, within the core context budget", async () => {
+  await processClaimedWhatsAppChat(
+    {
+      ...input("Hoje vendi 10 bois por R$ 30.000."),
+      media: { id: "audio-1", type: "audio", mimeType: "audio/ogg" },
+    },
+    {
+      loadConversation: async () => null,
+      resolveUserText: async (i) => i.text,
+      observeMemory: async () => ({
+        status: "available",
+        saved: 1,
+        natural: true,
+        context: "MEMÓRIA APRENDIDA. " + "dados relatados ".repeat(900),
+      }),
+      processGuardian: async () => ({
+        reply: null,
+        activeProperty: true,
+        context: "PROPRIEDADE ATIVA. " + "dados da fazenda ".repeat(700),
+      }),
+      recallContext: async (i) => {
+        assert.ok(i.maxContextChars! >= 8000 && i.maxContextChars! <= 8500);
+        return renderRecall(
+          {
+            reset_at: "2026-10-14T00:00:00Z",
+            facts: [],
+            total: 2,
+            turns: [
+              {
+                id: "original-1",
+                user_text: "Ontem a venda foi cancelada. " + "evidência original ".repeat(300),
+                assistant_text: null,
+                created_at: now.toISOString(),
+              },
+              {
+                id: "original-2",
+                user_text: "A venda de hoje é outra.",
+                assistant_text: null,
+                created_at: now.toISOString(),
+              },
+            ],
+          },
+          null,
+          now,
+          i.maxContextChars,
+        );
+      },
+      executeChat: async (i) => {
+        assert.ok(i.conversationRecall!.context.length <= 16000);
+        assert.match(i.conversationRecall!.context, /Ontem a venda foi cancelada/);
+        assert.match(i.conversationRecall!.context, /A venda de hoje é outra/);
+        assert.match(i.conversationRecall!.context, /PARCIAL abreviada/);
+        assert.equal(i.conversationRecall!.partial, true);
+        return {
+          status: 200,
+          body: {
+            reply: "Entendi, são vendas distintas.",
+            state: {},
+            conversationId: `wa:${phone}`,
+            diagnostics: {},
+          },
+        };
+      },
+      completeMessage: async () => {},
+      saveConversation: async () => {},
+      emergencyAnswer: async (_text, error) => {
+        throw error;
+      },
+    },
+  );
 });

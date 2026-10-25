@@ -615,27 +615,42 @@ export async function processClaimedWhatsAppChat(
         (!dependencies.executeChat && process.env.SUPABASE_SERVICE_ROLE_KEY
           ? recallWhatsAppContext
           : null);
+      // Leave room for original turns after adding newly learned notes and the shared book.
+      // Media has a smaller core envelope; mark any abbreviated prefix explicitly.
+      const clip = (value: string, limit: number) => {
+        const marker =
+          "\n[Seleção PARCIAL abreviada para preservar também as mensagens originais.]";
+        return value.length <= limit ? value : value.slice(0, limit - marker.length) + marker;
+      };
+      const learnedContext = input.media
+        ? clip(learnedMemory?.context ?? "", 5000)
+        : (learnedMemory?.context ?? "");
+      const farmContext = input.media
+        ? clip(guardian?.context ?? "", 2500)
+        : (guardian?.context ?? "");
+      const prefixLength = learnedContext.length + farmContext.length;
       if (recall)
         conversationRecall = await recall({
           phone: input.phone,
           text: userText,
           history: previous?.history,
-          maxContextChars: input.media ? 14_000 : undefined,
+          maxContextChars: Math.max(8000, (input.media ? 16000 : 65000) - prefixLength - 512),
         });
       if (guardian?.context || learnedMemory?.context)
         conversationRecall = {
-          context: [
-            learnedMemory?.context ?? "",
-            guardian?.context ?? "",
-            conversationRecall?.context ?? "",
-          ]
+          context: [learnedContext, farmContext, conversationRecall?.context ?? ""]
             .filter(Boolean)
             .join("\n\n"),
           sourceIds: conversationRecall?.sourceIds ?? [],
-          status: conversationRecall?.status ?? "available",
+          status:
+            conversationRecall?.status ??
+            (learnedMemory?.status === "unavailable" ? "unavailable" : "available"),
           totalTurns: conversationRecall?.totalTurns ?? 0,
           includedTurns: conversationRecall?.includedTurns ?? 0,
-          partial: conversationRecall?.partial ?? false,
+          partial:
+            (conversationRecall?.partial ?? false) ||
+            Boolean(learnedContext) ||
+            farmContext !== guardian?.context,
           period: conversationRecall?.period ?? null,
         };
       const chatInput: ChatInput = {

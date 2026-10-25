@@ -87,14 +87,22 @@ export function renderRecall(
       archive.coverageNote ? 4000 : 12000,
       Math.max(0, Math.floor(budget * 0.72) - used),
     );
-    const user = turn.user_text?.slice(0, allowance) ?? "";
-    const row = {
+    let user = turn.user_text?.slice(0, allowance) ?? "";
+    const makeRow = () => ({
       id: turn.id,
       at: turn.created_at,
       user,
       ...(user.length < turn.user_text.length ? { clipped: true as const } : {}),
-    };
-    const size = JSON.stringify(row).length;
+    });
+    let row = makeRow();
+    let size = JSON.stringify(row).length;
+    // JSON metadata and escaped characters count too. Shorten a large original
+    // to fit instead of dropping the entire turn because its envelope overflowed.
+    while (user && used + size > budget * 0.72) {
+      user = user.slice(0, Math.max(0, user.length - Math.ceil(used + size - budget * 0.72)));
+      row = makeRow();
+      size = JSON.stringify(row).length;
+    }
     if (!user || used + size > budget * 0.72) {
       partial = true;
       continue;
