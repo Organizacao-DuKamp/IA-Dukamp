@@ -12,9 +12,11 @@ import { applyFarmAction, describeAction, farmReport, fold } from "./book.ts";
 import { calculate, renderCalculation } from "./calculators.ts";
 import { guardianCandidate, parseGuardianRequest, type GuardianRequest } from "./parse.ts";
 import { guardianStore, type GuardianCommit, type GuardianStore } from "./store.server.ts";
+import type { ChatMessage } from "../chat/types.ts";
+import { naturalNotebookTurn } from "../whatsapp/learned-notes.ts";
 
-export const GUARDIAN_HELP = `A Guardiã da Fazenda é gratuita. Ela organiza os dados que você confirmar; não acompanha sensores em tempo real.
-Comece: “cadastrar fazenda Boa Vista em Monte Aprazível/SP”. Depois, confirme o resumo.
+export const GUARDIAN_HELP = `A TPEC-IA guarda informações úteis enquanto você conversa, sem exigir comandos de cadastro. Conte sobre sua fazenda, rebanho, alimentação, compras, vendas e acontecimentos; relatos ficam no seu caderno privado, com a mensagem de origem. Você pode corrigir o que contou naturalmente.
+A Guardiã da Fazenda é gratuita. Para compartilhar registros com sua equipe ou programar tarefas, você também pode criar um caderno conferido: “cadastrar fazenda Boa Vista em Monte Aprazível/SP”. Depois, confira o resumo. Ela não acompanha sensores em tempo real.
 • “Me lembra de pesar o lote 2 na sexta às 8h”
 • “Despesa R$ 150,50 com ração”
 • “Hoje nasceram 2 bezerros”
@@ -33,12 +35,14 @@ export interface GuardianInput {
   messageId: string;
   text: string;
   mediaType?: string;
+  history?: ChatMessage[];
 }
 export interface GuardianHandled {
   reply: string | null;
   context?: string;
   activeProperty: boolean;
   persisted?: boolean;
+  conversational?: boolean;
 }
 export interface GuardianDependencies {
   store?: GuardianStore;
@@ -144,6 +148,17 @@ export async function handleGuardianMessage(
     if (previous) return { reply: previous, activeProperty: false, persisted: true };
     for (let attempt = 0; attempt < 4; attempt++) {
       const snapshot = await store.load(input.phone);
+      if (
+        !deps.request &&
+        (!input.mediaType || input.mediaType === "audio") &&
+        naturalNotebookTurn(input.text, input.history)
+      )
+        return {
+          reply: null,
+          context: structuredContext(snapshot),
+          activeProperty: !!snapshot.active,
+          conversational: true,
+        };
       const link = input.text.trim().match(/^vincular painel\s+([a-f0-9]{32})[.! ]*$/i);
       let request: GuardianRequest | null =
         deps.request ?? parseGuardianRequest(input.text, snapshot, now);
@@ -273,9 +288,22 @@ export async function handleGuardianMessage(
           case "query":
             if (!snapshot.active)
               return {
-                reply:
-                  "Selecione ou cadastre uma fazenda antes de consultar seus registros. Diga “minhas fazendas” ou “guardiã”.",
+                reply: null,
+                context:
+                  "Não há um caderno compartilhado selecionado. Responda usando os relatos privados e as mensagens recuperadas; não exija cadastro de fazenda para lembrar ou consultar o que a pessoa já contou. Não chame os relatos de censo ou fechamento contábil.",
                 activeProperty: false,
+                conversational: true,
+              };
+            if (
+              !/\b(?:caderno de campo|registros confirmados|relatorio da fazenda|resumo da fazenda)\b/.test(
+                fold(input.text),
+              )
+            )
+              return {
+                reply: null,
+                context: structuredContext(snapshot),
+                activeProperty: true,
+                conversational: true,
               };
             base.reply = farmReport(snapshot.active.book, request);
             break;

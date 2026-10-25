@@ -54,8 +54,9 @@ export function WhatsAppFollowupPanel({ phone }: { phone: string }) {
             <h3 className="text-sm font-semibold">Memória e acompanhamento pelo WhatsApp</h3>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            Memórias extraídas ajudam a recuperar o contexto e precisam ser conferidas com as
-            mensagens originais. Avisos agora dependem de eventos e autorização na Guardiã.
+            A TPEC-IA aprende com os relatos da conversa, sem exigir cadastro de fazenda. Vendas,
+            compras, rebanho e rotina preservam a mensagem de origem; planos e estimativas não são
+            acontecimentos confirmados. Avisos dependem de autorização na Guardiã.
           </p>
         </div>
         <button
@@ -96,7 +97,7 @@ export function WhatsAppFollowupPanel({ phone }: { phone: string }) {
       <div className="mt-5 grid gap-4 lg:grid-cols-2">
         <div>
           <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Informações extraídas (não são cadastros confirmados)
+            Relatos aprendidos na conversa
           </h4>
           <div className="mt-2 space-y-2">
             {activeFacts.map((fact) => (
@@ -107,9 +108,18 @@ export function WhatsAppFollowupPanel({ phone }: { phone: string }) {
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium">{fact.subject}</span>
                   <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] text-emerald-800">
-                    ativa
+                    {{
+                      plan: "planejado",
+                      estimate: "estimativa",
+                      correction: "correção",
+                      third_party: "terceiros",
+                      answer: "resposta",
+                    }[fact.kind ?? ""] ?? "relatado"}
                   </span>
                 </div>
+                {fact.question && (
+                  <p className="mt-1 text-muted-foreground">Em resposta a: {fact.question}</p>
+                )}
                 <p className="mt-1 text-muted-foreground">{fact.valueText}</p>
                 <p className="mt-1 text-[10px] text-muted-foreground">
                   atualizada em {formatDate(fact.lastSeenAt)}
@@ -118,7 +128,7 @@ export function WhatsAppFollowupPanel({ phone }: { phone: string }) {
             ))}
             {activeFacts.length === 0 && !loading && (
               <div className="rounded-md border border-dashed border-border p-3 text-xs text-muted-foreground">
-                Ainda não há uma informação ativa relevante para acompanhamento.
+                Ainda não há relatos aprendidos para este número. Basta conversar com a TPEC-IA.
               </div>
             )}
             {resolvedFacts.length > 0 && (
