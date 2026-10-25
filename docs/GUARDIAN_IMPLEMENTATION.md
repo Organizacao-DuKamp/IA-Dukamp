@@ -1,5 +1,21 @@
 # Guardiã da Fazenda — implementação e homologação
 
+## Memória aprendida durante a conversa — revisão de 25/10/2026
+
+O WhatsApp passa a guardar relatos úteis sem exigir “registrar”, “salvar” ou “cadastrar fazenda”. “Minha fazenda fica em Tanabi”, “tenho 50 vacas”, “comprei ração” e “vendi 10 bois por R$ 30 mil” alimentam um caderno privado com as palavras originais, remetente, mensagem de origem e data de observação. Uma resposta curta pode guardar também a pergunta que lhe deu contexto. A conversa continua pelo modelo geral, sem um formulário ou confirmação extra para lembrar essas informações.
+
+- O caminho imediato não exige uma chamada de IA adicional. O processamento em segundo plano pode selecionar outros trechos literais de uma mensagem relevante, com validação que preserva a frase inteira: não pode cortar “não”, “vou”, condicionais ou o sujeito para fabricar um fato.
+- Há rótulos separados para relato, plano, estimativa, correção, informação de terceiros e resposta contextual. Não se transforma quantidade vendida em tamanho do rebanho, venda em recebimento comprovado, nem “vou vender” em venda concluída. Correções são preservadas ao lado da origem; não se resolve automaticamente a primeira ocorrência sanitária de outro animal.
+- Os relatos usam a tabela privada de memórias existente, com RLS e acesso somente pelo servidor. O hash de mensagem/trecho/pergunta evita duplicação em retries; um relato posterior não apaga o anterior. A nova camada não cria fazendas compartilhadas, integrantes, lançamentos contábeis conferidos ou consentimento para avisos a partir de uma conversa privada.
+- Consultas naturais ao que foi contado seguem para a recuperação privada, inclusive sem propriedade compartilhada. O cadastro da Guardiã continua opcional para o caderno conferido e compartilhado, tarefas e equipe. Os comandos explícitos desse caderno conservam a revisão existente.
+- A seleção direta inclui até 32 notas recentes e 16 notas de perfil/alimentação/objetivos, dentro de 10 mil caracteres, além da recuperação lexical, temporal e semântica dos originais. A cobertura é parcial; não há promessa de lembrar tudo nem de produzir totais completos com dados incompletos.
+- São aprendidos texto próprio e transcrição de áudio. Uma análise gerada a partir de imagem, vídeo ou documento não é promovida automaticamente a declaração do produtor. Perguntas, hipóteses, exemplos e trechos com sinais de credenciais/documentos não entram nos novos relatos; isso não equivale à remoção desses dados do histórico original já existente.
+- O limite de reset é conferido antes e depois da operação e a data de origem é preservada na fila. Falha de persistência não produz recibo de “salvo” e não interrompe a conversa. Nenhuma migração nova ou chave adicional é necessária para essa revisão.
+
+Exemplo de teste: contar espontaneamente onde fica a propriedade, a alimentação, uma compra e uma venda; mudar de assunto e perguntar o que foi informado; corrigir a quantidade; confirmar que uma intenção futura e uma pergunta hipotética não viraram transações concluídas. O painel administrativo mostra os relatos e seus rótulos.
+
+A revisão foi verificada com testes determinísticos da conversa e do armazenamento, build/typecheck, scanner de segredos e auditoria de imports. `scripts/learned-notes-live-validation.sql` passou no banco real com rollback integral: idempotência, preservação da origem, recuperação de notas mesmo sem fazenda cadastrada, isolamento por telefone, acesso público negado e reset. Previews não adquirem o armazenamento de memória de produção.
+
 Esta entrega acrescenta um caderno de propriedades e avisos por eventos à arquitetura existente. Os recursos são gratuitos. O código foi integrado à `main` e as seis migrações foram aplicadas ao projeto Supabase TPEC-IA em 24/10/2026, após autorização explícita. A Guardiã e a memória semântica foram configuradas para o site principal, com limites técnicos de consumo e avisos sujeitos ao consentimento do destinatário.
 
 ## Publicação e validação do ambiente real

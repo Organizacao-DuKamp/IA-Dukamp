@@ -14,6 +14,8 @@ import { currentMemoryMarker, stampMemoryState } from "../chat/memory-reset.ts";
 import type { ConversationRecall } from "../chat/context/types.ts";
 import { recallWhatsAppContext } from "../chat/context/whatsapp.server.ts";
 import type { GuardianHandled, GuardianInput } from "../guardian/handler.server.ts";
+import { observeLearnedMemory, type LearnedMemoryResult } from "./learned-notes.server.ts";
+import { naturalNotebookTurn, userStatement } from "./learned-notes.ts";
 
 const MAX_HISTORY_MESSAGES = 40;
 const MEMORY_CONVERSATION_TTL_MS = 6 * 60 * 60_000;
@@ -79,6 +81,7 @@ export interface WhatsAppConversationDependencies {
   resolveUserText?: (input: WhatsAppChatInput, history?: ChatMessage[]) => Promise<string>;
   emergencyAnswer?: typeof answerWhatsAppEmergency;
   recallContext?: typeof recallWhatsAppContext;
+  observeMemory?: typeof observeLearnedMemory;
   processGuardian?: (input: GuardianInput) => Promise<GuardianHandled | null>;
   processHerd?: (input: {
     phone: string;
@@ -426,6 +429,7 @@ export async function processClaimedWhatsAppChat(
     let snapshot: WhatsAppConversationSnapshot | null = null;
     let herdReply: string | null = null;
     let conversationRecall: ConversationRecall | undefined;
+    let learnedMemory: LearnedMemoryResult | undefined;
 
     try {
       if (input.media && !checkRateLimit(`media:${input.phone}`).ok)
@@ -445,9 +449,31 @@ export async function processClaimedWhatsAppChat(
       conversationId = previous?.conversationId ?? `wa:${input.phone}`;
       // Every inbound updates the service window and stop preference, including structured operations.
       try {
-        await observeWhatsAppInboundForMemory(input, userText);
+        await observeWhatsAppInboundForMemory(input, userText, previous?.history ?? [], startedAt);
       } catch {
         console.error("[whatsapp-memory] inbound observation unavailable");
+      }
+      const observe =
+        dependencies.observeMemory ?? (!dependencies.executeChat ? observeLearnedMemory : null);
+      if (observe) {
+        try {
+          learnedMemory = await observe({
+            phone: input.phone,
+            messageId: input.messageId,
+            text: userText,
+            mediaType: input.media?.type,
+            history: previous?.history,
+            at: startedAt,
+          });
+        } catch {
+          learnedMemory = {
+            status: "unavailable",
+            saved: 0,
+            natural: false,
+            context:
+              "A memória automática está indisponível. Continue a conversa sem exigir cadastro de fazenda e sem afirmar que guardou dados persistentes neste turno.",
+          };
+        }
       }
       const guardianHandler =
         dependencies.processGuardian ??
@@ -460,6 +486,7 @@ export async function processClaimedWhatsAppChat(
             messageId: input.messageId,
             text: userText,
             mediaType: input.media?.type,
+            history: previous?.history,
           })
         : null;
       if (guardian?.reply) {
@@ -500,7 +527,10 @@ export async function processClaimedWhatsAppChat(
           ? (await import("../herd/handler.server.ts")).handleHerdMessage
           : null);
       const herd =
-        herdHandler && !guardian?.activeProperty
+        herdHandler &&
+        !guardian?.activeProperty &&
+        !guardian?.conversational &&
+        !naturalNotebookTurn(userStatement(userText, input.media?.type), previous?.history)
           ? await herdHandler({
               phone: input.phone,
               messageId: input.messageId,
@@ -585,21 +615,42 @@ export async function processClaimedWhatsAppChat(
         (!dependencies.executeChat && process.env.SUPABASE_SERVICE_ROLE_KEY
           ? recallWhatsAppContext
           : null);
+      // Leave room for original turns after adding newly learned notes and the shared book.
+      // Media has a smaller core envelope; mark any abbreviated prefix explicitly.
+      const clip = (value: string, limit: number) => {
+        const marker =
+          "\n[Seleção PARCIAL abreviada para preservar também as mensagens originais.]";
+        return value.length <= limit ? value : value.slice(0, limit - marker.length) + marker;
+      };
+      const learnedContext = input.media
+        ? clip(learnedMemory?.context ?? "", 5000)
+        : (learnedMemory?.context ?? "");
+      const farmContext = input.media
+        ? clip(guardian?.context ?? "", 2500)
+        : (guardian?.context ?? "");
+      const prefixLength = learnedContext.length + farmContext.length;
       if (recall)
         conversationRecall = await recall({
           phone: input.phone,
           text: userText,
           history: previous?.history,
-          maxContextChars: input.media ? 14_000 : undefined,
+          maxContextChars: Math.max(8000, (input.media ? 16000 : 65000) - prefixLength - 512),
         });
-      if (guardian?.context)
+      if (guardian?.context || learnedMemory?.context)
         conversationRecall = {
-          context: [guardian.context, conversationRecall?.context ?? ""].join("\n\n"),
+          context: [learnedContext, farmContext, conversationRecall?.context ?? ""]
+            .filter(Boolean)
+            .join("\n\n"),
           sourceIds: conversationRecall?.sourceIds ?? [],
-          status: conversationRecall?.status ?? "available",
+          status:
+            conversationRecall?.status ??
+            (learnedMemory?.status === "unavailable" ? "unavailable" : "available"),
           totalTurns: conversationRecall?.totalTurns ?? 0,
           includedTurns: conversationRecall?.includedTurns ?? 0,
-          partial: conversationRecall?.partial ?? false,
+          partial:
+            (conversationRecall?.partial ?? false) ||
+            Boolean(learnedContext) ||
+            farmContext !== guardian?.context,
           period: conversationRecall?.period ?? null,
         };
       const chatInput: ChatInput = {
