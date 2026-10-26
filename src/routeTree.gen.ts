@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ExclusaoDeDadosRouteImport } from './routes/exclusao-de-dados'
+import { Route as PainelfazendaRouteImport } from './routes/painelfazenda'
 import { Route as PoliticaDePrivacidadeRouteImport } from './routes/politica-de-privacidade'
 import { Route as TermosDeUsoRouteImport } from './routes/termos-de-uso'
 import { Route as AuthenticatedGuardiaRouteImport } from './routes/_authenticated/guardia'
@@ -23,6 +24,7 @@ import { Route as AuthenticatedAdminProdutosRouteImport } from './routes/_authen
 import { Route as ApiPublicChatRouteImport } from './routes/api/public/chat'
 import { Route as ApiPublicChatTestRouteImport } from './routes/api/public/chat-test'
 import { Route as ApiPublicDiagRouteImport } from './routes/api/public/diag'
+import { Route as ApiPublicFarmPanelRouteImport } from './routes/api/public/farm-panel'
 import { Route as ApiPublicMarketIngestRouteImport } from './routes/api/public/market-ingest'
 import { Route as ApiPublicWhatsappRouteImport } from './routes/api/public/whatsapp'
 
@@ -43,6 +45,11 @@ const AuthRoute = AuthRouteImport.update({
 const ExclusaoDeDadosRoute = ExclusaoDeDadosRouteImport.update({
   id: '/exclusao-de-dados',
   path: '/exclusao-de-dados',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PainelfazendaRoute = PainelfazendaRouteImport.update({
+  id: '/painelfazenda',
+  path: '/painelfazenda',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PoliticaDePrivacidadeRoute = PoliticaDePrivacidadeRouteImport.update({
@@ -98,6 +105,11 @@ const ApiPublicDiagRoute = ApiPublicDiagRouteImport.update({
   path: '/api/public/diag',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicFarmPanelRoute = ApiPublicFarmPanelRouteImport.update({
+  id: '/api/public/farm-panel',
+  path: '/api/public/farm-panel',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicMarketIngestRoute = ApiPublicMarketIngestRouteImport.update({
   id: '/api/public/market-ingest',
   path: '/api/public/market-ingest',
@@ -113,6 +125,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/exclusao-de-dados': typeof ExclusaoDeDadosRoute
+  '/painelfazenda': typeof PainelfazendaRoute
   '/politica-de-privacidade': typeof PoliticaDePrivacidadeRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/guardia': typeof AuthenticatedGuardiaRoute
@@ -123,6 +136,7 @@ export interface FileRoutesByFullPath {
   '/api/public/chat': typeof ApiPublicChatRoute
   '/api/public/chat-test': typeof ApiPublicChatTestRoute
   '/api/public/diag': typeof ApiPublicDiagRoute
+  '/api/public/farm-panel': typeof ApiPublicFarmPanelRoute
   '/api/public/market-ingest': typeof ApiPublicMarketIngestRoute
   '/api/public/whatsapp': typeof ApiPublicWhatsappRoute
 }
@@ -130,6 +144,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/exclusao-de-dados': typeof ExclusaoDeDadosRoute
+  '/painelfazenda': typeof PainelfazendaRoute
   '/politica-de-privacidade': typeof PoliticaDePrivacidadeRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/guardia': typeof AuthenticatedGuardiaRoute
@@ -140,6 +155,7 @@ export interface FileRoutesByTo {
   '/api/public/chat': typeof ApiPublicChatRoute
   '/api/public/chat-test': typeof ApiPublicChatTestRoute
   '/api/public/diag': typeof ApiPublicDiagRoute
+  '/api/public/farm-panel': typeof ApiPublicFarmPanelRoute
   '/api/public/market-ingest': typeof ApiPublicMarketIngestRoute
   '/api/public/whatsapp': typeof ApiPublicWhatsappRoute
 }
@@ -149,6 +165,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/exclusao-de-dados': typeof ExclusaoDeDadosRoute
+  '/painelfazenda': typeof PainelfazendaRoute
   '/politica-de-privacidade': typeof PoliticaDePrivacidadeRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
   '/_authenticated/guardia': typeof AuthenticatedGuardiaRoute
@@ -159,6 +176,7 @@ export interface FileRoutesById {
   '/api/public/chat': typeof ApiPublicChatRoute
   '/api/public/chat-test': typeof ApiPublicChatTestRoute
   '/api/public/diag': typeof ApiPublicDiagRoute
+  '/api/public/farm-panel': typeof ApiPublicFarmPanelRoute
   '/api/public/market-ingest': typeof ApiPublicMarketIngestRoute
   '/api/public/whatsapp': typeof ApiPublicWhatsappRoute
 }
@@ -168,6 +186,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/exclusao-de-dados'
+    | '/painelfazenda'
     | '/politica-de-privacidade'
     | '/termos-de-uso'
     | '/guardia'
@@ -178,6 +197,7 @@ export interface FileRouteTypes {
     | '/api/public/chat'
     | '/api/public/chat-test'
     | '/api/public/diag'
+    | '/api/public/farm-panel'
     | '/api/public/market-ingest'
     | '/api/public/whatsapp'
   fileRoutesByTo: FileRoutesByTo
@@ -185,6 +205,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/exclusao-de-dados'
+    | '/painelfazenda'
     | '/politica-de-privacidade'
     | '/termos-de-uso'
     | '/guardia'
@@ -195,6 +216,7 @@ export interface FileRouteTypes {
     | '/api/public/chat'
     | '/api/public/chat-test'
     | '/api/public/diag'
+    | '/api/public/farm-panel'
     | '/api/public/market-ingest'
     | '/api/public/whatsapp'
   id:
@@ -203,6 +225,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/exclusao-de-dados'
+    | '/painelfazenda'
     | '/politica-de-privacidade'
     | '/termos-de-uso'
     | '/_authenticated/guardia'
@@ -213,6 +236,7 @@ export interface FileRouteTypes {
     | '/api/public/chat'
     | '/api/public/chat-test'
     | '/api/public/diag'
+    | '/api/public/farm-panel'
     | '/api/public/market-ingest'
     | '/api/public/whatsapp'
   fileRoutesById: FileRoutesById
@@ -222,11 +246,13 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ExclusaoDeDadosRoute: typeof ExclusaoDeDadosRoute
+  PainelfazendaRoute: typeof PainelfazendaRoute
   PoliticaDePrivacidadeRoute: typeof PoliticaDePrivacidadeRoute
   TermosDeUsoRoute: typeof TermosDeUsoRoute
   ApiPublicChatRoute: typeof ApiPublicChatRoute
   ApiPublicChatTestRoute: typeof ApiPublicChatTestRoute
   ApiPublicDiagRoute: typeof ApiPublicDiagRoute
+  ApiPublicFarmPanelRoute: typeof ApiPublicFarmPanelRoute
   ApiPublicMarketIngestRoute: typeof ApiPublicMarketIngestRoute
   ApiPublicWhatsappRoute: typeof ApiPublicWhatsappRoute
 }
@@ -259,6 +285,13 @@ declare module '@tanstack/react-router' {
       path: '/exclusao-de-dados'
       fullPath: '/exclusao-de-dados'
       preLoaderRoute: typeof ExclusaoDeDadosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/painelfazenda': {
+      id: '/painelfazenda'
+      path: '/painelfazenda'
+      fullPath: '/painelfazenda'
+      preLoaderRoute: typeof PainelfazendaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/politica-de-privacidade': {
@@ -331,6 +364,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicDiagRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/farm-panel': {
+      id: '/api/public/farm-panel'
+      path: '/api/public/farm-panel'
+      fullPath: '/api/public/farm-panel'
+      preLoaderRoute: typeof ApiPublicFarmPanelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/market-ingest': {
       id: '/api/public/market-ingest'
       path: '/api/public/market-ingest'
@@ -373,11 +413,13 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ExclusaoDeDadosRoute: ExclusaoDeDadosRoute,
+  PainelfazendaRoute: PainelfazendaRoute,
   PoliticaDePrivacidadeRoute: PoliticaDePrivacidadeRoute,
   TermosDeUsoRoute: TermosDeUsoRoute,
   ApiPublicChatRoute: ApiPublicChatRoute,
   ApiPublicChatTestRoute: ApiPublicChatTestRoute,
   ApiPublicDiagRoute: ApiPublicDiagRoute,
+  ApiPublicFarmPanelRoute: ApiPublicFarmPanelRoute,
   ApiPublicMarketIngestRoute: ApiPublicMarketIngestRoute,
   ApiPublicWhatsappRoute: ApiPublicWhatsappRoute,
 }

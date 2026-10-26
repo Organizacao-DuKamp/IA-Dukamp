@@ -213,6 +213,31 @@ export function parseGuardianRequest(
   if (/\bexportar (?:meus )?dados\b/.test(t)) return { kind: "export" };
   const accept = t.match(/^aceitar convite\s+([a-f0-9]{32})[.! ]*$/);
   if (accept) return { kind: "accept", token: accept[1] };
+  const transfer = t.match(
+    /^transferir\s+(\d{1,6})\s+(?:animais|cabecas|bovinos)(?:\s+do lote\s+([\p{L}\d_-]+))?\s+para\s+(?:a\s+)?fazenda\s+(.+?)(?:\s+no lote\s+([\p{L}\d_-]+))?(?:\s+(?:em\s+)?(?:20\d{2}-\d{2}-\d{2}|hoje|ontem))?[.! ]*$/u,
+  );
+  if (transfer && snapshot?.active) {
+    const targets = snapshot.properties.filter(
+      (p) => p.id === transfer[3] || fold(p.name) === transfer[3],
+    );
+    if (targets.length !== 1 || targets[0].id === snapshot.active.id)
+      return {
+        kind: "clarify",
+        reply:
+          "Escolha outra fazenda autorizada para receber os animais. Consulte “minhas fazendas” para obter o código correto.",
+      };
+    return {
+      kind: "action",
+      action: {
+        kind: "property_transfer",
+        count: Number(transfer[1]),
+        date: reportedDay,
+        toPropertyId: targets[0].id,
+        ...(transfer[2] ? { fromLot: transfer[2] } : {}),
+        ...(transfer[4] ? { toLot: transfer[4] } : {}),
+      },
+    };
+  }
   const select = text.match(/^(?:usar|selecionar) fazenda\s+(.+)$/i);
   if (select) return { kind: "select", property: select[1].trim() };
   const property = text.match(

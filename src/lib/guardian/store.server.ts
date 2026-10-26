@@ -61,6 +61,7 @@ export function mapSnapshot(value: unknown): GuardianSnapshot {
     throw new Error("guardian_snapshot_invalid");
   return {
     ...v,
+    properties: v.properties.map((p) => ({ ...p, name: p.name ?? "Propriedade sem nome" })),
     preferences: PreferencesSchema.parse(v.preferences ?? {}),
     active: v.active ? { ...v.active, book: FarmBookSchema.parse(v.active.book) } : null,
   };

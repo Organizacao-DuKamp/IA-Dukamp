@@ -162,6 +162,7 @@ test("mensagem de texto entra na TPEC-IA e resposta volta pela Graph API", async
     phone: "5517999999999",
     messageId: "wamid.test-1",
     text: "Qual o preço do produto?",
+    sentAt: "2026-08-12T10:20:00.000Z",
   });
   assert.equal(graphUrl, "https://graph.facebook.com/v25.0/1234567890/messages");
   assert.equal(graphAuth, "Bearer test-access-token");

@@ -3,6 +3,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { dispatchWhatsAppChat } from "./backend.server.ts";
 import {
   WhatsAppChatInputSchema,
+  metaMessageSentAt,
   type WhatsAppChatInput,
   type WhatsAppChatResult,
 } from "./types.ts";
@@ -22,6 +23,7 @@ interface IncomingTextMessage {
   phoneNumberId: string;
   phone: string;
   messageId: string;
+  sentAt?: string;
   text: string;
 }
 
@@ -131,6 +133,7 @@ function extractTextMessages(payload: unknown): IncomingTextMessage[] {
         const parsed = WhatsAppChatInputSchema.safeParse({
           phone: message.from,
           messageId: message.id,
+          sentAt: metaMessageSentAt(message.timestamp),
           text: textObject.body,
         });
         if (!parsed.success) continue;
@@ -332,6 +335,7 @@ export async function handleWhatsAppWebhookRequest(
         phone: message.phone,
         messageId: message.messageId,
         text: message.text,
+        ...(message.sentAt ? { sentAt: message.sentAt } : {}),
       });
       console.info(
         `[whatsapp] dispatch completed duration_ms=${Date.now() - started} should_send=${result.shouldSend} has_reply=${Boolean(result.reply)} reply_chars=${result.reply ? Array.from(result.reply).length : 0}`,

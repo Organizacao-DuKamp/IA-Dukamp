@@ -328,6 +328,7 @@ function LandingPage() {
           </span>
         </a>
         <nav aria-label="Navegação principal">
+          <a href="/painelfazenda">Painel da fazenda</a>
           <a href="#whatsapp">WhatsApp</a>
           <a href="#analise">Análise por foto</a>
           <a href="#como-funciona">Como funciona</a>

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { OperationsActionSchemas, OperationsSchema, type Operations } from "./operations.ts";
 
 export const TopicSchema = z.enum([
   "tasks",
@@ -40,6 +41,7 @@ export const PreferencesSchema = z
   .refine((v) => v.startHour < v.endHour, "O horário inicial deve vir antes do final.");
 export type GuardianPreferences = z.infer<typeof PreferencesSchema>;
 export const ActionSchema = z.discriminatedUnion("kind", [
+  ...OperationsActionSchemas,
   z
     .object({
       kind: z.literal("property_create"),
@@ -110,6 +112,13 @@ export const ActionSchema = z.discriminatedUnion("kind", [
     .object({
       kind: z.literal("animal"),
       code: label,
+      name: label.optional(),
+      rgn: label.optional(),
+      rgd: label.optional(),
+      category: label.optional(),
+      sire: label.optional(),
+      dam: label.optional(),
+      status: z.enum(["active", "sold", "dead", "transferred"]).optional(),
       sex: z.enum(["male", "female", "unknown"]).optional(),
       breed: label.optional(),
       birthDate: date.optional(),
@@ -146,6 +155,7 @@ export interface Provenance {
   actor: string;
   at: string;
   confirmed: true;
+  sourceAt?: string;
 }
 export interface Weighing extends Provenance {
   date: string;
@@ -161,6 +171,13 @@ export interface Weighing extends Provenance {
 }
 export interface GuardianAnimal {
   code: string;
+  name?: string;
+  rgn?: string;
+  rgd?: string;
+  category?: string;
+  sire?: string;
+  dam?: string;
+  status?: "active" | "sold" | "dead" | "transferred";
   sex: "male" | "female" | "unknown";
   breed?: string;
   birthDate?: string;
@@ -199,9 +216,10 @@ export interface FieldRecord {
 }
 export interface FarmBook {
   schema: 1;
-  name: string;
-  city: string;
-  uf: string;
+  name: string | null;
+  city: string | null;
+  uf: string | null;
+  operations?: Operations;
   profile: {
     activity?: string;
     species?: string[];
@@ -276,6 +294,7 @@ const ProvenanceSchema = z
     actor: z.string().regex(/^\d{6,20}$/),
     at: z.iso.datetime(),
     confirmed: z.literal(true),
+    sourceAt: z.iso.datetime().optional(),
   })
   .strict();
 const WeighingSchema = ProvenanceSchema.extend({
@@ -299,9 +318,13 @@ const WeighingSchema = ProvenanceSchema.extend({
 export const FarmBookSchema = z
   .object({
     schema: z.literal(1),
-    name: label,
-    city: label,
-    uf: z.string().regex(/^[A-Z]{2}$/),
+    name: label.nullable(),
+    city: label.nullable(),
+    uf: z
+      .string()
+      .regex(/^[A-Z]{2}$/)
+      .nullable(),
+    operations: OperationsSchema.optional(),
     profile: z
       .object({
         activity: label.optional(),
@@ -317,6 +340,13 @@ export const FarmBookSchema = z
         z
           .object({
             code: label,
+            name: label.optional(),
+            rgn: label.optional(),
+            rgd: label.optional(),
+            category: label.optional(),
+            sire: label.optional(),
+            dam: label.optional(),
+            status: z.enum(["active", "sold", "dead", "transferred"]).optional(),
             sex: z.enum(["male", "female", "unknown"]),
             breed: label.optional(),
             birthDate: date.optional(),
@@ -379,3 +409,7 @@ export const FarmBookSchema = z
       .max(20000),
   })
   .strict();
+
+export function farmName(book: Pick<FarmBook, "name" | "city">): string {
+  return book.name ?? `Propriedade sem nome${book.city ? ` — ${book.city}` : ""}`;
+}

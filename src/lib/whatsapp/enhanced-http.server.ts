@@ -11,6 +11,7 @@ import {
 } from "./presence.ts";
 import {
   WhatsAppChatInputSchema,
+  metaMessageSentAt,
   type WhatsAppChatInput,
   type WhatsAppChatResult,
   type WhatsAppControlRequest,
@@ -192,6 +193,7 @@ function extractIncomingMessages(payload: unknown): IncomingWhatsAppMessage[] {
         const parsed = WhatsAppChatInputSchema.safeParse({
           phone: message.from,
           messageId: message.id,
+          sentAt: metaMessageSentAt(message.timestamp),
           text: textValue,
           ...(media ? { media } : {}),
         });
@@ -545,6 +547,7 @@ export async function handleEnhancedWhatsAppWebhookRequest(
           phone: message.phone,
           messageId: message.messageId,
           text: message.text,
+          ...(message.sentAt ? { sentAt: message.sentAt } : {}),
           ...(message.media ? { media: message.media } : {}),
         }),
       );
