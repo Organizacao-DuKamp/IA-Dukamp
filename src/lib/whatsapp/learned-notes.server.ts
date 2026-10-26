@@ -6,6 +6,7 @@ import {
   collectLearnedNotes,
   mergeLearnedNotes,
   userStatement,
+  certainStatement,
   type LearnedNote,
 } from "./learned-notes.ts";
 
@@ -120,6 +121,7 @@ export const learnedNotesStore: LearnedNotesStore = {
         .select(columns)
         .eq("phone_number", phone)
         .eq("status", "active")
+        .in("metadata->>kind", ["reported", "correction", "answer"])
         .contains("metadata", { memory_epoch: USER_MEMORY_EPOCH, capture: "conversation_v1" })
         .gte("last_seen_at", boundary)
         .order("last_seen_at", { ascending: false });
@@ -147,10 +149,14 @@ export async function observeLearnedMemory(
     now?: Date;
     enabled?: boolean;
     notes?: LearnedNote[];
+    projectProperty?: (input: NoteInput) => Promise<unknown>;
   } = {},
 ): Promise<LearnedMemoryResult> {
   const text = userStatement(input.text, input.mediaType);
-  const notes = mergeLearnedNotes(collectLearnedNotes(text, input.history), deps.notes ?? []);
+  const notes = mergeLearnedNotes(
+    collectLearnedNotes(text, input.history),
+    deps.notes ?? [],
+  ).filter((n) => certainStatement(n.quote));
   const natural = notes.length > 0;
   if (
     !(deps.enabled ?? Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY)) ||
@@ -168,6 +174,20 @@ export async function observeLearnedMemory(
     const boundary = await store.boundary(input.phone);
     if (Date.parse(at) < Date.parse(boundary))
       return { status: "skipped", saved: 0, natural, context: "" };
+    // Only a trusted server projection can create an administrative property profile.
+    // Offline/test stores form a complete boundary and never acquire the live database.
+    const project =
+      deps.projectProperty ??
+      (!deps.store && process.env.TPEC_GUARDIAN_ENABLED === "true"
+        ? (await import("../guardian/observed-property.server.ts")).projectObservedProperty
+        : null);
+    if (project) {
+      try {
+        await project({ ...input, at });
+      } catch {
+        /* A later notes reconciliation retries it. */
+      }
+    }
     const saved = notes.length ? await store.save(input, notes, at) : [];
     const recent = await store.recent(input.phone, boundary);
     const currentBoundary = await store.boundary(input.phone);

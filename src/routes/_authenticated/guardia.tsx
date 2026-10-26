@@ -26,6 +26,7 @@ import {
   guardianCreateWebLink,
   guardianSubmitAction,
   guardianEventHistory,
+  guardianObservedProperty,
   type GuardianDetail,
   type PropertySummary,
 } from "@/lib/guardian.functions";
@@ -33,6 +34,7 @@ import { GuardianCalculator } from "@/components/guardian/GuardianCalculator";
 import { GuardianActionForm } from "@/components/guardian/GuardianActionForm";
 import { GuardianPreferences } from "@/components/guardian/GuardianPreferences";
 import { GuardianWorkspace } from "@/components/guardian/GuardianWorkspace";
+import { GuardianObservedProfiles } from "@/components/guardian/GuardianObservedProfiles";
 import type { GuardianAction, GuardianSnapshot } from "@/lib/guardian/schema";
 
 export const Route = createFileRoute("/_authenticated/guardia")({
@@ -40,6 +42,7 @@ export const Route = createFileRoute("/_authenticated/guardia")({
   component: GuardianPage,
 });
 const tabs = [
+  { id: "profiles", label: "Perfis da conversa", icon: Users },
   { id: "overview", label: "Visão geral", icon: Activity },
   { id: "tasks", label: "Tarefas", icon: ClipboardList },
   { id: "herd", label: "Rebanho", icon: Leaf },
@@ -63,7 +66,9 @@ function GuardianPage() {
     detailFn = useServerFn(guardianPropertyDetail),
     linkFn = useServerFn(guardianCreateWebLink),
     submitFn = useServerFn(guardianSubmitAction),
-    historyFn = useServerFn(guardianEventHistory);
+    historyFn = useServerFn(guardianEventHistory),
+    observedFn = useServerFn(guardianObservedProperty);
+  const loadObserved = useCallback((id: string) => observedFn({ data: { id } }), [observedFn]);
   const [overview, setOverview] = useState<Awaited<ReturnType<typeof guardianOverview>> | null>(
       null,
     ),
@@ -78,12 +83,21 @@ function GuardianPage() {
     [pairing, setPairing] = useState(""),
     [proposal, setProposal] = useState<{ reply: string; snapshot: GuardianSnapshot } | null>(null);
   const request = useRef(0);
+  const initial = useRef(true);
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
       const data = await overviewFn();
       setOverview(data);
+      if (
+        initial.current &&
+        data.isAdmin &&
+        data.observedProfiles.length &&
+        !data.properties.length
+      )
+        setTab("profiles");
+      initial.current = false;
       setSelected((current) =>
         data.properties.some((p: PropertySummary) => p.id === current)
           ? current
@@ -199,41 +213,47 @@ function GuardianPage() {
       </header>
       <div className="mx-auto grid max-w-[1440px] gap-6 px-4 py-6 md:grid-cols-[210px_minmax(0,1fr)] lg:px-6">
         <aside className="print:hidden">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Propriedade
-          </p>
-          <select
-            aria-label="Selecionar propriedade"
-            disabled={busy || loading}
-            value={selected}
-            onChange={(e) => {
-              setSelected(e.target.value);
-              setForm(false);
-            }}
-            className="mb-5 w-full rounded-xl border border-input bg-card px-3 py-3 text-sm"
-          >
-            <option value="">Selecione uma fazenda</option>
-            {overview?.properties.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-          <nav aria-label="Guardiã da Fazenda" className="flex gap-1 overflow-auto md:flex-col">
-            {tabs.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => {
-                  setTab(t.id);
+          {tab !== "profiles" && (
+            <>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Propriedade
+              </p>
+              <select
+                aria-label="Selecionar propriedade"
+                disabled={busy || loading}
+                value={selected}
+                onChange={(e) => {
+                  setSelected(e.target.value);
                   setForm(false);
                 }}
-                aria-current={tab === t.id ? "page" : undefined}
-                className={`flex shrink-0 items-center gap-3 rounded-xl px-3 py-3 text-left text-sm ${tab === t.id ? "bg-emerald-800 font-semibold text-white" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`}
+                className="mb-5 w-full rounded-xl border border-input bg-card px-3 py-3 text-sm"
               >
-                <t.icon size={18} />
-                {t.label}
-              </button>
-            ))}
+                <option value="">Selecione uma fazenda</option>
+                {overview?.properties.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
+          <nav aria-label="Guardiã da Fazenda" className="flex gap-1 overflow-auto md:flex-col">
+            {tabs
+              .filter((t) => t.id !== "profiles" || overview?.isAdmin)
+              .map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => {
+                    setTab(t.id);
+                    setForm(false);
+                  }}
+                  aria-current={tab === t.id ? "page" : undefined}
+                  className={`flex shrink-0 items-center gap-3 rounded-xl px-3 py-3 text-left text-sm ${tab === t.id ? "bg-emerald-800 font-semibold text-white" : "text-muted-foreground hover:bg-accent hover:text-foreground"}`}
+                >
+                  <t.icon size={18} />
+                  {t.label}
+                </button>
+              ))}
           </nav>
           <div className="mt-6 hidden rounded-xl border border-border p-4 text-xs leading-relaxed text-muted-foreground md:block">
             Seu caderno acompanha os registros confirmados. Avisos e previsões dependem das fontes
@@ -245,9 +265,11 @@ function GuardianPage() {
             <div>
               <p className="text-sm text-muted-foreground">Seu trabalho no campo, organizado.</p>
               <h2 className="mt-1 text-2xl font-semibold tracking-tight">
-                {detail?.book.name ?? "Bem-vindo à Guardiã"}
+                {tab === "profiles"
+                  ? "Perfis informados pelos produtores"
+                  : (detail?.book.name ?? "Bem-vindo à Guardiã")}
               </h2>
-              {detail && (
+              {detail && tab !== "profiles" && (
                 <p className="mt-2 flex items-center gap-1 text-sm text-muted-foreground">
                   <MapPin size={14} />
                   {detail.book.city}/{detail.book.uf}
@@ -259,7 +281,8 @@ function GuardianPage() {
                 onClick={() =>
                   void load()
                     .then(async () => {
-                      if (selected) setDetail(await detailFn({ data: { id: selected } }));
+                      if (selected && tab !== "profiles")
+                        setDetail(await detailFn({ data: { id: selected } }));
                     })
                     .catch(() => setError("Não foi possível atualizar os dados."))
                 }
@@ -269,14 +292,16 @@ function GuardianPage() {
               >
                 <RefreshCw size={17} />
               </button>
-              <button
-                onClick={() => setForm((v) => !v)}
-                disabled={busy || loading || !overview?.enabled || !overview.account}
-                className="inline-flex items-center gap-2 rounded-xl bg-emerald-800 px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
-              >
-                <Plus size={17} />
-                Novo registro
-              </button>
+              {tab !== "profiles" && (
+                <button
+                  onClick={() => setForm((v) => !v)}
+                  disabled={busy || loading || !overview?.enabled || !overview.account}
+                  className="inline-flex items-center gap-2 rounded-xl bg-emerald-800 px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
+                >
+                  <Plus size={17} />
+                  Novo registro
+                </button>
+              )}
             </div>
           </div>
           {error && (
@@ -301,14 +326,14 @@ function GuardianPage() {
               liberados após a ativação.
             </p>
           )}
-          {overview?.enabled && !overview.templateConfigured && (
+          {tab !== "profiles" && overview?.enabled && !overview.templateConfigured && (
             <p className="rounded-xl border border-amber-600/30 bg-amber-500/5 p-4 text-sm">
               Os avisos automáticos pelo WhatsApp só estão disponíveis até 24 horas após sua última
               mensagem. Avisos para depois desse período ainda aguardam liberação. Você já pode
               registrar atividades e consultar seu caderno.
             </p>
           )}
-          {overview?.enabled && !overview.account && (
+          {tab !== "profiles" && overview?.enabled && !overview.account && (
             <section className="rounded-2xl border border-border bg-card p-5">
               <h2 className="font-semibold">Vincule seu WhatsApp</h2>
               <p className="mt-2 text-sm text-muted-foreground">
@@ -392,8 +417,16 @@ function GuardianPage() {
             </p>
           )}
           {!loading && tab === "calculator" && <GuardianCalculator />}
+          {!loading && tab === "profiles" && overview?.isAdmin && (
+            <GuardianObservedProfiles
+              profiles={overview.observedProfiles}
+              partial={overview.observedPartial}
+              loadDetail={loadObserved}
+            />
+          )}
           {!loading &&
             tab !== "calculator" &&
+            tab !== "profiles" &&
             (detail ? (
               <GuardianWorkspace
                 key={detail.id}
