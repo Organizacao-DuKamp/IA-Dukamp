@@ -10,7 +10,12 @@ import {
 } from "./schema.ts";
 import { applyFarmAction, describeAction, farmReport, fold } from "./book.ts";
 import { calculate, renderCalculation } from "./calculators.ts";
-import { guardianCandidate, parseGuardianRequest, type GuardianRequest } from "./parse.ts";
+import {
+  guardianCandidate,
+  parseGuardianRequest,
+  taskContinuation,
+  type GuardianRequest,
+} from "./parse.ts";
 import { guardianStore, type GuardianCommit, type GuardianStore } from "./store.server.ts";
 import type { ChatMessage } from "../chat/types.ts";
 import { naturalNotebookTurn } from "../whatsapp/learned-notes.ts";
@@ -148,9 +153,11 @@ export async function handleGuardianMessage(
     if (previous) return { reply: previous, activeProperty: false, persisted: true };
     for (let attempt = 0; attempt < 4; attempt++) {
       const snapshot = await store.load(input.phone);
+      const continuedTask = taskContinuation(input.text, input.history);
       if (
         !deps.request &&
         (!input.mediaType || input.mediaType === "audio") &&
+        !continuedTask &&
         naturalNotebookTurn(input.text, input.history)
       )
         return {
@@ -161,7 +168,7 @@ export async function handleGuardianMessage(
         };
       const link = input.text.trim().match(/^vincular painel\s+([a-f0-9]{32})[.! ]*$/i);
       let request: GuardianRequest | null =
-        deps.request ?? parseGuardianRequest(input.text, snapshot, now);
+        deps.request ?? parseGuardianRequest(continuedTask ?? input.text, snapshot, now);
       if (request || link) attempted = true;
       if (!request && !link)
         return {

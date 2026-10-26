@@ -1,3 +1,4 @@
+import type { ChatMessage } from "../chat/types.ts";
 import { localDateForTimeZone, localDateTimeToUtc } from "../whatsapp/proactive.ts";
 import { recallPeriod } from "../chat/context/recall.ts";
 import { ActionSchema, type GuardianAction, type GuardianSnapshot } from "./schema.ts";
@@ -30,6 +31,39 @@ export type GuardianRequest =
   | { kind: "calculation"; calculation: Calculation }
   | { kind: "clarify"; reply: string }
   | { kind: "extract" };
+
+export const TASK_DATE_QUESTION =
+  "Qual o dia e horário da tarefa? Exemplo: me lembra de pesar o lote 2 na sexta às 8h. Uso 8h (Brasília) se você informar só o dia, e mostro a data antes de salvar.";
+
+// Only resume the immediately preceding clarification, never a recalled old task.
+export function taskContinuation(text: string, history: ChatMessage[] = []): string | null {
+  const answer = fold(text).trim();
+  if (
+    !/^(?:hoje|amanha|depois de amanha|(?:proxim[ao] )?(?:segunda|terca|quarta|quinta|sexta|sabado|domingo)(?:-feira)?|(?:dia )?\d{1,2}\/\d{1,2}(?:\/20\d{2})?|20\d{2}-\d{2}-\d{2}|as \d{1,2})(?:[\d\s:ha.,/-]|da noite|da tarde|da manha|as)*$/.test(
+      answer,
+    )
+  )
+    return null;
+  const question = history.at(-1),
+    original = history.at(-2);
+  if (
+    question?.role !== "assistant" ||
+    question.content !== TASK_DATE_QUESTION ||
+    original?.role !== "user"
+  )
+    return null;
+  if (
+    !/^(?:me lembr[ae]|criar tarefa|crie uma tarefa|agende|agendar)\b/.test(fold(original.content))
+  )
+    return null;
+  const prior = /\b(?:as|a partir das)\s*\d/.test(answer)
+    ? original.content.replace(
+        /\s+(?:às|as)\s*\d{1,2}(?::\d{2}|h\d{0,2})?(?:\s+da (?:noite|tarde|manhã|manha))?\s*$/i,
+        "",
+      )
+    : original.content;
+  return prior + " " + text;
+}
 
 export function brazilNumber(value: string): number {
   const text = value.trim();
@@ -303,8 +337,7 @@ export function parseGuardianRequest(
     if (!due)
       return {
         kind: "clarify",
-        reply:
-          "Qual o dia e horário da tarefa? Exemplo: me lembra de pesar o lote 2 na sexta às 8h. Uso 8h (Brasília) se você informar só o dia, e mostro a data antes de salvar.",
+        reply: TASK_DATE_QUESTION,
       };
     const title = text
       .replace(
@@ -313,6 +346,10 @@ export function parseGuardianRequest(
       )
       .replace(
         /\s+(?:na |no |em |dia )?(?:hoje|amanh[ãa]|depois de amanh[ãa]|(?:pr[oó]xima? )?(?:segunda|ter[cç]a|quarta|quinta|sexta|s[aá]bado|domingo)(?:-feira)?|\d{1,2}\/\d{1,2}(?:\/20\d{2})?|20\d{2}-\d{2}-\d{2}).*$/i,
+        "",
+      )
+      .replace(
+        /\s+(?:às|as)\s*\d{1,2}(?::\d{2}|h\d{0,2})?(?:\s+da (?:noite|tarde|manhã|manha))?\s*$/i,
         "",
       )
       .trim();
