@@ -85,7 +85,7 @@ test("conversation learns several useful facts without commands, farm creation o
   assert.doesNotMatch(JSON.stringify(saved), /amountCents|herd:size|payment/);
 });
 
-test("intent, estimates, third parties and a correction retain their meaning and original history", async () => {
+test("only direct assertions and corrections become notes; plans, estimates and third parties stay out", async () => {
   const mem = notebook();
   const cases = [
     ["Vou vender 10 bois amanhã.", "plan"],
@@ -99,11 +99,11 @@ test("intent, estimates, third parties and a correction retain their meaning and
       now,
       enabled: true,
     });
-    assert.equal(result.saved, 1);
-    assert.equal([...mem.rows.values()].at(-1)!.metadata.kind, kind);
+    assert.equal(result.saved, kind === "correction" ? 1 : 0);
+    if (kind === "correction") assert.equal([...mem.rows.values()].at(-1)!.metadata.kind, kind);
   }
-  assert.equal(mem.rows.size, 4);
-  assert.equal(collectLearnedNotes("Não quero vender meus bois.")[0]?.kind, "plan");
+  assert.equal(mem.rows.size, 1);
+  assert.equal(collectLearnedNotes("Não quero vender meus bois.").length, 0);
 });
 
 test("questions, hypotheticals, instructions, secrets and generic advice do not become facts", () => {
@@ -132,8 +132,10 @@ test("an extracted substring cannot remove a negation, condition, future or sour
   ]) {
     const quote = text.includes("vendeu") ? "vendeu 10 bois" : "10 bois";
     const result = validateExtractedNotes({ notes: [{ category: "sale", quote }] }, text);
-    assert.equal(result[0].quote, text);
-    assert.equal(result[0].kind, kind);
+    if (kind === "correction") {
+      assert.equal(result[0].quote, text);
+      assert.equal(result[0].kind, kind);
+    } else assert.deepEqual(result, []);
   }
   assert.deepEqual(
     validateExtractedNotes(

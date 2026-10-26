@@ -1,5 +1,20 @@
 # Guardiã da Fazenda — implementação e homologação
 
+## Perfis de conversa com informações afirmadas — 26/10/2026
+
+A administração da Guardiã inclui “Perfis da conversa”. Uma afirmação direta sobre a propriedade pode criar um perfil identificado pelo telefone, mesmo sem nome de fazenda. Município, UF expressamente informada, nome, área, atividade, raça, contagens de bovinos/categorias e alimentação têm campos próprios. Os padrões são conservadores: formas não reconhecidas ou ambíguas não são preenchidas por adivinhação.
+
+- O caso “tenho uma fazenda com 40 gados aqui em Tanabi” preenche município e quantidade. A meta futura de ganhar 40 kg e a pergunta sobre prazo não se tornam fatos da propriedade. Não se infere UF pelo DDD, cidade da fazenda pelo endereço de residência, pagamento pela menção de venda nem tamanho do rebanho a partir de uma compra/venda.
+- Os campos usam afirmações do produtor como fonte, com trecho literal, mensagem original, data em que foi informada e data de referência. O painel identifica a informação como “informada pelo produtor”; isso não representa aferição externa ou monitoramento por sensores.
+- Dados de cadastro e dados variáveis são distinguidos. “Tenho 40” seguido de “agora tenho 38” mantém ambas as observações, apresenta o valor mais recente e preserva o município. Um relato antigo processado depois não substitui dados com referência posterior. Não são inventadas fichas individuais a partir de uma quantidade agregada.
+- Perguntas, hipóteses, planos futuros, estimativas, afirmações de terceiros, documentos/credenciais e análises geradas de imagens não alimentam o perfil. A captura de novas notas privadas também passa a excluir esses conteúdos. O histórico original de conversa permanece preservado como histórico, sem virar cadastro confirmado.
+- O nome provisório é apenas uma identificação de interface. Uma declaração posterior do nome reaproveita o perfil sem nome; repetições da mesma mensagem não duplicam dados. Havendo várias propriedades no mesmo contato, uma afirmação sem associação inequívoca não é atribuída arbitrariamente a uma delas.
+- Os perfis são privados da administração. Não criam acesso de equipe, propriedades compartilhadas, tarefas ou consentimento para avisos. Leituras passam por autenticação e verificação administrativa atual no servidor; as tabelas/RPCs não têm acesso direto para `anon` ou `authenticated`.
+- A manutenção reconcilia até oito notas anteriores por execução, sem chamada extra a modelos, relendo a mensagem original completa. Um trecho isolado não pode perder a referência de qual propriedade estava sendo descrita. Falhas são tentadas novamente; gravações são idempotentes por remetente, geração, mensagem e campo.
+- Um reset de conversa oculta a geração derivada anterior e impede que uma origem antiga a restaure. O histórico de cada perfil mostra até 200 observações recentes, indicando cobertura parcial quando houver mais; a listagem administrativa inclui até 100 perfis recentes.
+
+Migração `20261026121503_guardian_observed_property_profiles.sql` aplicada ao projeto TPEC-IA: duas tabelas privadas, visão de valores atuais com `security_invoker`, cinco funções restritas ao servidor e índices das consultas. Não houve mudança em credenciais nem ativação de envios. O ensaio `scripts/observed-property-live-validation.sql` passou no PostgreSQL real e reverteu integralmente os dados sintéticos. PostgREST retornou 200 para as leituras de serviço e 401 para os acessos públicos. Os advisors mantiveram somente as três advertências de segurança legadas já registradas.
+
 ## Memória aprendida durante a conversa — revisão de 25/10/2026
 
 O WhatsApp passa a guardar relatos úteis sem exigir “registrar”, “salvar” ou “cadastrar fazenda”. “Minha fazenda fica em Tanabi”, “tenho 50 vacas”, “comprei ração” e “vendi 10 bois por R$ 30 mil” alimentam um caderno privado com as palavras originais, remetente, mensagem de origem e data de observação. Uma resposta curta pode guardar também a pergunta que lhe deu contexto. A conversa continua pelo modelo geral, sem um formulário ou confirmação extra para lembrar essas informações.

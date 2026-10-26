@@ -129,12 +129,36 @@ function kindFor(text: string): LearnedNote["kind"] {
   if (/\b(acho|aproximad\w*|cerca de|mais ou menos|estimo|estimad\w*|talvez)\b/.test(t))
     return "estimate";
   if (
-    /\b(vou|vamos|pretendo|planejo|quero|pensando em|vender|comprar|amanha|semana que vem|mes que vem)\b/.test(
+    /\b(vou|vamos|pretendo|planejo|quero|preciso|objetivo|meta|pensando em|vender|comprar|amanha|semana que vem|mes que vem)\b/.test(
       t,
     )
   )
     return "plan";
   return "reported";
+}
+
+/** Keep an assertion separate from a following question or intention, without rewriting it. */
+export function statementParts(text: string): string[] {
+  return text
+    .split(
+      /(?<=[.!?;])\s+|\n+|(?:,\s*|\s+e\s+)(?=(?:eu\s+)?(?:preciso|quero|pretendo|vou|qual|quanto|como|o que|ser[aá])\b)/iu,
+    )
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+export function certainStatement(text: string): boolean {
+  const t = fold(text.replace(/^\s*tpec[ -]?ia[,!: ]*/i, "").trim());
+  return (
+    safeStatement(t) &&
+    ["reported", "correction"].includes(kindFor(t)) &&
+    !/\b(acho|talvez|provavelmente|parece|deve ser|acredito|cerca de|mais ou menos|aproximad\w*|uns|umas|quase|poderia|gostaria|caso|se eu|se nos|por exemplo|li que|vi num video)\b/.test(
+      t,
+    ) &&
+    !/^se\b/.test(t) &&
+    !/\b(exemplos?|texto|mensagem de|fulano|disse|falou|escreveu|responda com|traduza|traducao|script|json|prompt)\b|```|^>/.test(
+      t,
+    )
+  );
 }
 
 export function memoryQuestion(history: ChatMessage[] = []): string | undefined {
@@ -158,10 +182,10 @@ export function collectLearnedNotes(text: string, history: ChatMessage[] = []): 
     .filter((m) => m.role === "user")
     .slice(-3)
     .some((m) => rural.test(fold(m.content)));
-  for (const part of text.split(/(?<=[.!?;])\s+|\n+/u)) {
+  for (const part of statementParts(text)) {
     // Do not split decimal numbers; retain the whole clause as evidence, within a bounded note.
     const quote = part.trim();
-    if (quote.length > 1500 || !safeStatement(quote)) continue;
+    if (quote.length > 1500 || !certainStatement(quote)) continue;
     const category = categoryFor(quote);
     if (
       !category ||
@@ -178,8 +202,9 @@ export function collectLearnedNotes(text: string, history: ChatMessage[] = []): 
   if (
     !notes.length &&
     question &&
+    !/\b(quer|pretende|vender|comprar|teria|fosse|se tivesse)\b/.test(fold(question)) &&
     text.length <= 160 &&
-    safeStatement(text) &&
+    certainStatement(text) &&
     !/^(sim|nao|ok|pode|pode ser|o primeiro|o segundo|tanto faz)[.! ]*$/.test(fold(text))
   ) {
     notes.push({
@@ -204,11 +229,10 @@ export function validateExtractedNotes(value: unknown, text: string): LearnedNot
   if (!parsed.success) return [];
   return parsed.data.notes.flatMap((n) => {
     // Selected substrings cannot drop a negation, plan, condition or the subject's owner.
-    const clause = text
-      .split(/(?<=[.!?;])\s+|\n+/u)
+    const clause = statementParts(text)
       .find((c) => c.includes(n.quote))
       ?.trim();
-    if (!clause || clause.length > 1500 || !safeStatement(clause)) return [];
+    if (!clause || clause.length > 1500 || !certainStatement(clause)) return [];
     return [{ ...n, quote: clause, kind: kindFor(clause) }];
   });
 }
@@ -226,7 +250,7 @@ export function shouldExtractNotes(text: string, history: ChatMessage[] = []): b
     collectLearnedNotes(text, history).length > 0 ||
     text
       .split(/(?<=[.!?;])\s+|\n+/u)
-      .some((part) => safeStatement(part.trim()) && (rural.test(fold(part)) || ruralContext))
+      .some((part) => certainStatement(part.trim()) && (rural.test(fold(part)) || ruralContext))
   );
 }
 

@@ -5,6 +5,8 @@ import { ActionSchema, TopicSchema } from "./guardian/schema.ts";
 import { CalculationInput, calculate } from "./guardian/calculators.ts";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { FarmBook, GuardianSnapshot } from "./guardian/schema.ts";
+import type { ObservedSummary } from "./guardian/observed-property.server.ts";
+export type { ObservedDetail, ObservedSummary } from "./guardian/observed-property.server.ts";
 
 type Context = { supabase: SupabaseClient; userId: string };
 export interface PropertySummary {
@@ -109,9 +111,15 @@ export const guardianOverview = createServerFn({ method: "GET" })
         properties: [] as PropertySummary[],
         partial: false,
         account: null,
+        observedProfiles: [] as ObservedSummary[],
+        observedPartial: false,
       };
     if (properties.error || account.error || role.error)
       throw new Error("Não foi possível consultar as propriedades autorizadas.");
+    const observed =
+      role.data === true
+        ? await (await import("./guardian/observed-property.server.ts")).listObservedProperties()
+        : { profiles: [] as ObservedSummary[], partial: false };
     return {
       configured: true,
       enabled: process.env.TPEC_GUARDIAN_ENABLED === "true",
@@ -120,7 +128,21 @@ export const guardianOverview = createServerFn({ method: "GET" })
       properties: (properties.data ?? []).slice(0, 100) as unknown as PropertySummary[],
       partial: (properties.data?.length ?? 0) > 100,
       account: account.data,
+      observedProfiles: observed.profiles,
+      observedPartial: observed.partial,
     };
+  });
+export const guardianObservedProperty = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((data: unknown) => z.object({ id: z.uuid() }).strict().parse(data))
+  .handler(async ({ context, data }) => {
+    const ctx = context as Context;
+    const { data: admin, error } = await ctx.supabase.rpc("has_role", {
+      _user_id: ctx.userId,
+      _role: "admin",
+    });
+    if (error || admin !== true) throw new Error("Acesso restrito a administradores.");
+    return (await import("./guardian/observed-property.server.ts")).getObservedProperty(data.id);
   });
 export const guardianPropertyDetail = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
