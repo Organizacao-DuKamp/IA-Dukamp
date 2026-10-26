@@ -14,6 +14,7 @@ import {
 import { FarmBookSchema } from "../src/lib/guardian/schema.ts";
 import { stockAt } from "../src/lib/guardian/operations.ts";
 import { handleGuardianMessage } from "../src/lib/guardian/handler.server.ts";
+import { automaticFarmEvent } from "../src/lib/guardian/automatic.ts";
 
 const phone = "5517999991111",
   other = "5517999992222",
@@ -295,6 +296,72 @@ test("integrated PostgreSQL: an existing explicitly registered owner farm is reu
     assert.equal(snapshot.active!.id, id);
     assert.equal(snapshot.active!.book.operations!.counts[0].count, 40);
     assert.equal(snapshot.active!.book.name, "Boa Vista");
+  } finally {
+    await f.db.close();
+  }
+});
+
+test("integrated PostgreSQL: resetting conversation context keeps the operational farm identity and never revives an old source", async () => {
+  const f = await farmIntegration();
+  try {
+    await f.observe(
+      phone,
+      "before-reset",
+      "Minha fazenda fica em Tanabi e tenho 40 cabeças.",
+      "2026-10-25T15:00:00Z",
+    );
+    const original = (await f.guardian.load(phone)).active!;
+    assert.equal(
+      (await f.guardian.load(phone)).properties[0].name,
+      "Propriedade sem nome — Tanabi",
+    );
+    await f.db.query(
+      "insert into whatsapp_followup_profiles(phone_number,context_reset_at) values($1,'2026-10-26T00:00:00Z')",
+      [phone],
+    );
+    await f.observe(phone, "after-reset", "Agora tenho 52 cabeças.", "2026-10-26T15:00:00Z");
+    const updated = await f.guardian.load(phone);
+    assert.equal(updated.properties.length, 1);
+    assert.equal(updated.active!.id, original.id);
+    assert.equal(updated.active!.book.city, "Tanabi");
+    assert.deepEqual(
+      updated.active!.book.operations!.counts.map((c) => c.count),
+      [40, 52],
+    );
+    assert.equal(
+      (await f.observe(phone, "late-old-source", "Tenho 40 cabeças.", "2026-10-25T16:00:00Z"))!
+        .status,
+      "reset",
+    );
+    assert.equal((await f.guardian.load(phone)).active!.book.operations!.counts.length, 2);
+    await f.observe(
+      phone,
+      "second-property",
+      "Tenho outra fazenda chamada Santa Rita em Votuporanga/SP. Tenho 20 cabeças.",
+      "2026-10-26T15:30:00Z",
+    );
+    await f.db.query(
+      "update whatsapp_followup_profiles set context_reset_at='2026-10-26T16:00:00Z' where phone_number=$1",
+      [phone],
+    );
+    const ambiguous = await f.observe(
+      phone,
+      "ambiguous-after-reset",
+      "Agora tenho 60 cabeças.",
+      "2026-10-26T16:30:00Z",
+    );
+    assert.equal(ambiguous!.status, "ambiguous_property");
+    const multiple = await f.guardian.load(phone);
+    assert.equal(multiple.properties.length, 2);
+    assert.equal(multiple.active!.id, original.id);
+    assert.equal(multiple.active!.book.operations!.counts.length, 2);
+    assert.deepEqual(
+      automaticFarmEvent(
+        { text: "Agora tenho 60 cabeças.", at: new Date("2026-10-26T16:30:00Z") },
+        multiple,
+      ),
+      { status: "pending", reason: "ambiguous_property" },
+    );
   } finally {
     await f.db.close();
   }

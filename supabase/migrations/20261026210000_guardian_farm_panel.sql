@@ -12,7 +12,8 @@ ALTER TABLE public.guardian_properties ADD CONSTRAINT guardian_book_required_fie
   AND octet_length(book::text)<=10000000
 );
 
-ALTER TABLE public.guardian_observed_properties ADD COLUMN guardian_property_id uuid UNIQUE REFERENCES public.guardian_properties(id) ON DELETE SET NULL;
+ALTER TABLE public.guardian_observed_properties ADD COLUMN guardian_property_id uuid REFERENCES public.guardian_properties(id) ON DELETE SET NULL;
+CREATE INDEX guardian_observed_operational_link ON public.guardian_observed_properties(guardian_property_id) WHERE guardian_property_id IS NOT NULL;
 CREATE FUNCTION public.guardian_project_operational_farm() RETURNS trigger
 LANGUAGE plpgsql SECURITY INVOKER SET search_path='' AS $$
 DECLARE profile public.guardian_observed_properties; farm public.guardian_properties; b jsonb; current_fact public.guardian_observed_facts; new_id uuid; op jsonb; matches int;
@@ -28,7 +29,7 @@ BEGIN
     SELECT count(*),(array_agg(p.id))[1] INTO matches,new_id
     FROM public.guardian_properties p JOIN public.guardian_members m ON m.property_id=p.id
     WHERE m.phone_number=NEW.phone_number AND m.active AND m.role='owner'
-      AND NOT EXISTS(SELECT 1 FROM public.guardian_observed_properties other WHERE other.guardian_property_id=p.id)
+      AND NOT EXISTS(SELECT 1 FROM public.guardian_observed_properties other WHERE other.guardian_property_id=p.id AND other.phone_number=NEW.phone_number AND other.generation_start=NEW.generation_start)
       AND (
         (profile.identity_key LIKE 'name:%' AND profile.identity_key='name:'||regexp_replace(translate(lower(btrim(p.book->>'name')),'áàâãäéèêëíìîïóòôõöúùûüç','aaaaaeeeeiiiiooooouuuuc'),'[^a-z0-9]+',' ','g'))
         OR (profile.identity_key='default' AND (SELECT count(*) FROM public.guardian_members WHERE phone_number=NEW.phone_number AND active)=1
@@ -38,6 +39,10 @@ BEGIN
       UPDATE public.guardian_observed_properties SET guardian_property_id=new_id WHERE id=profile.id;
       profile.guardian_property_id:=new_id;
     END IF;
+  END IF;
+  IF profile.guardian_property_id IS NULL AND profile.identity_key='default' AND (SELECT count(*) FROM public.guardian_members WHERE phone_number=NEW.phone_number AND active)>1 THEN
+    -- Legacy private facts with an ambiguous farm stay private during backfill.
+    RETURN NEW;
   END IF;
   IF profile.guardian_property_id IS NULL THEN
     IF (SELECT count(*) FROM public.guardian_members WHERE phone_number=NEW.phone_number AND active AND role='owner')>=100 THEN RAISE EXCEPTION 'guardian_capacity'; END IF;
@@ -220,4 +225,88 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION public.guardian_panel_issue(text,uuid,text,text),public.guardian_panel_exchange(text,text),public.guardian_panel_authorize(text),public.guardian_panel_attempt(text),public.guardian_panel_commit(text,bigint,uuid,text,text,jsonb,jsonb) FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.guardian_panel_issue(text,uuid,text,text),public.guardian_panel_exchange(text,text),public.guardian_panel_authorize(text),public.guardian_panel_attempt(text),public.guardian_panel_commit(text,bigint,uuid,text,text,jsonb,jsonb) TO service_role;
+-- The stored official name remains nullable; only the choice label uses a provisional name.
+CREATE OR REPLACE FUNCTION public.guardian_snapshot(p_phone text) RETURNS jsonb
+LANGUAGE plpgsql SECURITY INVOKER SET search_path='' AS $$
+DECLARE a public.guardian_accounts; p public.guardian_properties; r text; properties jsonb; notification jsonb;
+BEGIN
+  IF p_phone !~ '^[0-9]{6,20}$' THEN RAISE EXCEPTION 'invalid_guardian_sender'; END IF;
+  SELECT * INTO a FROM public.guardian_accounts WHERE phone_number=p_phone;
+  SELECT COALESCE(jsonb_agg(jsonb_build_object('id',g.id,'name',coalesce(g.book->>'name','Propriedade sem nome'||CASE WHEN g.book->>'city' IS NOT NULL THEN ' — '||(g.book->>'city') ELSE '' END),'role',m.role) ORDER BY g.created_at),'[]') INTO properties
+    FROM public.guardian_members m JOIN public.guardian_properties g ON g.id=m.property_id WHERE m.phone_number=p_phone AND m.active;
+  SELECT m.role INTO r FROM public.guardian_members m WHERE m.property_id=a.active_property_id AND m.phone_number=p_phone AND m.active;
+  IF FOUND THEN SELECT * INTO p FROM public.guardian_properties WHERE id=a.active_property_id; END IF;
+  SELECT jsonb_build_object('id',e.id,'taskId',e.evidence->>'taskId','sentAt',e.sent_at) INTO notification FROM public.guardian_events e
+    WHERE e.recipient=p_phone AND e.property_id=p.id AND e.status='sent' AND e.answered_at IS NULL AND e.sent_at>now()-interval '24 hours' ORDER BY e.sent_at DESC LIMIT 1;
+  RETURN jsonb_build_object('accountVersion',COALESCE(a.version,0),'preferences',a.preferences,'pending',CASE WHEN r IS NOT NULL OR a.pending->'action'->>'kind'='property_create' THEN a.pending ELSE NULL END,
+    'properties',properties,'active',CASE WHEN p.id IS NOT NULL THEN jsonb_build_object('id',p.id,'version',p.version,'role',r,'book',p.book) ELSE NULL END,'lastNotification',notification,'lastCalculation',a.last_calculation);
+END $$;
+REVOKE ALL ON FUNCTION public.guardian_snapshot(text) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.guardian_snapshot(text) TO service_role;
+
+-- Resolve unnamed observations against all authorized operational farms, including after a context reset.
+CREATE OR REPLACE FUNCTION public.guardian_observe_property(p_phone text,p_message_id text,p_source_at timestamptz,p_source_text text,p_name text,p_another boolean,p_facts jsonb)
+RETURNS jsonb LANGUAGE plpgsql SECURITY INVOKER SET search_path='' AS $$
+DECLARE
+  boundary timestamptz;
+  profile uuid;
+  profile_count int;
+  key text;
+  fact jsonb;
+  added int := 0;
+BEGIN
+  IF p_phone IS NULL OR p_phone !~ '^[0-9]{6,20}$' OR length(p_message_id) NOT BETWEEN 1 AND 128
+    OR p_source_at IS NULL OR p_source_at>clock_timestamp()+interval '1 minute'
+    OR length(p_source_text) NOT BETWEEN 1 AND 16000 OR jsonb_typeof(p_facts) IS DISTINCT FROM 'array'
+    OR jsonb_array_length(p_facts) NOT BETWEEN 1 AND 12 THEN RAISE EXCEPTION 'invalid_observed_property_input'; END IF;
+  PERFORM pg_advisory_xact_lock(hashtextextended('guardian-observed:'||p_phone,0));
+  boundary := public.whatsapp_context_boundary(p_phone);
+  IF p_source_at<boundary THEN RETURN jsonb_build_object('status','reset','added',0); END IF;
+  IF (SELECT count(DISTINCT f->>'field') FROM jsonb_array_elements(p_facts) f)<>jsonb_array_length(p_facts)
+    THEN RAISE EXCEPTION 'conflicting_observed_fields'; END IF;
+  FOR fact IN SELECT value FROM jsonb_array_elements(p_facts) LOOP
+    IF fact->>'field' IS NULL OR fact->'value' IS NULL OR fact->>'quote' IS NULL
+      OR position(fact->>'quote' IN p_source_text)=0 OR position('?' IN fact->>'quote')>0
+      OR fact->>'effectiveDate' IS NULL OR (fact->>'effectiveDate')::date>(p_source_at AT TIME ZONE 'America/Sao_Paulo')::date
+      THEN RAISE EXCEPTION 'unsupported_observed_evidence'; END IF;
+  END LOOP;
+  -- A retry must remain attached to its original property even if later profiles appeared.
+  SELECT f.property_id INTO profile FROM public.guardian_observed_facts f
+    WHERE f.phone_number=p_phone AND f.generation_start=boundary AND f.source_message_id=p_message_id LIMIT 1;
+  IF profile IS NULL THEN
+    IF p_name IS NULL AND (SELECT count(*) FROM public.guardian_members WHERE phone_number=p_phone AND active)>1 THEN
+      RETURN jsonb_build_object('status','ambiguous_property','added',0);
+    END IF;
+    SELECT count(*) INTO profile_count FROM public.guardian_observed_properties p WHERE p.phone_number=p_phone AND p.generation_start=boundary;
+    IF p_name IS NOT NULL THEN
+      IF length(btrim(p_name)) NOT BETWEEN 1 AND 160 OR NOT EXISTS (SELECT 1 FROM jsonb_array_elements(p_facts) f WHERE f->>'field'='name' AND f->>'value'=p_name)
+        THEN RAISE EXCEPTION 'unsupported_observed_name'; END IF;
+      key := 'name:'||regexp_replace(translate(lower(btrim(p_name)),'áàâãäéèêëíìîïóòôõöúùûüç','aaaaaeeeeiiiiooooouuuuc'),'[^a-z0-9]+',' ','g');
+      SELECT p.id INTO profile FROM public.guardian_observed_properties p WHERE p.phone_number=p_phone AND p.generation_start=boundary AND p.identity_key=key;
+      IF profile IS NOT NULL AND coalesce(p_another,false) THEN RETURN jsonb_build_object('status','ambiguous_property','added',0); END IF;
+      IF profile IS NULL AND profile_count=1 AND NOT coalesce(p_another,false) THEN
+        SELECT p.id INTO profile FROM public.guardian_observed_properties p WHERE p.phone_number=p_phone AND p.generation_start=boundary AND p.identity_key='default';
+        IF profile IS NOT NULL THEN UPDATE public.guardian_observed_properties SET identity_key=key WHERE id=profile; END IF;
+      END IF;
+    ELSE
+      IF coalesce(p_another,false) OR profile_count>1 THEN RETURN jsonb_build_object('status','ambiguous_property','added',0); END IF;
+      key := 'default';
+      IF profile_count=1 THEN SELECT p.id INTO profile FROM public.guardian_observed_properties p WHERE p.phone_number=p_phone AND p.generation_start=boundary; END IF;
+    END IF;
+    IF profile IS NULL THEN
+      INSERT INTO public.guardian_observed_properties(phone_number,generation_start,identity_key,updated_at)
+        VALUES(p_phone,boundary,key,p_source_at) RETURNING id INTO profile;
+    END IF;
+  END IF;
+  FOR fact IN SELECT value FROM jsonb_array_elements(p_facts) LOOP
+    INSERT INTO public.guardian_observed_facts(property_id,phone_number,generation_start,field,value,source_message_id,source_excerpt,source_question,source_at,effective_date)
+      VALUES(profile,p_phone,boundary,fact->>'field',fact->'value',p_message_id,fact->>'quote',fact->>'question',p_source_at,(fact->>'effectiveDate')::date)
+      ON CONFLICT (phone_number,generation_start,source_message_id,field) DO NOTHING;
+    IF FOUND THEN added := added+1; END IF;
+  END LOOP;
+  IF added>0 THEN UPDATE public.guardian_observed_properties SET updated_at=greatest(updated_at,p_source_at) WHERE id=profile; END IF;
+  RETURN jsonb_build_object('status','saved','propertyId',profile,'added',added);
+END;
+$$;
+
 NOTIFY pgrst,'reload schema';

@@ -1,6 +1,7 @@
 import { ActionSchema, type GuardianSnapshot, type GuardianAction } from "./schema.ts";
 import { OperationsActionSchema } from "./operations.ts";
 import { certainStatement, statementParts, userStatement } from "../whatsapp/learned-notes.ts";
+import { extractPropertyObservation } from "./observed-property.ts";
 import { localDay, recallPeriod } from "../chat/context/recall.ts";
 
 export type AutomaticObservation =
@@ -19,6 +20,20 @@ export function automaticFarmEvent(
   snapshot: GuardianSnapshot,
 ): AutomaticObservation {
   const text = userStatement(input.text, input.mediaType);
+  if (snapshot.properties.length > 1) {
+    const observation = extractPropertyObservation({
+      text,
+      mediaType: input.mediaType,
+      at: input.at,
+    });
+    if (
+      !observation.name &&
+      observation.facts.some((f) =>
+        ["herdTotal", "cows", "oxen", "calves", "heifers"].includes(f.field),
+      )
+    )
+      return { status: "pending", reason: "ambiguous_property" };
+  }
   // Preserve the private-notebook workflow for legacy books with no operational
   // baseline/profile yet. Observed-fact projection or an explicit count initializes it.
   if (
