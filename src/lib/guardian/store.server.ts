@@ -6,7 +6,7 @@ import {
   type GuardianEvent,
   type GuardianPreferences,
   type GuardianSnapshot,
-  type PendingAction,
+  type GuardianPending,
 } from "./schema.ts";
 
 export interface GuardianCommit {
@@ -30,7 +30,7 @@ export interface GuardianCommit {
     | "link"
     | "calculation";
   book?: FarmBook;
-  pending: PendingAction | null;
+  pending: GuardianPending | null;
   preferences?: GuardianPreferences;
   details?: Record<string, unknown>;
   reply: string;

@@ -240,7 +240,8 @@ test("integrated PostgreSQL: spontaneous sale persists once and reaches recall w
       },
     });
     assert.equal(result!.persisted, true);
-    assert.equal(result!.reply, null);
+    assert.match(result!.reply!, /Registros salvos/);
+    assert.match(result!.reply!, /código\/brinco e RGN/);
     assert.match(result!.context!, /RECIBO DESTE TURNO/);
     await handleGuardianMessage(input, { store: f.guardian, now });
     const book = (await f.guardian.load(phone)).active!.book;

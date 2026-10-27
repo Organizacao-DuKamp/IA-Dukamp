@@ -7,6 +7,18 @@ import { automaticFarmEvent } from "./automatic.ts";
 import { handlePanelCodeRequest } from "./panel.server.ts";
 import { farmIndicators, stockAt } from "./operations.ts";
 import { ledgerForTotals } from "./finance.ts";
+import {
+  identificationAfterEntry,
+  identificationAnswer,
+  identificationQuestion,
+  restoreProposal,
+} from "./herd-identification.ts";
+import {
+  HERD_IDENTITY_QUESTION,
+  herdTopic,
+  herdRegistrationIntent,
+  withHerdQuestion,
+} from "./herd-language.ts";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { z } from "zod";
 import {
@@ -59,6 +71,7 @@ export interface GuardianHandled {
   activeProperty: boolean;
   persisted?: boolean;
   conversational?: boolean;
+  herdIdentificationQuestion?: string;
 }
 export interface GuardianDependencies {
   store?: GuardianStore;
@@ -207,6 +220,96 @@ export async function handleGuardianMessage(
     if (previous) return { reply: previous, activeProperty: false, persisted: true };
     for (let attempt = 0; attempt < 4; attempt++) {
       const snapshot = await store.load(input.phone);
+      const followup = snapshot.pending?.kind === "herd_identification" ? snapshot.pending : null;
+      const herdQuestion =
+        snapshot.active && herdTopic(input.text)
+          ? followup
+            ? identificationQuestion(followup)
+            : HERD_IDENTITY_QUESTION
+          : undefined;
+      if (!snapshot.active && /^(?:c[oó]digo|brinco|rgn)\b/i.test(input.text.trim()))
+        return {
+          reply:
+            "Selecione uma fazenda à qual você tenha acesso antes de informar as identificações. Nenhuma ficha foi salva.",
+          activeProperty: false,
+          persisted: false,
+        };
+      if (followup && (!deps.request || ["confirm", "cancel"].includes(deps.request.kind))) {
+        const answer = identificationAnswer(
+          deps.request?.kind === "cancel" ? "cancelar" : input.text,
+          followup,
+          snapshot.active?.book ?? emptyFarm("", "", ""),
+        );
+        if (answer.kind !== "none") {
+          attempted = true;
+          const valid =
+            !!snapshot.active &&
+            followup.propertyId === snapshot.active.id &&
+            Date.parse(followup.expiresAt) > now.getTime();
+          let pending = valid ? followup : null;
+          let book = snapshot.active?.book;
+          let reply =
+            "A identificação pendente expirou ou a fazenda selecionada mudou. A entrada anterior continua salva; envie os códigos com a fazenda correta selecionada.";
+          if (valid) {
+            if (answer.kind === "ask") reply = answer.reply;
+            if (answer.kind === "close") {
+              pending = null;
+              reply = answer.reply;
+            }
+            if (answer.kind === "animals") {
+              if (!answer.actions.every((a) => canEdit(snapshot.active!.role, a)))
+                return {
+                  reply: "Seu acesso não permite cadastrar animais nesta fazenda.",
+                  activeProperty: true,
+                  persisted: false,
+                };
+              for (const [index, action] of answer.actions.entries())
+                book = applyFarmAction(
+                  book!,
+                  action,
+                  snapshot.active!.role,
+                  {
+                    actor: input.phone,
+                    messageId: input.messageId,
+                    at,
+                    sourceAt: referenceAt.toISOString(),
+                    confirmed: true,
+                  },
+                  `${turnId}-ID-${index + 1}`,
+                ).book;
+              pending = answer.pending;
+              reply =
+                `Identificações salvas: ${answer.actions.map((a) => `${a.code}${a.rgn ? ` — RGN ${a.rgn}` : " — sem RGN informado"}`).join("; ")}. A quantidade do rebanho não foi alterada.` +
+                (pending ? `\n\n${identificationQuestion(pending)}` : "");
+            }
+          }
+          const result = await store.commit({
+            phone: input.phone,
+            messageId: input.messageId,
+            accountVersion: snapshot.accountVersion,
+            propertyId: snapshot.active?.id ?? null,
+            propertyVersion: snapshot.active?.version ?? null,
+            operation: valid && answer.kind === "animals" ? "update" : "clear",
+            book: valid && answer.kind === "animals" ? book : undefined,
+            pending: pending ?? (valid ? restoreProposal(followup, now) : null),
+            details: {
+              kind: "animal",
+              followup: "herd_identification",
+              sourceEntryMessageId: followup.sourceMessageId,
+              entryIds: followup.entries.map((e) => e.eventId),
+            },
+            reply,
+          });
+          if (result === "conflict") continue;
+          if (result !== "committed" && !result.startsWith("replay:"))
+            throw new Error("guardian_commit_unconfirmed");
+          return {
+            reply: result.startsWith("replay:") ? result.slice(7) : reply,
+            activeProperty: !!snapshot.active,
+            persisted: valid && answer.kind === "animals",
+          };
+        }
+      }
       const continuedTask = taskContinuation(input.text, input.history);
       if (!deps.request) {
         const observation = automaticFarmEvent({ ...input, at: referenceAt }, snapshot);
@@ -238,6 +341,7 @@ export async function handleGuardianMessage(
                 ? "De qual fazenda é esse acontecimento? Consulte “minhas fazendas” e envie o relato com a fazenda selecionada. Ainda não alterei o rebanho."
                 : "Informe cada acontecimento com a data em que ocorreu. Preciso separar os relatos para não duplicar ou misturar períodos."),
             activeProperty: !!snapshot.active,
+            persisted: false,
           };
         }
         if (
@@ -285,7 +389,16 @@ export async function handleGuardianMessage(
             };
           }
           const directReceipt =
-            actions.some((a) => a.kind === "ledger" || a.kind === "animal") || actions.length > 1;
+            actions.some((a) => ["ledger", "animal", "herd_event"].includes(a.kind)) ||
+            actions.length > 1;
+          const identification = identificationAfterEntry(
+            actions,
+            applied.book,
+            snapshot.pending,
+            snapshot.active.id,
+            input.messageId,
+            at,
+          );
           const stock = applied.book.operations
             ? stockAt(
                 applied.book.operations,
@@ -294,7 +407,7 @@ export async function handleGuardianMessage(
                 ),
               ).count
             : null;
-          const savedReply = directReceipt
+          const receiptText = directReceipt
             ? `Registros salvos em ${farmName(applied.book)}:\n` +
               actions
                 .map((a) =>
@@ -311,6 +424,14 @@ export async function handleGuardianMessage(
                 ? `\nRebanho calculado após os registros: ${stock} animais.`
                 : "")
             : "Registro informado salvo na fazenda com origem e data preservadas.";
+          const savedReply = withHerdQuestion(
+            receiptText,
+            identification
+              ? identificationQuestion(identification)
+              : actions.some((a) => a.kind === "animal")
+                ? undefined
+                : herdQuestion,
+          );
           const result = await store.commit({
             phone: input.phone,
             messageId: input.messageId,
@@ -319,7 +440,7 @@ export async function handleGuardianMessage(
             propertyVersion: snapshot.active.version,
             operation: "update",
             book: applied.book,
-            pending: snapshot.pending,
+            pending: identification ?? snapshot.pending,
             details: {
               kind: actions[0].kind,
               classification: "declared",
@@ -348,8 +469,34 @@ export async function handleGuardianMessage(
             activeProperty: true,
             conversational: true,
             persisted: true,
+            herdIdentificationQuestion: directReceipt ? undefined : herdQuestion,
           };
         }
+      }
+      // A clarification about a failed registration must never become an AI-only acknowledgement.
+      if (/^(?:e |é )?(?:pra|para)(?: o)? rebanho[.! ]*$/i.test(input.text.trim()))
+        return {
+          reply:
+            "Entendi que é para o rebanho. Envie o acontecimento com a quantidade e a data, por exemplo: “hoje nasceram mais quatro bezerros”. Só confirmarei após salvar e atualizar o saldo.",
+          activeProperty: !!snapshot.active,
+          persisted: false,
+        };
+      if (!deps.request && snapshot.active?.book.operations && herdRegistrationIntent(input.text)) {
+        const parsed = parseGuardianRequest(input.text, snapshot, referenceAt);
+        const uncountedMovement =
+          parsed?.kind === "action" &&
+          parsed.action.kind === "record" &&
+          /\b(?:nasceu|nasceram|comprei|compramos|morreu|morreram|vendi|vendemos)\b/.test(
+            fold(input.text),
+          ) &&
+          !(parsed.action.type === "birth" && parsed.action.count);
+        if (!parsed || parsed.kind === "extract" || uncountedMovement)
+          return {
+            reply:
+              "Não consegui confirmar uma movimentação do rebanho com esses dados. Informe o que aconteceu, quantos animais e quando. Ainda não alterei o saldo.",
+            activeProperty: true,
+            persisted: false,
+          };
       }
       if (
         !deps.request &&
@@ -362,6 +509,7 @@ export async function handleGuardianMessage(
           context: structuredContext(snapshot, now),
           activeProperty: !!snapshot.active,
           conversational: true,
+          herdIdentificationQuestion: herdQuestion,
         };
       const link = input.text.trim().match(/^vincular painel\s+([a-f0-9]{32})[.! ]*$/i);
       let request: GuardianRequest | null =
@@ -372,6 +520,7 @@ export async function handleGuardianMessage(
           reply: null,
           context: structuredContext(snapshot, now),
           activeProperty: !!snapshot.active,
+          herdIdentificationQuestion: herdQuestion,
         };
       const base: GuardianCommit = {
         phone: input.phone,
@@ -497,6 +646,7 @@ export async function handleGuardianMessage(
                   "Não há um caderno compartilhado selecionado. Responda usando os relatos privados e as mensagens recuperadas; não exija cadastro de fazenda para lembrar ou consultar o que a pessoa já contou. Não chame os relatos de censo ou fechamento contábil.",
                 activeProperty: false,
                 conversational: true,
+                herdIdentificationQuestion: herdQuestion,
               };
             if (
               !/\b(?:caderno de campo|registros confirmados|relatorio da fazenda|resumo da fazenda)\b/.test(
@@ -508,6 +658,7 @@ export async function handleGuardianMessage(
                 context: structuredContext(snapshot, now),
                 activeProperty: true,
                 conversational: true,
+                herdIdentificationQuestion: herdQuestion,
               };
             base.reply = farmReport(snapshot.active.book, request);
             break;
@@ -531,7 +682,21 @@ export async function handleGuardianMessage(
             base.reply = renderCalculation(calculate(request.calculation));
             break;
           case "action": {
-            const action = ActionSchema.parse(request.action);
+            let action = ActionSchema.parse(request.action);
+            if (
+              action.kind === "record" &&
+              action.type === "birth" &&
+              action.count &&
+              snapshot.active?.book.operations
+            )
+              action = ActionSchema.parse({
+                kind: "herd_event",
+                type: "birth",
+                count: action.count,
+                date: action.date,
+                description: action.description.slice(0, 160),
+                ...(action.lot ? { lot: action.lot } : {}),
+              });
             if (action.kind !== "property_create" && !snapshot.active)
               return {
                 reply:
@@ -582,7 +747,23 @@ export async function handleGuardianMessage(
                 "A proposta expirou. Envie o registro novamente para eu mostrar os dados antes de salvar.";
               break;
             }
-            const a = ActionSchema.parse(pending.action);
+            if (pending.kind === "herd_identification")
+              return { reply: identificationQuestion(pending), activeProperty: !!snapshot.active };
+            let a = ActionSchema.parse(pending.action);
+            if (
+              a.kind === "record" &&
+              a.type === "birth" &&
+              a.count &&
+              snapshot.active?.book.operations
+            )
+              a = ActionSchema.parse({
+                kind: "herd_event",
+                type: "birth",
+                count: a.count,
+                date: a.date,
+                description: a.description.slice(0, 160),
+                ...(a.lot ? { lot: a.lot } : {}),
+              });
             if (
               a.kind !== "property_create" &&
               (!snapshot.active || pending.propertyId !== snapshot.active.id)
@@ -684,6 +865,18 @@ export async function handleGuardianMessage(
               base.book = applied.book;
               base.events = applied.events;
               base.reply = applied.result;
+              const identification = identificationAfterEntry(
+                [a],
+                applied.book,
+                null,
+                snapshot.active!.id,
+                pending.sourceMessageId,
+                at,
+              );
+              if (identification) {
+                base.pending = identification;
+                base.reply = withHerdQuestion(base.reply, identificationQuestion(identification));
+              }
               if (a.kind === "task_update" && snapshot.lastNotification?.taskId === a.task)
                 base.details.replyToEventId = snapshot.lastNotification.id;
             }
@@ -691,6 +884,8 @@ export async function handleGuardianMessage(
           }
         }
       }
+      if (herdQuestion && !base.reply.includes("código") && base.operation !== "pending")
+        base.reply = withHerdQuestion(base.reply, herdQuestion);
       const saved = await store.commit(base);
       if (saved === "conflict") continue;
       if (saved === "committed")
