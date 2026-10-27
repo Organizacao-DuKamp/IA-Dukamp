@@ -125,7 +125,14 @@ export const guardianOverview = createServerFn({ method: "GET" })
       enabled: process.env.TPEC_GUARDIAN_ENABLED === "true",
       templateConfigured: Boolean(process.env.WHATSAPP_GUARDIAN_TEMPLATE_NAME),
       isAdmin: role.data === true,
-      properties: (properties.data ?? []).slice(0, 100) as unknown as PropertySummary[],
+      properties: ((properties.data ?? []).slice(0, 100) as unknown as PropertySummary[]).map(
+        (p) => ({
+          ...p,
+          name: p.name ?? `Propriedade sem nome${p.city ? ` — ${p.city}` : ""}`,
+          city: p.city ?? "",
+          uf: p.uf ?? "",
+        }),
+      ),
       partial: (properties.data?.length ?? 0) > 100,
       account: account.data,
       observedProfiles: observed.profiles,
@@ -325,4 +332,106 @@ export const guardianUpdatePreferences = createServerFn({ method: "POST" })
     if (!result?.reply) throw new Error("Não foi possível salvar as preferências.");
     if (result.persisted === false) throw new Error(result.reply);
     return { reply: result.reply };
+  });
+
+async function requireGuardianAdmin(context: Context) {
+  const { data, error } = await context.supabase.rpc("has_role", {
+    _user_id: context.userId,
+    _role: "admin",
+  });
+  if (error || data !== true) throw new Error("Acesso restrito a administradores.");
+}
+export const guardianIntelligenceOverview = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const ctx = context as Context;
+    await requireGuardianAdmin(ctx);
+    const [pending, resolved, rejected, farms, unnamed] = await Promise.all([
+      ctx.supabase
+        .from("guardian_review_queue")
+        .select("id,property_id,message_id,reason,status,created_at", { count: "exact" })
+        .eq("status", "pending")
+        .order("created_at", { ascending: true })
+        .limit(51),
+      ctx.supabase
+        .from("guardian_review_queue")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "resolved"),
+      ctx.supabase
+        .from("guardian_review_queue")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "rejected"),
+      ctx.supabase.from("guardian_properties").select("id", { count: "exact", head: true }),
+      ctx.supabase
+        .from("guardian_properties")
+        .select("id", { count: "exact", head: true })
+        .is("book->>name", null),
+    ]);
+    if ([pending, resolved, rejected, farms, unnamed].some((r) => r.error))
+      throw new Error("Não foi possível carregar a fila. Confira as migrações da Guardiã.");
+    return {
+      pending: pending.count ?? 0,
+      resolved: resolved.count ?? 0,
+      rejected: rejected.count ?? 0,
+      farms: farms.count ?? 0,
+      unnamed: unnamed.count ?? 0,
+      entries: (pending.data ?? []).slice(0, 50) as Array<{
+        id: string;
+        property_id: string | null;
+        message_id: string;
+        reason: string;
+        status: string;
+        created_at: string;
+      }>,
+      partial: (pending.data?.length ?? 0) > 50,
+    };
+  });
+export const guardianResolveReview = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((value: unknown) =>
+    z
+      .object({ id: z.uuid(), status: z.enum(["resolved", "rejected"]) })
+      .strict()
+      .parse(value),
+  )
+  .handler(async ({ context, data }) => {
+    const ctx = context as Context;
+    await requireGuardianAdmin(ctx);
+    const { guardianDb } = await import("./guardian/store.server.ts");
+    const saved = await (
+      await guardianDb()
+    ).rpc("guardian_resolve_review", { p_id: data.id, p_actor: ctx.userId, p_status: data.status });
+    if (saved.error || saved.data !== true)
+      throw new Error("A pendência mudou ou não pôde ser encerrada. Atualize a fila.");
+    return { ok: true };
+  });
+export const guardianReviewSource = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((value: unknown) => z.object({ id: z.uuid() }).strict().parse(value))
+  .handler(async ({ context, data }) => {
+    const ctx = context as Context;
+    await requireGuardianAdmin(ctx);
+    const { guardianDb } = await import("./guardian/store.server.ts");
+    const db = await guardianDb();
+    const entry = await db
+      .from("guardian_review_queue")
+      .select("phone_number,message_id")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (entry.error || !entry.data) throw new Error("Pendência indisponível.");
+    const source = await db
+      .from("ai_chat_turns")
+      .select("user_text,created_at")
+      .eq("phone_number", entry.data.phone_number)
+      .eq("client_message_id", entry.data.message_id)
+      .eq("channel", "whatsapp")
+      .maybeSingle();
+    if (source.error) throw new Error("Não foi possível consultar a origem.");
+    const { certainStatement } = await import("./whatsapp/learned-notes.ts");
+    const text = source.data?.user_text;
+    return {
+      quote:
+        typeof text === "string" && text.length <= 1500 && certainStatement(text) ? text : null,
+      at: source.data?.created_at ?? null,
+    };
   });

@@ -232,8 +232,18 @@ export async function listObservedProperties() {
   if (error?.code === "PGRST202" || error?.code === "42883")
     return { profiles: [] as ObservedSummary[], partial: false, configured: false };
   if (error) throw new Error("Não foi possível carregar os perfis informados nas conversas.");
+  const result = z
+    .object({ profiles: z.array(ObservedSummarySchema), partial: z.boolean() })
+    .parse(data);
   return {
-    ...z.object({ profiles: z.array(ObservedSummarySchema), partial: z.boolean() }).parse(data),
+    ...result,
+    profiles: result.profiles.map((p) => ({
+      ...p,
+      name:
+        typeof p.facts.name?.value === "string"
+          ? p.facts.name.value
+          : `Propriedade sem nome${p.facts.city?.value ? ` — ${p.facts.city.value}` : ""}`,
+    })),
     configured: true,
   };
 }

@@ -48,5 +48,43 @@ export function farmCsv(book: FarmBook): string {
       r.lot ?? "",
       r.type,
     ]);
+  for (const f of book.operations?.feed ?? [])
+    rows.push(["Consumo", f.id, f.date, f.feed, f.kg, "kg", f.lot ?? "Fazenda", f.basis]);
+  for (const c of book.operations?.categoryCounts ?? [])
+    rows.push([
+      "Categoria declarada",
+      c.id,
+      c.date,
+      c.category,
+      c.count,
+      "cabeças",
+      "",
+      "declarado",
+    ]);
+  const replaced = new Set(book.operations?.movements.map((m) => m.replaces).filter(Boolean));
+  for (const c of book.operations?.counts ?? [])
+    rows.push([
+      "Contagem declarada",
+      c.id,
+      c.date,
+      "Quantidade ao fim do dia",
+      c.count,
+      "cabeças",
+      c.lot ?? "Fazenda",
+      "declarado",
+    ]);
+  for (const m of book.operations?.movements ?? [])
+    rows.push([
+      "Movimentação",
+      m.id,
+      m.date,
+      m.description,
+      m.count,
+      "cabeças",
+      m.lot ?? "Fazenda",
+      replaced.has(m.id) ? "substituído por correção" : m.type,
+    ]);
+  for (const l of book.operations?.lots ?? [])
+    rows.push(["Lote", l.name, "", l.pasture ?? "", l.areaHa ?? "", "ha", l.name, "informado"]);
   return "\ufeff" + rows.map((row) => row.map(cell).join(";")).join("\r\n");
 }

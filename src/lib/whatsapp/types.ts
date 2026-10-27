@@ -16,6 +16,7 @@ export const WhatsAppChatInputSchema = z.object({
   messageId: z.string().min(1).max(128),
   text: z.string().min(1).max(2000),
   media: WhatsAppMediaSchema.optional(),
+  sentAt: z.iso.datetime().optional(),
 });
 
 export type WhatsAppChatInput = z.infer<typeof WhatsAppChatInputSchema>;
@@ -76,3 +77,10 @@ export const WhatsAppControlResultSchema = z.discriminatedUnion("kind", [
 ]);
 
 export type WhatsAppControlResult = z.infer<typeof WhatsAppControlResultSchema>;
+
+/** A signed Meta epoch timestamp; missing/invalid timestamps keep the legacy fallback. */
+export function metaMessageSentAt(value: unknown, now = Date.now()): string | undefined {
+  if (typeof value !== "string" || !/^\d{10,11}$/.test(value)) return undefined;
+  const ms = Number(value) * 1000;
+  return Number.isFinite(ms) && ms > 0 && ms <= now ? new Date(ms).toISOString() : undefined;
+}

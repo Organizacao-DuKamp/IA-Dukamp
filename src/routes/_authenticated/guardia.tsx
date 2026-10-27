@@ -34,7 +34,9 @@ import { GuardianCalculator } from "@/components/guardian/GuardianCalculator";
 import { GuardianActionForm } from "@/components/guardian/GuardianActionForm";
 import { GuardianPreferences } from "@/components/guardian/GuardianPreferences";
 import { GuardianWorkspace } from "@/components/guardian/GuardianWorkspace";
+import { GuardianReviewQueue } from "@/components/guardian/GuardianReviewQueue";
 import { GuardianObservedProfiles } from "@/components/guardian/GuardianObservedProfiles";
+import { farmName } from "@/lib/guardian/schema";
 import type { GuardianAction, GuardianSnapshot } from "@/lib/guardian/schema";
 
 export const Route = createFileRoute("/_authenticated/guardia")({
@@ -267,7 +269,9 @@ function GuardianPage() {
               <h2 className="mt-1 text-2xl font-semibold tracking-tight">
                 {tab === "profiles"
                   ? "Perfis informados pelos produtores"
-                  : (detail?.book.name ?? "Bem-vindo à Guardiã")}
+                  : detail
+                    ? farmName(detail.book)
+                    : "Bem-vindo à Guardiã"}
               </h2>
               {detail && tab !== "profiles" && (
                 <p className="mt-2 flex items-center gap-1 text-sm text-muted-foreground">
@@ -418,11 +422,14 @@ function GuardianPage() {
           )}
           {!loading && tab === "calculator" && <GuardianCalculator />}
           {!loading && tab === "profiles" && overview?.isAdmin && (
-            <GuardianObservedProfiles
-              profiles={overview.observedProfiles}
-              partial={overview.observedPartial}
-              loadDetail={loadObserved}
-            />
+            <div className="space-y-6">
+              <GuardianReviewQueue />
+              <GuardianObservedProfiles
+                profiles={overview.observedProfiles}
+                partial={overview.observedPartial}
+                loadDetail={loadObserved}
+              />
+            </div>
           )}
           {!loading &&
             tab !== "calculator" &&

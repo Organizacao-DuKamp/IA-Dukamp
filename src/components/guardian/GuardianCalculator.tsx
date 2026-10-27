@@ -4,6 +4,51 @@ import { calculate, renderCalculation, type Calculation } from "@/lib/guardian/c
 
 const definitions: Record<Calculation["kind"], { name: string; fields: Array<[string, string]> }> =
   {
+    mortality_rate: {
+      name: "Taxa de mortalidade",
+      fields: [
+        ["events", "Mortes no período"],
+        ["eligible", "Animais expostos no mesmo período"],
+        ["start", "Início do período"],
+        ["end", "Fim do período"],
+      ],
+    },
+    birth_rate: {
+      name: "Taxa de natalidade",
+      fields: [
+        ["events", "Nascidos vivos no período"],
+        ["eligible", "Fêmeas expostas no mesmo período"],
+        ["start", "Início do período"],
+        ["end", "Fim do período"],
+      ],
+    },
+    weaning_rate: {
+      name: "Taxa de desmame",
+      fields: [
+        ["events", "Desmamados da mesma safra"],
+        ["eligible", "Nascidos vivos na safra"],
+        ["start", "Início do período"],
+        ["end", "Fim do período"],
+      ],
+    },
+    pregnancy_rate: {
+      name: "Taxa de prenhez",
+      fields: [
+        ["events", "Fêmeas com diagnóstico positivo"],
+        ["eligible", "Fêmeas examinadas no mesmo lote/período"],
+        ["start", "Início do período"],
+        ["end", "Fim do período"],
+      ],
+    },
+    productivity: {
+      name: "Produtividade por hectare",
+      fields: [
+        ["producedKg", "Produção medida (kg no período)"],
+        ["productiveHa", "Área produtiva correspondente (ha)"],
+        ["start", "Início do período"],
+        ["end", "Fim do período"],
+      ],
+    },
     gmd: {
       name: "Ganho médio diário",
       fields: [
@@ -93,7 +138,12 @@ export function GuardianCalculator() {
           try {
             const input = {
               kind,
-              ...Object.fromEntries(Object.entries(values).map(([k, v]) => [k, Number(v)])),
+              ...Object.fromEntries(
+                Object.entries(values).map(([k, v]) => [
+                  k,
+                  ["start", "end"].includes(k) ? v : Number(v),
+                ]),
+              ),
               ...(kind === "margin" ? { completeCosts: false } : {}),
             };
             setResult(renderCalculation(calculate(input)));
@@ -131,7 +181,7 @@ export function GuardianCalculator() {
               {label}
               <input
                 required
-                type="number"
+                type={["start", "end"].includes(key) ? "date" : "number"}
                 step="any"
                 value={values[key] ?? ""}
                 onChange={(e) => setValues((v) => ({ ...v, [key]: e.target.value }))}

@@ -1,6 +1,14 @@
+import {
+  OperationsActionSchema,
+  applyOperations,
+  describeOperations,
+  farmIndicators,
+  stockAt,
+} from "./operations.ts";
 import { calculate, renderCalculation } from "./calculators.ts";
 import {
   canEdit,
+  farmName,
   type FarmBook,
   type GuardianAction,
   type GuardianEvent,
@@ -20,6 +28,8 @@ const num = (v: number) => v.toLocaleString("pt-BR", { maximumFractionDigits: 3 
 const money = (cents: number) =>
   (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 export function describeAction(a: GuardianAction): string {
+  const operational = OperationsActionSchema.safeParse(a);
+  if (operational.success) return describeOperations(operational.data);
   switch (a.kind) {
     case "property_create":
       return `Criar a fazenda ${a.name}, em ${a.city}/${a.uf}.`;
@@ -54,6 +64,7 @@ export function describeAction(a: GuardianAction): string {
     case "property_delete":
       return `EXCLUIR definitivamente a fazenda ${a.name}, seus registros, convites e alertas. Os integrantes perderão o acesso.`;
   }
+  throw new Error("Ação desconhecida.");
 }
 export function applyFarmAction(
   original: FarmBook,
@@ -74,6 +85,15 @@ export function applyFarmAction(
       );
     return animal;
   };
+  const operational = OperationsActionSchema.safeParse(action);
+  if (operational.success) {
+    applyOperations(book, operational.data, source, id);
+    return {
+      book,
+      events,
+      result: "Registro salvo na gestão da fazenda, com origem e histórico preservados.",
+    };
+  }
   let result = "Registro confirmado e salvo.";
   switch (action.kind) {
     case "profile": {
@@ -251,7 +271,7 @@ export function applyFarmAction(
         updatedAt: task.updatedAt,
         sourceMessageId: source.messageId,
       },
-      message: `${book.name}: a tarefa “${task.title}” está prevista para ${new Date(task.dueAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })} (Brasília). Você já concluiu? Se sim, responda “concluir tarefa ${task.id}”.`,
+      message: `${farmName(book)}: a tarefa “${task.title}” está prevista para ${new Date(task.dueAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })} (Brasília). Você já concluiu? Se sim, responda “concluir tarefa ${task.id}”.`,
     });
   }
   return { book, events, result };
@@ -271,13 +291,30 @@ export function farmReport(
     (!input.start || day >= input.start) && (!input.end || day < input.end);
   const inLot = (lot?: string) => !input.lot || fold(lot ?? "") === fold(input.lot);
   const sections = [
-    book.name + ` — ${book.city}/${book.uf}`,
+    farmName(book) +
+      ` — ${[book.city, book.uf].filter(Boolean).join("/") || "localização não informada"}`,
     input.start || input.end
       ? `Período: ${input.start ?? "início"} até ${input.end ?? "hoje"} (fim exclusivo).`
       : "Dados confirmados desta propriedade.",
   ];
   const all = !input.section || input.section === "all";
   if (all || input.section === "herd") {
+    const today = localDateForTimeZone(new Date());
+    const end = input.end
+      ? new Date(Date.parse(input.end + "T12:00:00Z") - 86400000).toISOString().slice(0, 10)
+      : today;
+    const indicators = farmIndicators(book, input.start ?? "1900-01-01", end);
+    const stock =
+      input.lot && book.operations ? stockAt(book.operations!, end, input.lot) : indicators.stock;
+    sections.push(
+      stock.count === null
+        ? "Estoque agregado: ainda sem contagem inicial declarada."
+        : `Estoque agregado calculado: ${stock.count} cabeças em ${end}, a partir da contagem de ${stock.baseline!.date} e ${stock.included.length} movimentações posteriores. Fórmula: última contagem + entradas posteriores − saídas posteriores.`,
+    );
+    if (indicators.evolution && !input.lot)
+      sections.push(
+        `Contagens declaradas: ${indicators.evolution.initial} (${indicators.evolution.from}) → ${indicators.evolution.final} (${indicators.evolution.to}), diferença ${indicators.evolution.change}${indicators.evolution.percent !== null ? ` (${num(indicators.evolution.percent)}%)` : ""}. A variação não comprova compra, nascimento ou outra causa.`,
+      );
     const animals = book.animals.filter((a) => inLot(a.lot));
     sections.push(
       `Rebanho cadastrado: ${animals.length} animais; ${animals.filter((a) => a.sex === "female").length} fêmeas; ${animals.filter((a) => a.sex === "male").length} machos. Cadastro não equivale a censo completo da fazenda.`,

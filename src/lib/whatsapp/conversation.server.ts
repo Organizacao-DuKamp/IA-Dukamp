@@ -419,6 +419,12 @@ export async function processClaimedWhatsAppChat(
 ): Promise<WhatsAppChatResult> {
   const startedAt = new Date().toISOString();
   const startedMs = Date.now();
+  const sourceAt =
+    input.sentAt &&
+    Number.isFinite(Date.parse(input.sentAt)) &&
+    Date.parse(input.sentAt) <= startedMs
+      ? input.sentAt
+      : startedAt;
 
   return withAIUsageContext(async (usageEvents) => {
     const deps = depsWithDefaults(dependencies);
@@ -449,7 +455,7 @@ export async function processClaimedWhatsAppChat(
       conversationId = previous?.conversationId ?? `wa:${input.phone}`;
       // Every inbound updates the service window and stop preference, including structured operations.
       try {
-        await observeWhatsAppInboundForMemory(input, userText, previous?.history ?? [], startedAt);
+        await observeWhatsAppInboundForMemory(input, userText, previous?.history ?? [], sourceAt);
       } catch {
         console.error("[whatsapp-memory] inbound observation unavailable");
       }
@@ -463,7 +469,7 @@ export async function processClaimedWhatsAppChat(
             text: userText,
             mediaType: input.media?.type,
             history: previous?.history,
-            at: startedAt,
+            at: sourceAt,
           });
         } catch {
           learnedMemory = {
@@ -487,6 +493,7 @@ export async function processClaimedWhatsAppChat(
             text: userText,
             mediaType: input.media?.type,
             history: previous?.history,
+            ...(input.sentAt ? { sentAt: input.sentAt } : {}),
           })
         : null;
       if (guardian?.reply) {

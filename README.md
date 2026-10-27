@@ -178,3 +178,14 @@ npm run build
 ```
 
 O deploy preview da Netlify executa essa sequência automaticamente.
+
+## Painel do produtor e Guardiã 2.0
+
+O produtor pode abrir `/painelfazenda` e usar o código temporário pedido à TPEC-IA
+no WhatsApp: **gerar código do painel**. Havendo várias propriedades, a TPEC-IA
+solicita a escolha. O painel permite consultar e revisar alterações no mesmo
+caderno operacional usado pela conversa, sem criar senha ou conta de e-mail.
+
+A implantação requer as novas migrações e `TPEC_GUARDIAN_ENABLED=true` após
+homologação. Captura espontânea, regras de estoque, permissões, alertas, testes e
+instruções completas estão em [Guardiã 2.0 e painel da fazenda](docs/guardia-2-farm-panel.md).

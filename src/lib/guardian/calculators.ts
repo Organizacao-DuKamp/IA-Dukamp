@@ -3,7 +3,40 @@ import { z } from "zod";
 
 const positive = z.number().finite().positive().max(1e12);
 const nonnegative = z.number().finite().nonnegative().max(1e12);
+const rateInput = <K extends "mortality_rate" | "birth_rate" | "weaning_rate" | "pregnancy_rate">(
+  kind: K,
+) =>
+  z
+    .object({
+      kind: z.literal(kind),
+      events: nonnegative.int().max(1e7),
+      eligible: positive.int().max(1e7),
+      start: z.iso.date(),
+      end: z.iso.date(),
+    })
+    .strict()
+    .refine(
+      (v) => v.start <= v.end && (kind === "birth_rate" || v.events <= v.eligible),
+      "Confira período, ocorrências e população de referência.",
+    );
+const rates = [
+  rateInput("mortality_rate"),
+  rateInput("birth_rate"),
+  rateInput("weaning_rate"),
+  rateInput("pregnancy_rate"),
+] as const;
 export const CalculationInput = z.discriminatedUnion("kind", [
+  ...rates,
+  z
+    .object({
+      kind: z.literal("productivity"),
+      producedKg: nonnegative,
+      productiveHa: positive,
+      start: z.iso.date(),
+      end: z.iso.date(),
+    })
+    .strict()
+    .refine((v) => v.start <= v.end),
   z
     .object({
       kind: z.literal("gmd"),
@@ -88,6 +121,28 @@ export function calculate(raw: unknown): CalculationResult {
     estimated: false,
   };
   switch (p.kind) {
+    case "mortality_rate":
+    case "birth_rate":
+    case "weaning_rate":
+    case "pregnancy_rate":
+      result.values = { ratePercent: (p.events / p.eligible) * 100 };
+      result.units = { ratePercent: "%" };
+      result.formula = "taxa = ocorrências registradas / população de referência informada × 100";
+      result.assumptions = [
+        `Período informado: ${p.start} a ${p.end}. Regra guardian-calculators-v2.`,
+        "O usuário deve confirmar a cobertura completa e a mesma população: mortes/animais expostos; nascidos/fêmeas expostas; desmamados/nascidos vivos; prenhezes/fêmeas examinadas. Não usar quantidade de fichas como denominador.",
+      ];
+      break;
+    case "productivity":
+      result.values = { kgPerHa: p.producedKg / p.productiveHa };
+      result.units = { kgPerHa: "kg/ha no período informado" };
+      result.formula =
+        "produtividade = produção medida em kg / área produtiva correspondente em hectares";
+      result.assumptions = [
+        `Período: ${p.start} a ${p.end}. Regra guardian-calculators-v2.`,
+        "Produção e área informadas devem corresponder ao mesmo sistema e período. Não anualiza nem converte estoque de animais em produção.",
+      ];
+      break;
     case "gmd":
       result.values = { gain: p.finalKg - p.initialKg, gmd: (p.finalKg - p.initialKg) / p.days };
       result.units = { gain: "kg de peso vivo", gmd: "kg de peso vivo/cabeça/dia" };
@@ -207,7 +262,7 @@ export function renderCalculation(result: CalculationResult): string {
     result.estimated ? "Simulação com suas premissas:" : "Cálculo com os dados informados:",
     ...Object.entries(result.values).map(
       ([key, value]) =>
-        `${({ gain: "Ganho", gmd: "GMD", dryMatter: "Matéria seca", asFed: "Matéria natural", totalFeedKg: "Alimento no período", totalCost: "Custo no período", costPerHead: "Custo por cabeça", conversion: "Conversão alimentar", costPerKg: "Custo por kg", recordedCashResult: "Saldo registrado", marginPercent: "Margem dos lançamentos", baseRevenue: "Receita base", baseResult: "Resultado base", scenarioRevenue: "Receita do cenário", scenarioResult: "Resultado do cenário", difference: "Variação", breakEvenPrice: "Preço de equilíbrio" } as Record<string, string>)[key]}: ${value === null ? "não definida" : value.toLocaleString("pt-BR", { maximumFractionDigits: 4 })} ${result.units[key]}`,
+        `${({ ratePercent: "Taxa", kgPerHa: "Produtividade", gain: "Ganho", gmd: "GMD", dryMatter: "Matéria seca", asFed: "Matéria natural", totalFeedKg: "Alimento no período", totalCost: "Custo no período", costPerHead: "Custo por cabeça", conversion: "Conversão alimentar", costPerKg: "Custo por kg", recordedCashResult: "Saldo registrado", marginPercent: "Margem dos lançamentos", baseRevenue: "Receita base", baseResult: "Resultado base", scenarioRevenue: "Receita do cenário", scenarioResult: "Resultado do cenário", difference: "Variação", breakEvenPrice: "Preço de equilíbrio" } as Record<string, string>)[key]}: ${value === null ? "não definida" : value.toLocaleString("pt-BR", { maximumFractionDigits: 4 })} ${result.units[key]}`,
     ),
     result.formula,
     ...result.assumptions,

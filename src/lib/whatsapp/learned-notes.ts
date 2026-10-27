@@ -47,7 +47,7 @@ const questionStart =
 export function explicitNotebookRequest(text: string): boolean {
   const t = fold(text.trim());
   return (
-    /^(?:(?:eu )?quero |pode |por favor[, ]+)?(?:anot[ae]r?|registr[ae]r?|cadastr[ae]r?|cadastre|cri[ae]r?|corrij[ae]|corrigir|exclu[ai]r?|apag[ae]r?|convid[ae]r?|revog[au]r?|usar|selecionar|aceitar|vincular|exportar|concluir|cancelar|reagendar|agendar|agende|me lembr[ae]|ativar|ative|reativar|retomar|parar|pausar|desativar)\b/.test(
+    /^(?:(?:eu )?quero |pode |por favor[, ]+)?(?:anot[ae]r?|registr[ae]r?|cadastr[ae]r?|cadastre|cri[ae]r?|corrij[ae]|corrigir|exclu[ai]r?|apag[ae]r?|convid[ae]r?|revog[au]r?|usar|selecionar|aceitar|vincular|exportar|transferir|concluir|cancelar|reagendar|agendar|agende|me lembr[ae]|ativar|ative|reativar|retomar|parar|pausar|desativar)\b/.test(
       t,
     ) ||
     /^(?:despesa|receita|peso d[oa] animal|pesagem d[oa] animal|horario dos avisos|temas dos avisos|\d+ avisos por dia|relatorio (?:diario|semanal|mensal)|parar relatorios|usar anotacoes anteriores)\b/.test(

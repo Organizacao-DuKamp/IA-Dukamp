@@ -10,7 +10,8 @@ export function officialWeatherEvents(
   recipient: string,
   now = new Date(),
 ): GuardianEvent[] {
-  if (fold(weather.location.city) !== fold(book.city) || weather.location.uf !== book.uf) return [];
+  if (fold(weather.location.city) !== fold(book.city ?? "") || weather.location.uf !== book.uf)
+    return [];
   const age = now.getTime() - Date.parse(weather.updatedAt);
   if (!Number.isFinite(age) || age < 0 || age > 3600000) return [];
   return weather.alerts

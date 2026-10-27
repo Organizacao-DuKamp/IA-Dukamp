@@ -2,6 +2,13 @@ import { useState } from "react";
 import { ActionSchema, type GuardianAction } from "@/lib/guardian/schema";
 
 type FormKind =
+  | "feed_consumption"
+  | "alert_rules"
+  | "herd_count"
+  | "herd_event"
+  | "lot_transfer"
+  | "lot_update"
+  | "property_update"
   | "property_create"
   | "task_create"
   | "expense"
@@ -12,6 +19,13 @@ type FormKind =
   | "invite"
   | "profile";
 const names: Record<FormKind, string> = {
+  feed_consumption: "Consumo de alimentos / suplementos",
+  alert_rules: "Regras dos alertas",
+  herd_count: "Informar contagem do rebanho",
+  herd_event: "Movimentação do rebanho",
+  lot_transfer: "Transferir entre lotes",
+  lot_update: "Lotes e piquetes",
+  property_update: "Dados da propriedade",
   property_create: "Nova propriedade",
   task_create: "Nova tarefa",
   expense: "Registrar despesa",
@@ -26,7 +40,9 @@ export function GuardianActionForm({
   hasProperty,
   busy,
   onPropose,
+  allowedKinds,
 }: {
+  allowedKinds?: string[];
   hasProperty: boolean;
   busy: boolean;
   onPropose: (action: GuardianAction) => Promise<void>;
@@ -59,6 +75,79 @@ export function GuardianActionForm({
     setError("");
     let input: unknown;
     switch (kind) {
+      case "feed_consumption":
+        input = {
+          kind,
+          feed: values.feed,
+          kg: Number(values.kg),
+          basis: values.basis || "measured",
+          date: values.date || today(),
+          ...(values.lot ? { lot: values.lot } : {}),
+        };
+        break;
+      case "alert_rules":
+        input = {
+          kind,
+          enabled: values.enabled === "true",
+          ...(values.minGmd ? { minGmd: Number(values.minGmd) } : {}),
+          ...(values.staleDays ? { staleDays: Number(values.staleDays) } : {}),
+          ...(values.mortalityCount ? { mortalityCount: Number(values.mortalityCount) } : {}),
+          mortalityWindowDays: values.mortalityWindowDays ? Number(values.mortalityWindowDays) : 7,
+        };
+        break;
+      case "herd_count":
+        input = {
+          kind,
+          count: Number(values.count),
+          date: values.date || today(),
+          ...(values.lot ? { lot: values.lot } : {}),
+        };
+        break;
+      case "herd_event":
+        input = {
+          kind,
+          type: values.movementType || "birth",
+          count: Number(values.count),
+          date: values.date || today(),
+          description: values.description,
+          ...(values.lot ? { lot: values.lot } : {}),
+          ...(values.replaces ? { replaces: values.replaces } : {}),
+        };
+        break;
+      case "lot_transfer":
+        input = {
+          kind,
+          from: values.from,
+          to: values.to,
+          count: Number(values.count),
+          date: values.date || today(),
+        };
+        break;
+      case "lot_update":
+        input = {
+          kind,
+          lot: values.lot,
+          ...(values.pasture ? { pasture: values.pasture } : {}),
+          ...(values.areaHa ? { areaHa: Number(values.areaHa) } : {}),
+        };
+        break;
+      case "property_update":
+        input = {
+          kind,
+          ...Object.fromEntries(
+            Object.entries(values)
+              .filter(([, v]) => v)
+              .map(([k, v]) => [
+                k,
+                ["areaHa", "pastureHa", "latitude", "longitude"].includes(k)
+                  ? Number(v)
+                  : k === "uf"
+                    ? v.toUpperCase()
+                    : v,
+              ]),
+          ),
+        };
+        break;
       case "property_create":
         input = { kind, name: values.name, city: values.city, uf: values.uf?.toUpperCase() };
         break;
@@ -98,6 +187,11 @@ export function GuardianActionForm({
         input = {
           kind,
           code: values.code,
+          ...Object.fromEntries(
+            ["name", "rgn", "rgd", "category", "sire", "dam", "status"].flatMap((key) =>
+              values[key] ? [[key, values[key]]] : [],
+            ),
+          ),
           sex: values.sex || "unknown",
           ...(values.breed ? { breed: values.breed } : {}),
           ...(values.lot ? { lot: values.lot } : {}),
@@ -134,6 +228,7 @@ export function GuardianActionForm({
     <label key={key} className="block text-sm font-medium">
       {label}
       <select
+        aria-label={label}
         value={values[key] ?? options[0][0]}
         onChange={(e) => setValues((v) => ({ ...v, [key]: e.target.value }))}
         className="mt-1 block w-full rounded-lg border border-input bg-background px-3 py-2.5"
@@ -160,6 +255,7 @@ export function GuardianActionForm({
       <label className="block text-sm font-medium">
         O que deseja fazer?
         <select
+          aria-label="O que deseja fazer?"
           value={kind}
           onChange={(e) => {
             setKind(e.target.value as FormKind);
@@ -169,7 +265,11 @@ export function GuardianActionForm({
           className="mt-1 block w-full rounded-lg border border-input bg-background px-3 py-2.5"
         >
           {Object.entries(names)
-            .filter(([k]) => hasProperty || k === "property_create")
+            .filter(
+              ([k]) =>
+                (hasProperty || k === "property_create") &&
+                (!allowedKinds || allowedKinds.includes(k)),
+            )
             .map(([key, title]) => (
               <option key={key} value={key}>
                 {title}
@@ -178,6 +278,86 @@ export function GuardianActionForm({
         </select>
       </label>
       <div className="grid gap-4 sm:grid-cols-2">
+        {kind === "feed_consumption" && (
+          <>
+            {field("feed", "Alimento ou suplemento informado")}
+            {field("kg", "Quantidade fornecida (kg)", "number")}
+            {field("date", "Data do consumo", "date")}
+            {field("lot", "Lote (opcional)", "text", false)}
+            {select("basis", "Origem da quantidade", [
+              ["measured", "Medida / registrada pelo produtor"],
+              ["estimated", "Estimativa declarada"],
+            ])}
+          </>
+        )}
+        {kind === "alert_rules" && (
+          <>
+            {select("enabled", "Analisar regras desta fazenda", [
+              ["false", "Pausado"],
+              ["true", "Ativo (envio depende do consentimento no WhatsApp)"],
+            ])}
+            {field("minGmd", "Alertar GMD abaixo de (kg/dia)", "number", false)}
+            {field("staleDays", "Alertar contagem desatualizada após (dias)", "number", false)}
+            {field(
+              "mortalityCount",
+              "Alertar a partir de quantas mortes registradas",
+              "number",
+              false,
+            )}
+            {field(
+              "mortalityWindowDays",
+              "Período dessas mortes (dias, padrão 7)",
+              "number",
+              false,
+            )}
+          </>
+        )}
+        {kind === "property_update" && (
+          <>
+            {field("name", "Nome oficial (se informado)", "text", false)}
+            {field("responsibleName", "Responsável declarado", "text", false)}
+            {field("address", "Endereço informado", "text", false)}
+            {field("latitude", "Latitude informada", "number", false)}
+            {field("longitude", "Longitude informada", "number", false)}
+            {field("city", "Município", "text", false)}
+            {field("uf", "UF", "text", false)}
+            {field("areaHa", "Área total (ha)", "number", false)}
+            {field("pastureHa", "Área de pastagem (ha)", "number", false)}
+          </>
+        )}
+        {(kind === "herd_count" || kind === "herd_event" || kind === "lot_transfer") && (
+          <>
+            {kind === "herd_event" && (
+              <>
+                {select("movementType", "Tipo de movimentação", [
+                  ["birth", "Nascimento"],
+                  ["death", "Morte"],
+                  ["purchase", "Compra"],
+                  ["sale", "Venda"],
+                ])}
+                {field("description", "Descrição do acontecimento")}
+                {field("replaces", "Código do evento a corrigir (opcional)", "text", false)}
+              </>
+            )}
+            {field("count", "Quantidade de animais", "number")}
+            {field("date", "Data do fato (contagem: fim do dia)", "date")}
+            {kind === "lot_transfer" ? (
+              <>
+                {field("from", "Lote de origem")}
+                {field("to", "Lote de destino")}
+              </>
+            ) : (
+              field("lot", "Lote (vazio: rebanho da fazenda)", "text", false)
+            )}
+          </>
+        )}
+        {kind === "lot_update" && (
+          <>
+            {field("lot", "Nome do lote")}
+            {field("pasture", "Piquete / pastagem (opcional)", "text", false)}
+            {field("areaHa", "Área do piquete (ha, opcional)", "number", false)}
+          </>
+        )}
         {kind === "property_create" && (
           <>
             {field("name", "Nome da propriedade")}
@@ -219,6 +399,12 @@ export function GuardianActionForm({
         {kind === "animal" && (
           <>
             {field("code", "Identificação do animal")}
+            {field("name", "Nome do animal (opcional)", "text", false)}
+            {field("rgn", "RGN informado (opcional)", "text", false)}
+            {field("rgd", "RGD informado (opcional)", "text", false)}
+            {field("category", "Categoria (opcional)", "text", false)}
+            {field("sire", "Pai informado (opcional)", "text", false)}
+            {field("dam", "Mãe informada (opcional)", "text", false)}
             {select("sex", "Sexo", [
               ["unknown", "Não informado"],
               ["female", "Fêmea"],
@@ -276,7 +462,8 @@ export function GuardianActionForm({
         {busy ? "Preparando…" : "Revisar antes de salvar"}
       </button>
       <p className="text-xs text-muted-foreground">
-        Você confirma a proposta na próxima etapa. Nenhum aviso é ativado por este formulário.
+        Você confirma a proposta na próxima etapa. Os avisos respeitam as preferências que você
+        autorizou no WhatsApp.
       </p>
     </form>
   );

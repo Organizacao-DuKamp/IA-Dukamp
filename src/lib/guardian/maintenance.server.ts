@@ -101,6 +101,7 @@ export async function seedGuardianWeather() {
     summary.checked++;
     try {
       const book = property.book as FarmBook;
+      if (!book.city || !book.uf) continue;
       const { fetchWeatherIntelligence } = await import("../chat/weather-intelligence.server.ts");
       const weather = await fetchWeatherIntelligence(
         `${book.city}, ${book.uf}`,
@@ -147,12 +148,17 @@ export async function runGuardianMaintenance() {
   )
     return { enabled: false };
   // Source failures never stop unrelated reminders or results already in the queue.
-  const sources = await Promise.allSettled([seedGuardianWeather(), seedGuardianReports()]);
+  const sources = await Promise.allSettled([
+    seedGuardianWeather(),
+    seedGuardianReports(),
+    seedGuardianRules(),
+  ]);
   const delivery = await processGuardianEvents();
   return {
     enabled: true,
     weather: sources[0].status === "fulfilled" ? sources[0].value : { failed: true },
     reports: sources[1].status === "fulfilled" ? sources[1].value : { failed: true },
+    rules: sources[2].status === "fulfilled" ? sources[2].value : { failed: true },
     delivery,
   };
 }
@@ -185,6 +191,33 @@ export async function seedGuardianReports() {
       );
       if (saveError) throw new Error("report_save_failed");
       summary.queued++;
+    } catch {
+      summary.failed++;
+    }
+  }
+  return summary;
+}
+
+export async function seedGuardianRules() {
+  const db = await guardianDb();
+  const { data, error } = await db.rpc("guardian_claim_rules", { p_limit: 5 });
+  if (error) throw new Error("guardian_rules_claim_failed");
+  const { farmRuleEvents } = await import("./rules.ts");
+  const { FarmBookSchema } = await import("./schema.ts");
+  const summary = { checked: 0, queued: 0, failed: 0 };
+  for (const row of data ?? []) {
+    summary.checked++;
+    try {
+      const events = farmRuleEvents(FarmBookSchema.parse(row.book), row.version, row.phone);
+      if (!events.length) continue;
+      const saved = await db.rpc("guardian_queue_rule_events", {
+        p_property: row.propertyId,
+        p_phone: row.phone,
+        p_version: row.version,
+        p_events: events,
+      });
+      if (saved.error) throw new Error("guardian_rule_save_failed");
+      summary.queued += saved.data ?? 0;
     } catch {
       summary.failed++;
     }
