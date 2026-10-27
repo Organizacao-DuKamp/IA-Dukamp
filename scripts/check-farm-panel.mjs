@@ -6,6 +6,7 @@ import { mkdir } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 import { farmIntegration } from "../tests/helpers/farm-integration.ts";
 import { handleFarmPanel, handlePanelCodeRequest } from "../src/lib/guardian/panel.server.ts";
+import { handleGuardianMessage } from "../src/lib/guardian/handler.server.ts";
 
 const modulePath = process.env.PLAYWRIGHT_MODULE_PATH;
 const { chromium } = await import(modulePath ? pathToFileURL(modulePath).href : "playwright");
@@ -96,6 +97,58 @@ try {
   await page.getByRole("heading", { name: "Propriedade sem nome — Tanabi", exact: true }).waitFor();
   await page.getByRole("button", { name: "Financeiro", exact: true }).click();
   await page.getByText("Ração registrada pelo painel", { exact: true }).waitFor();
+  // Natural WhatsApp reports must reach the same database and visible sections.
+  const reportAt = new Date();
+  const financial = await handleGuardianMessage(
+    {
+      phone,
+      messageId: "browser-finance",
+      text: "A minha fazenda tem uma receita de 100 mil e uma despesa de 80 mil nesse mês, registre isso",
+    },
+    {
+      store: f.guardian,
+      now: reportAt,
+      extract: async () => {
+        throw new Error("unexpected extraction");
+      },
+    },
+  );
+  assert.equal(financial.persisted, true);
+  const herd = await handleGuardianMessage(
+    {
+      phone,
+      messageId: "browser-herd",
+      text: "Nasceu 4 bezerros na fazenda hoje, mas hoje também morreu 2\nUm dos bezerros já tem código e rgn: KBU 491",
+    },
+    { store: f.guardian, now: reportAt },
+  );
+  assert.equal(herd.persisted, true);
+  await page.reload({ waitUntil: "networkidle" });
+  await page.getByRole("button", { name: "Financeiro", exact: true }).click();
+  await page.getByRole("cell", { name: "R$ 100.000,00", exact: true }).waitFor();
+  await page.getByRole("cell", { name: "R$ 80.000,00", exact: true }).waitFor();
+  await page
+    .getByText(/total informado/)
+    .first()
+    .waitFor();
+  await page.getByRole("button", { name: "Rebanho e lotes", exact: true }).click();
+  assert.match(
+    await page.getByRole("article").filter({ hasText: "Estoque calculado" }).innerText(),
+    /42/,
+  );
+  await page.locator("summary").filter({ hasText: "KBU 491" }).click();
+  await page.getByText(/RGN informado: KBU 491/).waitFor();
+  await page.getByRole("button", { name: "Calculadoras", exact: true }).click();
+  await page.getByLabel("Peso inicial (kg)", { exact: true }).fill("100");
+  await page.getByLabel("Peso final (kg)", { exact: true }).fill("450");
+  await page.getByLabel("Dias entre pesagens", { exact: true }).fill("120");
+  await page.getByRole("button", { name: "Calcular", exact: true }).click();
+  await page.getByText(/GMD: 2,9167/).waitFor();
+  assert.doesNotMatch(
+    await page.locator("body").innerText(),
+    /Referência da definição|ainfo\.cnptia\.embrapa/,
+  );
+  await page.getByRole("button", { name: "Financeiro", exact: true }).click();
   await page.setViewportSize({ width: 390, height: 844 });
   assert.equal(
     await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1),
@@ -114,7 +167,7 @@ try {
   }
   assert.deepEqual(errors, []);
   console.log(
-    "PASS: public access, invalid code, WhatsApp code, isolated cookie session, reviewed edit, PostgreSQL persistence, reload, mobile layout and logout.",
+    "PASS: public access, invalid code, WhatsApp code, isolated cookie session, reviewed edit, natural financial totals, combined herd events and RGN, calculator without reference URL, PostgreSQL persistence, reload, mobile layout and logout.",
   );
 } catch (error) {
   if (testPage) {

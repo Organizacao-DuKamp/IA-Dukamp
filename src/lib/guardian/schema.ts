@@ -96,6 +96,11 @@ export const ActionSchema = z.discriminatedUnion("kind", [
       date,
       lot: label.optional(),
       category: label.optional(),
+      periodMonth: z
+        .string()
+        .regex(/^20\d{2}-(?:0[1-9]|1[0-2])$/)
+        .optional(),
+      estimated: z.boolean().optional(),
     })
     .strict(),
   z
@@ -203,6 +208,9 @@ export interface LedgerEntry {
   date: string;
   lot?: string;
   category?: string;
+  /** Monthly total declared by the producer; date is when that total was reported. */
+  periodMonth?: string;
+  estimated?: boolean;
   source: Provenance;
 }
 export interface FieldRecord {
@@ -387,6 +395,11 @@ export const FarmBookSchema = z
             date,
             lot: label.optional(),
             category: label.optional(),
+            periodMonth: z
+              .string()
+              .regex(/^20\d{2}-(?:0[1-9]|1[0-2])$/)
+              .optional(),
+            estimated: z.boolean().optional(),
             source: ProvenanceSchema,
           })
           .strict(),

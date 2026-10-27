@@ -266,6 +266,5 @@ export function renderCalculation(result: CalculationResult): string {
     ),
     result.formula,
     ...result.assumptions,
-    ...(result.reference ? [`Referência da definição: ${result.reference}`] : []),
   ].join("\n");
 }

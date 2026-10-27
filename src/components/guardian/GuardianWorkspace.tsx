@@ -17,6 +17,7 @@ import { GuardianCalculator } from "./GuardianCalculator";
 import { farmCsv } from "@/lib/guardian/export";
 import { farmReport } from "@/lib/guardian/book";
 import { printFarm } from "@/lib/guardian/print";
+import { ledgerForTotals, ledgerPeriod } from "@/lib/guardian/finance";
 type Tab =
   | "overview"
   | "tasks"
@@ -176,10 +177,11 @@ export function GuardianWorkspace({
     [start, setStart] = useState(""),
     [end, setEnd] = useState(""),
     [lot, setLot] = useState("");
-  const expense = book.ledger
+  const ledgerTotals = ledgerForTotals(book.ledger);
+  const expense = ledgerTotals
       .filter((e) => e.direction === "expense")
       .reduce((s, e) => s + e.amountCents, 0),
-    income = book.ledger
+    income = ledgerTotals
       .filter((e) => e.direction === "income")
       .reduce((s, e) => s + e.amountCents, 0);
   const ownRole = detail.members.find((m) => m.phone_number === ownPhone && m.active)?.role;
@@ -488,7 +490,7 @@ export function GuardianWorkspace({
             <table className="w-full text-left text-sm">
               <thead className="border-b border-border text-xs text-muted-foreground">
                 <tr>
-                  <th className="p-3">Data</th>
+                  <th className="p-3">Data / período</th>
                   <th className="p-3">Descrição</th>
                   <th className="p-3">Tipo</th>
                   <th className="p-3 text-right">Valor</th>
@@ -498,11 +500,14 @@ export function GuardianWorkspace({
               <tbody>
                 {book.ledger.map((l) => (
                   <tr key={l.id} className="border-b border-border/70">
-                    <td className="whitespace-nowrap p-3">
-                      {l.date.split("-").reverse().join("/")}
-                    </td>
+                    <td className="whitespace-nowrap p-3">{ledgerPeriod(l)}</td>
                     <td className="p-3">
                       {l.description}
+                      {!ledgerTotals.includes(l) && (
+                        <span className="block text-xs text-muted-foreground">
+                          Histórico ou detalhamento incluído no total mensal; não somado novamente.
+                        </span>
+                      )}
                       {l.lot && (
                         <span className="block text-xs text-muted-foreground">Lote {l.lot}</span>
                       )}
