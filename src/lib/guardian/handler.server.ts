@@ -5,7 +5,8 @@ import {
 } from "./transfer.server.ts";
 import { automaticFarmEvent } from "./automatic.ts";
 import { handlePanelCodeRequest } from "./panel.server.ts";
-import { farmIndicators } from "./operations.ts";
+import { farmIndicators, stockAt } from "./operations.ts";
+import { ledgerForTotals } from "./finance.ts";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { z } from "zod";
 import {
@@ -13,6 +14,7 @@ import {
   PreferencesSchema,
   emptyFarm,
   canEdit,
+  farmName,
   type GuardianAction,
   type GuardianSnapshot,
 } from "./schema.ts";
@@ -147,7 +149,7 @@ function structuredContext(s: GuardianSnapshot, now = new Date()): string | unde
         .slice(0, 8)
         .map((t) => ({ id: t.id, title: t.title, dueAt: t.dueAt })),
       recentRecords: b.records.slice(-5),
-      latestLedger: b.ledger.slice(-3),
+      latestLedger: ledgerForTotals(b.ledger).slice(-5),
     },
   ).slice(0, 8000)}`;
 }
@@ -231,9 +233,10 @@ export async function handleGuardianMessage(
           await queue(observation.reason);
           return {
             reply:
-              observation.reason === "ambiguous_property"
+              observation.reply ??
+              (observation.reason === "ambiguous_property"
                 ? "De qual fazenda é esse acontecimento? Consulte “minhas fazendas” e envie o relato com a fazenda selecionada. Ainda não alterei o rebanho."
-                : "Informe cada acontecimento com a data em que ocorreu. Preciso separar os relatos para não duplicar ou misturar períodos.",
+                : "Informe cada acontecimento com a data em que ocorreu. Preciso separar os relatos para não duplicar ou misturar períodos."),
             activeProperty: !!snapshot.active,
           };
         }
@@ -281,6 +284,33 @@ export async function handleGuardianMessage(
               persisted: false,
             };
           }
+          const directReceipt =
+            actions.some((a) => a.kind === "ledger" || a.kind === "animal") || actions.length > 1;
+          const stock = applied.book.operations
+            ? stockAt(
+                applied.book.operations,
+                new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(
+                  referenceAt,
+                ),
+              ).count
+            : null;
+          const savedReply = directReceipt
+            ? `Registros salvos em ${farmName(applied.book)}:\n` +
+              actions
+                .map((a) =>
+                  a.kind === "ledger"
+                    ? `• Financeiro: ${describeAction(a)}`
+                    : a.kind === "herd_event"
+                      ? `• Rebanho: ${a.count} ${a.type === "birth" ? "nascimentos" : a.type === "death" ? "mortes" : a.type === "sale" ? "animais vendidos" : "animais comprados"} em ${a.date}.`
+                      : a.kind === "animal"
+                        ? `• Animal: código ${a.code}${a.rgn ? `; RGN informado ${a.rgn}` : ""}.`
+                        : `• ${describeAction(a)}`,
+                )
+                .join("\n") +
+              (actions.some((a) => a.kind === "herd_event") && stock !== null
+                ? `\nRebanho calculado após os registros: ${stock} animais.`
+                : "")
+            : "Registro informado salvo na fazenda com origem e data preservadas.";
           const result = await store.commit({
             phone: input.phone,
             messageId: input.messageId,
@@ -296,7 +326,7 @@ export async function handleGuardianMessage(
               sourceMessageId: input.messageId,
               events: actions,
             },
-            reply: "Registro informado salvo na fazenda com origem e data preservadas.",
+            reply: savedReply,
             events: applied.events,
           });
           if (result === "conflict") continue;
@@ -306,10 +336,15 @@ export async function handleGuardianMessage(
           }
           const current = { ...snapshot, active: { ...snapshot.active, book: applied.book } };
           return {
-            reply: null,
+            reply: directReceipt
+              ? result.startsWith("replay:")
+                ? result.slice(7)
+                : savedReply
+              : null,
             context:
               structuredContext(current, now) +
-              "\nRECIBO DESTE TURNO: movimentação declarada persistida com origem e data, sem preço ou causa adicional inferidos.",
+              "\nRECIBO DESTE TURNO: registros declarados persistidos com origem e data. Informe exatamente o que foi salvo nas seções corretas (financeiro, rebanho e/ou animais); não afirme apenas que foi anotado no caderno de campo. Totais mensais e estimativas mantêm essa classificação. A identificação individual de um bezerro não acrescenta outro nascimento. Ações salvas: " +
+              JSON.stringify(actions),
             activeProperty: true,
             conversational: true,
             persisted: true,

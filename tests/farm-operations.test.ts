@@ -439,10 +439,16 @@ test("integrated PostgreSQL: distinct dated events commit together; an inconsist
     book = (await f.guardian.load(phone)).active!.book;
     assert.equal(book.operations!.movements.length, 2);
     assert.equal(stockAt(book.operations!, "2026-10-26").count, 35);
-    assert.deepEqual(
-      automaticFarmEvent({ text: "Vendi 10 bois e comprei 2 vacas ontem.", at: now }, snapshot()),
-      { status: "pending", reason: "ambiguous_date" },
+    const combined = automaticFarmEvent(
+      { text: "Vendi 10 bois e comprei 2 vacas ontem.", at: now },
+      snapshot(),
     );
+    assert.equal(combined.status, "batch");
+    if (combined.status === "batch")
+      assert.deepEqual(
+        combined.actions.map((a) => "date" in a && a.date),
+        ["2026-10-25", "2026-10-25"],
+      );
   } finally {
     await f.db.close();
   }

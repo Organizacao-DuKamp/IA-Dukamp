@@ -1,4 +1,5 @@
 import type { FarmBook } from "./schema.ts";
+import { ledgerForTotals, ledgerPeriod } from "./finance.ts";
 /** Protect CSV consumers from spreadsheet formula injection in user-controlled text. */
 function cell(value: unknown): string {
   let text = value == null ? "" : String(value);
@@ -26,16 +27,17 @@ export function farmCsv(book: FarmBook): string {
   }
   for (const t of book.tasks)
     rows.push(["Tarefa", t.id, t.dueAt, t.title, "", "", t.lot ?? "", t.status]);
+  const ledgerTotals = ledgerForTotals(book.ledger);
   for (const l of book.ledger)
     rows.push([
       l.direction === "expense" ? "Despesa" : "Receita",
       l.id,
-      l.date,
+      ledgerPeriod(l),
       l.description,
       (l.amountCents / 100).toFixed(2).replace(".", ","),
       "BRL",
       l.lot ?? "",
-      "confirmado",
+      ledgerTotals.includes(l) ? "considerado no saldo" : "histórico/detalhamento não somado",
     ]);
   for (const r of book.records)
     rows.push([

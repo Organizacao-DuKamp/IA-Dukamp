@@ -16,6 +16,7 @@ import {
   type Provenance,
 } from "./schema.ts";
 import { localDateForTimeZone } from "../whatsapp/proactive.ts";
+import { ledgerForTotals, ledgerPeriod } from "./finance.ts";
 
 export const fold = (text: string) =>
   text
@@ -46,7 +47,7 @@ export function describeAction(a: GuardianAction): string {
     case "task_update":
       return `Alterar a tarefa ${a.task}: ${a.status === "done" ? "concluir" : a.status === "cancelled" ? "cancelar" : ""}${a.dueAt ? ` reagendar para ${new Date(a.dueAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}` : ""}${a.title ? ` título: ${a.title}` : ""}.`;
     case "ledger":
-      return `${a.direction === "expense" ? "Despesa" : "Receita"} de ${money(a.amountCents)} em ${a.date}: ${a.description}${a.lot ? `, lote ${a.lot}` : ""}.`;
+      return `${a.direction === "expense" ? "Despesa" : "Receita"} de ${money(a.amountCents)} em ${ledgerPeriod(a)}: ${a.description}${a.lot ? `, lote ${a.lot}` : ""}.`;
     case "record":
       return `Anotar em ${a.date}: ${a.description}${a.count ? ` (quantidade informada: ${a.count})` : ""}${a.lot ? `, lote ${a.lot}` : ""}.`;
     case "animal":
@@ -139,6 +140,8 @@ export function applyFarmAction(
       break;
     }
     case "ledger": {
+      if (action.periodMonth && action.periodMonth > action.date.slice(0, 7))
+        throw new Error("O total mensal informado não pode se referir a um mês futuro.");
       if (action.date > localDay)
         throw new Error(
           "A data de um lançamento realizado não pode estar no futuro. Use uma tarefa para programar uma atividade futura.",
@@ -361,7 +364,14 @@ export function farmReport(
         ),
     );
   if (all || input.section === "finance") {
-    const ledger = book.ledger.filter((e) => inPeriod(e.date) && inLot(e.lot));
+    const endDay = input.end
+      ? new Date(Date.parse(input.end + "T12:00:00Z") - 86400000).toISOString().slice(0, 10)
+      : undefined;
+    const ledger = ledgerForTotals(
+      book.ledger.filter((e) => inLot(e.lot)),
+      input.start,
+      endDay,
+    );
     const income = ledger
         .filter((e) => e.direction === "income")
         .reduce((s, e) => s + e.amountCents, 0),
@@ -380,7 +390,7 @@ export function farmReport(
       ),
       ...ledger.map(
         (e) =>
-          `${e.id} — ${e.date} — ${e.direction === "expense" ? "despesa" : "receita"} ${money(e.amountCents)} — ${e.description}`,
+          `${e.id} — ${ledgerPeriod(e)} — ${e.direction === "expense" ? "despesa" : "receita"} ${money(e.amountCents)} — ${e.description}`,
       ),
     );
   }

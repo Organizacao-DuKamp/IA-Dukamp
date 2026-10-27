@@ -1,5 +1,6 @@
 import { localDateForTimeZone, localDateTimeToUtc } from "../whatsapp/proactive.ts";
 import type { FarmBook, GuardianEvent, GuardianPreferences } from "./schema.ts";
+import { ledgerForTotals } from "./finance.ts";
 
 export function reportPeriod(
   preferences: GuardianPreferences,
@@ -33,7 +34,8 @@ export function buildFarmDigest(
   asOf: string,
 ): string {
   const inside = (day: string) => day >= p.start && day < p.end;
-  const ledger = book.ledger.filter((e) => inside(e.date));
+  const endDay = new Date(Date.parse(p.end + "T12:00:00Z") - 86400000).toISOString().slice(0, 10);
+  const ledger = ledgerForTotals(book.ledger, p.start, endDay);
   const income = ledger
       .filter((e) => e.direction === "income")
       .reduce((s, e) => s + e.amountCents, 0),

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { FarmBook, Provenance } from "./schema.ts";
+import { ledgerForTotals } from "./finance.ts";
 
 const label = z.string().trim().min(1).max(160);
 const count = z.number().int().min(0).max(1e7);
@@ -431,11 +432,12 @@ export function farmIndicators(book: FarmBook, start: string, end: string) {
   const movements = operations.movements.filter(
     (m) => !replaced.has(m.id) && m.date >= start && m.date <= end,
   );
-  const expenses = book.ledger
-    .filter((l) => l.date >= start && l.date <= end && l.direction === "expense")
+  const ledger = ledgerForTotals(book.ledger, start, end);
+  const expenses = ledger
+    .filter((l) => l.direction === "expense")
     .reduce((n, l) => n + l.amountCents, 0);
-  const income = book.ledger
-    .filter((l) => l.date >= start && l.date <= end && l.direction === "income")
+  const income = ledger
+    .filter((l) => l.direction === "income")
     .reduce((n, l) => n + l.amountCents, 0);
   const history = operations.counts
     .filter((c) => !c.lot && c.date <= end)
