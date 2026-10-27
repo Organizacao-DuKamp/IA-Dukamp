@@ -8,6 +8,7 @@ import {
 import { extractPropertyObservation } from "../../src/lib/guardian/observed-property.ts";
 import type { FarmTransferStore } from "../../src/lib/guardian/transfer.server.ts";
 import type { PanelStore, PanelIdentity } from "../../src/lib/guardian/panel.server.ts";
+import { farmActionFamily } from "../../src/lib/guardian/schema.ts";
 
 export async function farmIntegration(
   path?: string,
@@ -79,7 +80,7 @@ export async function farmIntegration(
         version,
         id,
         digest,
-        action.kind,
+        farmActionFamily(action),
         book,
         events,
       ]),

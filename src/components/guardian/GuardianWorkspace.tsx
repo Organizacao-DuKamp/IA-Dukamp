@@ -503,6 +503,11 @@ export function GuardianWorkspace({
                     <td className="whitespace-nowrap p-3">{ledgerPeriod(l)}</td>
                     <td className="p-3">
                       {l.description}
+                      {l.recurrence === "monthly" && (
+                        <span className="block text-xs text-muted-foreground">
+                          Valor mensal informado pelo produtor
+                        </span>
+                      )}
                       {!ledgerTotals.includes(l) && (
                         <span className="block text-xs text-muted-foreground">
                           Histórico ou detalhamento incluído no total mensal; não somado novamente.

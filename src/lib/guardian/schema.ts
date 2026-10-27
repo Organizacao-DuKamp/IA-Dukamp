@@ -101,8 +101,31 @@ export const ActionSchema = z.discriminatedUnion("kind", [
         .regex(/^20\d{2}-(?:0[1-9]|1[0-2])$/)
         .optional(),
       estimated: z.boolean().optional(),
+      recurrence: z.literal("monthly").optional(),
     })
     .strict(),
+  z
+    .object({
+      kind: z.literal("edit_record"),
+      section: z.enum(["ledger", "records"]),
+      id: label,
+      changes: z
+        .object({
+          description: z.string().trim().min(3).max(1500).optional(),
+          date: date.optional(),
+          lot: label.optional(),
+          amountCents: z.number().int().positive().max(1e12).optional(),
+          direction: z.enum(["expense", "income"]).optional(),
+        })
+        .strict()
+        .refine((v) => Object.keys(v).length > 0),
+    })
+    .strict()
+    .refine((v) =>
+      v.section === "ledger"
+        ? !v.changes.description || v.changes.description.length <= 160
+        : v.changes.amountCents === undefined && v.changes.direction === undefined,
+    ),
   z
     .object({
       kind: z.literal("record"),
@@ -155,6 +178,15 @@ export const ActionSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("property_delete"), name: label }).strict(),
 ]);
 export type GuardianAction = z.infer<typeof ActionSchema>;
+/** Keep SQL authorization in the existing operation family. Corrections carry
+ * their exact action and prior values in the book/audit, not a new access right. */
+export function farmActionFamily(action: GuardianAction): string {
+  return action.kind === "edit_record"
+    ? action.section === "ledger"
+      ? "ledger"
+      : "record"
+    : action.kind;
+}
 export interface Provenance {
   messageId: string;
   actor: string;
@@ -211,6 +243,8 @@ export interface LedgerEntry {
   /** Monthly total declared by the producer; date is when that total was reported. */
   periodMonth?: string;
   estimated?: boolean;
+  recurrence?: "monthly";
+  revisions?: RecordRevision[];
   source: Provenance;
 }
 export interface FieldRecord {
@@ -220,7 +254,18 @@ export interface FieldRecord {
   date: string;
   lot?: string;
   count?: number;
+  revisions?: RecordRevision[];
   source: Provenance;
+}
+export interface RecordRevision {
+  source: Provenance;
+  before: {
+    description: string;
+    date: string;
+    lot?: string;
+    amountCents?: number;
+    direction?: "income" | "expense";
+  };
 }
 export interface FarmBook {
   schema: 1;
@@ -270,6 +315,20 @@ export interface HerdIdentification {
   repeatCheck?: { entryId: string; sourceMessageId: string; sourceAt: string };
   awaitingRgn?: { entryId: string; code: string };
   registryOnly?: { entryId: string; rgn: string };
+  proposedIdentities?: Array<{ code: string; rgn: string }>;
+}
+export interface ManagementDraft {
+  kind: "management_draft";
+  propertyId: string;
+  createdAt: string;
+  expiresAt: string;
+  sourceMessageId: string;
+  sourceAt: string;
+  section: "animals" | "ledger" | "records";
+  targets: string[];
+  lot?: string;
+  changes?: Extract<GuardianAction, { kind: "edit_record" }>["changes"];
+  previousPending?: GuardianPending;
 }
 export interface HerdRegistrationDraft {
   kind: "herd_registration";
@@ -302,6 +361,7 @@ export interface RecordDraft {
     count?: number;
     summary?: boolean;
     estimated?: boolean;
+    recurrence?: "monthly";
   }>;
   previousPending?: GuardianPending;
 }
@@ -309,6 +369,7 @@ export type GuardianPending =
   | PendingAction
   | HerdIdentification
   | HerdRegistrationDraft
+  | ManagementDraft
   | RecordDraft;
 export interface GuardianSnapshot {
   lastCalculation?: import("./calculators.ts").Calculation | null;
@@ -353,6 +414,7 @@ export function canEdit(role: GuardianRole, action: GuardianAction): boolean {
   if (role === "owner") return true;
   if (action.kind === "property_delete" || action.kind === "revoke") return false;
   if (role === "manager") return true;
+  if (action.kind === "edit_record") return action.section === "records";
   return ["record", "animal", "weighing", "move", "task_create", "task_update"].includes(
     action.kind,
   );
@@ -385,6 +447,20 @@ const WeighingSchema = ProvenanceSchema.extend({
     )
     .max(5000),
 });
+const RecordRevisionSchema = z
+  .object({
+    source: ProvenanceSchema,
+    before: z
+      .object({
+        description: z.string().min(3).max(1500),
+        date,
+        lot: label.optional(),
+        amountCents: z.number().int().positive().max(1e12).optional(),
+        direction: z.enum(["expense", "income"]).optional(),
+      })
+      .strict(),
+  })
+  .strict();
 export const FarmBookSchema = z
   .object({
     schema: z.literal(1),
@@ -462,6 +538,8 @@ export const FarmBookSchema = z
               .regex(/^20\d{2}-(?:0[1-9]|1[0-2])$/)
               .optional(),
             estimated: z.boolean().optional(),
+            recurrence: z.literal("monthly").optional(),
+            revisions: z.array(RecordRevisionSchema).max(1000).optional(),
             source: ProvenanceSchema,
           })
           .strict(),
@@ -477,6 +555,7 @@ export const FarmBookSchema = z
             date,
             lot: label.optional(),
             count: z.number().int().positive().max(1e6).optional(),
+            revisions: z.array(RecordRevisionSchema).max(1000).optional(),
             source: ProvenanceSchema,
           })
           .strict(),

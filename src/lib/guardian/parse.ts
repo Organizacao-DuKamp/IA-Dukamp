@@ -184,6 +184,7 @@ export function parseGuardianRequest(
     snapshot.pending.kind !== "herd_identification" &&
     snapshot.pending.kind !== "herd_registration" &&
     snapshot.pending.kind !== "record_draft" &&
+    snapshot.pending.kind !== "management_draft" &&
     snapshot.pending.action.kind === "weighing"
   ) {
     const action = ActionSchema.safeParse({

@@ -252,6 +252,81 @@ try {
   await page.getByRole("cell").filter({ hasText: "a manutenção do curral" }).waitFor();
   await page.getByRole("button", { name: "Caderno de campo", exact: true }).click();
   await page.getByText("Consertei a cerca semana passada", { exact: true }).waitFor();
+  // Reproduce the producer's audio, identity list, contextual lot edit and monthly cost.
+  const spokenBirth = await handleGuardianMessage(
+    {
+      phone,
+      messageId: "practical-audio-birth",
+      mediaType: "audio",
+      text: "[Mensagem recebida por áudio no WhatsApp]\nPedido do usuário: Analise e responda ao áudio que enviei.\nTranscrição do áudio: Repente, adicione mais dois bezerros que nasceram hoje, tá? no rebanho, por favor.",
+    },
+    { store: f.guardian, now: reportAt },
+  );
+  assert.equal(spokenBirth.persisted, true);
+  const spokenIds = await handleGuardianMessage(
+    { phone, messageId: "practical-ids", text: "Sim, eles tem:\nBR201\nBR202" },
+    { store: f.guardian, now: reportAt },
+  );
+  assert.equal(spokenIds.persisted, true);
+  const lotEdit = await handleGuardianMessage(
+    {
+      phone,
+      messageId: "practical-lot",
+      text: "Sabe esses dois últimos animais registrados? Então, coloque eles no lote 2 da fazenda por favor",
+    },
+    { store: f.guardian, now: reportAt },
+  );
+  assert.equal(lotEdit.persisted, true);
+  const monthlyCost = await handleGuardianMessage(
+    {
+      phone,
+      messageId: "practical-monthly",
+      text: "Minha fazenda tem cinco mil de despesas todos os meses com cana de açúcar",
+    },
+    { store: f.guardian, now: reportAt },
+  );
+  assert.equal(monthlyCost.persisted, true);
+  const moneyEdit = await handleGuardianMessage(
+    { phone, messageId: "practical-money-edit", text: "Corrija a última despesa para 5500 reais" },
+    { store: f.guardian, now: reportAt },
+  );
+  assert.equal(moneyEdit.persisted, true);
+  const noteEdit = await handleGuardianMessage(
+    {
+      phone,
+      messageId: "practical-note-edit",
+      text: "Corrija a anotação Consertei a cerca semana passada para o lote 3",
+    },
+    { store: f.guardian, now: reportAt },
+  );
+  assert.equal(noteEdit.persisted, true);
+  await page.reload({ waitUntil: "networkidle" });
+  assert.match(
+    await page.getByRole("article").filter({ hasText: "Estoque calculado" }).innerText(),
+    /54/,
+  );
+  await page.getByRole("button", { name: "Rebanho e lotes", exact: true }).click();
+  await page
+    .locator("summary")
+    .filter({ hasText: "BR201" })
+    .filter({ hasText: "Lote 2" })
+    .waitFor();
+  await page
+    .locator("summary")
+    .filter({ hasText: "BR202" })
+    .filter({ hasText: "Lote 2" })
+    .waitFor();
+  await page.getByRole("button", { name: "Financeiro", exact: true }).click();
+  const caneRow = page.getByRole("row").filter({ hasText: "cana de açúcar" });
+  await caneRow.getByText("Valor mensal informado pelo produtor", { exact: true }).waitFor();
+  assert.match(await caneRow.innerText(), /5\.500,00/);
+  assert.equal(await caneRow.count(), 1);
+  await page.getByRole("button", { name: "Caderno de campo", exact: true }).click();
+  await page
+    .getByRole("article")
+    .filter({ hasText: "Consertei a cerca semana passada" })
+    .filter({ hasText: "Lote 3" })
+    .waitFor();
   await page.getByRole("button", { name: "Calculadoras", exact: true }).click();
   await page.getByLabel("Peso inicial (kg)", { exact: true }).fill("100");
   await page.getByLabel("Peso final (kg)", { exact: true }).fill("450");

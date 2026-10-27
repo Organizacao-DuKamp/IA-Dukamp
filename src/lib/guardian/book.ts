@@ -47,7 +47,16 @@ export function describeAction(a: GuardianAction): string {
     case "task_update":
       return `Alterar a tarefa ${a.task}: ${a.status === "done" ? "concluir" : a.status === "cancelled" ? "cancelar" : ""}${a.dueAt ? ` reagendar para ${new Date(a.dueAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}` : ""}${a.title ? ` título: ${a.title}` : ""}.`;
     case "ledger":
-      return `${a.direction === "expense" ? "Despesa" : "Receita"} de ${money(a.amountCents)} em ${ledgerPeriod(a)}: ${a.description}${a.lot ? `, lote ${a.lot}` : ""}.`;
+      return `${a.direction === "expense" ? "Despesa" : "Receita"} de ${money(a.amountCents)} em ${ledgerPeriod(a)}: ${a.description}${a.lot ? `, lote ${a.lot}` : ""}${a.recurrence ? " (valor mensal informado)" : ""}.`;
+    case "edit_record":
+      return `Atualizar ${a.section === "ledger" ? "o lançamento financeiro" : "a anotação"} ${a.id}: ${Object.entries(
+        a.changes,
+      )
+        .map(
+          ([key, value]) =>
+            `${({ description: "descrição", date: "data", lot: "lote", amountCents: "valor", direction: "tipo" } as Record<string, string>)[key]}: ${key === "amountCents" ? money(Number(value)) : key === "direction" ? (value === "expense" ? "despesa" : "receita") : value}`,
+        )
+        .join("; ")}.`;
     case "record":
       return `Anotar em ${a.date}: ${a.description}${a.count ? ` (quantidade informada: ${a.count})` : ""}${a.lot ? `, lote ${a.lot}` : ""}.`;
     case "animal":
@@ -161,6 +170,46 @@ export function applyFarmAction(
       result = `Anotação ${id} salva no caderno de campo.`;
       break;
     }
+    case "edit_record": {
+      const row = book[action.section].find((r) => r.id === action.id);
+      if (!row) throw new Error("Não encontrei o registro nesta fazenda. Nada foi alterado.");
+      if (action.changes.date && action.changes.date > localDay)
+        throw new Error("A data de um registro realizado não pode estar no futuro.");
+      if (action.section === "ledger") {
+        const entry = book.ledger.find((r) => r.id === action.id)!;
+        if (
+          entry.periodMonth &&
+          action.changes.date &&
+          entry.periodMonth > action.changes.date.slice(0, 7)
+        )
+          throw new Error("A data não pode ser anterior ao mês do total financeiro.");
+      }
+      if (
+        Object.entries(action.changes).every(
+          ([key, value]) => row[key as keyof typeof row] === value,
+        )
+      ) {
+        result = `O registro ${row.id} já está com esses dados.`;
+        break;
+      }
+      const revisions = (row.revisions ??= []);
+      if (revisions.length >= 1000)
+        throw new Error("O registro atingiu o limite técnico de revisões.");
+      revisions.push({
+        source,
+        before: {
+          description: row.description,
+          date: row.date,
+          ...(row.lot ? { lot: row.lot } : {}),
+          ...("amountCents" in row
+            ? { amountCents: row.amountCents, direction: row.direction }
+            : {}),
+        },
+      });
+      Object.assign(row, action.changes);
+      result = `Registro ${row.id} atualizado no ${action.section === "ledger" ? "financeiro" : "caderno de campo"}.`;
+      break;
+    }
     case "animal": {
       const { kind: _kind, ...attrs } = action;
       if (action.birthDate && action.birthDate > localDay)
@@ -221,8 +270,16 @@ export function applyFarmAction(
     }
     case "move": {
       const animal = findAnimal(action.code);
+      if (animal.status && animal.status !== "active")
+        throw new Error(`O animal ${animal.code} não está ativo nesta fazenda.`);
       const previous = animal.lot;
+      if (fold(previous ?? "") === fold(action.lot)) {
+        result = `${animal.code} já está no lote ${action.lot}.`;
+        break;
+      }
       animal.lot = action.lot;
+      if (book.operations && !book.operations.lots.some((l) => fold(l.name) === fold(action.lot)))
+        book.operations.lots.push({ name: action.lot });
       book.records.push({
         id,
         type: "movement",
