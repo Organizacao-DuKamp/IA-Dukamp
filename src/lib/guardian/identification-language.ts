@@ -21,6 +21,10 @@ export type IdentityEnvelope = {
 /** The count in "only one has it" describes availability, never a registry series. */
 export function identityEnvelope(text: string): IdentityEnvelope {
   let body = text.trim();
+  body = body.replace(
+    /^(?:sim[,\s]+)?(?:eles|elas|ambos|ambas)\s+(?:t[eê]m|tem|possuem)\s*[:;,]?\s*/i,
+    "",
+  );
   const noneOthers =
     /\b(?:os|as) (?:outros|outras|demais|restantes) n[aã]o (?:t[eê]m|possuem|tem)\b/i.test(body);
   body = body

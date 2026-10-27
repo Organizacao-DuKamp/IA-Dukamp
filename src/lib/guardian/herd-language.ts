@@ -87,8 +87,16 @@ export function cardinal(text: string): number | null {
 export function herdStatement(text: string, mediaType?: string): string {
   let result = userStatement(text, mediaType)
     .replace(/^(?:tpec(?:[ -]?ia)?|pepec|pepeque)[,!: ]+/i, "")
+    // Speech fillers and an explicit request to record a past event are not
+    // uncertainty about whether that event happened. Keep factual negations.
+    .replace(/^(?:(?:olha|repente|ent[aã]o)[,!: ]+)+/i, "")
+    .replace(/^n[aã]o[, ]+eu quero que voc[eê]\s+/i, "")
     .replace(
-      /^(?:registre|registra|registrar|anote|anota|anotar)\s*[:,]?\s+(?:a[ií]\s+)?(?:tamb[eé]m\s+)?(?:que\s+)?/i,
+      /^(?:eu quero que voc[eê]\s+|(?:voc[eê] pode|pode)\s+)?(?:adicione|adiciona|adicionar|inclua|incluir)\s+/i,
+      "",
+    )
+    .replace(
+      /^(?:registre|registra|registrar|anote|anota|anotar)\s*[:,]?\s+(?:(?:a[ií]|pra mim|para mim)\s+)?(?:tamb[eé]m\s+)?(?:que\s+)?/i,
       "",
     )
     .replace(
@@ -96,6 +104,8 @@ export function herdStatement(text: string, mediaType?: string): string {
       "",
     )
     .replace(/(?:,\s*)?(?:t[aá]|ok|beleza|viu)[?!.…\s]*$/i, "")
+    .replace(/[, ]*\b(?:t[aá]|ok|t[aá] bom)\s*\?\s*/gi, " ")
+    .replace(/[, ]*por favor[.!?…\s]*$/i, "")
     .replace(/\b(?:acabou|acabaram)\s+de\s+nascer\b/gi, "nasceram")
     .trim();
   result = result.replace(

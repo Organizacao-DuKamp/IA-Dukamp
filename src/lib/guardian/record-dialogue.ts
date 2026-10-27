@@ -3,15 +3,61 @@ import {
   type GuardianAction,
   type RecordDraft,
   type PendingAction,
+  type GuardianSnapshot,
 } from "./schema.ts";
 import { certainStatement, userStatement } from "../whatsapp/learned-notes.ts";
 import { brazilNumber } from "./parse.ts";
 import { cardinal, foldHerd, herdStatement } from "./herd-language.ts";
-import { eventDay, hasEventVerb } from "./herd-event-language.ts";
+import { eventDay, hasEventVerb, farmScopeMatches } from "./herd-event-language.ts";
 import { localDay } from "../chat/context/recall.ts";
+import type { ChatMessage } from "../chat/types.ts";
+import { financialObservation } from "./financial-observation.ts";
 
 type Slots = Pick<RecordDraft, "section" | "entries">;
 export type RecordDialogue = { kind: "none" } | { kind: "slots"; slots: Slots };
+export function recordReference(text: string) {
+  return /^(?:(?:por favor[, ]*|voce pode |pode |quero que voce )\s*)?(?:registre|registra|registrar|anote|anota|salve|salvar|lance|lancar)\s+(?:ess[ae]|est[ae])\s+(?:despesa|receita|anotacao|registro|lancamento)(?:\s+(?:no financeiro|no caderno de campo|por favor))?[.!? ]*$|^(?:registre|registra|anote|salve|lance)\s+(?:isso|aquilo)(?:\s+(?:no financeiro|no caderno de campo|por favor))?[.!? ]*$/.test(
+    foldHerd(userStatement(text)),
+  );
+}
+/** Resolve "that expense" from recent producer statements, never from assistant
+ * prose. Farm-selection boundaries stop the lookup even if the old text matches. */
+export function referencedRecord(
+  text: string,
+  history: ChatMessage[],
+  at: Date,
+  snapshot: GuardianSnapshot,
+): Slots | null {
+  if (!recordReference(text)) return null;
+  const target = /\b(?:despesa|receita|financeiro)\b/i.test(text)
+    ? "finance"
+    : /\bcaderno|anota[cç][aã]o\b/i.test(text)
+      ? "field"
+      : null;
+  for (const m of history.slice(-12).reverse()) {
+    if (
+      /^(?:Fazenda selecionada:|usar fazenda|selecionar fazenda|cadastrar fazenda|caderno individual anterior)/i.test(
+        m.content.trim(),
+      )
+    )
+      break;
+    if (m.role !== "user") continue;
+    const statement = userStatement(m.content);
+    if (recordReference(statement)) continue;
+    const native = recordDialogue(statement, at);
+    if (native.kind === "slots" && (!target || native.slots.section === target))
+      return farmScopeMatches(herdStatement(statement), snapshot, false) ? native.slots : null;
+    const financial = financialObservation(herdStatement(statement), at);
+    if (target !== "field" && (financial.status === "action" || financial.status === "batch")) {
+      const actions = financial.status === "batch" ? financial.actions : [financial.action];
+      if (actions.every((a) => a.kind === "ledger"))
+        return farmScopeMatches(herdStatement(statement), snapshot, false)
+          ? { section: "finance", entries: actions as Slots["entries"] }
+          : null;
+    }
+  }
+  return null;
+}
 export function moneyValue(text: string): number | null {
   const t = foldHerd(text)
     .replace(/^(?:foi|foram|deu|paguei|gastei|recebi|o valor foi|o valor e|r\$)\s*/i, "")
@@ -20,14 +66,20 @@ export function moneyValue(text: string): number | null {
   const match = t.match(
     /^(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:[,.]\d{1,2})?)(?:\s*(mil|milhao|milhoes))?[.! ]*$/,
   );
+  const spokenScale = t.match(/^(.+)\s+(mil|milhao|milhoes)$/);
+  const spokenBase = spokenScale ? cardinal(spokenScale[1]) : null;
   const value = match
     ? brazilNumber(match[1]) * (match[2] === "mil" ? 1000 : match[2] ? 1000000 : 1)
-    : cardinal(t);
+    : t === "mil"
+      ? 1000
+      : spokenBase !== null
+        ? spokenBase * (spokenScale![2] === "mil" ? 1000 : 1000000)
+        : cardinal(t);
   return value !== null && Number.isFinite(value) && value > 0 && value <= 1e10
     ? Math.round(value * 100)
     : null;
 }
-function amountIn(text: string) {
+export function amountIn(text: string) {
   const literal = text.replace(/\b(?:20\d{2}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}(?:\/20\d{2})?)\b/g, "");
   const match =
     literal.match(
@@ -36,7 +88,19 @@ function amountIn(text: string) {
     literal.match(
       /(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:[,.]\d{1,2})?)(?:\s*(mil|milh[aã]o|milh[oõ]es))?\s+reais?\b/i,
     );
-  if (!match) return null;
+  if (!match) {
+    const spoken =
+      literal.match(
+        /\b([\p{L}]+(?:\s+e\s+[\p{L}]+){0,2})(\s+mil)?(?=\s+(?:de\s+)?(?:despesas?|receitas?|reais)\b)/iu,
+      ) ??
+      literal.match(
+        /\b(?:paguei|pagamos|gastei|gastamos|recebi|recebemos|despesas?|receitas?)\s+(?:(?:de|foi|foram)\s+)?([\p{L}]+(?:\s+e\s+[\p{L}]+){0,2})(\s+mil)?\b/iu,
+      );
+    if (!spoken) return null;
+    const base = cardinal(spoken[1]),
+      value = base === null ? null : base * (spoken[2] ? 1000 : 1);
+    return value ? { amount: Math.round(value * 100), token: spoken[0] } : null;
+  }
   const tail = literal.slice(match.index! + match[0].length);
   if (
     /^\s*(?:kg|litros?|sacos?|cabe[cç]as?|animais|bois|vacas|bezerros|d[oó]lares|usd|euros)\b/i.test(
@@ -78,10 +142,43 @@ export function recordDialogue(text: string, at: Date, mediaType?: string): Reco
     /\b(?:paguei|pagamos|gastei|gastamos|recebi|recebemos|despesas?|receitas?|financeiro)\b/.test(
       t,
     );
+  const lot = clean.match(/\blote\s+([\p{L}\d_-]+)/iu)?.[1];
+  const recurring =
+    /\b(?:todos os meses|todo mes|por mes|mensalmente|mensal recorrente|recorrente mensal)\b/.test(
+      t,
+    );
+  if (
+    finance &&
+    recurring &&
+    (t.match(/\b(?:receitas?|despesas?|paguei|recebi|gastei)\b/g)?.length ?? 0) === 1 &&
+    !/\b(?:sera|vai|prevista|previsto|custara|devera)\b/.test(t)
+  ) {
+    const amount = amountIn(clean);
+    const object = clean
+      .match(/\b(?:com|referente [aà]|relativ[oa] [aà])\s+([^.!?\n]+)/iu)?.[1]
+      ?.replace(/[,;]?\s*(?:todos os meses|todo m[eê]s|por m[eê]s|mensalmente)[\s\S]*$/i, "")
+      .trim();
+    return {
+      kind: "slots",
+      slots: {
+        section: "finance",
+        entries: [
+          {
+            kind: "ledger",
+            direction: /\b(?:despesas?|gastei|paguei)\b/.test(t) ? "expense" : "income",
+            ...(amount?.amount ? { amountCents: amount.amount } : {}),
+            ...(object ? { description: object.slice(0, 160) } : {}),
+            date: localDay(at),
+            recurrence: "monthly",
+            ...(lot ? { lot } : {}),
+          },
+        ],
+      },
+    };
+  }
   const date = eventDay(clean, at),
     month = monthReply(clean, at);
   const reported = date.ambiguous || date.invalid || month ? undefined : (date.day ?? localDay(at));
-  const lot = clean.match(/\blote\s+([\p{L}\d_-]+)/iu)?.[1];
   if (finance) {
     // Leave complete canonical commands in their existing reviewed flow.
     if (
@@ -101,7 +198,10 @@ export function recordDialogue(text: string, at: Date, mediaType?: string): Reco
       : /\b(?:recebi|recebemos|receita)\b/.test(t)
         ? ("income" as const)
         : undefined;
-    let description = amount ? clean.replace(amount.token, " ") : clean;
+    let description = (amount ? clean.replace(amount.token, " ") : clean).replace(
+      /^(?:hoje|ontem|anteontem)[, ]+/i,
+      "",
+    );
     description = description
       .trim()
       .replace(
@@ -119,6 +219,7 @@ export function recordDialogue(text: string, at: Date, mediaType?: string): Reco
       .replace(/\s+/g, " ")
       .replace(/^[, :.-]+|[, :.-]+$/g, "")
       .trim();
+    if (/^(?:ess[ae]|est[ae]|iss[oa])\b/i.test(description)) description = "";
     return {
       kind: "slots",
       slots: {

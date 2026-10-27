@@ -42,6 +42,8 @@ export function labeledAnimal(line: string): AnimalAction | null {
   return parsed.success ? (parsed.data as AnimalAction) : null;
 }
 export function identificationQuestion(p: HerdIdentification) {
+  if (p.proposedIdentities)
+    return `Você está informando ${p.proposedIdentities.map((a) => `código ${a.code}, RGN ${a.rgn}`).join("; ")}? Pode responder “sim” ou corrigir os dados.`;
   if (p.awaitingRgn) return `O código ${p.awaitingRgn.code} também é o RGN desse animal?`;
   if (p.registryOnly)
     return `Qual é o código/brinco do animal com RGN ${p.registryOnly.rgn}? Se o código for o mesmo, pode responder “é o mesmo”.`;
@@ -135,6 +137,29 @@ export function identificationAnswer(
         "Código ou brinco é a identificação usada na fazenda. RGN é o registro genealógico de nascimento. O RGN é opcional: posso salvar só o código que você informar.",
     };
   if (herdRegistrationIntent(assertion)) return { kind: "none" };
+  if (pending.proposedIdentities && /^(?:nao|nao e isso|nao sao esses)[.! ]*$/.test(t)) {
+    const next = structuredClone(pending);
+    delete next.proposedIdentities;
+    return {
+      kind: "ask",
+      pending: next,
+      reply:
+        "Certo. Quais são as identificações corretas desses animais? Pode enviar só os códigos, ou dizer o código e o RGN de cada um.",
+    };
+  }
+  if (
+    pending.proposedIdentities &&
+    /^(?:sim|isso|exatamente|confirmar|confirmo|correto)[.! ]*$/.test(t)
+  ) {
+    const next = structuredClone(pending),
+      proposed = next.proposedIdentities!;
+    delete next.proposedIdentities;
+    return identificationAnswer(
+      proposed.map((a) => `código ${a.code}, RGN ${a.rgn}`).join("\n"),
+      next,
+      book,
+    );
+  }
   const done = (p: HerdIdentification) =>
     p.entries.every((e) => e.codes.length >= (e.identifyCount ?? e.count));
   if (
@@ -290,6 +315,13 @@ export function identificationAnswer(
     return { kind: "ask", pending: next, reply: identificationQuestion(next) };
   }
   const lines = identityLines(body);
+  const informalPairs = lines.map((line) =>
+    line.match(/^(?:c[oó]digo|brinco)\s*:?\s*([\p{L}\d_-]+)\s*,\s*([\p{L}\d_-]+\s+\d+)[.! ]*$/iu),
+  );
+  if (informalPairs.length && informalPairs.every(Boolean)) {
+    next.proposedIdentities = informalPairs.map((m) => ({ code: m![1], rgn: m![2] }));
+    return { kind: "ask", pending: next, reply: identificationQuestion(next) };
+  }
   const actions: AnimalAction[] = [];
   let untyped = false;
   for (const line of lines) {
@@ -361,6 +393,7 @@ export function identificationAnswer(
   selected.codes.push(...actions.map((a) => a.code));
   if (envelope.noneOthers) selected.identifyCount = selected.codes.length;
   delete next.registryOnly;
+  delete next.proposedIdentities;
   delete next.awaitingRgn;
   if (untyped && actions.length === 1)
     next.awaitingRgn = { entryId: chosen.eventId, code: actions[0].code };

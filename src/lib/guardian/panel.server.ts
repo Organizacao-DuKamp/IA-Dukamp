@@ -6,6 +6,7 @@ import {
   FarmBookSchema,
   canEdit,
   farmName,
+  farmActionFamily,
   type FarmBook,
   type GuardianRole,
 } from "./schema.ts";
@@ -98,7 +99,7 @@ export const panelStore: PanelStore = {
         p_version: version,
         p_request: requestId,
         p_digest: digest,
-        p_kind: action.kind,
+        p_kind: farmActionFamily(action),
         p_book: book,
         p_events: events,
       })
