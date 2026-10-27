@@ -83,6 +83,13 @@ const NON_SERIES = new Set([
   "MODELO",
   "SAL",
   "MINERAL",
+  "APENAS",
+  "SOMENTE",
+  "SO",
+  "TEM",
+  "TEMOS",
+  "NOVOS",
+  "NOVAS",
 ]);
 
 function normalize(text: string): string {
@@ -132,9 +139,12 @@ export function isAnimalRecordNotation(text: string): boolean {
     return true;
   return (
     extractAnimalRegistrations(text).length > 0 &&
-    (/\b(peso|kg|kilos?|quilos?|macho|f[eê]mea|anot\w*|registr\w*|vacin\w*|marca[cç][aã]o)\b/i.test(
-      text,
+    (/^(?:apenas|somente|s[oó])\s+(?:\d+|um|uma)\b[\s\S]{0,50}\b(?:tem|t[eê]m|possui|possuem)\b/i.test(
+      text.trim(),
     ) ||
+      /\b(peso|kg|kilos?|quilos?|macho|f[eê]mea|anot\w*|registr\w*|vacin\w*|marca[cç][aã]o)\b/i.test(
+        text,
+      ) ||
       /^\s*[a-z]{2,6}\s*\d+\s+\d+(?:[.,]\d+)?\s*$/i.test(text))
   );
 }

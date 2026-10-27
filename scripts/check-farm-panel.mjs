@@ -208,6 +208,50 @@ try {
   await page.getByRole("button", { name: "Rebanho e lotes", exact: true }).click();
   await page.locator("summary").filter({ hasText: "C01" }).click();
   await page.getByText(/RGN informado: KBU 701/).waitFor();
+  await handleGuardianMessage(
+    { phone, messageId: "browser-context-purchase", text: "Hoje comprei mais 4 gados" },
+    { store: f.guardian, now: reportAt },
+  );
+  const oneIdentity = await handleGuardianMessage(
+    { phone, messageId: "browser-only-one", text: "Apenas 1 gado tem:\nDUKN 401" },
+    { store: f.guardian, now: reportAt },
+  );
+  assert.equal(oneIdentity.persisted, true);
+  assert.doesNotMatch(oneIdentity.reply, /ABCZ|fontes públicas/);
+  await handleGuardianMessage(
+    { phone, messageId: "browser-same-rgn", text: "sim, é o mesmo" },
+    { store: f.guardian, now: reportAt },
+  );
+  await handleGuardianMessage(
+    { phone, messageId: "browser-context-expense", text: "Paguei a manutenção do curral" },
+    { store: f.guardian, now: reportAt },
+  );
+  const contextExpense = await handleGuardianMessage(
+    { phone, messageId: "browser-context-amount", text: "250 reais" },
+    { store: f.guardian, now: reportAt },
+  );
+  assert.equal(contextExpense.persisted, true);
+  await handleGuardianMessage(
+    { phone, messageId: "browser-context-field", text: "Consertei a cerca semana passada" },
+    { store: f.guardian, now: reportAt },
+  );
+  const contextNote = await handleGuardianMessage(
+    { phone, messageId: "browser-context-date", text: "foi ontem" },
+    { store: f.guardian, now: reportAt },
+  );
+  assert.equal(contextNote.persisted, true);
+  await page.reload({ waitUntil: "networkidle" });
+  assert.match(
+    await page.getByRole("article").filter({ hasText: "Estoque calculado" }).innerText(),
+    /52/,
+  );
+  await page.getByRole("button", { name: "Rebanho e lotes", exact: true }).click();
+  await page.locator("summary").filter({ hasText: "DUKN 401" }).click();
+  await page.getByText(/RGN informado: DUKN 401/).waitFor();
+  await page.getByRole("button", { name: "Financeiro", exact: true }).click();
+  await page.getByRole("cell").filter({ hasText: "a manutenção do curral" }).waitFor();
+  await page.getByRole("button", { name: "Caderno de campo", exact: true }).click();
+  await page.getByText("Consertei a cerca semana passada", { exact: true }).waitFor();
   await page.getByRole("button", { name: "Calculadoras", exact: true }).click();
   await page.getByLabel("Peso inicial (kg)", { exact: true }).fill("100");
   await page.getByLabel("Peso final (kg)", { exact: true }).fill("450");
@@ -237,7 +281,7 @@ try {
   }
   assert.deepEqual(errors, []);
   console.log(
-    "PASS: public access, invalid code, WhatsApp code, isolated cookie session, reviewed edit, natural financial totals, combined herd events and RGN, spoken 'mais quatro' addition, '+2' and 'hoje mesmo' reports, rephrase without duplication, identity followup without double-counting, calculator without reference URL, PostgreSQL persistence, reload, mobile layout and logout.",
+    "PASS: public access, cookie session, reviewed edits, financial totals, herd events, natural identifier followups, financial amount followups, field note date followups, calculator, PostgreSQL persistence, reload, mobile layout and logout.",
   );
 } catch (error) {
   if (testPage) {

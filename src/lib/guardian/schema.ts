@@ -248,6 +248,7 @@ export interface PendingAction {
   createdAt: string;
   expiresAt: string;
   sourceMessageId: string;
+  revisedBy?: string;
 }
 export interface HerdIdentification {
   kind: "herd_identification";
@@ -262,9 +263,13 @@ export interface HerdIdentification {
     date: string;
     lot?: string;
     codes: string[];
+    /** How many of the remaining animals the producer says have identification. */
+    identifyCount?: number;
   }>;
-  previousProposal?: PendingAction;
+  previousProposal?: GuardianPending;
   repeatCheck?: { entryId: string; sourceMessageId: string; sourceAt: string };
+  awaitingRgn?: { entryId: string; code: string };
+  registryOnly?: { entryId: string; rgn: string };
 }
 export interface HerdRegistrationDraft {
   kind: "herd_registration";
@@ -275,9 +280,36 @@ export interface HerdRegistrationDraft {
   sourceAt: string;
   text: string;
   missing: "count" | "date";
-  previousPending?: PendingAction | HerdIdentification;
+  previousPending?: GuardianPending;
 }
-export type GuardianPending = PendingAction | HerdIdentification | HerdRegistrationDraft;
+export interface RecordDraft {
+  kind: "record_draft";
+  propertyId: string;
+  createdAt: string;
+  expiresAt: string;
+  sourceMessageId: string;
+  sourceAt: string;
+  section: "finance" | "field";
+  entries: Array<{
+    kind: "ledger" | "record";
+    direction?: "income" | "expense";
+    amountCents?: number;
+    description?: string;
+    date?: string;
+    periodMonth?: string;
+    type?: "management" | "health";
+    lot?: string;
+    count?: number;
+    summary?: boolean;
+    estimated?: boolean;
+  }>;
+  previousPending?: GuardianPending;
+}
+export type GuardianPending =
+  | PendingAction
+  | HerdIdentification
+  | HerdRegistrationDraft
+  | RecordDraft;
 export interface GuardianSnapshot {
   lastCalculation?: import("./calculators.ts").Calculation | null;
   accountVersion: number;

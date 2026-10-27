@@ -251,7 +251,11 @@ test("integrated PostgreSQL: natural financial reports reach the ledger, retain 
       },
       deps,
     );
-    assert.match(denied!.reply!, /Ainda não salvei no financeiro/);
+    assert.match(denied!.reply!, /Qual foi o valor da despesa/);
+    const unfinished = (await f.guardian.load(phone)).pending;
+    assert.equal(unfinished?.kind, "record_draft");
+    if (unfinished?.kind === "record_draft")
+      assert.equal(unfinished.entries[0].amountCents, 10000000);
     assert.equal((await f.guardian.load(phone)).active!.book.records.length, 0);
     const recall = await handleGuardianMessage(
       { phone, messageId: "recall", text: "resumo financeiro deste mês" },

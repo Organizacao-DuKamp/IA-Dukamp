@@ -6,11 +6,19 @@ import {
 import { automaticFarmEvent } from "./automatic.ts";
 import { possibleRepeatedEntry, repeatAnswer, repeatQuestion } from "./herd-repeat.ts";
 import {
+  recordDialogue,
+  recordAnswer,
+  recordActions,
+  missingRecordSlot,
+  monthlyFinanceDraft,
+  proposalCorrection,
+} from "./record-dialogue.ts";
+import {
   missingRegistrationField,
   registrationAnswer,
   registrationQuestion,
 } from "./herd-registration.ts";
-import { certainHerdStatement, hasEventVerb } from "./herd-event-language.ts";
+import { certainHerdStatement, hasEventVerb, farmScopeMatches } from "./herd-event-language.ts";
 import { herdStatement } from "./herd-language.ts";
 import { handlePanelCodeRequest } from "./panel.server.ts";
 import { farmIndicators, stockAt } from "./operations.ts";
@@ -37,6 +45,8 @@ import {
   farmName,
   type GuardianAction,
   type GuardianSnapshot,
+  type GuardianPending,
+  type RecordDraft,
 } from "./schema.ts";
 import { applyFarmAction, describeAction, farmReport, fold } from "./book.ts";
 import { calculate, renderCalculation } from "./calculators.ts";
@@ -174,6 +184,14 @@ function structuredContext(s: GuardianSnapshot, now = new Date()): string | unde
     },
   ).slice(0, 8000)}`;
 }
+function pendingQuestion(pending: GuardianPending | null | undefined): string | undefined {
+  if (!pending) return undefined;
+  if (pending.kind === "herd_identification")
+    return pending.repeatCheck ? repeatQuestion(pending) : identificationQuestion(pending);
+  if (pending.kind === "herd_registration") return registrationQuestion(pending.missing);
+  if (pending.kind === "record_draft") return missingRecordSlot(pending)?.question;
+  return `${describeAction(pending.action)}\nEssa proposta anterior ainda está pendente. Responda “confirmar” se quiser salvá-la.`;
+}
 export async function handleGuardianMessage(
   input: GuardianInput,
   deps: GuardianDependencies = {},
@@ -228,6 +246,32 @@ export async function handleGuardianMessage(
     if (previous) return { reply: previous, activeProperty: false, persisted: true };
     for (let attempt = 0; attempt < 4; attempt++) {
       const snapshot = await store.load(input.phone);
+      // A bare answer follows the latest question, not an older suspended operation.
+      const lastPrompt = input.history?.at(-1);
+      const shortContextReply =
+        /^(?:sim(?:[, ]+[eé] o mesmo)?|n[aã]o|ok|confirmo|confirmar|\d+(?:[.,]\d+)?|(?:foi )?(?:hoje|ontem|anteontem))[.! ]*$/i.test(
+          input.text.trim(),
+        );
+      if (
+        !deps.request &&
+        snapshot.pending &&
+        lastPrompt?.role === "assistant" &&
+        shortContextReply
+      ) {
+        const expected = pendingQuestion(snapshot.pending);
+        const focused =
+          (expected && lastPrompt.content.includes(expected)) ||
+          ("action" in snapshot.pending &&
+            lastPrompt.content.includes(describeAction(snapshot.pending.action)));
+        if (!focused)
+          return {
+            reply: null,
+            context: structuredContext(snapshot, now),
+            activeProperty: !!snapshot.active,
+            conversational: true,
+            persisted: false,
+          };
+      }
       const followup = snapshot.pending?.kind === "herd_identification" ? snapshot.pending : null;
       let continuation:
         | {
@@ -235,8 +279,201 @@ export async function handleGuardianMessage(
             actions?: GuardianAction[];
             sourceMessageId: string;
             sourceAt: string;
+            pendingAfter?: GuardianPending | null;
           }
         | undefined;
+      const recordDraft = snapshot.pending?.kind === "record_draft" ? snapshot.pending : null;
+      const saveRecordDraft = async (
+        slots: Pick<RecordDraft, "section" | "entries">,
+        existing?: RecordDraft,
+      ): Promise<GuardianHandled | null> => {
+        attempted = true;
+        const previousPending =
+          existing?.previousPending ??
+          (snapshot.pending?.kind === "record_draft"
+            ? snapshot.pending.previousPending
+            : (snapshot.pending ?? undefined));
+        const pending: RecordDraft = existing
+          ? { ...existing, ...slots }
+          : {
+              kind: "record_draft",
+              propertyId: snapshot.active!.id,
+              createdAt: at,
+              expiresAt: new Date(now.getTime() + 30 * 60000).toISOString(),
+              sourceMessageId: input.messageId,
+              sourceAt: referenceAt.toISOString(),
+              ...slots,
+              ...(previousPending ? { previousPending } : {}),
+            };
+        const reply =
+          missingRecordSlot(slots)?.question ??
+          "Confira os dados desse registro; ainda não foi salvo.";
+        const result = await store.commit({
+          phone: input.phone,
+          messageId: input.messageId,
+          accountVersion: snapshot.accountVersion,
+          propertyId: snapshot.active!.id,
+          propertyVersion: snapshot.active!.version,
+          operation: "pending",
+          pending,
+          reply,
+        });
+        if (result === "conflict") return null;
+        if (result !== "committed" && !result.startsWith("replay:"))
+          throw new Error("guardian_commit_unconfirmed");
+        return {
+          reply: result.startsWith("replay:") ? result.slice(7) : reply,
+          activeProperty: true,
+          persisted: false,
+        };
+      };
+      if (!deps.request && recordDraft) {
+        const slots = recordAnswer(input.text, recordDraft, referenceAt);
+        const control = /^(?:sim|confirmar|confirmo|cancelar|nao|ok)[.! ]*$/.test(fold(input.text));
+        if (slots || control) {
+          attempted = true;
+          const valid =
+            recordDraft.propertyId === snapshot.active?.id &&
+            Date.parse(recordDraft.expiresAt) > now.getTime();
+          const cancelled = /^(?:nao|cancelar)[.! ]*$/.test(fold(input.text));
+          const previous =
+            recordDraft.previousPending &&
+            recordDraft.previousPending.propertyId === snapshot.active?.id &&
+            Date.parse(recordDraft.previousPending.expiresAt) > now.getTime()
+              ? recordDraft.previousPending
+              : null;
+          if (!valid || cancelled) {
+            const reply = withHerdQuestion(
+              !valid
+                ? "O pedido expirou ou a fazenda mudou. Não salvei esse registro; reenvie os dados na fazenda correta."
+                : "Pedido cancelado. Nenhum lançamento ou anotação foi salvo.",
+              pendingQuestion(previous),
+            );
+            const result = await store.commit({
+              phone: input.phone,
+              messageId: input.messageId,
+              accountVersion: snapshot.accountVersion,
+              propertyId: snapshot.active?.id ?? null,
+              propertyVersion: snapshot.active?.version ?? null,
+              operation: "clear",
+              pending: previous,
+              reply,
+            });
+            if (result === "conflict") continue;
+            if (result !== "committed" && !result.startsWith("replay:"))
+              throw new Error("guardian_commit_unconfirmed");
+            return {
+              reply: result.startsWith("replay:") ? result.slice(7) : reply,
+              activeProperty: !!snapshot.active,
+              persisted: false,
+            };
+          }
+          const actions = slots ? recordActions(slots) : null;
+          if (actions)
+            continuation = {
+              action: actions[0],
+              actions,
+              sourceMessageId: recordDraft.sourceMessageId,
+              sourceAt: recordDraft.sourceAt,
+              pendingAfter: previous,
+            };
+          else {
+            const asked = await saveRecordDraft(slots ?? recordDraft, recordDraft);
+            if (!asked) continue;
+            return asked;
+          }
+        }
+      }
+      if (
+        !deps.request &&
+        snapshot.pending &&
+        snapshot.pending.kind !== "herd_identification" &&
+        snapshot.pending.kind !== "herd_registration" &&
+        snapshot.pending.kind !== "record_draft" &&
+        Date.parse(snapshot.pending.expiresAt) > now.getTime() &&
+        snapshot.pending.propertyId === snapshot.active?.id
+      ) {
+        const correction = proposalCorrection(input.text, snapshot.pending, referenceAt);
+        if (correction) {
+          attempted = true;
+          const pending = { ...snapshot.pending, action: correction, revisedBy: input.messageId };
+          const reply = `${describeAction(correction)}\nAtualizei a proposta mantendo os demais dados. Responda “confirmar” para salvar.`;
+          const result = await store.commit({
+            phone: input.phone,
+            messageId: input.messageId,
+            accountVersion: snapshot.accountVersion,
+            propertyId: snapshot.active!.id,
+            propertyVersion: snapshot.active!.version,
+            operation: "pending",
+            pending,
+            reply,
+          });
+          if (result === "conflict") continue;
+          if (result !== "committed" && !result.startsWith("replay:"))
+            throw new Error("guardian_commit_unconfirmed");
+          return {
+            reply: result.startsWith("replay:") ? result.slice(7) : reply,
+            activeProperty: true,
+            persisted: false,
+          };
+        }
+      }
+      if (!deps.request && !continuation && snapshot.active?.book.operations) {
+        const dialogue = recordDialogue(input.text, referenceAt, input.mediaType);
+        if (dialogue.kind === "slots") {
+          const selected =
+            input.history?.at(-1)?.role === "assistant" &&
+            input.history.at(-1)!.content.startsWith("Fazenda selecionada:");
+          if (!farmScopeMatches(herdStatement(input.text), snapshot, !!selected))
+            return {
+              reply:
+                "De qual fazenda é esse registro? Selecione a propriedade correta; ainda não salvei o lançamento ou a anotação.",
+              activeProperty: true,
+              persisted: false,
+            };
+          if (
+            dialogue.slots.section === "finance" &&
+            !["owner", "manager"].includes(snapshot.active.role)
+          )
+            return {
+              reply: "Seu perfil não permite registros financeiros nesta fazenda.",
+              activeProperty: true,
+              persisted: false,
+            };
+          const actions = recordActions(dialogue.slots);
+          if (actions) {
+            const operational =
+              dialogue.slots.section === "finance"
+                ? automaticFarmEvent({ ...input, at: referenceAt }, snapshot)
+                : null;
+            if (operational?.status === "pending")
+              return {
+                reply:
+                  operational.reply ??
+                  "Preciso confirmar a fazenda e a data dos acontecimentos antes de salvar esta mensagem. Nenhum dos registros foi salvo.",
+                activeProperty: true,
+                persisted: false,
+              };
+            const operations =
+              operational?.status === "action"
+                ? [operational.action]
+                : operational?.status === "batch"
+                  ? operational.actions
+                  : [];
+            const combined = [...actions, ...operations.filter((a) => a.kind !== "ledger")];
+            continuation = {
+              action: combined[0],
+              actions: combined,
+              sourceMessageId: input.messageId,
+              sourceAt: referenceAt.toISOString(),
+            };
+          } else {
+            const asked = await saveRecordDraft(dialogue.slots);
+            if (!asked) continue;
+            return asked;
+          }
+        }
+      }
       const draft = snapshot.pending?.kind === "herd_registration" ? snapshot.pending : null;
       if (draft && !deps.request) {
         const completedText = registrationAnswer(input.text, draft, referenceAt);
@@ -418,7 +655,10 @@ export async function handleGuardianMessage(
           let reply =
             "A identificação pendente expirou ou a fazenda selecionada mudou. A entrada anterior continua salva; envie os códigos com a fazenda correta selecionada.";
           if (valid) {
-            if (answer.kind === "ask") reply = answer.reply;
+            if (answer.kind === "ask") {
+              reply = answer.reply;
+              pending = answer.pending ?? followup;
+            }
             if (answer.kind === "close") {
               pending = null;
               reply = answer.reply;
@@ -446,10 +686,13 @@ export async function handleGuardianMessage(
                 ).book;
               pending = answer.pending;
               reply =
+                answer.reply ??
                 `Identificações salvas: ${answer.actions.map((a) => `${a.code}${a.rgn ? ` — RGN ${a.rgn}` : " — sem RGN informado"}`).join("; ")}. A quantidade do rebanho não foi alterada.` +
-                (pending ? `\n\n${identificationQuestion(pending)}` : "");
+                  (pending ? `\n\n${identificationQuestion(pending)}` : "");
             }
           }
+          const resumed = pending ?? (valid ? restoreProposal(followup, now) : null);
+          if (!pending && resumed) reply = withHerdQuestion(reply, pendingQuestion(resumed));
           const result = await store.commit({
             phone: input.phone,
             messageId: input.messageId,
@@ -458,7 +701,7 @@ export async function handleGuardianMessage(
             propertyVersion: snapshot.active?.version ?? null,
             operation: valid && answer.kind === "animals" ? "update" : "clear",
             book: valid && answer.kind === "animals" ? book : undefined,
-            pending: pending ?? (valid ? restoreProposal(followup, now) : null),
+            pending: resumed,
             details: {
               kind: "animal",
               followup: "herd_identification",
@@ -504,6 +747,27 @@ export async function handleGuardianMessage(
           if (error) throw new Error("guardian_review_unavailable");
         };
         if (observation.status === "pending") {
+          if (snapshot.active && observation.reply?.includes("financeiro")) {
+            const slots = monthlyFinanceDraft(input.text, referenceAt);
+            const selected =
+              input.history?.at(-1)?.role === "assistant" &&
+              input.history.at(-1)!.content.startsWith("Fazenda selecionada:");
+            if (
+              slots &&
+              missingRecordSlot(slots) &&
+              farmScopeMatches(herdStatement(input.text), snapshot, !!selected)
+            ) {
+              if (!["owner", "manager"].includes(snapshot.active.role))
+                return {
+                  reply: "Seu perfil não permite registros financeiros nesta fazenda.",
+                  activeProperty: true,
+                  persisted: false,
+                };
+              const asked = await saveRecordDraft(slots);
+              if (!asked) continue;
+              return asked;
+            }
+          }
           if (
             snapshot.active &&
             observation.reason === "ambiguous_date" &&
@@ -573,7 +837,7 @@ export async function handleGuardianMessage(
           if (!actions.every((action) => canEdit(snapshot.active!.role, action)))
             return {
               reply:
-                "Seu perfil não permite alterar o estoque do rebanho. Peça ao responsável pela fazenda.",
+                "Seu perfil não permite estes registros na fazenda. Peça ao responsável pela fazenda.",
               activeProperty: true,
             };
           let applied = {
@@ -604,7 +868,7 @@ export async function handleGuardianMessage(
             return {
               reply:
                 error instanceof Error &&
-                /^(A contagem representa|Informe uma contagem anterior|A data de um evento|A movimentação produziria|Não há saldo conhecido)/.test(
+                /^(A contagem representa|Informe uma contagem anterior|A data de um|A movimentação produziria|Não há saldo conhecido)/.test(
                   error.message,
                 )
                   ? `${error.message} Nenhum movimento desta mensagem foi salvo.`
@@ -614,7 +878,7 @@ export async function handleGuardianMessage(
             };
           }
           const directReceipt =
-            actions.some((a) => ["ledger", "animal", "herd_event"].includes(a.kind)) ||
+            actions.some((a) => ["ledger", "record", "animal", "herd_event"].includes(a.kind)) ||
             actions.length > 1;
           const identification = identificationAfterEntry(
             actions,
@@ -638,24 +902,37 @@ export async function handleGuardianMessage(
                 .map((a) =>
                   a.kind === "ledger"
                     ? `• Financeiro: ${describeAction(a)}`
-                    : a.kind === "herd_event"
-                      ? `• Rebanho: ${a.count} ${a.type === "birth" ? "nascimentos" : a.type === "death" ? "mortes" : a.type === "sale" ? "animais vendidos" : "animais comprados"} em ${a.date}.`
-                      : a.kind === "animal"
-                        ? `• Animal: código ${a.code}${a.rgn ? `; RGN informado ${a.rgn}` : ""}.`
-                        : `• ${describeAction(a)}`,
+                    : a.kind === "record"
+                      ? `• Caderno de campo: ${a.description} (${a.date}).`
+                      : a.kind === "herd_event"
+                        ? `• Rebanho: ${a.count} ${a.type === "birth" ? "nascimentos" : a.type === "death" ? "mortes" : a.type === "sale" ? "animais vendidos" : "animais comprados"} em ${a.date}.`
+                        : a.kind === "animal"
+                          ? `• Animal: código ${a.code}${a.rgn ? `; RGN informado ${a.rgn}` : ""}.`
+                          : `• ${describeAction(a)}`,
                 )
                 .join("\n") +
               (actions.some((a) => a.kind === "herd_event") && stock !== null
                 ? `\nRebanho calculado após os registros: ${stock} animais.`
                 : "")
             : "Registro informado salvo na fazenda com origem e data preservadas.";
+          const postPending =
+            continuation && "pendingAfter" in continuation
+              ? (continuation.pendingAfter ?? null)
+              : (identification ?? snapshot.pending);
           const savedReply = withHerdQuestion(
-            receiptText,
-            identification
-              ? identificationQuestion(identification)
-              : actions.some((a) => a.kind === "animal")
-                ? undefined
-                : herdQuestion,
+            withHerdQuestion(
+              receiptText,
+              identification
+                ? identificationQuestion(identification)
+                : actions.some((a) => a.kind === "animal")
+                  ? undefined
+                  : herdQuestion,
+            ),
+            !identification &&
+              ((continuation && "pendingAfter" in continuation) ||
+                postPending?.kind === "record_draft")
+              ? pendingQuestion(postPending)
+              : undefined,
           );
           const result = await store.commit({
             phone: input.phone,
@@ -665,7 +942,7 @@ export async function handleGuardianMessage(
             propertyVersion: snapshot.active.version,
             operation: "update",
             book: applied.book,
-            pending: identification ?? snapshot.pending,
+            pending: postPending,
             details: {
               kind: actions[0].kind,
               classification: "declared",
@@ -989,6 +1266,12 @@ export async function handleGuardianMessage(
                 activeProperty: !!snapshot.active,
                 persisted: false,
               };
+            if (pending.kind === "record_draft")
+              return {
+                reply: missingRecordSlot(pending)?.question ?? "Ainda faltam dados desse registro.",
+                activeProperty: !!snapshot.active,
+                persisted: false,
+              };
             if (pending.kind === "herd_identification")
               return { reply: identificationQuestion(pending), activeProperty: !!snapshot.active };
             let a = ActionSchema.parse(pending.action);
@@ -1029,6 +1312,7 @@ export async function handleGuardianMessage(
               ...a,
               sourceMessageId: pending.sourceMessageId,
               confirmedBy: input.messageId,
+              ...(pending.revisedBy ? { revisedBy: pending.revisedBy } : {}),
             };
             if (a.kind === "property_create") {
               base.operation = "create";
