@@ -109,13 +109,13 @@ responsável; a fila de revisão não descarta a origem nem “confirma” dados
 
 Migrações novas, nesta ordem:
 
-1. `20261026210000_guardian_farm_panel.sql`: identidade provisória compatível,
+1. `20261027111123_guardian_farm_panel.sql`: identidade provisória compatível,
    vínculo e projeção dos perfis observados, backfill da geração ativa, códigos,
    sessões, idempotência web, limites e fila privada de revisão.
-2. `20261026213000_guardian_reviews_rules.sql`: decisões administrativas auditadas,
+2. `20261027111135_guardian_reviews_rules.sql`: decisões administrativas auditadas,
    claims de regras por propriedade/integrante, fila com versão da origem e
    cancelamento de alertas quando a evidência muda.
-3. `20261026220000_guardian_property_transfers.sql`: autorização e transação para
+3. `20261027111144_guardian_property_transfers.sql`: autorização e transação para
    transferências entre duas propriedades, com ordem de locks e controle de versão.
 
 As tabelas novas têm RLS e nenhuma permissão direta para `anon`. Códigos, sessões,
@@ -227,3 +227,15 @@ Branch local: `feat/guardia-farm-panel`, a partir da base auditada acima.
 
 Os commits estão preparados localmente. A integração ao branch principal e a
 publicação dependem da revisão e homologação descritas nesta documentação.
+
+## Histórico de implantação conectada — 27/10/2026
+
+As três migrações foram homologadas pelos 820 testes e aplicadas, na ordem documentada, ao projeto TPEC-IA `cawgzodelwchccilqeqr`. A conexão Supabase atribuiu as versões abaixo. Os arquivos e o helper de testes foram sincronizados com o histórico real, mantendo o SQL integralmente inalterado, para impedir reaplicação por uma futura execução de `db push`.
+
+| Versão original de desenvolvimento | Versão registrada no Supabase | Migração |
+| --- | --- | --- |
+| 20261026210000 | 20261027111123 | guardian_farm_panel |
+| 20261026213000 | 20261027111135 | guardian_reviews_rules |
+| 20261026220000 | 20261027111144 | guardian_property_transfers |
+
+A conferência posterior preservou os hashes dos animais, tarefas, lançamentos e registros do caderno anteriormente existente e as três observações originais. O backfill foi aplicado sem apagar registros. A publicação e a validação do endereço público são etapas separadas desta aplicação de esquema.
