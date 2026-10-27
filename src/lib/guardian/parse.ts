@@ -178,7 +178,12 @@ export function parseGuardianRequest(
   const corrected = t.match(
     /^(?:era|e|corrija para|o peso certo e)\s*([\d.,]+)\s*kg(?:[, ]*nao\s*([\d.,]+)\s*(?:kg)?)?[.! ]*$/,
   );
-  if (corrected && snapshot?.pending?.action.kind === "weighing") {
+  if (
+    corrected &&
+    snapshot?.pending &&
+    snapshot.pending.kind !== "herd_identification" &&
+    snapshot.pending.action.kind === "weighing"
+  ) {
     const action = ActionSchema.safeParse({
       ...snapshot.pending.action,
       weightKg: brazilNumber(corrected[1]),

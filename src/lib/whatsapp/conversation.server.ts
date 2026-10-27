@@ -14,6 +14,7 @@ import { currentMemoryMarker, stampMemoryState } from "../chat/memory-reset.ts";
 import type { ConversationRecall } from "../chat/context/types.ts";
 import { recallWhatsAppContext } from "../chat/context/whatsapp.server.ts";
 import type { GuardianHandled, GuardianInput } from "../guardian/handler.server.ts";
+import { withHerdQuestion } from "../guardian/herd-language.ts";
 import { observeLearnedMemory, type LearnedMemoryResult } from "./learned-notes.server.ts";
 import { naturalNotebookTurn, userStatement } from "./learned-notes.ts";
 
@@ -693,6 +694,7 @@ export async function processClaimedWhatsAppChat(
 
       const core = ChatCoreResultSchema.parse(result.body);
       if (!core.reply.trim()) throw new Error("empty_chat_reply");
+      core.reply = withHerdQuestion(core.reply, guardian?.herdIdentificationQuestion);
       const nextHistory = appendTurn(previous?.history ?? [], userText, core.reply);
 
       try {

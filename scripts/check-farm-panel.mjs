@@ -138,6 +138,35 @@ try {
   );
   await page.locator("summary").filter({ hasText: "KBU 491" }).click();
   await page.getByText(/RGN informado: KBU 491/).waitFor();
+  const audioEntry = await handleGuardianMessage(
+    {
+      phone,
+      messageId: "browser-audio-more-four",
+      text: "[Mensagem recebida por áudio no WhatsApp]\nPedido do usuário: Analise o áudio.\nTranscrição do áudio: Pepec, agora nasceram mais quatro bezerros aqui na minha fazenda, tá? Se você puder registrar isso pra mim...",
+      mediaType: "audio",
+    },
+    { store: f.guardian, now: reportAt },
+  );
+  assert.equal(audioEntry.persisted, true);
+  assert.match(audioEntry.reply, /46 animais/);
+  assert.match(audioEntry.reply, /código\/brinco e RGN/);
+  const identified = await handleGuardianMessage(
+    {
+      phone,
+      messageId: "browser-identification",
+      text: "código B101, RGN KBU 501\ncódigo B102, RGN KBU 502\ncódigo B103\ncódigo B104",
+    },
+    { store: f.guardian, now: reportAt },
+  );
+  assert.equal(identified.persisted, true);
+  await page.reload({ waitUntil: "networkidle" });
+  assert.match(
+    await page.getByRole("article").filter({ hasText: "Estoque calculado" }).innerText(),
+    /46/,
+  );
+  await page.getByRole("button", { name: "Rebanho e lotes", exact: true }).click();
+  await page.locator("summary").filter({ hasText: "B101" }).click();
+  await page.getByText(/RGN informado: KBU 501/).waitFor();
   await page.getByRole("button", { name: "Calculadoras", exact: true }).click();
   await page.getByLabel("Peso inicial (kg)", { exact: true }).fill("100");
   await page.getByLabel("Peso final (kg)", { exact: true }).fill("450");
@@ -167,7 +196,7 @@ try {
   }
   assert.deepEqual(errors, []);
   console.log(
-    "PASS: public access, invalid code, WhatsApp code, isolated cookie session, reviewed edit, natural financial totals, combined herd events and RGN, calculator without reference URL, PostgreSQL persistence, reload, mobile layout and logout.",
+    "PASS: public access, invalid code, WhatsApp code, isolated cookie session, reviewed edit, natural financial totals, combined herd events and RGN, spoken 'mais quatro' addition, identity followup without double-counting, calculator without reference URL, PostgreSQL persistence, reload, mobile layout and logout.",
   );
 } catch (error) {
   if (testPage) {

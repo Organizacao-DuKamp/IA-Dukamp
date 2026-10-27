@@ -4,6 +4,8 @@ import { certainStatement, statementParts, userStatement } from "../whatsapp/lea
 import { extractPropertyObservation } from "./observed-property.ts";
 import { localDay, recallPeriod } from "../chat/context/recall.ts";
 import { financialObservation } from "./financial-observation.ts";
+import { herdStatement } from "./herd-language.ts";
+import { labeledAnimal } from "./herd-identification.ts";
 
 export type AutomaticObservation =
   | { status: "none" }
@@ -20,10 +22,11 @@ export function automaticFarmEvent(
   },
   snapshot: GuardianSnapshot,
 ): AutomaticObservation {
-  const text = userStatement(input.text, input.mediaType);
+  const original = userStatement(input.text, input.mediaType);
+  const text = herdStatement(input.text, input.mediaType);
   if (snapshot.properties.length > 1) {
     const observation = extractPropertyObservation({
-      text,
+      text: original,
       mediaType: input.mediaType,
       at: input.at,
     });
@@ -40,7 +43,7 @@ export function automaticFarmEvent(
   if (!snapshot.active && !snapshot.properties.length) return { status: "none" };
   if (
     /encaminhad[oa]|mensagem de|corrigindo|me enganei|na verdade|errei|\b(?:vizinho|vizinha|disse|falou|suponha|hipotetic|simula)\b|```|(?:^|\n)\s*>/i.test(
-      text,
+      original,
     )
   )
     return { status: "none" };
@@ -67,7 +70,9 @@ export function automaticFarmEvent(
     ),
   );
   const hasHerdNoun =
-    /\b(?:bezerros?|bezerras?|animais|bovinos|bois|vacas|novilhas|cabeças|cabecas)\b/i.test(text);
+    /\b(?:bezerros?|bezerras?|animais|animal|bovinos?|gados?|bois|boi|vacas?|novilhas?|cabeças?|cabecas?)\b/i.test(
+      text,
+    );
   let previousHerd = false;
   for (const quote of parts) {
     if (
@@ -81,9 +86,9 @@ export function automaticFarmEvent(
     );
     if (declarations && declarations.length > 1)
       return { status: "pending", reason: "ambiguous_date" };
-    const literal = quote.replace(/^(?:(?:hoje|ontem|anteontem|tamb[eé]m)[, ]+)+/i, "");
+    const literal = quote.replace(/^(?:(?:hoje|ontem|anteontem|tamb[eé]m|agora)[, ]+)+/i, "");
     const match = literal.match(
-      /^(?:(?:eu|nós|nos)\s+)?(nasceram|nasceu|morreram|morreu|vendi|vendemos|comprei|compramos)\s+(\d{1,6})\b(?:\s+(cabeças(?: de gado)?|cabecas(?: de gado)?|animais|bovinos|bois|vacas|bezerros|bezerras|novilhas)\b)?/i,
+      /^(?:(?:eu|nós|nos)\s+)?(nasceram|nasceu|morreram|morreu|vendi|vendemos|comprei|compramos)\s+(\d{1,6})\b(?:\s+(cabe[cç]as?(?: de gado)?|animais|animal|bovinos?|gados?|bois|boi|vacas?|bezerros?|bezerras?|novilhas?)\b)?/i,
     );
     const husbandry = literal.match(
       /^(?:(?:eu|nós|nos)\s+)?(vacinei|vacinamos|vermifuguei|vermifugamos|tratei|tratamos|desmamei|desmamamos|inseminei|inseminamos|pesei|pesamos|transferi|transferimos|passei|passamos)\b/i,
@@ -194,6 +199,11 @@ export function automaticFarmEvent(
       );
       if (parsed.success) candidates.push(parsed.data);
     }
+  }
+  if (/^(?:c[oó]digo|brinco)\b/i.test(text)) {
+    const identityLines = text.split(/[;\n]+/).map((line) => labeledAnimal(line.trim()));
+    if (identityLines.length && identityLines.every((a) => a !== null))
+      candidates.push(...(identityLines as GuardianAction[]));
   }
   // An explicitly shared code/RGN identifies one calf, not every birth in the batch.
   const sharedIdentity = text.match(

@@ -242,17 +242,35 @@ export interface FarmBook {
   records: FieldRecord[];
 }
 export interface PendingAction {
+  kind?: "proposal";
   action: GuardianAction;
   propertyId: string | null;
   createdAt: string;
   expiresAt: string;
   sourceMessageId: string;
 }
+export interface HerdIdentification {
+  kind: "herd_identification";
+  propertyId: string;
+  createdAt: string;
+  expiresAt: string;
+  sourceMessageId: string;
+  entries: Array<{
+    eventId: string;
+    type: "birth" | "purchase";
+    count: number;
+    date: string;
+    lot?: string;
+    codes: string[];
+  }>;
+  previousProposal?: PendingAction;
+}
+export type GuardianPending = PendingAction | HerdIdentification;
 export interface GuardianSnapshot {
   lastCalculation?: import("./calculators.ts").Calculation | null;
   accountVersion: number;
   preferences: GuardianPreferences;
-  pending: PendingAction | null;
+  pending: GuardianPending | null;
   properties: Array<{ id: string; name: string; role: GuardianRole }>;
   active: { id: string; version: number; role: GuardianRole; book: FarmBook } | null;
   lastNotification?: { id: string; taskId: string | null; sentAt: string } | null;
