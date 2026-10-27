@@ -7,6 +7,14 @@ import {
   type PendingAction,
 } from "./schema.ts";
 import { foldHerd, herdStatement, herdRegistrationIntent } from "./herd-language.ts";
+import {
+  bareAnimalCode,
+  explicitRegistryLookup,
+  identityEnvelope,
+  identityLines,
+  isIdentityHelp,
+  normalizedRegistry,
+} from "./identification-language.ts";
 
 type AnimalAction = Extract<GuardianAction, { kind: "animal" }>;
 export function labeledAnimal(line: string): AnimalAction | null {
@@ -34,16 +42,22 @@ export function labeledAnimal(line: string): AnimalAction | null {
   return parsed.success ? (parsed.data as AnimalAction) : null;
 }
 export function identificationQuestion(p: HerdIdentification) {
-  const remaining = p.entries.reduce((n, e) => n + e.count - e.codes.length, 0);
+  if (p.awaitingRgn) return `O código ${p.awaitingRgn.code} também é o RGN desse animal?`;
+  if (p.registryOnly)
+    return `Qual é o código/brinco do animal com RGN ${p.registryOnly.rgn}? Se o código for o mesmo, pode responder “é o mesmo”.`;
+  const remaining = p.entries.reduce(
+    (n, e) => n + (e.identifyCount ?? e.count) - e.codes.length,
+    0,
+  );
   const scope = p.entries
     .map(
       (e) =>
         `${e.type === "birth" ? "nascimento" : "compra"} de ${e.count} em ${e.date}${e.lot ? `, lote ${e.lot}` : ""}`,
     )
     .join("; ");
-  return `Sobre ${scope}: esses animais têm código/brinco e RGN? Faltam identificar ${remaining} ${remaining === 1 ? "animal" : "animais"}. Envie um por linha, por exemplo: “código B01, RGN KBU 491”. Se não houver RGN, envie só o código; se não tiverem identificação, responda “não têm”. A quantidade já está no rebanho; cadastrar as fichas não soma animais novamente.`;
+  return `Sobre ${scope}: esses animais têm código/brinco e RGN? Faltam identificar ${remaining} ${remaining === 1 ? "animal" : "animais"}. Pode enviar as identificações como preferir, ou dizer quantos deles têm. O RGN é opcional e as fichas não somam animais novamente.`;
 }
-export function restoreProposal(p: HerdIdentification, now: Date): PendingAction | null {
+export function restoreProposal(p: HerdIdentification, now: Date): GuardianPending | null {
   return p.previousProposal &&
     p.previousProposal.propertyId === p.propertyId &&
     Date.parse(p.previousProposal.expiresAt) > now.getTime()
@@ -76,7 +90,10 @@ export function identificationAfterEntry(
   if (entries.length === 1)
     entries[0].codes = [...new Set(animalActions.map((a) => a.code))].slice(0, entries[0].count);
   if (entries.every((e) => e.codes.length >= e.count)) return null;
-  const previous = pending?.kind === "herd_registration" ? pending.previousPending : pending;
+  const previous =
+    pending?.kind === "herd_registration" || pending?.kind === "record_draft"
+      ? pending.previousPending
+      : pending;
   const prior = previous?.kind === "herd_identification" ? previous.previousProposal : previous;
   return {
     kind: "herd_identification",
@@ -94,8 +111,13 @@ export function identificationAfterEntry(
 export type IdentificationAnswer =
   | { kind: "none" }
   | { kind: "close"; reply: string }
-  | { kind: "ask"; reply: string }
-  | { kind: "animals"; actions: AnimalAction[]; pending: HerdIdentification | null };
+  | { kind: "ask"; reply: string; pending?: HerdIdentification }
+  | {
+      kind: "animals";
+      actions: AnimalAction[];
+      pending: HerdIdentification | null;
+      reply?: string;
+    };
 export function identificationAnswer(
   text: string,
   pending: HerdIdentification,
@@ -105,7 +127,76 @@ export function identificationAnswer(
     t = foldHerd(assertion)
       .replace(/[.!?]+$/g, "")
       .trim();
+  if (explicitRegistryLookup(assertion)) return { kind: "none" };
+  if (isIdentityHelp(assertion))
+    return {
+      kind: "ask",
+      reply:
+        "Código ou brinco é a identificação usada na fazenda. RGN é o registro genealógico de nascimento. O RGN é opcional: posso salvar só o código que você informar.",
+    };
   if (herdRegistrationIntent(assertion)) return { kind: "none" };
+  const done = (p: HerdIdentification) =>
+    p.entries.every((e) => e.codes.length >= (e.identifyCount ?? e.count));
+  if (
+    pending.registryOnly &&
+    /^(?:sim|e o mesmo|o mesmo|sao iguais|pode usar o mesmo)[.! ]*$/.test(t)
+  ) {
+    const next = structuredClone(pending);
+    const rgn = next.registryOnly!.rgn;
+    delete next.registryOnly;
+    return identificationAnswer(`código e RGN: ${rgn}`, next, book);
+  }
+  if (pending.awaitingRgn) {
+    const { code } = pending.awaitingRgn;
+    const bound =
+      pending.entries.some(
+        (e) => e.eventId === pending.awaitingRgn!.entryId && e.codes.includes(code),
+      ) && book.animals.some((a) => a.code === code);
+    const same =
+      /^(?:sim|sim[, ]+e o mesmo|e o mesmo|o mesmo|tambem|tambem e o rgn|esse tambem e o rgn|(?:o )?rgn (?:e )?(?:o )?mesmo)[.! ]*$/.test(
+        t,
+      );
+    const declared = assertion.match(
+      /^(?:o\s+)?rgn\s*(?:[eé]|:)\s*([\p{L}\d_-]+(?:\s+\d+)?)[.! ]*$/iu,
+    );
+    const no = /^(?:nao|nao tem|sem rgn|nao tem rgn)[.! ]*$/.test(t);
+    if (bound && (same || declared || no)) {
+      const next = structuredClone(pending);
+      delete next.awaitingRgn;
+      if (no)
+        return done(next)
+          ? {
+              kind: "close",
+              reply: `Mantive ${code} como código, sem RGN. O rebanho permanece igual.`,
+            }
+          : {
+              kind: "ask",
+              pending: next,
+              reply: `Mantive ${code} sem RGN.\n${identificationQuestion(next)}`,
+            };
+      const rgn = same ? code : declared![1].trim();
+      if (
+        book.animals.some(
+          (a) => a.code !== code && a.rgn && normalizedRegistry(a.rgn) === normalizedRegistry(rgn),
+        )
+      )
+        return {
+          kind: "ask",
+          reply: "Esse RGN já pertence a outra ficha. Confira o registro; não alterei os dados.",
+        };
+      const parsed = ActionSchema.safeParse({ kind: "animal", code, rgn });
+      if (!parsed.success)
+        return { kind: "ask", reply: "Confira o RGN desse animal; não alterei a ficha." };
+      return {
+        kind: "animals",
+        actions: [parsed.data as AnimalAction],
+        pending: done(next) ? null : next,
+        reply:
+          `RGN ${rgn} salvo na ficha ${code}. O rebanho permanece igual.` +
+          (done(next) ? "" : `\n${identificationQuestion(next)}`),
+      };
+    }
+  }
   if (/^(?:nao (?:tem|tenho|possuem)|sem) rgn$/.test(t))
     return {
       kind: "ask",
@@ -128,7 +219,18 @@ export function identificationAnswer(
     )
   )
     return { kind: "ask", reply: identificationQuestion(pending) };
-  if (!/\b(?:c[oó]digo|brinco|rgn)\b/i.test(assertion)) return { kind: "none" };
+  const envelope = identityEnvelope(assertion);
+  if (envelope.noneOthers && !envelope.body)
+    return {
+      kind: "close",
+      reply:
+        "Entendido. Os demais ficam sem identificação por enquanto; o rebanho não foi alterado.",
+    };
+  const relevant =
+    /\b(?:c[oó]digo|brinco|rgn)\b/i.test(assertion) ||
+    envelope.count !== undefined ||
+    identityLines(envelope.body).some((line) => bareAnimalCode(line));
+  if (!relevant) return { kind: "none" };
   if (
     /\?|\b(?:talvez|acho|vizinho|disse|encaminhad|exemplo|suponha|corrigindo|errei)\b/i.test(
       assertion,
@@ -140,7 +242,7 @@ export function identificationAnswer(
         "Envie somente as identificações confirmadas dos animais desta entrada. " +
         identificationQuestion(pending),
     };
-  const available = pending.entries.filter((e) => e.codes.length < e.count);
+  const available = pending.entries.filter((e) => e.codes.length < (e.identifyCount ?? e.count));
   const chosen =
     available.length === 1
       ? available[0]
@@ -157,22 +259,58 @@ export function identificationAnswer(
           )
           .join("\n"),
     };
-  const lines = assertion
+  const next = structuredClone(pending);
+  const selected = next.entries.find((e) => e.eventId === chosen.eventId)!;
+  if (envelope.count !== undefined && envelope.count > chosen.count - chosen.codes.length)
+    return {
+      kind: "ask",
+      reply:
+        "A quantidade informada supera os animais ainda sem identificação desta entrada. Confira quantos têm código.",
+    };
+  if (envelope.only && envelope.count !== undefined)
+    selected.identifyCount = chosen.codes.length + envelope.count;
+  if (envelope.count === 0)
+    return {
+      kind: "close",
+      reply:
+        "Entendido: nenhum desses animais tem identificação por enquanto. A quantidade já registrada no rebanho permanece igual.",
+    };
+  if (envelope.count !== undefined && !envelope.body)
+    return {
+      kind: "ask",
+      pending: next,
+      reply: `Entendi: ${envelope.count} ${envelope.count === 1 ? "animal tem identificação" : "animais têm identificação"}. Qual é ${envelope.count === 1 ? "a identificação dele" : "a identificação de cada um"}?`,
+    };
+  const body = envelope.body
     .replace(new RegExp(`^evento ${chosen.eventId}\\s*[:;]?\\s*`, "i"), "")
-    .replace(/^sim[, ]+/i, "")
-    .split(/[;\n]+/)
-    .map((s) => s.trim())
-    .filter(Boolean);
+    .replace(/^sim[, ]+/i, "");
+  const registry = body.match(/^(?:o\s+)?rgn\s*(?:[eé]|:)?\s*([\p{L}\d_-]+(?:\s+\d+)?)[.! ]*$/iu);
+  if (registry) {
+    next.registryOnly = { entryId: chosen.eventId, rgn: registry[1].trim() };
+    return { kind: "ask", pending: next, reply: identificationQuestion(next) };
+  }
+  const lines = identityLines(body);
   const actions: AnimalAction[] = [];
+  let untyped = false;
   for (const line of lines) {
-    const identity = labeledAnimal(line);
+    let identity = labeledAnimal(line);
+    const bare = bareAnimalCode(line);
+    if (!identity && bare) {
+      identity = { kind: "animal", code: bare };
+      untyped = !pending.registryOnly;
+    }
     if (!identity)
       return {
         kind: "ask",
         reply:
           "Preciso do código/brinco de cada animal; RGN é opcional. Exemplo: “código B01, RGN KBU 491”. Não salvei fichas incompletas.",
       };
-    const { code, rgn } = identity;
+    const { code } = identity;
+    const rgn =
+      identity.rgn ??
+      (next.registryOnly?.entryId === chosen.eventId && lines.length === 1
+        ? next.registryOnly.rgn
+        : undefined);
     const key = foldHerd(code);
     if (
       actions.some((a) => foldHerd(a.code) === key) ||
@@ -212,16 +350,35 @@ export function identificationAnswer(
       };
     actions.push(parsed.data as AnimalAction);
   }
-  if (actions.length > chosen.count - chosen.codes.length)
+  if (
+    actions.length > (selected.identifyCount ?? selected.count) - chosen.codes.length ||
+    (envelope.count !== undefined && actions.length > envelope.count)
+  )
     return {
       kind: "ask",
       reply: `Recebi mais códigos que os ${chosen.count - chosen.codes.length} animais ainda sem identificação desta entrada. Confira a lista; nenhuma ficha foi salva.`,
     };
-  const next = structuredClone(pending);
-  next.entries.find((e) => e.eventId === chosen.eventId)!.codes.push(...actions.map((a) => a.code));
+  selected.codes.push(...actions.map((a) => a.code));
+  if (envelope.noneOthers) selected.identifyCount = selected.codes.length;
+  delete next.registryOnly;
+  delete next.awaitingRgn;
+  if (untyped && actions.length === 1)
+    next.awaitingRgn = { entryId: chosen.eventId, code: actions[0].code };
+  const without = next.entries.reduce((n, e) => n + e.count - (e.identifyCount ?? e.count), 0);
   return {
     kind: "animals",
     actions,
-    pending: next.entries.every((e) => e.codes.length >= e.count) ? null : next,
+    pending: done(next) && !next.awaitingRgn ? null : next,
+    ...(untyped || envelope.only || envelope.noneOthers
+      ? {
+          reply:
+            `Salvei ${actions.map((a) => a.code).join(", ")} ${actions.length === 1 ? "como identificação de um animal" : "como identificações dos animais"} desta entrada.${without ? ` Os outros ${without} ficam sem identificação por enquanto.` : ""} O rebanho não foi somado novamente.` +
+            (next.awaitingRgn
+              ? `\n${identificationQuestion(next)}`
+              : done(next)
+                ? ""
+                : `\n${identificationQuestion(next)}`),
+        }
+      : {}),
   };
 }
