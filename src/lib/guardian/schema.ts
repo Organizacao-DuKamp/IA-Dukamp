@@ -264,8 +264,20 @@ export interface HerdIdentification {
     codes: string[];
   }>;
   previousProposal?: PendingAction;
+  repeatCheck?: { entryId: string; sourceMessageId: string; sourceAt: string };
 }
-export type GuardianPending = PendingAction | HerdIdentification;
+export interface HerdRegistrationDraft {
+  kind: "herd_registration";
+  propertyId: string;
+  createdAt: string;
+  expiresAt: string;
+  sourceMessageId: string;
+  sourceAt: string;
+  text: string;
+  missing: "count" | "date";
+  previousPending?: PendingAction | HerdIdentification;
+}
+export type GuardianPending = PendingAction | HerdIdentification | HerdRegistrationDraft;
 export interface GuardianSnapshot {
   lastCalculation?: import("./calculators.ts").Calculation | null;
   accountVersion: number;

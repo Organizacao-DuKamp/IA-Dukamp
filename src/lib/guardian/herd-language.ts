@@ -59,7 +59,7 @@ const units: Record<string, number> = {
   novecentas: 900,
 };
 /** Accept a grammatical cardinal, rather than adding arbitrary adjacent number words. */
-function cardinal(text: string): number | null {
+export function cardinal(text: string): number | null {
   const t = foldHerd(text).replace(/\s+/g, " ");
   if (/^\d{1,6}$/.test(t)) return Number(t);
   if (units[t] !== undefined) return units[t];
@@ -88,7 +88,7 @@ export function herdStatement(text: string, mediaType?: string): string {
   let result = userStatement(text, mediaType)
     .replace(/^(?:tpec(?:[ -]?ia)?|pepec|pepeque)[,!: ]+/i, "")
     .replace(
-      /^(?:registre|registrar|anote|anotar)\s+(?:a[ií]\s+)?(?:tamb[eé]m\s+)?(?:que\s+)?/i,
+      /^(?:registre|registra|registrar|anote|anota|anotar)\s*[:,]?\s+(?:a[ií]\s+)?(?:tamb[eé]m\s+)?(?:que\s+)?/i,
       "",
     )
     .replace(
@@ -104,6 +104,23 @@ export function herdStatement(text: string, mediaType?: string): string {
       const parsed = cardinal(number);
       return parsed === null ? whole : `${verb} ${parsed}`;
     },
+  );
+  const words = Object.keys(units)
+    .sort((a, b) => b.length - a.length)
+    .join("|");
+  result = result.replace(
+    new RegExp(
+      `\\b((?:${words})(?:\\s+e\\s+(?:${words})){0,2})(?=\\s+(?:(?:novos?|novas?)\\s+)?(?:bezerros?|bezerras?|vacas?|bois|boi|gados?|bovinos?|animais|animal|novilhas?|novilhos?|touros?|cabe[cç]as?)\\b)`,
+      "giu",
+    ),
+    (whole, value: string) => {
+      const parsed = cardinal(value);
+      return parsed === null ? whole : String(parsed);
+    },
+  );
+  result = result.replace(
+    /\b(\d{1,3}(?:\.\d{3})+)(?=\s+(?:bezerros?|bezerras?|vacas?|bois|boi|gados?|bovinos?|animais|animal|novilhas?|novilhos?|touros?|cabe[cç]as?)\b)/giu,
+    (value) => value.replace(/\./g, ""),
   );
   // An initial discourse marker does not change the original event date.
   return result.replace(/^(?:(?:agora|ent[aã]o|aqui)[, ]+)+/i, "");
