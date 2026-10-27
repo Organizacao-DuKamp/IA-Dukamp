@@ -4,6 +4,14 @@ import {
   type FarmTransferStore,
 } from "./transfer.server.ts";
 import { automaticFarmEvent } from "./automatic.ts";
+import { possibleRepeatedEntry, repeatAnswer, repeatQuestion } from "./herd-repeat.ts";
+import {
+  missingRegistrationField,
+  registrationAnswer,
+  registrationQuestion,
+} from "./herd-registration.ts";
+import { certainHerdStatement, hasEventVerb } from "./herd-event-language.ts";
+import { herdStatement } from "./herd-language.ts";
 import { handlePanelCodeRequest } from "./panel.server.ts";
 import { farmIndicators, stockAt } from "./operations.ts";
 import { ledgerForTotals } from "./finance.ts";
@@ -221,6 +229,161 @@ export async function handleGuardianMessage(
     for (let attempt = 0; attempt < 4; attempt++) {
       const snapshot = await store.load(input.phone);
       const followup = snapshot.pending?.kind === "herd_identification" ? snapshot.pending : null;
+      let continuation:
+        | {
+            action: GuardianAction;
+            actions?: GuardianAction[];
+            sourceMessageId: string;
+            sourceAt: string;
+          }
+        | undefined;
+      const draft = snapshot.pending?.kind === "herd_registration" ? snapshot.pending : null;
+      if (draft && !deps.request) {
+        const completedText = registrationAnswer(input.text, draft, referenceAt);
+        const shortAnswer =
+          completedText ||
+          /^(?:confirmar|confirmo|sim|cancelar|nao|\d+[.! ]*)$/.test(fold(input.text));
+        if (shortAnswer) {
+          attempted = true;
+          const valid =
+            draft.propertyId === snapshot.active?.id && Date.parse(draft.expiresAt) > now.getTime();
+          const resolved =
+            valid && completedText
+              ? automaticFarmEvent(
+                  { ...input, text: completedText, at: new Date(draft.sourceAt) },
+                  snapshot,
+                )
+              : null;
+          if (resolved?.status === "action" || resolved?.status === "batch") {
+            const actions = resolved.status === "batch" ? resolved.actions : [resolved.action];
+            continuation = {
+              action: actions[0],
+              actions,
+              sourceMessageId: draft.sourceMessageId,
+              sourceAt: draft.sourceAt,
+            };
+          } else {
+            const cancelled = /^(?:cancelar|nao)[.! ]*$/.test(fold(input.text));
+            const reply = !valid
+              ? "A fazenda mudou ou o pedido expirou. Reenvie o acontecimento completo na fazenda correta; nada foi registrado."
+              : cancelled
+                ? "Pedido cancelado. Nenhuma movimentação foi registrada."
+                : registrationQuestion(draft.missing);
+            const previous =
+              draft.previousPending &&
+              draft.previousPending.propertyId === snapshot.active?.id &&
+              Date.parse(draft.previousPending.expiresAt) > now.getTime()
+                ? draft.previousPending
+                : null;
+            const result = await store.commit({
+              phone: input.phone,
+              messageId: input.messageId,
+              accountVersion: snapshot.accountVersion,
+              propertyId: snapshot.active?.id ?? null,
+              propertyVersion: snapshot.active?.version ?? null,
+              operation: "clear",
+              pending: !valid || cancelled ? previous : draft,
+              reply,
+            });
+            if (result === "conflict") continue;
+            if (result !== "committed" && !result.startsWith("replay:"))
+              throw new Error("guardian_commit_unconfirmed");
+            return {
+              reply: result.startsWith("replay:") ? result.slice(7) : reply,
+              activeProperty: !!snapshot.active,
+              persisted: false,
+            };
+          }
+        }
+      }
+      const askRegistration = async (
+        missing: "count" | "date",
+      ): Promise<GuardianHandled | null> => {
+        attempted = true;
+        const previousPending =
+          draft?.previousPending ??
+          (snapshot.pending?.kind === "herd_registration"
+            ? undefined
+            : (snapshot.pending ?? undefined));
+        const pending = {
+          kind: "herd_registration" as const,
+          propertyId: snapshot.active!.id,
+          createdAt: at,
+          expiresAt: new Date(now.getTime() + 30 * 60000).toISOString(),
+          sourceMessageId: input.messageId,
+          sourceAt: referenceAt.toISOString(),
+          text: input.text,
+          missing,
+          ...(previousPending ? { previousPending } : {}),
+        };
+        const reply = registrationQuestion(missing);
+        const result = await store.commit({
+          phone: input.phone,
+          messageId: input.messageId,
+          accountVersion: snapshot.accountVersion,
+          propertyId: snapshot.active!.id,
+          propertyVersion: snapshot.active!.version,
+          operation: "pending",
+          pending,
+          reply,
+        });
+        if (result === "conflict") return null;
+        if (result !== "committed" && !result.startsWith("replay:"))
+          throw new Error("guardian_commit_unconfirmed");
+        return {
+          reply: result.startsWith("replay:") ? result.slice(7) : reply,
+          activeProperty: true,
+          persisted: false,
+        };
+      };
+      const repeated = followup ? repeatAnswer(input.text, followup) : null;
+      if (
+        !repeated &&
+        /^(?:s[aã]o|[eé])\s+(?:mais\s+.+|os mesmos|os mesmos animais)[.! ]*$/i.test(
+          input.text.trim(),
+        )
+      )
+        return {
+          reply:
+            "Não há uma confirmação de repetição pendente. Para registrar outra entrada, informe o acontecimento, por exemplo: “hoje nasceram mais 2 bezerros”. Nenhuma nova movimentação foi salva por esta resposta.",
+          activeProperty: !!snapshot.active,
+          persisted: false,
+        };
+      if (followup && repeated && !deps.request) {
+        attempted = true;
+        const valid =
+          followup.propertyId === snapshot.active?.id &&
+          Date.parse(followup.expiresAt) > now.getTime();
+        if (valid && repeated.kind === "additional") continuation = repeated;
+        else {
+          const pending = valid ? structuredClone(followup) : null;
+          if (pending && repeated.kind === "same") delete pending.repeatCheck;
+          const reply = !valid
+            ? "A fazenda mudou ou a confirmação expirou. Nenhuma entrada foi repetida."
+            : repeated.kind === "same"
+              ? "Certo, são os mesmos animais. Não dupliquei a entrada.\n\n" +
+                identificationQuestion(pending!)
+              : repeatQuestion(followup);
+          const result = await store.commit({
+            phone: input.phone,
+            messageId: input.messageId,
+            accountVersion: snapshot.accountVersion,
+            propertyId: snapshot.active?.id ?? null,
+            propertyVersion: snapshot.active?.version ?? null,
+            operation: "clear",
+            pending,
+            reply,
+          });
+          if (result === "conflict") continue;
+          if (result !== "committed" && !result.startsWith("replay:"))
+            throw new Error("guardian_commit_unconfirmed");
+          return {
+            reply: result.startsWith("replay:") ? result.slice(7) : reply,
+            activeProperty: !!snapshot.active,
+            persisted: false,
+          };
+        }
+      }
       const herdQuestion =
         snapshot.active && herdTopic(input.text)
           ? followup
@@ -234,7 +397,11 @@ export async function handleGuardianMessage(
           activeProperty: false,
           persisted: false,
         };
-      if (followup && (!deps.request || ["confirm", "cancel"].includes(deps.request.kind))) {
+      if (
+        !continuation &&
+        followup &&
+        (!deps.request || ["confirm", "cancel"].includes(deps.request.kind))
+      ) {
         const answer = identificationAnswer(
           deps.request?.kind === "cancel" ? "cancelar" : input.text,
           followup,
@@ -312,7 +479,11 @@ export async function handleGuardianMessage(
       }
       const continuedTask = taskContinuation(input.text, input.history);
       if (!deps.request) {
-        const observation = automaticFarmEvent({ ...input, at: referenceAt }, snapshot);
+        const observation = continuation
+          ? continuation.actions
+            ? { status: "batch" as const, actions: continuation.actions }
+            : { status: "action" as const, action: continuation.action }
+          : automaticFarmEvent({ ...input, at: referenceAt }, snapshot);
         const queue = async (
           reason: "ambiguous_property" | "ambiguous_date" | "conflict" | "persistence_failure",
         ) => {
@@ -333,6 +504,20 @@ export async function handleGuardianMessage(
           if (error) throw new Error("guardian_review_unavailable");
         };
         if (observation.status === "pending") {
+          if (
+            snapshot.active &&
+            observation.reason === "ambiguous_date" &&
+            input.text.length <= 2000 &&
+            hasEventVerb(herdStatement(input.text)) &&
+            (herdStatement(input.text).match(
+              /\b(?:nasceram|nasceu|morreram|morreu|comprei|compramos|vendi|vendemos)\b/gi,
+            )?.length ?? 0) === 1 &&
+            certainHerdStatement(herdStatement(input.text))
+          ) {
+            const asked = await askRegistration("date");
+            if (!asked) continue;
+            return asked;
+          }
           await queue(observation.reason);
           return {
             reply:
@@ -351,6 +536,39 @@ export async function handleGuardianMessage(
           const actions = [
             ...(observation.status === "batch" ? observation.actions : [observation.action]),
           ].sort((a, b) => ("date" in a ? a.date : "").localeCompare("date" in b ? b.date : ""));
+          const repeatedEntry = !continuation
+            ? possibleRepeatedEntry(actions, followup, input.text, snapshot.active.id, now)
+            : null;
+          if (repeatedEntry && followup) {
+            attempted = true;
+            const pending = {
+              ...followup,
+              repeatCheck: {
+                entryId: repeatedEntry.eventId,
+                sourceMessageId: input.messageId,
+                sourceAt: referenceAt.toISOString(),
+              },
+            };
+            const reply = repeatQuestion(pending);
+            const result = await store.commit({
+              phone: input.phone,
+              messageId: input.messageId,
+              accountVersion: snapshot.accountVersion,
+              propertyId: snapshot.active.id,
+              propertyVersion: snapshot.active.version,
+              operation: "pending",
+              pending,
+              reply,
+            });
+            if (result === "conflict") continue;
+            if (result !== "committed" && !result.startsWith("replay:"))
+              throw new Error("guardian_commit_unconfirmed");
+            return {
+              reply: result.startsWith("replay:") ? result.slice(7) : reply,
+              activeProperty: true,
+              persisted: false,
+            };
+          }
           attempted = true;
           if (!actions.every((action) => canEdit(snapshot.active!.role, action)))
             return {
@@ -370,20 +588,27 @@ export async function handleGuardianMessage(
                 snapshot.active.role,
                 {
                   actor: input.phone,
-                  messageId: input.messageId,
+                  messageId: continuation?.sourceMessageId ?? input.messageId,
                   at,
-                  ...(input.sentAt ? { sourceAt: referenceAt.toISOString() } : {}),
+                  ...(continuation || input.sentAt
+                    ? { sourceAt: continuation?.sourceAt ?? referenceAt.toISOString() }
+                    : {}),
                   confirmed: true,
                 },
                 actions.length === 1 ? turnId : `${turnId}-${index + 1}`,
               );
               applied = { book: next.book, events: [...applied.events, ...next.events] };
             }
-          } catch {
+          } catch (error) {
             await queue("conflict");
             return {
               reply:
-                "Esse relato pode gerar uma inconsistência no rebanho. Confira a quantidade, a data e a fazenda; deixei a movimentação pendente para revisão, sem alterar o saldo.",
+                error instanceof Error &&
+                /^(A contagem representa|Informe uma contagem anterior|A data de um evento|A movimentação produziria|Não há saldo conhecido)/.test(
+                  error.message,
+                )
+                  ? `${error.message} Nenhum movimento desta mensagem foi salvo.`
+                  : "Esse relato pode gerar uma inconsistência no rebanho. Confira a quantidade, a data e a fazenda; deixei a movimentação pendente para revisão, sem alterar o saldo.",
               activeProperty: true,
               persisted: false,
             };
@@ -396,7 +621,7 @@ export async function handleGuardianMessage(
             applied.book,
             snapshot.pending,
             snapshot.active.id,
-            input.messageId,
+            continuation?.sourceMessageId ?? input.messageId,
             at,
           );
           const stock = applied.book.operations
@@ -444,7 +669,8 @@ export async function handleGuardianMessage(
             details: {
               kind: actions[0].kind,
               classification: "declared",
-              sourceMessageId: input.messageId,
+              sourceMessageId: continuation?.sourceMessageId ?? input.messageId,
+              ...(continuation ? { confirmedBy: input.messageId } : {}),
               events: actions,
             },
             reply: savedReply,
@@ -482,6 +708,16 @@ export async function handleGuardianMessage(
           persisted: false,
         };
       if (!deps.request && snapshot.active?.book.operations && herdRegistrationIntent(input.text)) {
+        const missing = missingRegistrationField(input.text);
+        if (
+          missing &&
+          input.text.length <= 2000 &&
+          certainHerdStatement(herdStatement(input.text))
+        ) {
+          const asked = await askRegistration(missing);
+          if (!asked) continue;
+          return asked;
+        }
         const parsed = parseGuardianRequest(input.text, snapshot, referenceAt);
         const uncountedMovement =
           parsed?.kind === "action" &&
@@ -747,6 +983,12 @@ export async function handleGuardianMessage(
                 "A proposta expirou. Envie o registro novamente para eu mostrar os dados antes de salvar.";
               break;
             }
+            if (pending.kind === "herd_registration")
+              return {
+                reply: registrationQuestion(pending.missing),
+                activeProperty: !!snapshot.active,
+                persisted: false,
+              };
             if (pending.kind === "herd_identification")
               return { reply: identificationQuestion(pending), activeProperty: !!snapshot.active };
             let a = ActionSchema.parse(pending.action);

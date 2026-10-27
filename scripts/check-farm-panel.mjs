@@ -167,6 +167,47 @@ try {
   await page.getByRole("button", { name: "Rebanho e lotes", exact: true }).click();
   await page.locator("summary").filter({ hasText: "B101" }).click();
   await page.getByText(/RGN informado: KBU 501/).waitFor();
+  const firstPhrase = await handleGuardianMessage(
+    {
+      phone,
+      messageId: "browser-plus-two",
+      text: "Tpec-ia nasceu +2 bezerros novos hoje na minha fazenda ok",
+    },
+    { store: f.guardian, now: reportAt },
+  );
+  assert.equal(firstPhrase.persisted, true);
+  assert.match(firstPhrase.reply, /48 animais/);
+  const rephrase = await handleGuardianMessage(
+    {
+      phone,
+      messageId: "browser-today-same",
+      text: "Hoje mesmo nasceu 2 bezerros aqui na minha fazenda",
+    },
+    { store: f.guardian, now: reportAt },
+  );
+  assert.equal(rephrase.persisted, false);
+  assert.match(rephrase.reply, /mesmos animais ou de mais 2/);
+  await handleGuardianMessage(
+    { phone, messageId: "browser-same", text: "são os mesmos" },
+    { store: f.guardian, now: reportAt },
+  );
+  const newIdentities = await handleGuardianMessage(
+    {
+      phone,
+      messageId: "browser-plus-two-ids",
+      text: "código C01, RGN KBU 701\ncódigo C02, RGN KBU 702",
+    },
+    { store: f.guardian, now: reportAt },
+  );
+  assert.equal(newIdentities.persisted, true);
+  await page.reload({ waitUntil: "networkidle" });
+  assert.match(
+    await page.getByRole("article").filter({ hasText: "Estoque calculado" }).innerText(),
+    /48/,
+  );
+  await page.getByRole("button", { name: "Rebanho e lotes", exact: true }).click();
+  await page.locator("summary").filter({ hasText: "C01" }).click();
+  await page.getByText(/RGN informado: KBU 701/).waitFor();
   await page.getByRole("button", { name: "Calculadoras", exact: true }).click();
   await page.getByLabel("Peso inicial (kg)", { exact: true }).fill("100");
   await page.getByLabel("Peso final (kg)", { exact: true }).fill("450");
@@ -196,7 +237,7 @@ try {
   }
   assert.deepEqual(errors, []);
   console.log(
-    "PASS: public access, invalid code, WhatsApp code, isolated cookie session, reviewed edit, natural financial totals, combined herd events and RGN, spoken 'mais quatro' addition, identity followup without double-counting, calculator without reference URL, PostgreSQL persistence, reload, mobile layout and logout.",
+    "PASS: public access, invalid code, WhatsApp code, isolated cookie session, reviewed edit, natural financial totals, combined herd events and RGN, spoken 'mais quatro' addition, '+2' and 'hoje mesmo' reports, rephrase without duplication, identity followup without double-counting, calculator without reference URL, PostgreSQL persistence, reload, mobile layout and logout.",
   );
 } catch (error) {
   if (testPage) {

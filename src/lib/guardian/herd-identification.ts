@@ -76,7 +76,8 @@ export function identificationAfterEntry(
   if (entries.length === 1)
     entries[0].codes = [...new Set(animalActions.map((a) => a.code))].slice(0, entries[0].count);
   if (entries.every((e) => e.codes.length >= e.count)) return null;
-  const prior = pending?.kind === "herd_identification" ? pending.previousProposal : pending;
+  const previous = pending?.kind === "herd_registration" ? pending.previousPending : pending;
+  const prior = previous?.kind === "herd_identification" ? previous.previousProposal : previous;
   return {
     kind: "herd_identification",
     propertyId,
