@@ -119,10 +119,9 @@ export function eventDay(
 export function farmScopeMatches(
   text: string,
   snapshot: GuardianSnapshot,
-  selectedJustNow: boolean,
+  _selectedJustNow: boolean,
 ) {
   if (!snapshot.active) return false;
-  let explicit = false;
   for (const match of text.matchAll(
     /\b(?:fazenda|propriedade|s[ií]tio|ch[aá]cara)\s+([^,.;!?\n]+)/giu,
   )) {
@@ -139,7 +138,8 @@ export function farmScopeMatches(
     );
     // An unnamed active farm can still be the only scope, but an invented name cannot.
     if (matches.length !== 1 || matches[0].id !== snapshot.active.id) return false;
-    explicit = true;
   }
-  return snapshot.properties.length <= 1 || explicit || selectedJustNow;
+  // A persisted active selection remains the conversational scope between turns.
+  // Every explicitly named property above must still match it.
+  return true;
 }

@@ -102,6 +102,7 @@ export const ActionSchema = z.discriminatedUnion("kind", [
         .optional(),
       estimated: z.boolean().optional(),
       recurrence: z.literal("monthly").optional(),
+      totalRelation: z.enum(["additional", "included"]).optional(),
     })
     .strict(),
   z
@@ -244,6 +245,7 @@ export interface LedgerEntry {
   periodMonth?: string;
   estimated?: boolean;
   recurrence?: "monthly";
+  totalRelation?: "additional" | "included";
   revisions?: RecordRevision[];
   source: Provenance;
 }
@@ -360,6 +362,7 @@ export interface RecordDraft {
     lot?: string;
     count?: number;
     summary?: boolean;
+    totalRelation?: "additional" | "included";
     estimated?: boolean;
     recurrence?: "monthly";
   }>;
@@ -539,6 +542,7 @@ export const FarmBookSchema = z
               .optional(),
             estimated: z.boolean().optional(),
             recurrence: z.literal("monthly").optional(),
+            totalRelation: z.enum(["additional", "included"]).optional(),
             revisions: z.array(RecordRevisionSchema).max(1000).optional(),
             source: ProvenanceSchema,
           })

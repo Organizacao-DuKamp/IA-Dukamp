@@ -144,18 +144,23 @@ export function recordDialogue(text: string, at: Date, mediaType?: string): Reco
     );
   const lot = clean.match(/\blote\s+([\p{L}\d_-]+)/iu)?.[1];
   const recurring =
-    /\b(?:todos os meses|todo mes|por mes|mensalmente|mensal recorrente|recorrente mensal)\b/.test(
+    /\b(?:todos os meses|todo mes|por mes|mensal|mensais|mensalmente|mensal recorrente|recorrente mensal)\b/.test(
       t,
     );
   if (
     finance &&
     recurring &&
-    (t.match(/\b(?:receitas?|despesas?|paguei|recebi|gastei)\b/g)?.length ?? 0) === 1 &&
+    !(/\b(?:receitas?|recebi)\b/.test(t) && /\b(?:despesas?|paguei|gastei)\b/.test(t)) &&
     !/\b(?:sera|vai|prevista|previsto|custara|devera)\b/.test(t)
   ) {
-    const amount = amountIn(clean);
+    const amount =
+      (() => {
+        const m = clean.match(/\b(\d+(?:[.,]\d+)?\s+mil)\b/i);
+        const value = m && moneyValue(m[1]);
+        return value ? { amount: value, token: m![0] } : null;
+      })() ?? amountIn(clean);
     const object = clean
-      .match(/\b(?:com|referente [aà]|relativ[oa] [aà])\s+([^.!?\n]+)/iu)?.[1]
+      .match(/\b(?:com|referente [aà]|relativ[oa] [aà]|despesas?\s+de)\s+([^,.!?\n]+)/iu)?.[1]
       ?.replace(/[,;]?\s*(?:todos os meses|todo m[eê]s|por m[eê]s|mensalmente)[\s\S]*$/i, "")
       .trim();
     return {
@@ -170,6 +175,9 @@ export function recordDialogue(text: string, at: Date, mediaType?: string): Reco
             ...(object ? { description: object.slice(0, 160) } : {}),
             date: localDay(at),
             recurrence: "monthly",
+            totalRelation: /\b(?:incluid[oa]|dentro d[oa]s?|ja conta|ja esta no total)\b/.test(t)
+              ? "included"
+              : "additional",
             ...(lot ? { lot } : {}),
           },
         ],
@@ -240,7 +248,11 @@ export function recordDialogue(text: string, at: Date, mediaType?: string): Reco
   const field =
     /\b(?:vacinei|vacinamos|vermifuguei|vermifugamos|adubei|adubamos|limpei|limpamos|consertei|consertamos|rocamos|rocei|reparei|reparamos)\b/.test(
       t,
-    ) || /\bcaderno de campo\b/.test(t);
+    ) ||
+    /\bcaderno de campo\b/.test(t) ||
+    /\b(?:lote|cerca|bebedouro|curral)\b[\s\S]*\b(?:defeito|problema|quebrad[oa]|rompid[oa]|vazando|precisa de reparo)\b/.test(
+      t,
+    );
   if (!field || hasEventVerb(clean)) return { kind: "none" };
   const description = clean
     .replace(/^(?:no |(?:o |meu )?)?caderno de campo\s*[:,]?\s*(?:que\s+)?/i, "")

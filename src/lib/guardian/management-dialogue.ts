@@ -30,7 +30,7 @@ function lotIn(text: string) {
 export function managementCandidate(text: string) {
   const t = foldHerd(text);
   return (
-    /\b(?:coloque|coloca|colocar|mova|mover|mude|muda|mudar|passe|passa|passar|transfira|transferir|altere|alterar|troque|trocar|corrija|corrigir|atualize|atualizar|quero|deixe)\b/.test(
+    /\b(?:coloque|coloca|colocar|mova|mover|mude|muda|mudar|passe|passa|passar|transfira|transferir|altere|alterar|troque|trocar|corrija|corrigir|atualize|atualizar|deixe)\b/.test(
       t,
     ) &&
     /\b(?:lote|despesa|receita|lancamento|financeiro|anotacao|registro|caderno|animal|animais|bezerros|bezerro|gado)\b/.test(

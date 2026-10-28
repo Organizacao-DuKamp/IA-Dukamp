@@ -216,6 +216,11 @@ test("literal extraction rejects hypotheticals, quotations, forwarding, generate
   );
   const multiple = snapshot();
   multiple.properties.push({ id: "other", name: "Santa Rita", role: "owner" });
+  assert.equal(
+    automaticFarmEvent({ text: "Vendi 10 bois ontem.", at: now }, multiple).status,
+    "action",
+  );
+  multiple.active = null;
   assert.deepEqual(automaticFarmEvent({ text: "Vendi 10 bois ontem.", at: now }, multiple), {
     status: "pending",
     reason: "ambiguous_property",

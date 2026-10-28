@@ -4,6 +4,7 @@ import {
   type FarmTransferStore,
 } from "./transfer.server.ts";
 import { automaticFarmEvent } from "./automatic.ts";
+import { namedProperty } from "./property-scope.ts";
 import { possibleRepeatedEntry, repeatAnswer, repeatQuestion } from "./herd-repeat.ts";
 import {
   recordDialogue,
@@ -250,6 +251,7 @@ export async function handleGuardianMessage(
   let extracted: GuardianAction | null | undefined;
   let attempted = false;
   let resolvedManagement: { propertyId: string; slots: ManagementSlots } | undefined;
+  let initialSnapshot: GuardianSnapshot | undefined;
   try {
     if (!deps.request) {
       const portalReply = await handlePanelCodeRequest(input, {
@@ -261,8 +263,64 @@ export async function handleGuardianMessage(
     }
     const previous = await store.receipt(input.phone, input.messageId);
     if (previous) return { reply: previous, activeProperty: false, persisted: true };
+    if (!deps.request && (!input.mediaType || input.mediaType === "audio")) {
+      const selection = await store.load(input.phone);
+      initialSnapshot = selection;
+      const named = namedProperty(input.text, selection);
+      if (named && named.id !== selection.active?.id) {
+        const result = await store.commit({
+          phone: input.phone,
+          messageId: `scope:${turnId}`,
+          accountVersion: selection.accountVersion,
+          propertyId: named.id,
+          propertyVersion: null,
+          operation: "select",
+          pending: null,
+          reply: `Fazenda selecionada: ${named.name}.`,
+          details: { sourceMessageId: input.messageId, kind: "explicit_property_scope" },
+        });
+        if (result !== "committed" && !result.startsWith("replay:"))
+          throw new Error("guardian_property_selection_conflict");
+        initialSnapshot = undefined;
+      }
+      if (named && fold(input.text).replace(/[.!?]+$/, "") === fold(named.name))
+        return {
+          reply: `Fazenda selecionada: ${named.name}. Pode continuar o pedido nesta propriedade.`,
+          activeProperty: true,
+          persisted: false,
+        };
+    }
     for (let attempt = 0; attempt < 4; attempt++) {
-      const snapshot = await store.load(input.phone);
+      const snapshot =
+        attempt === 0 && initialSnapshot ? initialSnapshot : await store.load(input.phone);
+      if (
+        !deps.request &&
+        snapshot.active &&
+        /\b(?:quantos (?:animais|gados|bezerros)(?: eu)? (?:tenho|tem|ha|existem)|quantas cabecas|saldo do rebanho|total do rebanho)\b/.test(
+          fold(input.text),
+        )
+      ) {
+        const b = snapshot.active.book;
+        if (!farmScopeMatches(herdStatement(input.text), snapshot, false))
+          return {
+            reply:
+              "De qual fazenda você quer consultar o rebanho? Selecione uma propriedade autorizada.",
+            activeProperty: true,
+            persisted: false,
+          };
+        const day = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(
+          referenceAt,
+        );
+        const indicators = farmIndicators(b, "2000-01-01", day);
+        return {
+          reply:
+            indicators.stock.count !== null
+              ? `O rebanho calculado de ${farmName(b)} tem ${indicators.stock.count} animais. Fichas individuais cadastradas: ${b.animals.length}; elas não são somadas outra vez ao saldo.`
+              : `Em ${farmName(b)}, há ${indicators.births} nascimentos registrados no rebanho e ${b.animals.length} fichas individuais. O total é desconhecido porque falta a contagem inicial. Brincos são opcionais para registrar entradas; não é necessário usar o painel.`,
+          activeProperty: true,
+          persisted: false,
+        };
+      }
       if (resolvedManagement && resolvedManagement.propertyId !== snapshot.active?.id)
         return {
           reply:
@@ -550,7 +608,7 @@ export async function handleGuardianMessage(
           };
         }
       }
-      if (!deps.request && !continuation && snapshot.active?.book.operations) {
+      if (!deps.request && !continuation && snapshot.active) {
         const reference = recordReference(input.text);
         const recalled = reference
           ? referencedRecord(input.text, input.history ?? [], referenceAt, snapshot)
@@ -1097,8 +1155,10 @@ export async function handleGuardianMessage(
                               : `• ${describeAction(a)}`,
                 )
                 .join("\n") +
-              (actions.some((a) => a.kind === "herd_event" || a.kind === "move") && stock !== null
-                ? `\nRebanho calculado após os registros: ${stock} animais.`
+              (actions.some((a) => a.kind === "herd_event" || a.kind === "move")
+                ? stock !== null
+                  ? `\nRebanho calculado após os registros: ${stock} animais.`
+                  : "\nA entrada está no rebanho, mesmo sem brincos. O total ainda é desconhecido: falta a contagem inicial. Não somei as fichas como se fossem o censo."
                 : "")
             : "Registro informado salvo na fazenda com origem e data preservadas.";
           const postPending =
@@ -1183,7 +1243,7 @@ export async function handleGuardianMessage(
           activeProperty: !!snapshot.active,
           persisted: false,
         };
-      if (!deps.request && snapshot.active?.book.operations && herdRegistrationIntent(input.text)) {
+      if (!deps.request && snapshot.active && herdRegistrationIntent(input.text)) {
         const missing = missingRegistrationField(input.text);
         if (
           missing &&
@@ -1202,7 +1262,12 @@ export async function handleGuardianMessage(
             fold(input.text),
           ) &&
           !(parsed.action.type === "birth" && parsed.action.count);
-        if (!parsed || parsed.kind === "extract" || uncountedMovement)
+        if (
+          !parsed ||
+          parsed.kind === "extract" ||
+          uncountedMovement ||
+          (parsed.kind === "action" && parsed.action.kind === "record")
+        )
           return {
             reply:
               "Não consegui confirmar uma movimentação do rebanho com esses dados. Informe o que aconteceu, quantos animais e quando. Ainda não alterei o saldo.",

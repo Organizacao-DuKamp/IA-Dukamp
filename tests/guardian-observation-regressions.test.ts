@@ -88,6 +88,12 @@ test("financial questions, third parties, plans and incomplete reports cannot be
   }
   const multiple = snapshot();
   multiple.properties.push({ id: "other", name: "Outra", role: "owner" });
+  assert.equal(
+    automaticFarmEvent({ text: "Minha receita foi de 100 mil neste mês", at: now }, multiple)
+      .status,
+    "action",
+  );
+  multiple.active = null;
   assert.deepEqual(
     automaticFarmEvent({ text: "Minha receita foi de 100 mil neste mês", at: now }, multiple),
     { status: "pending", reason: "ambiguous_property" },
