@@ -378,7 +378,8 @@ export interface TaskBatchDraft {
   rest: string;
   taskTexts: string[];
   missingIndex: number;
-  missing: "date" | "title";
+  missing: "date" | "title" | "record";
+  completedTasks?: string[];
   question: string;
 }
 export type GuardianPending =

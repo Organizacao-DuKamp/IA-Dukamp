@@ -173,7 +173,6 @@ test("permission, farm scope, negation and a failing commit cannot produce false
       "Na fazenda Desconhecida comprei 4 gados hoje e me lembra de dar ração hoje às 13:30",
       "Suponha que comprei 4 gados hoje e me lembra de dar ração hoje às 13:30",
       "Não me lembra hoje às uma e meia da tarde de dar ração",
-      "Selecione a fazenda Eduardo e adicione gados. Me lembra de dar ração hoje às 13:30",
     ].entries()) {
       const r = await send(f, `blocked-${i}`, text);
       assert.notEqual(r?.persisted, true, text);

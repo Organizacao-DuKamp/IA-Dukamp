@@ -86,6 +86,8 @@ export function cardinal(text: string): number | null {
  */
 export function herdStatement(text: string, mediaType?: string): string {
   let result = userStatement(text, mediaType)
+    .replace(/^(?:[óo][, ]+)?(?:seguinte|t[aá] legal)[,:! ]+/i, "")
+    .replace(/^voc[eê]\s+(?:tem que|precisa)\s+/i, "")
     .replace(/^(?:tpec(?:[ -]?ia)?|pepec|pepeque)[,!: ]+/i, "")
     // Speech fillers and an explicit request to record a past event are not
     // uncertainty about whether that event happened. Keep factual negations.

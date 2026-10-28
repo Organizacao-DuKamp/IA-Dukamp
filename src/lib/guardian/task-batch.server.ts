@@ -1,8 +1,10 @@
+import { complementaryFarmGoals, compoundRestAnswer } from "./compound-goals.ts";
+import { taskMarkers, recoverTaskContext } from "./task-language.ts";
 import { createHash } from "node:crypto";
 import { automaticFarmEvent } from "./automatic.ts";
 import { applyFarmAction, describeAction, fold } from "./book.ts";
 import { parseDueDate, parseGuardianRequest } from "./parse.ts";
-import { normalizeTaskClock } from "./task-time.ts";
+import { normalizeTaskClock, taskClocks, removeTaskClocks } from "./task-time.ts";
 import { farmScopeMatches } from "./herd-event-language.ts";
 import { identificationAfterEntry, identificationQuestion } from "./herd-identification.ts";
 import {
@@ -18,27 +20,28 @@ import { localDateForTimeZone } from "../whatsapp/proactive.ts";
 import { recordDialogue, recordActions } from "./record-dialogue.ts";
 import { stockAt } from "./operations.ts";
 
-const marker = /\b(?:me lembr[ae]|criar tarefa|crie uma tarefa|agende|agendar)\b/gi;
 const dayPattern =
   /(?<![\p{L}\d])(?:hoje|amanh[ãa]|depois de amanh[ãa]|(?:pr[oó]xim[ao] )?(?:segunda|ter[cç]a|quarta|quinta|sexta|s[aá]bado|domingo)(?:-feira)?|(?:dia )?\d{1,2}\/\d{1,2}(?:\/20\d{2})?|20\d{2}-\d{2}-\d{2}|(?:daqui a|em) \d+ dias?)(?![\p{L}\d])/giu;
-const rawClock =
-  /(?<![\p{L}\d])(?:às|as|à|a partir das)\s+(?:\d{1,2}(?::\d{2}|h\d{0,2})?|uma?|duas?|tr[eê]s|quatro|cinco|seis|sete|oito|nove|dez|onze|doze|treze)(?:\s+(?:horas?\s+)?e\s+(?:meia|quinze|trinta|quarenta e cinco))?(?:\s+horas?)?(?:\s+da\s+(?:manh[ãa]|tarde|noite|madrugada))?(?![\p{L}\d])/giu;
 
 function task(text: string, reference: Date, now: Date, zone: string) {
   const normalized = normalizeTaskClock(text);
-  const clocks = [...normalized.matchAll(/\bas\s+(\d{1,2}):(\d{2})\b/g)];
+  const clocks = taskClocks(text);
   const days = text.match(dayPattern) ?? [];
   // Clock-only scheduling explicitly means today; never silently move it to tomorrow.
   const dated = days.length ? normalized : `${normalized} hoje`;
   const due = parseDueDate(dated, reference, zone);
-  const title = text
-    .replace(rawClock, " ")
+  const title = removeTaskClocks(text)
     .replace(dayPattern, " ")
-    .replace(/^(?:[\s,.:;!]+|(?:tamb[eé]m|de|para|pra|eu)\b\s*)+/gi, "")
-    .replace(/(?:[, ]*(?:ok|t[aá]|por favor)[.!?]*)+$/i, "")
+    .replace(/^(?:[\s,.:;!]+|(?:tamb[eé]m|de|para|pra|eu|uma|outra|primeira|segunda)\b\s*)+/gi, "")
+    .replace(/(?:[, ]*(?:ok|t[aá]|por favor|por a[ií])[.!?]*)+$/i, "")
     .replace(/\s+/g, " ")
     .replace(/^[,.;: ]+|[,.;:!? ]+$/g, "")
     .trim();
+  if (clocks.length === 1 && clocks[0].ambiguous)
+    return {
+      missing: "date" as const,
+      question: `Você quer ${clocks[0].hour}h${String(clocks[0].minute).padStart(2, "0")} da manhã ou ${clocks[0].hour + 12}h${String(clocks[0].minute).padStart(2, "0")} da tarde/noite?`,
+    };
   if (clocks.length > 1 || days.length > 1)
     return {
       missing: "date" as const,
@@ -64,6 +67,18 @@ function task(text: string, reference: Date, now: Date, zone: string) {
   };
 }
 
+function splitTimedTasks(text: string): string[] {
+  for (const conjunction of text.matchAll(
+    /\s+e\s+(?!(?:meia|quinze|trinta|quarenta|um|dois|tres)\b)|;\s*/gi,
+  )) {
+    const left = text.slice(0, conjunction.index),
+      right = text.slice(conjunction.index! + conjunction[0].length);
+    if (taskClocks(left).length && taskClocks(right).length)
+      return [...splitTimedTasks(left), ...splitTimedTasks(right)];
+  }
+  return [text];
+}
+
 /** Explicit multi-objective requests use one versioned commit, without an LLM acknowledgement. */
 export async function handleTaskBatch(
   input: GuardianInput,
@@ -73,7 +88,10 @@ export async function handleTaskBatch(
   reference: Date,
 ): Promise<GuardianHandled | "conflict" | null> {
   if (input.mediaType && input.mediaType !== "audio") return null;
-  const matches = [...input.text.matchAll(marker)];
+  const incomingText = input.text;
+  const recovered = recoverTaskContext(input.text, input.history, snapshot, now);
+  if (recovered) input = { ...input, text: recovered.text };
+  const matches = taskMarkers(input.text);
   const previous = snapshot.pending?.kind === "task_batch" ? snapshot.pending : null;
   // Preserve the existing confirmation flow for a single conventional task.
   const combined =
@@ -87,9 +105,12 @@ export async function handleTaskBatch(
     /\b(?:uma?|duas?|tr[eê]s|quatro|cinco|seis|sete|oito|nove|dez|onze|doze)\s+(?:e meia|da tarde|da noite|da manh[ãa])/i.test(
       input.text,
     );
-  if (!combined && !spoken && !previous) return null;
+  const newTaskWording = matches.some(
+    (m) => !/^(?:me lembr[ae]|criar tarefa|crie uma tarefa|agende|agendar)$/i.test(m[0]),
+  );
+  if (!combined && !spoken && !previous && !recovered && !newTaskWording) return null;
   if (
-    /\b(?:n[aã]o me lembr[ae]|vizinh[oa]|disse|falou|suponha|hipot[eé]tic|exemplo|simule|ser[aá] que|como (?:criar|agendar))\b|["“”]|(?:^|\n)\s*>/i.test(
+    /\b(?:n[aã]o me (?:lembr[ae]|avis[ae]r?|mand[ae])|vizinh[oa]|disse|falou|suponha|hipot[eé]tic|exemplo|simule|ser[aá] que|como (?:criar|agendar))\b|["“”]|(?:^|\n)\s*>/i.test(
       input.text,
     )
   )
@@ -109,7 +130,11 @@ export async function handleTaskBatch(
   let rest: string,
     texts: string[],
     sourceMessageId = input.messageId,
-    sourceAt = reference.toISOString();
+    sourceAt = recovered?.sourceAt ?? reference.toISOString();
+  if (recovered) {
+    sourceMessageId = recovered.sourceMessageId;
+    reference = new Date(recovered.sourceAt);
+  }
   if (previous && !matches.length) {
     if (previous.propertyId !== active.id || Date.parse(previous.expiresAt) <= now.getTime())
       return {
@@ -119,6 +144,9 @@ export async function handleTaskBatch(
         persisted: false,
       };
     if (/^(?:cancelar|cancela|deixa|n[aã]o)[.! ]*$/i.test(input.text)) {
+      const cancelReply = previous.completedTasks?.length
+        ? "Pendência cancelada. A tarefa já salva continua no painel."
+        : "Pedido cancelado. Nenhum item foi salvo.";
       const result = await store.commit({
         phone: input.phone,
         messageId: input.messageId,
@@ -127,14 +155,14 @@ export async function handleTaskBatch(
         propertyVersion: active.version,
         operation: "clear",
         pending: null,
-        reply: "Pedido cancelado. Nenhum item foi salvo.",
+        reply: cancelReply,
       });
       if (result !== "committed" && result !== "conflict" && !result.startsWith("replay:"))
         throw Error("guardian_commit_unconfirmed");
       return result === "conflict"
         ? result
         : {
-            reply: "Pedido cancelado. Nenhum item foi salvo.",
+            reply: cancelReply,
             activeProperty: true,
             persisted: false,
           };
@@ -164,18 +192,23 @@ export async function handleTaskBatch(
     const lastPrompt = input.history?.at(-1);
     if (lastPrompt?.role === "assistant" && !lastPrompt.content.includes(previous.question))
       return { reply: null, activeProperty: true, persisted: false, conversational: true };
-    rest = previous.rest;
+    rest =
+      previous.missing === "record"
+        ? compoundRestAnswer(previous.rest, input.text, new Date(previous.sourceAt))
+        : previous.rest;
     texts = [...previous.taskTexts];
     const old = texts[previous.missingIndex];
-    const hasClock = /\bas\s+\d{1,2}:\d{2}\b/.test(normalizeTaskClock(answer));
+    const hasClock = taskClocks(answer).length > 0;
     const hasDay = !!answer.match(dayPattern);
-    texts[previous.missingIndex] =
-      previous.missing === "title"
-        ? `${old} para ${input.text}`
-        : `${hasDay ? old.replace(dayPattern, " ") : old}`.replace(
-            hasClock ? rawClock : /$^/,
-            " ",
-          ) + ` ${answer}`;
+    if (previous.missing !== "record")
+      texts[previous.missingIndex] =
+        previous.missing === "title"
+          ? `${old} para ${input.text}`
+          : (hasClock
+              ? removeTaskClocks(hasDay ? old.replace(dayPattern, " ") : old)
+              : hasDay
+                ? old.replace(dayPattern, " ")
+                : old) + ` ${answer}`;
     sourceMessageId = previous.sourceMessageId;
     sourceAt = previous.sourceAt;
     reference = new Date(previous.sourceAt);
@@ -199,24 +232,42 @@ export async function handleTaskBatch(
       rest += "; " + text.slice(split).replace(/^\s+e\s+/i, "");
       return text.slice(0, split);
     });
+    // Enumerated tasks may share one creation verb; split only where each side has its own clock.
+    texts = texts.flatMap((text) => splitTimedTasks(text));
     // A task after a herd or finance clause is supported. Unparsed commands stay pending, never silently disappear.
   }
-  if (/\b(?:exclua|apague|remova|altere|corrija|cancele|cadastre)\b/i.test(rest))
+  if (recovered) {
+    const already = (snapshot.active?.book.operations?.movements ?? []).filter(
+      (m) => m.source.messageId === sourceMessageId,
+    );
+    if (!already.length || !(await store.receipt(input.phone, sourceMessageId)))
+      return {
+        reply:
+          "Não consegui confirmar os registros anteriores. Não repeti a entrada; confira a fazenda antes de retomar a tarefa.",
+        activeProperty: true,
+        persisted: false,
+      };
+    rest = "";
+  }
+  if (/\b(?:exclua|apague|remova|cancele)\b/i.test(rest))
     return {
       reply:
         "Esse pedido inclui uma alteração que precisa ser conferida separadamente. Nenhum item foi salvo; informe a alteração com o registro correspondente.",
       activeProperty: true,
       persisted: false,
     };
+  let recordQuestion: string | undefined;
   let observation = automaticFarmEvent({ text: rest, at: reference }, snapshot);
-  if (observation.status === "pending")
-    return {
-      reply:
-        observation.reply ??
-        "Preciso esclarecer a fazenda, quantidade ou data do outro registro antes de salvar estes pedidos juntos.",
-      activeProperty: true,
-      persisted: false,
-    };
+  if (observation.status === "pending") {
+    if (observation.reason === "ambiguous_property")
+      return {
+        reply: "De qual fazenda são estes pedidos? Nenhum item foi salvo em propriedade incerta.",
+        activeProperty: true,
+        persisted: false,
+      };
+    recordQuestion =
+      observation.reply ?? "Qual é a quantidade e a data do acontecimento que ficou pendente?";
+  }
   if (observation.status === "none" && rest) {
     const dialogue = recordDialogue(rest, reference);
     const records = dialogue.kind === "slots" ? recordActions(dialogue.slots) : null;
@@ -233,24 +284,59 @@ export async function handleTaskBatch(
     )
       observation = { status: "action", action: parsed.action };
   }
+  const extra = complementaryFarmGoals(
+    rest,
+    observation.status === "batch"
+      ? observation.actions
+      : observation.status === "action"
+        ? [observation.action]
+        : [],
+    snapshot,
+    input.phone,
+    reference,
+  );
+  if (extra.actions.length)
+    observation =
+      extra.actions.length === 1
+        ? { status: "action", action: extra.actions[0] }
+        : { status: "batch", actions: extra.actions };
+  if (extra.question) recordQuestion = extra.question;
   const selectionOnly =
     fold(rest)
       .replace(/^(?:selecione|selecionar|usar|use)\s+(?:a\s+)?fazenda\s+/, "")
       .replace(/[.! ]+$/, "") === fold(farmName(active.book));
-  if (rest && observation.status === "none" && !selectionOnly)
-    return {
-      reply:
-        "Entendi o lembrete, mas não consegui identificar com segurança o outro pedido. Reenvie os acontecimentos e suas quantidades; nenhum item foi salvo.",
-      activeProperty: true,
-      persisted: false,
-    };
+  if (
+    rest &&
+    observation.status === "none" &&
+    !selectionOnly &&
+    !recordQuestion &&
+    !/^(?:bom dia|boa tarde|boa noite|olha|seguinte|por favor)[,.! ]*$/i.test(rest)
+  )
+    recordQuestion = /\b(?:galgos?|cavalos?|cachorros?|porcos?)\b/i.test(rest)
+      ? "A entrada citada é de bovinos? A transcrição mencionou outro animal. Confirme só a espécie ou corrija esse trecho; não alterei o rebanho."
+      : "Ficou pendente o outro registro. Informe só o acontecimento com a quantidade ou valor que falta; não precisa repetir a tarefa já salva.";
   const actions: GuardianAction[] =
     observation.status === "batch"
       ? [...observation.actions]
       : observation.status === "action"
         ? [observation.action]
         : [];
+  if (recovered) {
+    const clocks = taskClocks(incomingText);
+    if (clocks.length === 1 && texts.length === 1) {
+      const originalClock = taskClocks(texts[0])[0],
+        correction = clocks[0];
+      if (
+        !correction.ambiguous ||
+        !originalClock ||
+        originalClock.hour % 12 !== correction.hour % 12 ||
+        originalClock.minute !== correction.minute
+      )
+        texts[0] = removeTaskClocks(texts[0]) + " " + correction.text;
+    }
+  }
   for (const [index, text] of texts.entries()) {
+    if (previous?.completedTasks?.includes(text)) continue;
     const parsed = task(text, reference, now, snapshot.preferences.timeZone);
     if (!parsed.action) {
       const question = `${parsed.question} Mantive os outros dados; nenhum item deste pedido foi salvo ainda.`;
@@ -288,6 +374,14 @@ export async function handleTaskBatch(
     }
     actions.push(parsed.action);
   }
+  if (!actions.length)
+    return {
+      reply:
+        recordQuestion ??
+        "Os pedidos já estão nos registros desta fazenda. Não dupliquei a entrada nem a tarefa.",
+      activeProperty: true,
+      persisted: false,
+    };
   if (!actions.every((a) => canEdit(active.role, a)))
     return {
       reply: "Seu perfil não permite todos estes registros. Nenhum item foi salvo.",
@@ -320,21 +414,23 @@ export async function handleTaskBatch(
       activeProperty: true,
       persisted: false,
     };
-  const duplicate = actions.every((a) =>
-    a.kind === "task_create"
-      ? active.book.tasks.some(
-          (t) => t.dueAt === a.dueAt && fold(t.title) === fold(a.title) && recent(t.source),
-        )
-      : a.kind === "herd_event"
-        ? active.book.operations?.movements.some(
-            (m) =>
-              m.type === a.type &&
-              m.count === a.count &&
-              m.date === a.date &&
-              m.lot === a.lot &&
-              recent(m.source),
-          )
-        : false,
+  const taskAlreadySaved = (a: GuardianAction) =>
+    a.kind === "task_create" &&
+    active.book.tasks.some(
+      (t) => t.status === "open" && t.dueAt === a.dueAt && fold(t.title) === fold(a.title),
+    );
+  const duplicate = actions.every(
+    (a) =>
+      taskAlreadySaved(a) ||
+      (a.kind === "herd_event" &&
+        active.book.operations?.movements.some(
+          (m) =>
+            m.type === a.type &&
+            m.count === a.count &&
+            m.date === a.date &&
+            m.lot === a.lot &&
+            recent(m.source),
+        )),
   );
   if (duplicate)
     return {
@@ -343,8 +439,10 @@ export async function handleTaskBatch(
       activeProperty: true,
       persisted: false,
     };
+  const newActions = actions.filter((a) => !taskAlreadySaved(a));
+  actions.splice(0, actions.length, ...newActions);
   const id = createHash("sha256")
-    .update(input.phone + ":" + sourceMessageId)
+    .update(input.phone + ":" + input.messageId)
     .digest("hex")
     .slice(0, 10)
     .toUpperCase();
@@ -376,14 +474,25 @@ export async function handleTaskBatch(
       persisted: false,
     };
   }
-  const pending = identificationAfterEntry(
-    actions,
-    book,
-    null,
-    active.id,
-    sourceMessageId,
-    now.toISOString(),
-  );
+  const identification = recovered
+    ? snapshot.pending
+    : identificationAfterEntry(actions, book, null, active.id, sourceMessageId, now.toISOString());
+  const pending: GuardianSnapshot["pending"] = recordQuestion
+    ? {
+        kind: "task_batch",
+        propertyId: active.id,
+        createdAt: previous?.createdAt ?? now.toISOString(),
+        expiresAt: previous?.expiresAt ?? new Date(now.getTime() + 30 * 60000).toISOString(),
+        sourceMessageId,
+        sourceAt,
+        rest,
+        taskTexts: texts,
+        missingIndex: 0,
+        missing: "record",
+        question: recordQuestion,
+        completedTasks: texts,
+      }
+    : identification;
   const stock = book.operations
     ? stockAt(book.operations, localDateForTimeZone(now, snapshot.preferences.timeZone)).count
     : null;
@@ -398,7 +507,10 @@ export async function handleTaskBatch(
     (!snapshot.preferences.enabled
       ? "\nA tarefa está no painel. Os avisos no WhatsApp dependem de ativar os avisos da Guardiã."
       : "") +
-    (pending ? `\n\n${identificationQuestion(pending)}` : "");
+    (recordQuestion ? `\n\nPendente: ${recordQuestion}` : "") +
+    (pending?.kind === "herd_identification" && !recovered
+      ? `\n\n${identificationQuestion(pending)}`
+      : "");
   const result = await store.commit({
     phone: input.phone,
     messageId: input.messageId,
@@ -415,7 +527,9 @@ export async function handleTaskBatch(
       batch: true,
       sourceMessageId,
       sourceAt,
-      ...(sourceMessageId !== input.messageId ? { confirmedBy: input.messageId } : {}),
+      ...(sourceMessageId !== input.messageId
+        ? { confirmedBy: input.messageId, resumedTask: true }
+        : {}),
       events: actions,
     },
   });
