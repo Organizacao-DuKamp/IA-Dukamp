@@ -5,6 +5,18 @@ export function taskClocks(text: string) {
   return [...text.matchAll(new RegExp(clockSource, "giu"))]
     .filter((m) => {
       const g = m.groups!;
+      const following = text.slice(m.index! + m[0].length);
+      if (
+        !g.colon &&
+        !g.hourUnit &&
+        !g.spoken &&
+        !g.hours &&
+        !g.period &&
+        /^\s+(?:gados?|animais|animal|vacas?|bois|bezerros?|bezerras?|bovinos?|novilhas?|tarefas?|lembretes?|lotes?|sacos?|litros?|kg|hectares?|cabe[cç]as?)\b/iu.test(
+          following,
+        )
+      )
+        return false;
       return !!(g.lead || g.colon || g.hourUnit || g.spoken || g.hours || g.period);
     })
     .map((m) => {

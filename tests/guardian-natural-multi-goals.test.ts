@@ -46,6 +46,11 @@ test("spoken approximate times and bare numeric clocks retain the afternoon and 
   assert.equal(normalizeTaskClock("às dezoito e trinta"), "as 18:30");
   assert.equal(normalizeTaskClock("18:30"), "as 18:30");
   assert.equal(taskClocks("comprei 4 gados no dia 28/10").length, 0);
+  assert.equal(
+    normalizeTaskClock("alimentar as quatro vacas às seis e meia da tarde"),
+    "alimentar as quatro vacas as 18:30",
+  );
+  assert.equal(taskClocks("conferir as duas tarefas às 18h").length, 1);
 });
 
 for (const [n, text, title, due] of [
