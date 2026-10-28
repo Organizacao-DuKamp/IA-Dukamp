@@ -268,7 +268,7 @@ function farmStore(active = false): GuardianStore {
     },
   };
 }
-test("spontaneous births, purchases and sales never require farm creation or confirmation", async () => {
+test("private notes stay conversational, but shared herd entries require a successful commit", async () => {
   for (const active of [false, true])
     for (const text of [
       "Hoje nasceram 2 bezerros.",
@@ -286,6 +286,14 @@ test("spontaneous births, purchases and sales never require farm creation or con
           },
         },
       );
+      if (active && /nasceram|vendi/.test(text)) {
+        assert.notEqual(result?.persisted, true);
+        assert.match(
+          result!.reply!,
+          /Nenhuma nova operação está confirmada|Nenhum movimento desta mensagem foi salvo/,
+        );
+        continue;
+      }
       assert.equal(result?.reply, null, text);
       assert.equal(result?.conversational, true);
     }

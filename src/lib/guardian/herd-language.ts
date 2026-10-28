@@ -91,6 +91,7 @@ export function herdStatement(text: string, mediaType?: string): string {
     // uncertainty about whether that event happened. Keep factual negations.
     .replace(/^(?:(?:olha|repente|ent[aã]o)[,!: ]+)+/i, "")
     .replace(/^n[aã]o[, ]+eu quero que voc[eê]\s+/i, "")
+    .replace(/^(?:eu\s+)?quero que voc[eê]\s+/i, "")
     .replace(
       /^(?:eu quero que voc[eê]\s+|(?:voc[eê] pode|pode)\s+)?(?:adicione|adiciona|adicionar|inclua|incluir)\s+/i,
       "",
@@ -133,7 +134,13 @@ export function herdStatement(text: string, mediaType?: string): string {
     (value) => value.replace(/\./g, ""),
   );
   // An initial discourse marker does not change the original event date.
-  return result.replace(/^(?:(?:agora|ent[aã]o|aqui)[, ]+)+/i, "");
+  return result
+    .replace(
+      /\b(\d+)\s+(novos?\s+)?(bezerros?|bezerras?|vacas?|bois|gados?|animais)\s+([^.!?]*?)\bque\s+(nasceram|nasceu|morreram|morreu)\b/giu,
+      (_, n: string, fresh: string, animal: string, context: string, verb: string) =>
+        `${verb} ${n} ${fresh ?? ""}${animal} ${context}`,
+    )
+    .replace(/^(?:(?:agora|ent[aã]o|aqui)[, ]+)+/i, "");
 }
 
 export function herdTopic(text: string): boolean {

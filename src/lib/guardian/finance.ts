@@ -31,13 +31,27 @@ export function ledgerForTotals(entries: LedgerEntry[], start = "", end = "9999-
     // A whole-farm total also covers individually identified lots.
     const total =
       totals.get(key(e, e.date.slice(0, 7))) ?? totals.get(`${e.date.slice(0, 7)}:${e.direction}:`);
-    return !total || e.date > coverageEnd(total);
+    // A separately reported new expense after a total is an increment, including
+    // on the same date. A later revised total absorbs earlier increments again.
+    const after =
+      total && (e.source.sourceAt ?? e.source.at) > (total.source.sourceAt ?? total.source.at);
+    return (
+      !total ||
+      e.date > coverageEnd(total) ||
+      (e.totalRelation !== "included" && after && e.date >= total.date)
+    );
   });
 }
 
-export function ledgerPeriod(entry: Pick<LedgerEntry, "date" | "periodMonth" | "estimated">) {
+export function ledgerPeriod(
+  entry: Pick<LedgerEntry, "date" | "periodMonth" | "estimated" | "totalRelation">,
+) {
   const period = entry.periodMonth
     ? `${entry.periodMonth.slice(5)}/${entry.periodMonth.slice(0, 4)} (total informado)`
     : entry.date.split("-").reverse().join("/");
-  return period + (entry.estimated ? " — estimado" : "");
+  return (
+    period +
+    (entry.estimated ? " — estimado" : "") +
+    (entry.totalRelation === "included" ? " — já incluído no total informado" : "")
+  );
 }

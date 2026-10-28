@@ -32,6 +32,12 @@ export function automaticFarmEvent(
 ): AutomaticObservation {
   const original = userStatement(input.text, input.mediaType);
   const text = herdStatement(input.text, input.mediaType);
+  if (
+    !snapshot.active &&
+    snapshot.properties.length > 1 &&
+    (hasEventVerb(text) || /\b(?:receita|despesa|paguei|recebi)\b/i.test(text))
+  )
+    return { status: "pending", reason: "ambiguous_property" };
   if (snapshot.properties.length > 1) {
     const observation = extractPropertyObservation({
       text: original,
@@ -93,7 +99,7 @@ export function automaticFarmEvent(
         missingMovement = true;
       continue;
     }
-    if (!snapshot.active?.book.operations) continue;
+    if (!snapshot.active) continue;
     if (!farmScopeMatches(text, snapshot, !!selectedJustNow))
       return { status: "pending", reason: "ambiguous_property" };
     const period = eventDay(quote, input.at);
