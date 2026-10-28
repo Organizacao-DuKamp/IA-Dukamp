@@ -79,7 +79,7 @@ try {
   assert.equal(
     await page
       .getByRole("article")
-      .filter({ hasText: "Estoque calculado" })
+      .filter({ hasText: "Rebanho calculado" })
       .innerText()
       .then((text) => text.includes("40")),
     true,
@@ -125,15 +125,18 @@ try {
   assert.equal(herd.persisted, true);
   await page.reload({ waitUntil: "networkidle" });
   await page.getByRole("button", { name: "Financeiro", exact: true }).click();
-  await page.getByRole("cell", { name: "R$ 100.000,00", exact: true }).waitFor();
-  await page.getByRole("cell", { name: "R$ 80.000,00", exact: true }).waitFor();
   await page
-    .getByText(/total informado/)
+    .getByText(/100\.000,00/)
     .first()
     .waitFor();
+  await page
+    .getByText(/80\.000,00/)
+    .first()
+    .waitFor();
+  await page.getByText("Já incluído no total", { exact: true }).first().waitFor();
   await page.getByRole("button", { name: "Rebanho e lotes", exact: true }).click();
   assert.match(
-    await page.getByRole("article").filter({ hasText: "Estoque calculado" }).innerText(),
+    await page.getByRole("article").filter({ hasText: "Rebanho calculado" }).innerText(),
     /42/,
   );
   await page.locator("summary").filter({ hasText: "KBU 491" }).click();
@@ -161,7 +164,7 @@ try {
   assert.equal(identified.persisted, true);
   await page.reload({ waitUntil: "networkidle" });
   assert.match(
-    await page.getByRole("article").filter({ hasText: "Estoque calculado" }).innerText(),
+    await page.getByRole("article").filter({ hasText: "Rebanho calculado" }).innerText(),
     /46/,
   );
   await page.getByRole("button", { name: "Rebanho e lotes", exact: true }).click();
@@ -202,7 +205,7 @@ try {
   assert.equal(newIdentities.persisted, true);
   await page.reload({ waitUntil: "networkidle" });
   assert.match(
-    await page.getByRole("article").filter({ hasText: "Estoque calculado" }).innerText(),
+    await page.getByRole("article").filter({ hasText: "Rebanho calculado" }).innerText(),
     /48/,
   );
   await page.getByRole("button", { name: "Rebanho e lotes", exact: true }).click();
@@ -242,14 +245,14 @@ try {
   assert.equal(contextNote.persisted, true);
   await page.reload({ waitUntil: "networkidle" });
   assert.match(
-    await page.getByRole("article").filter({ hasText: "Estoque calculado" }).innerText(),
+    await page.getByRole("article").filter({ hasText: "Rebanho calculado" }).innerText(),
     /52/,
   );
   await page.getByRole("button", { name: "Rebanho e lotes", exact: true }).click();
   await page.locator("summary").filter({ hasText: "DUKN 401" }).click();
   await page.getByText(/RGN informado: DUKN 401/).waitFor();
   await page.getByRole("button", { name: "Financeiro", exact: true }).click();
-  await page.getByRole("cell").filter({ hasText: "a manutenção do curral" }).waitFor();
+  await page.getByRole("heading", { name: "a manutenção do curral", exact: true }).waitFor();
   await page.getByRole("button", { name: "Caderno de campo", exact: true }).click();
   await page.getByText("Consertei a cerca semana passada", { exact: true }).waitFor();
   // Reproduce the producer's audio, identity list, contextual lot edit and monthly cost.
@@ -302,7 +305,7 @@ try {
   assert.equal(noteEdit.persisted, true);
   await page.reload({ waitUntil: "networkidle" });
   assert.match(
-    await page.getByRole("article").filter({ hasText: "Estoque calculado" }).innerText(),
+    await page.getByRole("article").filter({ hasText: "Rebanho calculado" }).innerText(),
     /54/,
   );
   await page.getByRole("button", { name: "Rebanho e lotes", exact: true }).click();
@@ -317,7 +320,8 @@ try {
     .filter({ hasText: "Lote 2" })
     .waitFor();
   await page.getByRole("button", { name: "Financeiro", exact: true }).click();
-  const caneRow = page.getByRole("row").filter({ hasText: "cana de açúcar" });
+  const caneRow = page.getByRole("article").filter({ hasText: "cana de açúcar" });
+  await caneRow.getByText("Detalhes do lançamento", { exact: true }).click();
   await caneRow.getByText("Valor mensal informado pelo produtor", { exact: true }).waitFor();
   assert.match(await caneRow.innerText(), /5\.500,00/);
   assert.equal(await caneRow.count(), 1);
@@ -338,16 +342,52 @@ try {
     /Referência da definição|ainfo\.cnptia\.embrapa/,
   );
   await page.getByRole("button", { name: "Financeiro", exact: true }).click();
+  const screenshots = process.env.FARM_PANEL_SCREENSHOTS;
+  if (screenshots) {
+    await mkdir(screenshots, { recursive: true });
+    await page.screenshot({
+      path: screenshots + "/farm-panel-finance-desktop.png",
+      fullPage: true,
+    });
+    await page.getByRole("button", { name: "Visão geral", exact: true }).click();
+    await page.screenshot({
+      path: screenshots + "/farm-panel-overview-desktop.png",
+      fullPage: true,
+    });
+    await page.getByRole("button", { name: "Financeiro", exact: true }).click();
+  }
+  await page.getByRole("button", { name: "Receitas", exact: true }).click();
+  assert.equal(await page.getByRole("heading", { name: "cana de açúcar", exact: true }).count(), 0);
+  await page.getByRole("button", { name: "Todos", exact: true }).click();
+  await page.getByLabel("Buscar lançamento", { exact: true }).fill("cana de açúcar");
+  assert.equal(await page.getByRole("article").filter({ hasText: "cana de açúcar" }).count(), 1);
+  await page.getByLabel("Buscar lançamento", { exact: true }).fill("");
   await page.setViewportSize({ width: 390, height: 844 });
   assert.equal(
     await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1),
     true,
     "Mobile page must not overflow horizontally",
   );
-  const screenshots = process.env.FARM_PANEL_SCREENSHOTS;
-  if (screenshots) {
-    await mkdir(screenshots, { recursive: true });
+  if (screenshots)
     await page.screenshot({ path: screenshots + "/farm-panel-mobile.png", fullPage: true });
+  for (const area of [
+    "Visão geral",
+    "Rebanho e lotes",
+    "Tarefas",
+    "Caderno de campo",
+    "Calculadoras",
+  ]) {
+    await page.getByLabel("Área da fazenda", { exact: true }).selectOption({ label: area });
+    assert.equal(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1),
+      true,
+      area + " mobile overflow",
+    );
+    if (screenshots && area === "Visão geral")
+      await page.screenshot({
+        path: screenshots + "/farm-panel-overview-mobile.png",
+        fullPage: true,
+      });
   }
   await page.getByRole("button", { name: "Sair", exact: true }).click();
   await page.getByRole("heading", { name: "Acesse sua fazenda" }).waitFor();

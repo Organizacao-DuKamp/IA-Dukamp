@@ -2,6 +2,14 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
+  LayoutDashboard,
+  Beef,
+  ClipboardList,
+  NotebookPen,
+  Wallet,
+  Bell,
+  Calculator,
+  Plus,
   ArrowRight,
   Check,
   KeyRound,
@@ -46,6 +54,15 @@ const tabs = [
   ["calculator", "Calculadoras"],
 ] as const;
 type Tab = (typeof tabs)[number][0];
+const tabIcons = {
+  overview: LayoutDashboard,
+  herd: Beef,
+  tasks: ClipboardList,
+  records: NotebookPen,
+  finance: Wallet,
+  events: Bell,
+  calculator: Calculator,
+};
 const endpoint = "/api/public/farm-panel";
 const whatsapp = "https://wa.me/5516992256069?text=" + encodeURIComponent("Gerar código do painel");
 async function api(method = "GET", body?: unknown) {
@@ -199,7 +216,7 @@ function FarmPanel() {
           )}
         </div>
       </header>
-      <main className="mx-auto max-w-7xl px-5 py-8 sm:py-12">
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
         {error && (
           <p
             role="alert"
@@ -338,23 +355,53 @@ function FarmPanel() {
                 <button
                   disabled={busy}
                   onClick={() => setForm((f) => !f)}
-                  className="rounded-xl bg-emerald-900 px-4 py-3 text-sm font-semibold text-white"
+                  className="inline-flex items-center gap-2 rounded-xl bg-emerald-900 px-4 py-3 text-sm font-semibold text-white"
                 >
-                  {form ? "Fechar formulário" : "Novo registro"}
+                  <Plus size={17} aria-hidden="true" />
+                  {form ? "Fechar" : "Novo registro"}
                 </button>
               </div>
             </div>
-            <nav aria-label="Áreas da fazenda" className="mb-7 flex gap-2 overflow-x-auto pb-2">
-              {tabs.map(([id, label]) => (
-                <button
-                  key={id}
-                  onClick={() => setTab(id)}
-                  aria-current={tab === id ? "page" : undefined}
-                  className={`shrink-0 rounded-full px-4 py-2.5 text-sm font-medium ${tab === id ? "bg-emerald-900 text-white" : "border bg-white text-slate-600"}`}
+            <nav
+              aria-label="Áreas da fazenda"
+              className="mb-6 rounded-2xl border border-slate-200 bg-white p-2 sm:flex sm:gap-1 sm:overflow-x-auto"
+            >
+              <label className="flex items-center gap-3 px-2 text-xs font-medium text-slate-500 sm:hidden">
+                Área da fazenda
+                <select
+                  aria-label="Área da fazenda"
+                  value={tab}
+                  onChange={(e) => setTab(e.target.value as Tab)}
+                  className="min-w-0 flex-1 rounded-xl bg-slate-50 p-3 text-sm font-semibold text-emerald-900 outline-emerald-700"
                 >
-                  {label}
-                </button>
-              ))}
+                  {tabs.map(([id, label]) => (
+                    <option key={id} value={id}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {tabs.map(([id, label]) => {
+                const Icon = tabIcons[id];
+                return (
+                  <button
+                    key={id}
+                    onClick={(e) => {
+                      setTab(id);
+                      e.currentTarget.scrollIntoView({
+                        block: "nearest",
+                        inline: "center",
+                        behavior: "smooth",
+                      });
+                    }}
+                    aria-current={tab === id ? "page" : undefined}
+                    className={`hidden shrink-0 items-center gap-2 rounded-xl sm:inline-flex px-3 py-2.5 text-sm font-medium ${tab === id ? "bg-emerald-900 text-white" : "text-slate-600 hover:bg-slate-50"}`}
+                  >
+                    <Icon size={17} aria-hidden="true" />
+                    {label}
+                  </button>
+                );
+              })}
             </nav>
             <div className="space-y-6">
               {proposal && (
@@ -388,7 +435,16 @@ function FarmPanel() {
               )}
               {form && (
                 <GuardianActionForm
-                  key={view.propertyId}
+                  key={`${view.propertyId}:${tab}`}
+                  initialKind={
+                    tab === "finance"
+                      ? "expense"
+                      : tab === "herd"
+                        ? "herd_event"
+                        : tab === "records"
+                          ? "record"
+                          : "task_create"
+                  }
                   hasProperty
                   busy={busy}
                   allowedKinds={allowed}
@@ -417,12 +473,16 @@ function FarmPanel() {
                 }}
               />
             </div>
-            <p className="mt-8 text-xs leading-relaxed text-slate-500">
-              Dados informados pelo produtor e cálculos sobre os registros disponíveis. Não
-              representam medição em tempo real nem diagnóstico veterinário. A sessão vence em{" "}
-              {new Date(view.expiresAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}{" "}
-              (Brasília). Para outra fazenda, saia e peça o código correspondente no WhatsApp.
-            </p>
+            <details className="mt-8 text-xs text-slate-500">
+              <summary className="w-fit cursor-pointer">Acesso e informações dos dados</summary>
+              <p className="mt-3 max-w-2xl leading-relaxed">
+                Dados informados pelo produtor; cálculos usam os registros disponíveis. Sessão até{" "}
+                {new Date(view.expiresAt).toLocaleString("pt-BR", {
+                  timeZone: "America/Sao_Paulo",
+                })}{" "}
+                (Brasília). Para acessar outra fazenda, saia e peça o código correspondente.
+              </p>
+            </details>
           </>
         )}
         <Link to="/" className="mt-10 inline-flex items-center gap-2 text-sm text-slate-600">
