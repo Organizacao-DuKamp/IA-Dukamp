@@ -111,7 +111,13 @@ export const panelStore: PanelStore = {
 
 /** Called only after the WhatsApp webhook authenticated the sender. */
 export async function handlePanelCodeRequest(
-  input: { phone: string; messageId: string; text: string; mediaType?: string },
+  input: {
+    phone: string;
+    messageId: string;
+    text: string;
+    mediaType?: string;
+    history?: Array<{ role: string; content: string }>;
+  },
   deps: {
     load?: typeof guardianStore.load;
     issue?: (phone: string, property: string, message: string, hash: string) => Promise<boolean>;
@@ -120,12 +126,19 @@ export async function handlePanelCodeRequest(
 ): Promise<string | null> {
   if (input.mediaType && input.mediaType !== "audio") return null;
   const original = fold(input.text);
+  const last = input.history?.at(-1);
+  const choiceReply =
+    last?.role === "assistant" && last.content.startsWith("Escolha a fazenda para abrir no painel:")
+      ? original.match(/^(\d+)(?:[.)]?\s+(.+))?[.! ]*$/)
+      : null;
   const farmAlias = original.match(
     /^(?:(?:quero|preciso|pode)\s+)?(?:(?:gerar|gere|criar|crie)\s+)?(?:um\s+)?codigo(?:\s+de acesso)?\s+(?:para|pra|da)\s+(?:(?:a|minha|nossa)\s+)?fazenda(?:\s+(.+?))?[.! ]*$/,
   );
-  const text = farmAlias
-    ? "gerar codigo do painel" + (farmAlias[1] ? " para " + farmAlias[1] : "")
-    : original;
+  const text = choiceReply
+    ? `gerar codigo do painel para ${choiceReply[1]}`
+    : farmAlias
+      ? "gerar codigo do painel" + (farmAlias[1] ? " para " + farmAlias[1] : "")
+      : original;
   const match = text.match(
     /^(?:(?:quero|preciso|pode|me|por favor)\s+)*(?:(?:gerar|gere|criar|crie|obter|abrir|acessar|acesso|ver|entrar)(?:\s+(?:um|o|meu|no|ao))?\s+)?(?:codigo\s+(?:do|para o|de acesso ao|para acessar o)\s+)?painel(?:\s+(?:da|de)\s+fazenda)?(?:\s+(?:para|da|de)\s+(.+?))?[.! ]*$/,
   );
@@ -150,6 +163,8 @@ export async function handlePanelCodeRequest(
         "\nResponda “gerar código do painel para 1” ou use o nome da fazenda."
       );
     const property = candidates[0];
+    if (choiceReply?.[2] && fold(property.name) !== choiceReply[2].trim())
+      return "O número e o nome não correspondem à mesma fazenda. Escolha novamente pelo nome completo; nenhum código foi emitido.";
     const code = normalizeCode((deps.code ?? makePanelCode)());
     const issue =
       deps.issue ??

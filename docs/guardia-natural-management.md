@@ -6,6 +6,7 @@ Correção baseada na análise autorizada das últimas 20 mensagens do produtor,
 
 - Livros antigos sem `operations` não chegavam ao extrator de movimentos. Nascimentos e compras agora inicializam as operações existentes, sem exigir brincos nem um censo inventado. Total desconhecido permanece desconhecido; entradas e indicadores ficam registrados. Saídas sem saldo conhecido continuam bloqueadas.
 - Uma fazenda mencionada explicitamente e pertencente ao remetente torna-se a propriedade ativa, com recibo próprio de seleção. A seleção persiste entre mensagens. Nomes desconhecidos/duplicados não escolhem outra fazenda. Transferências entre propriedades conservam o fluxo conjunto anterior, sem selecionar o destino como origem.
+- A escolha de código do painel aceita “2. Tambori” em resposta à lista de fazendas; número e nome devem corresponder. Fora desse contexto, um número não emite acesso.
 - Pedidos como “Eu quero que você registre 2 novos bezerros na fazenda Tambori que nasceram hoje” preservam o acontecimento. “Quero” sozinho não classifica uma inclusão como edição. Nascimento não vira anotação genérica se o movimento não for resolvido: pede esclarecimento e não confirma gravação fictícia.
 - Consulta de quantidade responde com saldo calculado ou com eventos conhecidos e indicação de censo ausente. Não exige fichas individuais para contabilizar entradas.
 - Custos mensais por extenso ou em linguagem comum, inclusive “despesa de cana-de-açúcar, 2 mil mensal de despesa”, entram no financeiro. Frequência mensal não agenda pagamentos futuros.

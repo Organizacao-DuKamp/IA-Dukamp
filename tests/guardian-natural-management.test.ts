@@ -7,6 +7,7 @@ import { emptyFarm, type LedgerEntry, type FarmBook } from "../src/lib/guardian/
 import { stockAt, farmIndicators } from "../src/lib/guardian/operations.ts";
 import { ledgerForTotals } from "../src/lib/guardian/finance.ts";
 import { recordDialogue } from "../src/lib/guardian/record-dialogue.ts";
+import { handlePanelCodeRequest } from "../src/lib/guardian/panel.server.ts";
 
 const phone = "5517999991111",
   at = new Date("2026-10-27T20:30:13Z");
@@ -42,6 +43,47 @@ const send = (
     { phone, messageId: id, text, sentAt: time.toISOString() },
     { store: f.guardian, now: time, extract: noAI },
   );
+
+test("the panel property picker accepts the producer's numbered name reply only in its own context", async () => {
+  const f = await farmIntegration();
+  try {
+    await create(f, "Eduardo");
+    await create(f, "Tambori");
+    let issued = "";
+    const deps = {
+      load: f.guardian.load,
+      issue: async (_p: string, id: string) => {
+        issued = id;
+        return true;
+      },
+      code: () => "ABCD2345EFGH6789",
+    };
+    const choices = await handlePanelCodeRequest(
+      { phone, messageId: "picker", text: "gerar código da fazenda" },
+      deps,
+    );
+    assert.match(choices!, /Escolha a fazenda/);
+    const snapshot = await f.guardian.load(phone);
+    const target = snapshot.properties[1];
+    const answer = await handlePanelCodeRequest(
+      {
+        phone,
+        messageId: "choice",
+        text: `2. ${target.name}`,
+        history: [{ role: "assistant", content: choices! }],
+      },
+      deps,
+    );
+    assert.match(answer!, /Seu código/);
+    assert.equal(issued, target.id);
+    assert.equal(
+      await handlePanelCodeRequest({ phone, messageId: "unrelated", text: "2. Tambori" }, deps),
+      null,
+    );
+  } finally {
+    await f.db.close();
+  }
+});
 
 test("legacy farm without operations receives births without tags and an explicit property selects the right book", async () => {
   const f = await farmIntegration();
