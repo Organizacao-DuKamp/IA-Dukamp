@@ -39,6 +39,7 @@ export async function farmIntegration(
       "20261027111123_guardian_farm_panel.sql",
       "20261027111135_guardian_reviews_rules.sql",
       "20261027111144_guardian_property_transfers.sql",
+      "20261028121145_guardian_installed_sessions.sql",
     ]) {
       if (name.endsWith("_guardian_farm_panel.sql") && beforeEvolution) await beforeEvolution(db);
       await db.exec(
@@ -63,12 +64,23 @@ export async function farmIntegration(
   };
   const store: PanelStore = {
     attempt: (key) => rpc<boolean>("select guardian_panel_attempt($1) data", [key]),
-    exchange: (code, session) =>
-      rpc<boolean>("select guardian_panel_exchange($1,$2) data", [code, session]),
-    authorize: (hash) =>
-      rpc<PanelIdentity | null>("select guardian_panel_authorize($1) data", [hash]),
+    exchange: (code, session, installed = false) =>
+      rpc<boolean>("select guardian_panel_exchange_mode($1,$2,$3) data", [
+        code,
+        session,
+        installed,
+      ]),
+    authorize: (hash, installed = false) =>
+      rpc<PanelIdentity | null>("select guardian_panel_authorize_mode($1,$2) data", [
+        hash,
+        installed,
+      ]),
     replay: (hash, id, digest) =>
       rpc<string | null>("select guardian_panel_replay($1,$2,$3) data", [hash, id, digest]),
+    revokeAll: async (hash) => {
+      if (!(await rpc<boolean>("select guardian_panel_revoke_sessions($1) data", [hash])))
+        throw Error("revoke failed");
+    },
     revoke: async (hash) => {
       await db.query("update guardian_panel_sessions set revoked_at=now() where token_hash=$1", [
         hash,

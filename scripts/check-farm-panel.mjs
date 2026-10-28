@@ -394,6 +394,83 @@ try {
   if (screenshots) {
     await page.screenshot({ path: screenshots + "/farm-panel-access-mobile.png", fullPage: true });
   }
+  // Installation UI: the browser owns the native confirmation; exercise its event contract.
+  await page.evaluate(() => {
+    const event = new Event("beforeinstallprompt");
+    Object.assign(event, {
+      prompt: async () => {
+        window.__panelInstallPromptCalled = true;
+      },
+      userChoice: Promise.resolve({ outcome: "dismissed" }),
+    });
+    window.dispatchEvent(event);
+  });
+  await page.getByRole("button", { name: "Baixar aplicativo", exact: true }).click();
+  assert.equal(await page.evaluate(() => window.__panelInstallPromptCalled), true);
+  const manifest = await (await context.request.get(origin + "/painelfazenda.webmanifest")).json();
+  assert.equal(manifest.display, "standalone");
+  assert.equal(manifest.scope, "/painelfazenda");
+  for (const icon of manifest.icons)
+    assert.equal((await context.request.get(origin + icon.src)).status(), 200);
+  // Simulate installed display mode and a full browser-context restart with persistent cookies.
+  const appCode = "JKLM2345NPQR6789",
+    appProperty = (await f.guardian.load(phone)).active.id;
+  await f.issue(
+    phone,
+    appProperty,
+    "installed-browser-code",
+    (await import("../src/lib/guardian/panel.server.ts")).hashToken(appCode),
+  );
+  const prepareApp = async (ctx) => {
+    await ctx.addInitScript(() => {
+      const original = window.matchMedia.bind(window);
+      window.matchMedia = (query) =>
+        query === "(display-mode: standalone)"
+          ? new Proxy(original(query), {
+              get: (target, key) => (key === "matches" ? true : Reflect.get(target, key)),
+            })
+          : original(query);
+    });
+    const p = await ctx.newPage();
+    p.on("pageerror", (e) => errors.push(e.message));
+    await p.route("**/api/public/farm-panel", async (route) => {
+      const response = await route.fetch({ url: backend + "/api/public/farm-panel" });
+      await route.fulfill({ response });
+    });
+    return p;
+  };
+  const appContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const appPage = await prepareApp(appContext);
+  await appPage.goto(origin + "/painelfazenda?app=1", { waitUntil: "networkidle" });
+  await appPage.getByLabel("Código de acesso", { exact: true }).fill(appCode);
+  await appPage.getByRole("button", { name: "Entrar no painel", exact: true }).click();
+  await appPage.getByRole("button", { name: "Sair", exact: true }).waitFor();
+  const appState = await appContext.storageState();
+  assert.ok(
+    appState.cookies.some(
+      (c) => c.name === "tpec_farm_app_session" && c.expires > Date.now() / 1000 + 300 * 86400,
+    ),
+  );
+  await appContext.close();
+  const restoredContext = await browser.newContext({
+    storageState: appState,
+    viewport: { width: 390, height: 844 },
+  });
+  const reopened = await prepareApp(restoredContext);
+  await reopened.goto(origin + "/painelfazenda?app=1", { waitUntil: "networkidle" });
+  await reopened.getByRole("button", { name: "Sair", exact: true }).waitFor();
+  await reopened.getByText("Acesso mantido neste aplicativo.", { exact: true }).waitFor();
+  if (screenshots)
+    await reopened.screenshot({
+      path: screenshots + "/farm-panel-installed-mobile.png",
+      fullPage: true,
+    });
+  await reopened.getByText("Acesso e informações dos dados", { exact: true }).click();
+  await reopened
+    .getByRole("button", { name: "Sair de todos os meus acessos desta fazenda", exact: true })
+    .click();
+  await reopened.getByRole("heading", { name: "Acesse sua fazenda", exact: true }).waitFor();
+  await restoredContext.close();
   assert.deepEqual(errors, []);
   console.log(
     "PASS: public access, cookie session, reviewed edits, financial totals, herd events, natural identifier followups, financial amount followups, field note date followups, calculator, PostgreSQL persistence, reload, mobile layout and logout.",
