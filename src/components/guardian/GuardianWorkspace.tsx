@@ -1,23 +1,16 @@
+import { FinanceLedger } from "./FinanceLedger";
+import { PanelMetric } from "./PanelMetric";
+import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { FarmOperations } from "./FarmOperations";
 import { useRef, useState } from "react";
-import {
-  ArrowDownToLine,
-  Check,
-  ClipboardList,
-  Leaf,
-  ShieldCheck,
-  TrendingUp,
-  Users,
-  Wallet,
-  X,
-} from "lucide-react";
+import { ArrowDownToLine, Check, ClipboardList, TrendingUp, Users } from "lucide-react";
 import type { GuardianDetail, GuardianEventHistoryView } from "@/lib/guardian.functions";
 import type { GuardianAction } from "@/lib/guardian/schema";
 import { GuardianCalculator } from "./GuardianCalculator";
 import { farmCsv } from "@/lib/guardian/export";
 import { farmReport } from "@/lib/guardian/book";
 import { printFarm } from "@/lib/guardian/print";
-import { ledgerForTotals, ledgerPeriod } from "@/lib/guardian/finance";
+import { ledgerForTotals } from "@/lib/guardian/finance";
 type Tab =
   | "overview"
   | "tasks"
@@ -59,14 +52,14 @@ function Badge({ value }: { value: string }) {
     claimed: "Em processamento",
     dispatching: "Em envio",
     retry: "Nova tentativa",
-    sent: "Aceito pela Meta",
+    sent: "Envio aceito",
     uncertain: "Envio incerto",
     failed: "Falhou",
     expired: "Expirado",
   };
   return (
     <span
-      className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${["sent", "done"].includes(value) ? "bg-emerald-100 text-emerald-950" : ["failed", "uncertain"].includes(value) ? "bg-amber-100 text-amber-950" : "bg-secondary text-secondary-foreground"}`}
+      className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${["sent", "done"].includes(value) ? "bg-emerald-100 text-emerald-950" : ["failed", "uncertain"].includes(value) ? "bg-amber-100 text-amber-950" : value === "open" ? "bg-amber-100 text-amber-900" : "bg-slate-100 text-slate-600"}`}
     >
       {title[value] ?? value}
     </span>
@@ -188,39 +181,36 @@ export function GuardianWorkspace({
   if (tab === "calculator") return <GuardianCalculator />;
   return (
     <div className="space-y-5">
-      {(tab === "overview" || tab === "herd") && <FarmOperations book={book} />}
+      {(tab === "overview" || tab === "herd") && (
+        <FarmOperations book={book} compact={tab === "overview"} />
+      )}
       {tab === "overview" && (
         <>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {[
-              ["Animais cadastrados", book.animals.length, "Somente o cadastro confirmado", Leaf],
-              [
-                "Tarefas pendentes",
-                book.tasks.filter((t) => t.status === "open").length,
-                "Manejo e acompanhamento",
-                ClipboardList,
-              ],
-              ["Despesas registradas", cash(expense), "Custos lançados no caderno", Wallet],
-              [
-                "Saldo registrado",
-                cash(income - expense),
-                "Receitas menos despesas registradas",
-                TrendingUp,
-              ],
-            ].map(([label, value, hint, Icon]) => {
-              const I = Icon as typeof Leaf;
-              return (
-                <article
-                  key={String(label)}
-                  className="rounded-2xl border border-border bg-card p-5"
-                >
-                  <I size={19} className="mb-4 text-emerald-700" />
-                  <p className="text-xs text-muted-foreground">{String(label)}</p>
-                  <p className="mt-1 text-2xl font-semibold tracking-tight">{String(value)}</p>
-                  <p className="mt-2 text-xs text-muted-foreground">{String(hint)}</p>
-                </article>
-              );
-            })}
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <PanelMetric
+              label="Receitas"
+              value={cash(income)}
+              icon={ArrowDownLeft}
+              tone="positive"
+            />
+            <PanelMetric
+              label="Despesas"
+              value={cash(expense)}
+              icon={ArrowUpRight}
+              tone="negative"
+            />
+            <PanelMetric
+              label="Saldo registrado"
+              value={cash(income - expense)}
+              icon={TrendingUp}
+              tone={income - expense < 0 ? "negative" : "positive"}
+            />
+            <PanelMetric
+              label="Tarefas pendentes"
+              value={book.tasks.filter((t) => t.status === "open").length}
+              icon={ClipboardList}
+              tone="warning"
+            />
           </div>
           <div className="grid gap-5 lg:grid-cols-2">
             <section className="rounded-2xl border border-border bg-card p-5">
@@ -245,98 +235,113 @@ export function GuardianWorkspace({
                     </div>
                   ))}
                 {!book.tasks.some((t) => t.status === "open") && (
-                  <Empty>
-                    Nenhuma tarefa pendente. Registre a próxima atividade pelo WhatsApp ou neste
-                    painel.
-                  </Empty>
+                  <Empty>Tudo em dia. Nenhuma tarefa pendente.</Empty>
                 )}
               </div>
             </section>
-            <section className="rounded-2xl bg-emerald-950 p-5 text-emerald-50">
-              <ShieldCheck size={28} className="text-emerald-300" />
-              <h2 className="mt-4 text-xl font-semibold">Informação que você pode conferir</h2>
-              <p className="mt-3 text-sm leading-relaxed text-emerald-100">
-                Cada registro tem origem, data e confirmação. A Guardiã usa os dados informados pela
-                equipe e avisos meteorológicos disponíveis para a localidade.
-              </p>
-              <p className="mt-4 text-sm leading-relaxed text-emerald-100">
-                O saldo reflete os lançamentos deste caderno. Custos não registrados impedem apurar
-                o lucro completo da fazenda.
-              </p>
-              <div className="mt-5 rounded-xl border border-emerald-700 p-3 text-sm">
-                Tudo gratuito. Avisos pelo WhatsApp dependem da autorização de cada destinatário.
+            <section className="rounded-2xl border border-slate-200 bg-white p-5">
+              <h2 className="font-semibold">Últimos lançamentos</h2>
+              <div className="mt-4 divide-y divide-slate-100">
+                {book.ledger
+                  .slice()
+                  .sort(
+                    (a, b) =>
+                      b.date.localeCompare(a.date) || b.source.at.localeCompare(a.source.at),
+                  )
+                  .slice(0, 4)
+                  .map((e) => (
+                    <div key={e.id} className="flex items-start justify-between gap-3 py-3">
+                      <div className="min-w-0">
+                        <p className="break-words text-sm font-medium">{e.description}</p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {e.direction === "expense" ? "Despesa" : "Receita"} ·{" "}
+                          {e.date.split("-").reverse().join("/")}
+                          {!ledgerTotals.includes(e) && (
+                            <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5">
+                              Já incluído no total
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                      <span
+                        className={`shrink-0 text-sm font-semibold ${e.direction === "expense" ? "text-rose-700" : "text-emerald-700"}`}
+                      >
+                        {e.direction === "expense" ? "−" : "+"} {cash(e.amountCents)}
+                      </span>
+                    </div>
+                  ))}
               </div>
+              {!book.ledger.length && <Empty>Nenhum lançamento financeiro.</Empty>}
             </section>
           </div>
           <section className="rounded-2xl border border-border bg-card p-5">
-            <h2 className="font-semibold">Relatório por período e lote</h2>
-            <div className="mt-4 grid gap-3 sm:grid-cols-3">
-              <label className="text-sm">
-                Data inicial
-                <input
-                  type="date"
-                  value={start}
-                  onChange={(e) => setStart(e.target.value)}
-                  className="mt-1 block w-full rounded-lg border border-input bg-background p-2"
-                />
-              </label>
-              <label className="text-sm">
-                Data final (exclusiva)
-                <input
-                  type="date"
-                  value={end}
-                  onChange={(e) => setEnd(e.target.value)}
-                  className="mt-1 block w-full rounded-lg border border-input bg-background p-2"
-                />
-              </label>
-              <label className="text-sm">
-                Lote (opcional)
-                <input
-                  value={lot}
-                  onChange={(e) => setLot(e.target.value)}
-                  className="mt-1 block w-full rounded-lg border border-input bg-background p-2"
-                />
-              </label>
-            </div>
-            <details className="mt-4">
-              <summary className="cursor-pointer text-sm font-medium text-emerald-700">
-                Ver relatório dos registros
-              </summary>
-              <pre className="mt-3 max-h-[36rem] overflow-auto whitespace-pre-wrap rounded-xl bg-secondary/40 p-4 font-sans text-sm">
-                {farmReport(book, {
-                  start: start || undefined,
-                  end: end || undefined,
-                  lot: lot || undefined,
-                })}
-              </pre>
-            </details>
-            <button
-              onClick={() =>
-                download(
-                  farmReport(book, {
+            <details>
+              <summary className="cursor-pointer font-semibold">Relatórios e exportação</summary>
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                <label className="text-sm">
+                  Data inicial
+                  <input
+                    type="date"
+                    value={start}
+                    onChange={(e) => setStart(e.target.value)}
+                    className="mt-1 block w-full rounded-lg border border-input bg-background p-2"
+                  />
+                </label>
+                <label className="text-sm">
+                  Data final (exclusiva)
+                  <input
+                    type="date"
+                    value={end}
+                    onChange={(e) => setEnd(e.target.value)}
+                    className="mt-1 block w-full rounded-lg border border-input bg-background p-2"
+                  />
+                </label>
+                <label className="text-sm">
+                  Lote (opcional)
+                  <input
+                    value={lot}
+                    onChange={(e) => setLot(e.target.value)}
+                    className="mt-1 block w-full rounded-lg border border-input bg-background p-2"
+                  />
+                </label>
+              </div>
+              <details className="mt-4">
+                <summary className="cursor-pointer text-sm font-medium text-emerald-700">
+                  Ver relatório dos registros
+                </summary>
+                <pre className="mt-3 max-h-[36rem] overflow-auto whitespace-pre-wrap rounded-xl bg-secondary/40 p-4 font-sans text-sm">
+                  {farmReport(book, {
                     start: start || undefined,
                     end: end || undefined,
                     lot: lot || undefined,
-                  }),
-                  "text/plain;charset=utf-8",
-                  "relatorio-fazenda.txt",
-                )
-              }
-              className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-emerald-700"
-            >
-              <ArrowDownToLine size={16} />
-              Baixar relatório
-            </button>
+                  })}
+                </pre>
+              </details>
+              <button
+                onClick={() =>
+                  download(
+                    farmReport(book, {
+                      start: start || undefined,
+                      end: end || undefined,
+                      lot: lot || undefined,
+                    }),
+                    "text/plain;charset=utf-8",
+                    "relatorio-fazenda.txt",
+                  )
+                }
+                className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-emerald-700"
+              >
+                <ArrowDownToLine size={16} />
+                Baixar relatório
+              </button>
+            </details>
           </section>
         </>
       )}
       {tab === "tasks" && (
         <section className="rounded-2xl border border-border bg-card p-5">
           <h2 className="text-lg font-semibold">Tarefas da propriedade</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Cada tarefa gera um lembrete com validade. Concluir ou reagendar cancela o aviso
-            anterior.
-          </p>
+
           <div className="mt-5 space-y-3">
             {book.tasks.map((t) => (
               <article key={t.id} className="rounded-xl border border-border p-4">
@@ -346,7 +351,6 @@ export function GuardianWorkspace({
                     <p className="mt-1 text-xs text-muted-foreground">
                       {when(t.dueAt)} · Brasília{t.lot ? ` · Lote ${t.lot}` : ""}
                     </p>
-                    <p className="mt-1 text-xs text-muted-foreground">Código {t.id}</p>
                   </div>
                   <Badge value={t.status} />
                 </div>
@@ -381,10 +385,8 @@ export function GuardianWorkspace({
       )}
       {tab === "herd" && (
         <section className="rounded-2xl border border-border bg-card p-5">
-          <h2 className="text-lg font-semibold">Rebanho e histórico de pesagens</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Pesos estimados aparecem separados. Correções preservam os valores anteriores.
-          </p>
+          <h2 className="text-lg font-semibold">Fichas dos animais</h2>
+
           <div className="mt-5 space-y-3">
             {book.animals.map((a) => (
               <details key={a.code} className="rounded-xl border border-border p-4">
@@ -393,6 +395,11 @@ export function GuardianWorkspace({
                   {a.sex === "female" ? "Fêmea" : a.sex === "male" ? "Macho" : "Sexo pendente"}
                   {a.breed ? ` · ${a.breed}` : ""}
                   {a.lot ? ` · Lote ${a.lot}` : ""}
+                  {a.rgn && (
+                    <span className="ml-2 inline-flex rounded-full bg-sky-50 px-2 py-1 text-xs font-medium text-sky-800">
+                      RGN {a.rgn}
+                    </span>
+                  )}
                 </summary>
                 <p className="mt-3 text-xs text-muted-foreground">
                   Nascimento: {a.birthDate ?? "não informado"} · Atualizado em {when(a.source.at)}
@@ -440,9 +447,20 @@ export function GuardianWorkspace({
               <article key={r.id} className="rounded-xl border border-border p-4">
                 <p className="text-xs text-muted-foreground">
                   {r.date.split("-").reverse().join("/")}
-                  {r.lot ? ` · Lote ${r.lot}` : ""} · {r.id}
+                  {r.lot ? ` · Lote ${r.lot}` : ""}
                 </p>
+                <span
+                  className={`mt-2 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${r.type === "health" ? "bg-violet-50 text-violet-800" : "bg-sky-50 text-sky-800"}`}
+                >
+                  {r.type === "health" ? "Sanidade" : "Manejo"}
+                </span>
                 <p className="mt-2 text-sm">{r.description}</p>
+                <details className="mt-2 text-xs text-slate-500">
+                  <summary className="w-fit cursor-pointer">Origem do registro</summary>
+                  <p className="mt-2">
+                    Código: {r.id} · {when(r.source.at)}
+                  </p>
+                </details>
                 {r.count && (
                   <p className="mt-1 text-sm font-medium">Quantidade informada: {r.count}</p>
                 )}
@@ -459,101 +477,34 @@ export function GuardianWorkspace({
                 )}
               </article>
             ))}
-            {!book.records.length && (
-              <Empty>
-                Registre manejo, nascimentos, compras e ocorrências em texto ou áudio pelo WhatsApp.
-              </Empty>
-            )}
+            {!book.records.length && <Empty>Nenhuma anotação no caderno de campo.</Empty>}
           </div>
-          <p className="mt-4 text-xs text-muted-foreground">
-            Relatos sanitários organizam informações. Fotografias e descrições não confirmam
-            diagnóstico nem autorizam prescrição individualizada.
-          </p>
+          <details className="mt-4 text-xs text-slate-500">
+            <summary className="cursor-pointer">Sobre relatos sanitários</summary>
+            <p className="mt-2">
+              Fotografias e descrições não confirmam diagnóstico nem autorizam prescrição
+              individualizada.
+            </p>
+          </details>
         </section>
       )}
       {tab === "finance" && (
-        <section className="rounded-2xl border border-border bg-card p-5">
-          <h2 className="text-lg font-semibold">Receitas e despesas registradas</h2>
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            {[
-              ["Receitas", income],
-              ["Despesas", expense],
-              ["Saldo", income - expense],
-            ].map(([label, value]) => (
-              <div key={label} className="rounded-xl bg-secondary/50 p-4">
-                <p className="text-xs text-muted-foreground">{label}</p>
-                <p className="mt-1 text-xl font-semibold">{cash(Number(value))}</p>
-              </div>
-            ))}
-          </div>
-          <div className="mt-5 overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b border-border text-xs text-muted-foreground">
-                <tr>
-                  <th className="p-3">Data / período</th>
-                  <th className="p-3">Descrição</th>
-                  <th className="p-3">Tipo</th>
-                  <th className="p-3 text-right">Valor</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {book.ledger.map((l) => (
-                  <tr key={l.id} className="border-b border-border/70">
-                    <td className="whitespace-nowrap p-3">{ledgerPeriod(l)}</td>
-                    <td className="p-3">
-                      {l.description}
-                      {l.recurrence === "monthly" && (
-                        <span className="block text-xs text-muted-foreground">
-                          Valor mensal informado pelo produtor
-                        </span>
-                      )}
-                      {!ledgerTotals.includes(l) && (
-                        <span className="block text-xs text-muted-foreground">
-                          Histórico ou detalhamento incluído no total mensal; não somado novamente.
-                        </span>
-                      )}
-                      {l.lot && (
-                        <span className="block text-xs text-muted-foreground">Lote {l.lot}</span>
-                      )}
-                    </td>
-                    <td className="p-3">{l.direction === "expense" ? "Despesa" : "Receita"}</td>
-                    <td className="whitespace-nowrap p-3 text-right font-medium">
-                      {cash(l.amountCents)}
-                    </td>
-                    <td>
-                      {(ownRole === "owner" || ownRole === "manager") && (
-                        <button
-                          disabled={busy}
-                          className="text-xs text-destructive"
-                          onClick={() =>
-                            void onPropose({ kind: "delete_record", section: "ledger", id: l.id })
-                          }
-                          aria-label={`Revisar exclusão de ${l.description}`}
-                        >
-                          <X size={14} />
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {!book.ledger.length && <Empty>Nenhuma movimentação registrada.</Empty>}
-          </div>
-          <p className="mt-4 text-xs text-muted-foreground">
-            Saldo dos lançamentos não equivale a lucro líquido. Use a calculadora para simular
-            custos por cabeça, por kg e cenários de venda.
-          </p>
-        </section>
+        <FinanceLedger
+          ledger={book.ledger}
+          busy={busy}
+          canDelete={ownRole === "owner" || ownRole === "manager"}
+          onPropose={onPropose}
+        />
       )}
       {tab === "events" && (
         <section className="rounded-2xl border border-border bg-card p-5">
-          <h2 className="text-lg font-semibold">Eventos e histórico de avisos</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Últimos 50 eventos da propriedade. “Aceito pela Meta” confirma a aceitação do envio; não
-            confirma leitura.
-          </p>
+          <h2 className="text-lg font-semibold">Avisos da fazenda</h2>
+          <details className="mt-2 text-xs text-slate-500">
+            <summary className="w-fit cursor-pointer">Sobre os avisos</summary>
+            <p className="mt-2">
+              Últimos 50 eventos. Envio aceito não confirma entrega nem leitura.
+            </p>
+          </details>
           <div className="mt-5 space-y-3">
             {detail.events.map((e) => (
               <article key={e.id} className="rounded-xl border border-border p-4">

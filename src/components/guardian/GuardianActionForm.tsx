@@ -41,13 +41,22 @@ export function GuardianActionForm({
   busy,
   onPropose,
   allowedKinds,
+  initialKind,
 }: {
+  initialKind?: FormKind;
   allowedKinds?: string[];
   hasProperty: boolean;
   busy: boolean;
   onPropose: (action: GuardianAction) => Promise<void>;
 }) {
-  const [kind, setKind] = useState<FormKind>(hasProperty ? "task_create" : "property_create"),
+  const [kind, setKind] = useState<FormKind>(
+      (() => {
+        const preferred = initialKind ?? (hasProperty ? "task_create" : "property_create");
+        return allowedKinds && !allowedKinds.includes(preferred)
+          ? ((allowedKinds.find((k) => k in names) as FormKind | undefined) ?? preferred)
+          : preferred;
+      })(),
+    ),
     [values, setValues] = useState<Record<string, string>>({}),
     [error, setError] = useState("");
   const field = (key: string, label: string, type = "text", required = true) => (
@@ -461,10 +470,6 @@ export function GuardianActionForm({
       >
         {busy ? "Preparando…" : "Revisar antes de salvar"}
       </button>
-      <p className="text-xs text-muted-foreground">
-        Você confirma a proposta na próxima etapa. Os avisos respeitam as preferências que você
-        autorizou no WhatsApp.
-      </p>
     </form>
   );
 }
