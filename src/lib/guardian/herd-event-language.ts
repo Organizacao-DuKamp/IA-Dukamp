@@ -14,7 +14,7 @@ const afterVerb = new RegExp(
   "iu",
 );
 const beforeVerb = new RegExp(
-  `\\b${count}\\s+(?:(?:novos?|novas?)\\s+)?${cattleWords}\\s+(?:(?:novos?|novas?|que|hoje|ontem|anteontem|mesmo|aqui|agora|tamb[eé]m)\\s+)*(${eventVerb})\\b`,
+  `\\b${count}\\s+(?:(?:novos?|novas?)\\s+)?${cattleWords}\\s+(?:(?:novos?|novas?|que|eu|n[oó]s|hoje|ontem|anteontem|mesmo|aqui|agora|tamb[eé]m)\\s+)*(${eventVerb})\\b`,
   "iu",
 );
 export const hasEventVerb = (text: string) => new RegExp(`\\b${eventVerb}\\b`, "iu").test(text);
