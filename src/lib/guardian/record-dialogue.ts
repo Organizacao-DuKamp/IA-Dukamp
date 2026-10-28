@@ -61,7 +61,7 @@ export function referencedRecord(
 export function moneyValue(text: string): number | null {
   const t = foldHerd(text)
     .replace(/^(?:foi|foram|deu|paguei|gastei|recebi|o valor foi|o valor e|r\$)\s*/i, "")
-    .replace(/\s*rea(?:l|is)[.! ]*$/, "")
+    .replace(/\s*(?:rea(?:l|is)|r\$)[.! ]*$/, "")
     .trim();
   const match = t.match(
     /^(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:[,.]\d{1,2})?)(?:\s*(mil|milhao|milhoes))?[.! ]*$/,
@@ -83,7 +83,7 @@ export function amountIn(text: string) {
   const literal = text.replace(/\b(?:20\d{2}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}(?:\/20\d{2})?)\b/g, "");
   const match =
     literal.match(
-      /(?:R\$\s*|(?:paguei|pagamos|gastei|gastamos|recebi|recebemos|despesa|receita|valor|foi|deu)\s*(?:de |foi |deu |e )?)(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:[,.]\d{1,2})?)(?!\d|[.,]\d)(?:\s*(mil|milh[aã]o|milh[oõ]es))?/i,
+      /(?:R\$\s*|(?:paguei|pagamos|gastei|gastamos|gasto|recebi|recebemos|despesa|receita|valor|foi|deu)\s*(?:de |foi |deu |e )?)(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:[,.]\d{1,2})?)(?!\d|[.,]\d)(?:\s*(mil|milh[aã]o|milh[oõ]es))?/i,
     ) ??
     literal.match(
       /(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:[,.]\d{1,2})?)(?:\s*(mil|milh[aã]o|milh[oõ]es))?\s+reais?\b/i,
@@ -94,7 +94,7 @@ export function amountIn(text: string) {
         /\b([\p{L}]+(?:\s+e\s+[\p{L}]+){0,2})(\s+mil)?(?=\s+(?:de\s+)?(?:despesas?|receitas?|reais)\b)/iu,
       ) ??
       literal.match(
-        /\b(?:paguei|pagamos|gastei|gastamos|recebi|recebemos|despesas?|receitas?)\s+(?:(?:de|foi|foram)\s+)?([\p{L}]+(?:\s+e\s+[\p{L}]+){0,2})(\s+mil)?\b/iu,
+        /\b(?:paguei|pagamos|gastei|gastamos|gasto|recebi|recebemos|despesas?|receitas?)\s+(?:(?:de|foi|foram)\s+)?([\p{L}]+(?:\s+e\s+[\p{L}]+){0,2})(\s+mil)?\b/iu,
       );
     if (!spoken) return null;
     const base = cardinal(spoken[1]),
@@ -121,7 +121,17 @@ function monthReply(text: string, at: Date) {
 }
 export function recordDialogue(text: string, at: Date, mediaType?: string): RecordDialogue {
   const raw = userStatement(text, mediaType),
-    clean = herdStatement(raw),
+    clean = herdStatement(raw)
+      .replace(
+        /^(?:coloca|coloque|inclua|lance|lança|lanca)\s+(?:nas?|no)\s+(?:despesas?|receitas?|financeiro)\s+(?:que\s+)?/i,
+        (prefix) =>
+          /receita/i.test(prefix)
+            ? "receita "
+            : /despesa/i.test(prefix)
+              ? "despesa "
+              : "no financeiro ",
+      )
+      .replace(/\beu\s+(?=(?:gasto|gastei|recebo|recebi)\b)/i, ""),
     t = foldHerd(clean);
   if (
     /^(?:resumo|relatorio|extrato|historico|saldo|listar|mostrar|ver|consultar|quanto|qual)\b/.test(
@@ -139,7 +149,7 @@ export function recordDialogue(text: string, at: Date, mediaType?: string): Reco
   )
     return { kind: "none" };
   const finance =
-    /\b(?:paguei|pagamos|gastei|gastamos|recebi|recebemos|despesas?|receitas?|financeiro)\b/.test(
+    /\b(?:paguei|pagamos|gastei|gastamos|gasto|recebi|recebemos|despesas?|receitas?|financeiro)\b/.test(
       t,
     );
   const lot = clean.match(/\blote\s+([\p{L}\d_-]+)/iu)?.[1];
@@ -161,7 +171,10 @@ export function recordDialogue(text: string, at: Date, mediaType?: string): Reco
       })() ?? amountIn(clean);
     const object = clean
       .match(/\b(?:com|referente [aà]|relativ[oa] [aà]|despesas?\s+de)\s+([^,.!?\n]+)/iu)?.[1]
-      ?.replace(/[,;]?\s*(?:todos os meses|todo m[eê]s|por m[eê]s|mensalmente)[\s\S]*$/i, "")
+      ?.replace(
+        /[,;]?\s*(?:todos os meses|todo m[eê]s|por m[eê]s|mensalmente|mensal|mensais)[\s\S]*$/i,
+        "",
+      )
       .trim();
     return {
       kind: "slots",
@@ -170,9 +183,11 @@ export function recordDialogue(text: string, at: Date, mediaType?: string): Reco
         entries: [
           {
             kind: "ledger",
-            direction: /\b(?:despesas?|gastei|paguei)\b/.test(t) ? "expense" : "income",
+            direction: /\b(?:despesas?|gastei|gasto|paguei)\b/.test(t) ? "expense" : "income",
             ...(amount?.amount ? { amountCents: amount.amount } : {}),
-            ...(object ? { description: object.slice(0, 160) } : {}),
+            ...(object && !/^(?:tpec(?:[ -]?ia)?|tepec)[.!… ]*$/i.test(object)
+              ? { description: object.slice(0, 160) }
+              : {}),
             date: localDay(at),
             recurrence: "monthly",
             totalRelation: /\b(?:incluid[oa]|dentro d[oa]s?|ja conta|ja esta no total)\b/.test(t)
@@ -201,7 +216,7 @@ export function recordDialogue(text: string, at: Date, mediaType?: string): Reco
     const labels = [...clean.matchAll(/\b(receitas?|despesas?)\b/gi)];
     if (labels.length > 1 || month) return { kind: "none" };
     const amount = amountIn(clean);
-    const direction = /\b(?:paguei|pagamos|gastei|gastamos|despesa)\b/.test(t)
+    const direction = /\b(?:paguei|pagamos|gastei|gastamos|gasto|despesa)\b/.test(t)
       ? ("expense" as const)
       : /\b(?:recebi|recebemos|receita)\b/.test(t)
         ? ("income" as const)
@@ -227,7 +242,11 @@ export function recordDialogue(text: string, at: Date, mediaType?: string): Reco
       .replace(/\s+/g, " ")
       .replace(/^[, :.-]+|[, :.-]+$/g, "")
       .trim();
-    if (/^(?:ess[ae]|est[ae]|iss[oa])\b/i.test(description)) description = "";
+    if (
+      /^(?:ess[ae]|est[ae]|iss[oa])\b/i.test(description) ||
+      /^(?:tpec(?:[ -]?ia)?|tepec)[.!… ]*$/i.test(description)
+    )
+      description = "";
     return {
       kind: "slots",
       slots: {
@@ -426,6 +445,7 @@ export function recordAnswer(text: string, draft: RecordDraft, at: Date): Slots 
       text.length > (draft.section === "finance" ? 160 : 1500)
     )
       return null;
+    if (/^(?:tpec(?:[ -]?ia)?|tepec)[.!… ]*$/i.test(t)) return next;
     missing.entry.description = text.replace(/^(?:foi|era)\s+(?:com\s+)?/i, "");
   }
   if (missing.field === "date") {
