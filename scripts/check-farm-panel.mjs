@@ -377,7 +377,7 @@ try {
     "Caderno de campo",
     "Calculadoras",
   ]) {
-    await page.getByRole("button", { name: area, exact: true }).click();
+    await page.getByLabel("Área da fazenda", { exact: true }).selectOption({ label: area });
     assert.equal(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1),
       true,

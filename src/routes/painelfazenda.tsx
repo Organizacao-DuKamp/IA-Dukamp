@@ -364,8 +364,23 @@ function FarmPanel() {
             </div>
             <nav
               aria-label="Áreas da fazenda"
-              className="mb-6 flex gap-1 overflow-x-auto rounded-2xl border border-slate-200 bg-white p-2"
+              className="mb-6 rounded-2xl border border-slate-200 bg-white p-2 sm:flex sm:gap-1 sm:overflow-x-auto"
             >
+              <label className="flex items-center gap-3 px-2 text-xs font-medium text-slate-500 sm:hidden">
+                Área da fazenda
+                <select
+                  aria-label="Área da fazenda"
+                  value={tab}
+                  onChange={(e) => setTab(e.target.value as Tab)}
+                  className="min-w-0 flex-1 rounded-xl bg-slate-50 p-3 text-sm font-semibold text-emerald-900 outline-emerald-700"
+                >
+                  {tabs.map(([id, label]) => (
+                    <option key={id} value={id}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
               {tabs.map(([id, label]) => {
                 const Icon = tabIcons[id];
                 return (
@@ -380,7 +395,7 @@ function FarmPanel() {
                       });
                     }}
                     aria-current={tab === id ? "page" : undefined}
-                    className={`inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium ${tab === id ? "bg-emerald-900 text-white" : "text-slate-600 hover:bg-slate-50"}`}
+                    className={`hidden shrink-0 items-center gap-2 rounded-xl sm:inline-flex px-3 py-2.5 text-sm font-medium ${tab === id ? "bg-emerald-900 text-white" : "text-slate-600 hover:bg-slate-50"}`}
                   >
                     <Icon size={17} aria-hidden="true" />
                     {label}
