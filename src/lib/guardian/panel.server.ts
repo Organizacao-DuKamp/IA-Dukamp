@@ -14,6 +14,18 @@ import { applyFarmAction, fold } from "./book.ts";
 import { farmIndicators } from "./operations.ts";
 
 export const PANEL_COOKIE = "tpec_farm_session";
+export const APP_COOKIE = "tpec_farm_app_session";
+const APP_AGE = 365 * 86400;
+function installedRequest(request: Request) {
+  return request.headers.get("x-tpec-panel-mode") === "installed";
+}
+export function browserSessionAge(now = new Date()) {
+  const day = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(now);
+  return Math.max(
+    1,
+    Math.floor((Date.parse(day + "T00:00:00-03:00") + 86400000 - now.getTime()) / 1000),
+  );
+}
 export const hashToken = (value: string) => createHash("sha256").update(value).digest("hex");
 export const normalizeCode = (value: string) => value.toUpperCase().replace(/[\s-]/g, "");
 const codeAlphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -35,9 +47,10 @@ export interface PanelIdentity {
 }
 export interface PanelStore {
   attempt(key: string): Promise<boolean>;
-  exchange(codeHash: string, sessionHash: string): Promise<boolean>;
-  authorize(hash: string): Promise<PanelIdentity | null>;
+  exchange(codeHash: string, sessionHash: string, installed?: boolean): Promise<boolean>;
+  authorize(hash: string, installed?: boolean): Promise<PanelIdentity | null>;
   revoke(hash: string): Promise<void>;
+  revokeAll?(hash: string): Promise<void>;
   replay(hash: string, requestId: string, digest: string): Promise<string | null>;
   commit(
     hash: string,
@@ -58,18 +71,22 @@ export const panelStore: PanelStore = {
     if (error) throw new Error("panel_unavailable");
     return data === true;
   },
-  async exchange(codeHash, sessionHash) {
+  async exchange(codeHash, sessionHash, installed = false) {
     const db = await guardianDb();
     const { data, error } = await db
-      .rpc("guardian_panel_exchange", { p_code_hash: codeHash, p_session_hash: sessionHash })
+      .rpc("guardian_panel_exchange_mode", {
+        p_code_hash: codeHash,
+        p_session_hash: sessionHash,
+        p_installed: installed,
+      })
       .abortSignal(AbortSignal.timeout(5000));
     if (error) throw new Error("panel_unavailable");
     return data === true;
   },
-  async authorize(hash) {
+  async authorize(hash, installed = false) {
     const db = await guardianDb();
     const { data, error } = await db
-      .rpc("guardian_panel_authorize", { p_hash: hash })
+      .rpc("guardian_panel_authorize_mode", { p_hash: hash, p_installed: installed })
       .abortSignal(AbortSignal.timeout(5000));
     if (error) throw new Error("panel_unavailable");
     if (!data) return null;
@@ -82,6 +99,12 @@ export const panelStore: PanelStore = {
       .abortSignal(AbortSignal.timeout(5000));
     if (error) throw new Error("panel_unavailable");
     return data;
+  },
+  async revokeAll(hash) {
+    const { data, error } = await (await guardianDb())
+      .rpc("guardian_panel_revoke_sessions", { p_hash: hash })
+      .abortSignal(AbortSignal.timeout(5000));
+    if (error || data !== true) throw new Error("panel_unavailable");
   },
   async revoke(hash) {
     const db = await guardianDb();
@@ -206,12 +229,13 @@ const Body = z.discriminatedUnion("kind", [
     .strict(),
 ]);
 function cookieToken(request: Request): string | null {
+  const name = installedRequest(request) ? APP_COOKIE : PANEL_COOKIE;
   const value = request.headers
     .get("cookie")
     ?.split(";")
     .map((c) => c.trim())
-    .find((c) => c.startsWith(PANEL_COOKIE + "="))
-    ?.slice(PANEL_COOKIE.length + 1);
+    .find((c) => c.startsWith(name + "="))
+    ?.slice(name.length + 1);
   return value && /^[a-f0-9]{64}$/.test(value) ? value : null;
 }
 function response(data: unknown, status = 200, cookie?: string) {
@@ -221,13 +245,13 @@ function response(data: unknown, status = 200, cookie?: string) {
     pragma: "no-cache",
     "x-content-type-options": "nosniff",
     "referrer-policy": "no-referrer",
-    vary: "Cookie",
+    vary: "Cookie, X-TPEC-Panel-Mode",
   });
   if (cookie) headers.set("set-cookie", cookie);
   return new Response(JSON.stringify(data), { status, headers });
 }
 function sessionCookie(request: Request, token: string, age: number) {
-  return `${PANEL_COOKIE}=${token}; Path=/api/public/farm-panel; HttpOnly; SameSite=Strict; Max-Age=${age}${new URL(request.url).protocol === "https:" ? "; Secure" : ""}`;
+  return `${installedRequest(request) ? APP_COOKIE : PANEL_COOKIE}=${token}; Path=/api/public/farm-panel; HttpOnly; SameSite=Strict; Max-Age=${age}${new URL(request.url).protocol === "https:" ? "; Secure" : ""}`;
 }
 function publicIdentity(identity: PanelIdentity) {
   // Phone numbers, member lists, and provenance actor IDs never go to this browser.
@@ -273,7 +297,12 @@ export async function handleFarmPanel(
     return response({ error: "Solicitação não autorizada." }, 403);
   try {
     if (method === "DELETE") {
-      if (hash) await store.revoke(hash);
+      if (hash && request.headers.get("x-tpec-panel-all") === "1") {
+        if (!(await store.authorize(hash, installedRequest(request))))
+          return response({ error: "Acesso expirado." }, 401);
+        if (!store.revokeAll) throw new Error("panel_unavailable");
+        await store.revokeAll(hash);
+      } else if (hash) await store.revoke(hash);
       return response({ ok: true }, 200, sessionCookie(request, "", 0));
     }
     if (method === "POST") {
@@ -302,14 +331,22 @@ export async function handleFarmPanel(
             401,
           );
         const session = randomBytes(32).toString("hex");
-        if (!(await store.exchange(hashToken(code), hashToken(session))))
+        if (!(await store.exchange(hashToken(code), hashToken(session), installedRequest(request))))
           return response(
             { error: "Código inválido, vencido ou já utilizado. Peça outro pelo WhatsApp." },
             401,
           );
-        return response({ ok: true }, 200, sessionCookie(request, session, 12 * 3600));
+        return response(
+          { ok: true },
+          200,
+          sessionCookie(
+            request,
+            session,
+            installedRequest(request) ? APP_AGE : browserSessionAge(),
+          ),
+        );
       }
-      const identity = hash ? await store.authorize(hash) : null;
+      const identity = hash ? await store.authorize(hash, installedRequest(request)) : null;
       if (!identity)
         return response({ error: "Acesso expirado. Peça um novo código pelo WhatsApp." }, 401);
       if (
@@ -377,10 +414,14 @@ export async function handleFarmPanel(
         message: result === "replay" ? "Essa alteração já havia sido salva." : applied.result,
       });
     }
-    const identity = hash ? await store.authorize(hash) : null;
+    const identity = hash ? await store.authorize(hash, installedRequest(request)) : null;
     if (!identity)
       return response({ error: "Acesso expirado. Peça um novo código pelo WhatsApp." }, 401);
-    return response(publicIdentity(identity));
+    return response(
+      publicIdentity(identity),
+      200,
+      installedRequest(request) ? sessionCookie(request, token!, APP_AGE) : undefined,
+    );
   } catch {
     return response(
       {

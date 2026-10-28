@@ -125,7 +125,7 @@ test("integrated PostgreSQL: WhatsApp code exchange, scoped browser edits, stale
     assert.equal(login.status, 200);
     assert.match(
       login.headers.get("set-cookie")!,
-      /HttpOnly; SameSite=Strict; Max-Age=43200; Secure/,
+      /HttpOnly; SameSite=Strict; Max-Age=\d+; Secure/,
     );
     assert.match(login.headers.get("cache-control")!, /no-store/);
     const token = login.headers.get("set-cookie")!.match(/tpec_farm_session=([a-f0-9]+)/)![1];

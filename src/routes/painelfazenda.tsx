@@ -18,6 +18,8 @@ import {
   RefreshCw,
   ShieldCheck,
 } from "lucide-react";
+import { InstallPanel } from "@/components/guardian/InstallPanel";
+import { installedPanel } from "@/lib/guardian/app-mode";
 import { GuardianWorkspace } from "@/components/guardian/GuardianWorkspace";
 import { GuardianActionForm } from "@/components/guardian/GuardianActionForm";
 import { describeAction } from "@/lib/guardian/book";
@@ -30,6 +32,13 @@ export const Route = createFileRoute("/painelfazenda")({
       { title: "Painel da Fazenda · TPEC-IA" },
       { name: "robots", content: "noindex, nofollow" },
       { name: "referrer", content: "no-referrer" },
+      { name: "theme-color", content: "#064e3b" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-title", content: "Minha Fazenda" },
+    ],
+    links: [
+      { rel: "manifest", href: "/painelfazenda.webmanifest" },
+      { rel: "apple-touch-icon", href: "/farm-app-192.png" },
     ],
   }),
   component: FarmPanel,
@@ -70,7 +79,14 @@ async function api(method = "GET", body?: unknown) {
     method,
     credentials: "same-origin",
     cache: "no-store",
-    headers: { "content-type": "application/json", "x-tpec-panel": "1" },
+    headers: {
+      "content-type": "application/json",
+      "x-tpec-panel": "1",
+      "x-tpec-panel-mode": installedPanel() ? "installed" : "browser",
+      ...(body && typeof body === "object" && "kind" in body && body.kind === "logout_all"
+        ? { "x-tpec-panel-all": "1" }
+        : {}),
+    },
     ...(body ? { body: JSON.stringify(body) } : {}),
   });
   const data = await result.json();
@@ -157,6 +173,24 @@ function FarmPanel() {
       setBusy(false);
     }
   }
+  function exit(all = false) {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    setBusy(true);
+    void api("DELETE", all ? { kind: "logout_all" } : undefined)
+      .then(() => {
+        generation.current++;
+        setView(null);
+        setProposal(null);
+        setNotice("");
+        setForm(false);
+      })
+      .catch((e) => setError(e.message))
+      .finally(() => {
+        inFlight.current = false;
+        setBusy(false);
+      });
+  }
   const allowed =
     view && !["owner", "manager"].includes(view.role)
       ? ["record", "animal", "weighing", "task_create"]
@@ -191,24 +225,7 @@ function FarmPanel() {
           {view && (
             <button
               disabled={busy}
-              onClick={() => {
-                if (inFlight.current) return;
-                inFlight.current = true;
-                setBusy(true);
-                void api("DELETE")
-                  .then(() => {
-                    generation.current++;
-                    setView(null);
-                    setProposal(null);
-                    setNotice("");
-                    setForm(false);
-                  })
-                  .catch((e) => setError(e.message))
-                  .finally(() => {
-                    inFlight.current = false;
-                    setBusy(false);
-                  });
-              }}
+              onClick={() => exit()}
               className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm"
             >
               <LogOut size={16} /> Sair
@@ -233,6 +250,9 @@ function FarmPanel() {
             {notice}
           </p>
         )}
+        <div className="mb-6">
+          <InstallPanel authenticated={!!view} />
+        </div>
         {loading ? (
           <p role="status" className="py-20 text-center">
             Conferindo seu acesso…
@@ -476,12 +496,22 @@ function FarmPanel() {
             <details className="mt-8 text-xs text-slate-500">
               <summary className="w-fit cursor-pointer">Acesso e informações dos dados</summary>
               <p className="mt-3 max-w-2xl leading-relaxed">
-                Dados informados pelo produtor; cálculos usam os registros disponíveis. Sessão até{" "}
+                Dados informados pelo produtor; cálculos usam os registros disponíveis.{" "}
+                {installedPanel()
+                  ? "Acesso mantido neste aplicativo. Renovação até "
+                  : "Sessão do navegador até "}{" "}
                 {new Date(view.expiresAt).toLocaleString("pt-BR", {
                   timeZone: "America/Sao_Paulo",
                 })}{" "}
                 (Brasília). Para acessar outra fazenda, saia e peça o código correspondente.
               </p>
+              <button
+                disabled={busy}
+                onClick={() => exit(true)}
+                className="mt-4 rounded-lg border border-rose-200 bg-white px-3 py-2 text-xs font-medium text-rose-700"
+              >
+                Sair de todos os meus acessos desta fazenda
+              </button>
             </details>
           </>
         )}
