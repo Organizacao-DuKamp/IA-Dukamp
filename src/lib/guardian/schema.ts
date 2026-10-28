@@ -368,8 +368,22 @@ export interface RecordDraft {
   }>;
   previousPending?: GuardianPending;
 }
+export interface TaskBatchDraft {
+  kind: "task_batch";
+  propertyId: string;
+  createdAt: string;
+  expiresAt: string;
+  sourceMessageId: string;
+  sourceAt: string;
+  rest: string;
+  taskTexts: string[];
+  missingIndex: number;
+  missing: "date" | "title";
+  question: string;
+}
 export type GuardianPending =
   | PendingAction
+  | TaskBatchDraft
   | HerdIdentification
   | HerdRegistrationDraft
   | ManagementDraft

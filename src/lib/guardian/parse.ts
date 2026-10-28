@@ -1,3 +1,4 @@
+import { normalizeTaskClock } from "./task-time.ts";
 import type { ChatMessage } from "../chat/types.ts";
 import { localDateForTimeZone, localDateTimeToUtc } from "../whatsapp/proactive.ts";
 import { recallPeriod } from "../chat/context/recall.ts";
@@ -84,7 +85,7 @@ export function parseDueDate(
   now: Date,
   timeZone = "America/Sao_Paulo",
 ): string | null {
-  const t = fold(text),
+  const t = normalizeTaskClock(text),
     today = localDateForTimeZone(now, timeZone);
   let day: string | null = null;
   const iso = t.match(/\b(20\d{2}-\d{2}-\d{2})\b/);
@@ -185,6 +186,7 @@ export function parseGuardianRequest(
     snapshot.pending.kind !== "herd_registration" &&
     snapshot.pending.kind !== "record_draft" &&
     snapshot.pending.kind !== "management_draft" &&
+    snapshot.pending.kind !== "task_batch" &&
     snapshot.pending.action.kind === "weighing"
   ) {
     const action = ActionSchema.safeParse({
