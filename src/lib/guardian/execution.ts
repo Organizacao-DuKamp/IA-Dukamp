@@ -1,3 +1,4 @@
+import { resolveActionReferences } from "./references.ts";
 import { createHash } from "node:crypto";
 import {
   ActionSchema,
@@ -31,9 +32,11 @@ export function prepareFarmBatch(input: {
   const id = operationalId(input.source.actor, input.source.messageId);
   let book = input.book;
   const events: GuardianEvent[] = [],
-    resultIds: string[] = [];
+    resultIds: string[] = [],
+    actions: GuardianAction[] = [];
   for (const [index, value] of input.actions.entries()) {
-    const action = ActionSchema.parse(value);
+    const action = resolveActionReferences(ActionSchema.parse(value), book);
+    actions.push(action);
     const resultId = createHash("sha256")
       .update(input.source.actor + ":" + input.source.messageId + ":semantic:" + index)
       .digest("hex")
@@ -49,8 +52,8 @@ export function prepareFarmBatch(input: {
     sourceMessageId: input.source.messageId,
     executedByMessageId: input.executedByMessageId,
     at: input.source.at,
-    actions: input.actions,
+    actions,
     resultIds,
   };
-  return { book: FarmBookSchema.parse(book), events, resultIds, operationId: id };
+  return { book: FarmBookSchema.parse(book), events, resultIds, operationId: id, actions };
 }

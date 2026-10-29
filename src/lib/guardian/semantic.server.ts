@@ -718,6 +718,7 @@ export async function handleSemanticTurn(
     return preserveFailure(reply);
   }
   const { book, events } = prepared;
+  actions = prepared.actions;
   if (plan.intent === "propose") {
     base.operation = "pending";
     base.pending = {

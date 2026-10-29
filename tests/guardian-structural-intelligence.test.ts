@@ -465,3 +465,18 @@ test("financial permission denial and a lost database acknowledgement cannot pro
     await f.db.close();
   }
 });
+
+test("spoken lot destinations resolve to canonical real labels without merging padded identifiers or competing labels", async () => {
+  const { resolveLotReference } = await import("../src/lib/guardian/references.ts");
+  const b = emptyFarm("Test", "Tanabi", "SP");
+  b.operations = {
+    counts: [],
+    movements: [],
+    lots: [{ name: "3" }, { name: "03" }, { name: "Lote Girassol" }],
+  };
+  assert.equal(resolveLotReference("lote três", b), "3");
+  assert.equal(resolveLotReference("lote 03", b), "03");
+  assert.equal(resolveLotReference("girassol", b), "Lote Girassol");
+  b.operations.lots.push({ name: "três" });
+  assert.throws(() => resolveLotReference("lote tres", b), /mais de um lote/);
+});
