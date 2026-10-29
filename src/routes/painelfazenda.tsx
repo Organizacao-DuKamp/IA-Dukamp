@@ -7,6 +7,7 @@ import {
   ClipboardList,
   NotebookPen,
   Wallet,
+  Fuel,
   Bell,
   Calculator,
   Plus,
@@ -59,6 +60,7 @@ const tabs = [
   ["tasks", "Tarefas"],
   ["records", "Caderno de campo"],
   ["finance", "Financeiro"],
+  ["fuel", "Combustível"],
   ["events", "Avisos e histórico"],
   ["calculator", "Calculadoras"],
 ] as const;
@@ -69,6 +71,7 @@ const tabIcons = {
   tasks: ClipboardList,
   records: NotebookPen,
   finance: Wallet,
+  fuel: Fuel,
   events: Bell,
   calculator: Calculator,
 };
@@ -372,14 +375,16 @@ function FarmPanel() {
                 >
                   <RefreshCw size={16} /> Atualizar
                 </button>
-                <button
-                  disabled={busy}
-                  onClick={() => setForm((f) => !f)}
-                  className="inline-flex items-center gap-2 rounded-xl bg-emerald-900 px-4 py-3 text-sm font-semibold text-white"
-                >
-                  <Plus size={17} aria-hidden="true" />
-                  {form ? "Fechar" : "Novo registro"}
-                </button>
+                {tab !== "fuel" && (
+                  <button
+                    disabled={busy}
+                    onClick={() => setForm((f) => !f)}
+                    className="inline-flex items-center gap-2 rounded-xl bg-emerald-900 px-4 py-3 text-sm font-semibold text-white"
+                  >
+                    <Plus size={17} aria-hidden="true" />
+                    {form ? "Fechar" : "Novo registro"}
+                  </button>
+                )}
               </div>
             </div>
             <nav
@@ -453,7 +458,7 @@ function FarmPanel() {
                   </div>
                 </section>
               )}
-              {form && (
+              {form && tab !== "fuel" && (
                 <GuardianActionForm
                   key={`${view.propertyId}:${tab}`}
                   initialKind={
@@ -485,6 +490,7 @@ function FarmPanel() {
                   members: [],
                 }}
                 tab={tab}
+                canManageFuel={["owner", "manager"].includes(view.role)}
                 busy={busy}
                 onPropose={async (action) => {
                   setProposal({ action, requestId: crypto.randomUUID(), version: view.version });

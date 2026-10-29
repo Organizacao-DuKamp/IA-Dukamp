@@ -1,3 +1,4 @@
+import { FuelActionSchemas, FuelBookSchema, FuelVoidSchema, type FuelBook } from "./fuel.ts";
 import { z } from "zod";
 import { OperationsActionSchemas, OperationsSchema, type Operations } from "./operations.ts";
 
@@ -42,6 +43,7 @@ export const PreferencesSchema = z
 export type GuardianPreferences = z.infer<typeof PreferencesSchema>;
 export const ActionSchema = z.discriminatedUnion("kind", [
   ...OperationsActionSchemas,
+  ...FuelActionSchemas,
   z
     .object({
       kind: z.literal("property_create"),
@@ -182,6 +184,7 @@ export type GuardianAction = z.infer<typeof ActionSchema>;
 /** Keep SQL authorization in the existing operation family. Corrections carry
  * their exact action and prior values in the book/audit, not a new access right. */
 export function farmActionFamily(action: GuardianAction): string {
+  if (action.kind.startsWith("fuel_")) return "ledger";
   return action.kind === "edit_record"
     ? action.section === "ledger"
       ? "ledger"
@@ -241,6 +244,9 @@ export interface LedgerEntry {
   date: string;
   lot?: string;
   category?: string;
+  categoryTotal?: boolean;
+  fuelMovementId?: string;
+  voided?: { reason: string; source: Provenance };
   /** Monthly total declared by the producer; date is when that total was reported. */
   periodMonth?: string;
   estimated?: boolean;
@@ -275,6 +281,7 @@ export interface FarmBook {
   city: string | null;
   uf: string | null;
   operations?: Operations;
+  fuel?: FuelBook;
   profile: {
     activity?: string;
     species?: string[];
@@ -393,7 +400,20 @@ export interface TaskCompletionDraft {
   question: string;
   previousPending?: GuardianPending;
 }
+export interface FuelDraft {
+  kind: "fuel_draft";
+  repeatCheck?: boolean;
+  propertyId: string;
+  createdAt: string;
+  expiresAt: string;
+  sourceMessageId: string;
+  sourceAt: string;
+  text: string;
+  question: string;
+  previousPending?: GuardianPending;
+}
 export type GuardianPending =
+  | FuelDraft
   | PendingAction
   | TaskBatchDraft
   | TaskCompletionDraft
@@ -501,6 +521,7 @@ export const FarmBookSchema = z
       .regex(/^[A-Z]{2}$/)
       .nullable(),
     operations: OperationsSchema.optional(),
+    fuel: FuelBookSchema.optional(),
     profile: z
       .object({
         activity: label.optional(),
@@ -563,6 +584,9 @@ export const FarmBookSchema = z
             date,
             lot: label.optional(),
             category: label.optional(),
+            categoryTotal: z.boolean().optional(),
+            fuelMovementId: label.optional(),
+            voided: FuelVoidSchema.optional(),
             periodMonth: z
               .string()
               .regex(/^20\d{2}-(?:0[1-9]|1[0-2])$/)

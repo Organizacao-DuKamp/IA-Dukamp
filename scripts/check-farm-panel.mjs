@@ -362,6 +362,61 @@ try {
   await page.getByLabel("Buscar lançamento", { exact: true }).fill("cana de açúcar");
   assert.equal(await page.getByRole("article").filter({ hasText: "cana de açúcar" }).count(), 1);
   await page.getByLabel("Buscar lançamento", { exact: true }).fill("");
+  // Fuel operations share the public panel API and the WhatsApp farm book.
+  await page.getByRole("button", { name: "Combustível", exact: true }).click();
+  await page.getByRole("button", { name: "Informar saldo", exact: true }).click();
+  await page.getByLabel("Saldo (L)", { exact: true }).fill("1000");
+  await page
+    .getByRole("button", { name: "Revisar combustível antes de salvar", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Confirmar e salvar", exact: true }).click();
+  await page.getByRole("status").filter({ hasText: "Combustível salvo" }).waitFor();
+  await page.getByRole("button", { name: "Entrada", exact: true }).click();
+  await page.getByLabel("Quantidade (L)", { exact: true }).fill("500");
+  await page.getByLabel("Custo da entrada (R$, opcional)", { exact: true }).fill("3000");
+  await page
+    .getByRole("button", { name: "Revisar combustível antes de salvar", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Confirmar e salvar", exact: true }).click();
+  await page.getByRole("status").filter({ hasText: "Combustível salvo" }).waitFor();
+  for (const [id, text] of [
+    ["fuel-out", "Saíram 250 litros de diesel para o trator e saíram 20 litros para o caminhão"],
+    ["fuel-expense", "Hoje o custo da gasolina foi 500"],
+    ["fuel-month", "Esse mês foi 2000 de gasolina"],
+  ]) {
+    const r = await handleGuardianMessage(
+      { phone, messageId: "browser-" + id, text, mediaType: "audio" },
+      {
+        store: f.guardian,
+        now: new Date(),
+        extract: async () => {
+          throw Error("Unexpected fuel AI extraction");
+        },
+      },
+    );
+    assert.equal(r.persisted, true, r.reply);
+  }
+  await page.reload({ waitUntil: "networkidle" });
+  await page.getByRole("button", { name: "Combustível", exact: true }).click();
+  assert.match(
+    await page.getByRole("article").filter({ hasText: "Diesel no tanque" }).innerText(),
+    /1\.230 L/,
+  );
+  assert.match(
+    await page.getByRole("article").filter({ hasText: "Gastos no mês" }).innerText(),
+    /5\.000,00/,
+  );
+  const destination = page
+    .getByRole("heading", { name: "Para onde foi", exact: true })
+    .locator("..");
+  assert.match(await destination.innerText(), /trator[\s\S]*250 L/i);
+  assert.match(await destination.innerText(), /caminhão[\s\S]*20 L/i);
+  await page.getByRole("button", { name: "Comparar", exact: true }).click();
+  await page
+    .getByRole("region", { name: "Comparação mensal de combustível", exact: true })
+    .waitFor();
+  if (screenshots)
+    await page.screenshot({ path: screenshots + "/farm-fuel-desktop.png", fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   assert.equal(
     await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1),
@@ -375,6 +430,7 @@ try {
     "Rebanho e lotes",
     "Tarefas",
     "Caderno de campo",
+    "Combustível",
     "Calculadoras",
   ]) {
     await page.getByLabel("Área da fazenda", { exact: true }).selectOption({ label: area });
@@ -383,6 +439,8 @@ try {
       true,
       area + " mobile overflow",
     );
+    if (screenshots && area === "Combustível")
+      await page.screenshot({ path: screenshots + "/farm-fuel-mobile.png", fullPage: true });
     if (screenshots && area === "Visão geral")
       await page.screenshot({
         path: screenshots + "/farm-panel-overview-mobile.png",
@@ -473,7 +531,7 @@ try {
   await restoredContext.close();
   assert.deepEqual(errors, []);
   console.log(
-    "PASS: public access, cookie session, reviewed edits, financial totals, herd events, natural identifier followups, financial amount followups, field note date followups, calculator, PostgreSQL persistence, reload, mobile layout and logout.",
+    "PASS: public access, cookie session, reviewed edits, financial totals, herd events, natural identifier followups, financial amount followups, field note date followups, calculator, fuel tanks, destinations, monthly comparison, PostgreSQL persistence, reload, mobile layout and logout.",
   );
 } catch (error) {
   if (testPage) {

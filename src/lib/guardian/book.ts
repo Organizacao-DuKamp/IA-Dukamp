@@ -1,3 +1,4 @@
+import { FuelActionSchema, applyFuel, describeFuel } from "./fuel.ts";
 import {
   OperationsActionSchema,
   applyOperations,
@@ -29,6 +30,8 @@ const num = (v: number) => v.toLocaleString("pt-BR", { maximumFractionDigits: 3 
 const money = (cents: number) =>
   (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 export function describeAction(a: GuardianAction): string {
+  const fuel = FuelActionSchema.safeParse(a);
+  if (fuel.success) return describeFuel(fuel.data);
   const operational = OperationsActionSchema.safeParse(a);
   if (operational.success) return describeOperations(operational.data);
   switch (a.kind) {
@@ -95,6 +98,11 @@ export function applyFarmAction(
       );
     return animal;
   };
+  const fuel = FuelActionSchema.safeParse(action);
+  if (fuel.success) {
+    applyFuel(book, fuel.data, source, id);
+    return { book, events, result: `Combustível salvo. ${describeFuel(fuel.data)}` };
+  }
   const operational = OperationsActionSchema.safeParse(action);
   if (operational.success) {
     applyOperations(book, operational.data, source, id);

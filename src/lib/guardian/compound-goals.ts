@@ -1,3 +1,4 @@
+import { fuelObservation, fuelTopic } from "./fuel-language.ts";
 import { cardinal, foldHerd, herdStatement } from "./herd-language.ts";
 import { hasEventVerb, eventDay } from "./herd-event-language.ts";
 import { localDay } from "../chat/context/recall.ts";
@@ -26,7 +27,8 @@ export function complementaryFarmGoals(
       if (!actions.some((existing) => JSON.stringify(existing) === JSON.stringify(a)))
         actions.push(a);
   };
-  const dialogue = recordDialogue(text, at);
+  const fuel = fuelTopic(text) ? fuelObservation(text, at) : null;
+  const dialogue = recordDialogue(fuel?.status === "actions" ? fuel.residual : text, at);
   if (dialogue.kind === "slots") {
     const records = recordActions(dialogue.slots);
     if (records) add(records.filter((a) => !actions.some((existing) => existing.kind === a.kind)));
