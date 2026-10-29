@@ -22,7 +22,38 @@ export const AlertRulesSchema = z
     mortalityWindowDays: z.number().int().min(1).max(90).default(7),
   })
   .strict();
+export const InventoryGroupSchema = z
+  .object({
+    name: label,
+    count: count.min(1),
+    description: z.string().trim().min(3).max(1500),
+  })
+  .strict();
+export const InventorySchema = z
+  .object({
+    date: day,
+    complete: z.boolean(),
+    groups: z.array(InventoryGroupSchema).min(1).max(100),
+  })
+  .strict()
+  .superRefine((v, ctx) => {
+    const names = v.groups.map((g) =>
+      g.name
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "")
+        .toLowerCase(),
+    );
+    if (new Set(names).size !== names.length)
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "Os grupos precisam ser distintos; subgrupos pertencem à descrição do grupo principal.",
+      });
+    if (v.groups.reduce((n, g) => n + g.count, 0) > 1000000)
+      ctx.addIssue({ code: "custom", message: "Quantidade total inválida." });
+  });
 export const OperationsActionSchemas = [
+  InventorySchema.safeExtend({ kind: z.literal("herd_inventory") }),
   z
     .object({
       kind: z.literal("property_transfer"),
@@ -44,7 +75,14 @@ export const OperationsActionSchemas = [
       lot: label.optional(),
     })
     .strict(),
-  z.object({ kind: z.literal("herd_count"), count, date: day, lot: label.optional() }).strict(),
+  z
+    .object({
+      kind: z.literal("herd_count"),
+      count,
+      date: day,
+      lot: label.optional(),
+    })
+    .strict(),
   z
     .object({
       kind: z.literal("herd_event"),
@@ -100,6 +138,8 @@ export type OperationsAction = z.infer<typeof OperationsActionSchema>;
 export function describeOperations(action: OperationsAction): string {
   const lot = (value?: string) => (value ? `, lote ${value}` : ", rebanho da fazenda");
   switch (action.kind) {
+    case "herd_inventory":
+      return `Registrar o rebanho já existente em ${action.date}${action.complete ? `: ${action.groups.reduce((n, g) => n + g.count, 0)} animais no total` : " (levantamento parcial, sem alterar o total da fazenda)"}.\n${action.groups.map((g) => `• ${g.count} ${g.name}: ${g.description}`).join("\n")}\nOs subgrupos estão incluídos em seus grupos principais. Brincos e RGN podem ser preenchidos depois; não cria nascimentos, compras nem fichas individuais fictícias.`;
     case "property_transfer":
       return `Transferir ${action.count} animais da fazenda selecionada${action.fromLot ? `, lote ${action.fromLot}` : ""} para a propriedade ${action.toPropertyId}${action.toLot ? `, lote ${action.toLot}` : ""} em ${action.date}. As duas fazendas serão atualizadas juntas, após conferir acesso e saldo.`;
     case "herd_count":
@@ -152,6 +192,10 @@ const source = z
   .strict();
 export const OperationsSchema = z
   .object({
+    inventories: z
+      .array(InventorySchema.safeExtend({ id: label, source }))
+      .max(1000)
+      .optional(),
     categoryCounts: z
       .array(
         z
@@ -184,7 +228,17 @@ export const OperationsSchema = z
       .max(10000)
       .optional(),
     counts: z
-      .array(z.object({ id: label, count, date: day, lot: label.optional(), source }).strict())
+      .array(
+        z
+          .object({
+            id: label,
+            count,
+            date: day,
+            lot: label.optional(),
+            source,
+          })
+          .strict(),
+      )
       .max(10000)
       .default([]),
     movements: z
@@ -227,7 +281,11 @@ export const OperationsSchema = z
   })
   .strict();
 export type Operations = z.infer<typeof OperationsSchema>;
-export const emptyOperations = (): Operations => ({ counts: [], movements: [], lots: [] });
+export const emptyOperations = (): Operations => ({
+  counts: [],
+  movements: [],
+  lots: [],
+});
 const incoming = (type: string) => ["birth", "purchase", "transfer_in"].includes(type);
 export function stockAt(operations: Operations, date: string, lot?: string) {
   const baseline = operations.counts
@@ -286,15 +344,33 @@ export function applyOperations(
     else {
       if (operations.lots.length >= 1000)
         throw new Error("O volume atingiu o limite técnico de lotes.");
-      operations.lots.push({ name: action.lot, pasture: action.pasture, areaHa: action.areaHa });
+      operations.lots.push({
+        name: action.lot,
+        pasture: action.pasture,
+        areaHa: action.areaHa,
+      });
     }
     return;
   }
-  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(
-    new Date(provenance.at),
-  );
+  const today = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+  }).format(new Date(provenance.at));
   if (action.date > today)
     throw new Error("A data de um evento realizado não pode estar no futuro.");
+  if (action.kind === "herd_inventory") {
+    const rows = (operations.inventories ??= []);
+    if (rows.length >= 1000) throw new Error("O volume atingiu o limite técnico de levantamentos.");
+    const { kind: _, ...inventory } = action;
+    rows.push({ ...inventory, id, source: provenance });
+    if (action.complete)
+      operations.counts.push({
+        id,
+        count: action.groups.reduce((n, g) => n + g.count, 0),
+        date: action.date,
+        source: provenance,
+      });
+    return;
+  }
   if (action.kind === "feed_consumption") {
     const { kind: _, ...entry } = action;
     const feed = (operations.feed ??= []);
@@ -380,7 +456,12 @@ export function applyOperations(
     scopes.set(scope, entries);
   };
   for (const c of operations.counts)
-    add(c.lot ?? "", { date: c.date, at: c.source.at, count: c.count, snapshot: true });
+    add(c.lot ?? "", {
+      date: c.date,
+      at: c.source.at,
+      count: c.count,
+      snapshot: true,
+    });
   for (const m of operations.movements) {
     if (replaced.has(m.id)) continue;
     const row = {

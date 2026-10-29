@@ -168,7 +168,11 @@ export const ActionSchema = z.discriminatedUnion("kind", [
     .strict(),
   z.object({ kind: z.literal("move"), code: label, lot: label }).strict(),
   z
-    .object({ kind: z.literal("delete_record"), section: z.enum(["records", "ledger"]), id: label })
+    .object({
+      kind: z.literal("delete_record"),
+      section: z.enum(["records", "ledger"]),
+      id: label,
+    })
     .strict(),
   z
     .object({
@@ -177,13 +181,19 @@ export const ActionSchema = z.discriminatedUnion("kind", [
       role: RoleSchema.exclude(["owner"]),
     })
     .strict(),
-  z.object({ kind: z.literal("revoke"), phone: z.string().regex(/^\d{10,15}$/) }).strict(),
+  z
+    .object({
+      kind: z.literal("revoke"),
+      phone: z.string().regex(/^\d{10,15}$/),
+    })
+    .strict(),
   z.object({ kind: z.literal("property_delete"), name: label }).strict(),
 ]);
 export type GuardianAction = z.infer<typeof ActionSchema>;
 /** Keep SQL authorization in the existing operation family. Corrections carry
  * their exact action and prior values in the book/audit, not a new access right. */
 export function farmActionFamily(action: GuardianAction): string {
+  if (action.kind === "herd_inventory") return "herd_count";
   if (action.kind.startsWith("fuel_")) return "ledger";
   return action.kind === "edit_record"
     ? action.section === "ledger"
@@ -296,6 +306,10 @@ export interface FarmBook {
   records: FieldRecord[];
 }
 export interface PendingAction {
+  semantic?: boolean;
+  actions?: GuardianAction[];
+  sourceAt?: string;
+  evidence?: Array<{ messageIndex: number; quote: string }>;
   kind?: "proposal";
   action: GuardianAction;
   propertyId: string | null;
@@ -427,8 +441,17 @@ export interface GuardianSnapshot {
   preferences: GuardianPreferences;
   pending: GuardianPending | null;
   properties: Array<{ id: string; name: string; role: GuardianRole }>;
-  active: { id: string; version: number; role: GuardianRole; book: FarmBook } | null;
-  lastNotification?: { id: string; taskId: string | null; sentAt: string } | null;
+  active: {
+    id: string;
+    version: number;
+    role: GuardianRole;
+    book: FarmBook;
+  } | null;
+  lastNotification?: {
+    id: string;
+    taskId: string | null;
+    sentAt: string;
+  } | null;
 }
 export interface GuardianEvent {
   type:
