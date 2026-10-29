@@ -1,3 +1,4 @@
+import { speciesNames } from "./operations.ts";
 import type { FarmBook } from "./schema.ts";
 import { ledgerForTotals, ledgerPeriod } from "./finance.ts";
 /** Protect CSV consumers from spreadsheet formula injection in user-controlled text. */
@@ -84,7 +85,7 @@ export function farmCsv(book: FarmBook): string {
         "Rebanho por grupos",
         inventory.id,
         inventory.date,
-        group.name + ": " + group.description,
+        speciesNames[group.species ?? "cattle"] + " — " + group.name + ": " + group.description,
         group.count,
         "cabeças",
         "",
@@ -96,7 +97,7 @@ export function farmCsv(book: FarmBook): string {
       "Contagem declarada",
       c.id,
       c.date,
-      "Quantidade ao fim do dia",
+      "Quantidade ao fim do dia — " + speciesNames[c.species ?? "cattle"],
       c.count,
       "cabeças",
       c.lot ?? "Fazenda",
@@ -107,7 +108,7 @@ export function farmCsv(book: FarmBook): string {
       "Movimentação",
       m.id,
       m.date,
-      m.description,
+      speciesNames[m.species ?? "cattle"] + " — " + m.description,
       m.count,
       "cabeças",
       m.lot ?? "Fazenda",

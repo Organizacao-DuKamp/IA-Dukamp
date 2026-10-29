@@ -1,7 +1,7 @@
 import { PanelMetric } from "./PanelMetric";
 import { Beef, Sprout, MinusCircle } from "lucide-react";
 import { useState } from "react";
-import { farmIndicators, emptyOperations, stockAt } from "@/lib/guardian/operations";
+import { farmIndicators, emptyOperations, stockAt, speciesNames } from "@/lib/guardian/operations";
 import type { FarmBook } from "@/lib/guardian/schema";
 
 export function FarmOperations({ book, compact = false }: { book: FarmBook; compact?: boolean }) {
@@ -18,7 +18,7 @@ export function FarmOperations({ book, compact = false }: { book: FarmBook; comp
     ...operations.counts.map((c) => ({
       ...c,
       type: "Contagem declarada",
-      description: "Quantidade ao fim do dia",
+      description: "Quantidade ao fim do dia — " + speciesNames[c.species ?? "cattle"],
     })),
     ...operations.movements.map((m) => ({
       ...m,
@@ -36,7 +36,7 @@ export function FarmOperations({ book, compact = false }: { book: FarmBook; comp
       (r) =>
         r.date >= start &&
         r.date <= end &&
-        `${r.type} ${r.lot ?? ""} ${r.description}`
+        `${r.type} ${r.lot ?? ""} ${r.description} ${speciesNames[r.species ?? "cattle"]}`
           .toLocaleLowerCase("pt-BR")
           .includes(search.toLocaleLowerCase("pt-BR")),
     )
@@ -57,19 +57,52 @@ export function FarmOperations({ book, compact = false }: { book: FarmBook; comp
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
         <PanelMetric
-          label="Rebanho calculado"
+          label={
+            data.stocksBySpecies.some((s) => s.species !== "cattle")
+              ? "Bovinos contabilizados"
+              : "Rebanho calculado"
+          }
           value={data.stock.count ?? "Não informado"}
           icon={Beef}
           hint={data.stock.count === null ? "Contagem inicial pendente" : "cabeças"}
         />
-        <PanelMetric label="Nascimentos" value={data.births} icon={Sprout} tone="positive" />
         <PanelMetric
-          label="Mortes"
+          label={
+            data.stocksBySpecies.some((s) => s.species !== "cattle")
+              ? "Nascimentos bovinos"
+              : "Nascimentos"
+          }
+          value={data.births}
+          icon={Sprout}
+          tone="positive"
+        />
+        <PanelMetric
+          label={
+            data.stocksBySpecies.some((s) => s.species !== "cattle")
+              ? "Mortes de bovinos"
+              : "Mortes"
+          }
           value={data.deaths}
           icon={MinusCircle}
           tone={data.deaths > 0 ? "negative" : "neutral"}
         />
       </div>
+      {data.stocksBySpecies.some((s) => s.species !== "cattle") && (
+        <section className="rounded-xl border p-4 text-sm" aria-label="Animais por espécie">
+          <h3 className="font-semibold">Animais por espécie</h3>
+          <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {data.stocksBySpecies.map((s) => (
+              <div key={s.species} className="rounded-lg bg-slate-50 p-3">
+                <span>{s.label}</span>
+                <strong className="block text-xl">{s.count}</strong>
+              </div>
+            ))}
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            As espécies têm saldos separados. Porcos e aves não são somados aos bovinos.
+          </p>
+        </section>
+      )}
       {!!operations.inventories?.length &&
         (() => {
           const inventory = operations.inventories
@@ -92,6 +125,9 @@ export function FarmOperations({ book, compact = false }: { book: FarmBook; comp
                     <strong>
                       {g.count} · {g.name}
                     </strong>
+                    <span className="ml-2 text-xs text-muted-foreground">
+                      {speciesNames[g.species ?? "cattle"]}
+                    </span>
                     <p className="mt-1 whitespace-pre-wrap">{g.description}</p>
                   </article>
                 ))}
@@ -254,7 +290,9 @@ export function FarmOperations({ book, compact = false }: { book: FarmBook; comp
                         {r.type}
                       </span>
                     </td>
-                    <td className="p-2">{r.count}</td>
+                    <td className="p-2">
+                      {r.count} {speciesNames[r.species ?? "cattle"]}
+                    </td>
                     <td className="p-2">{r.lot ?? "Fazenda"}</td>
                     <td className="p-2">
                       <details>

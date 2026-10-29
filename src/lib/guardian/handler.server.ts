@@ -238,7 +238,8 @@ function pendingQuestion(pending: GuardianPending | null | undefined): string | 
   if (
     pending.kind === "task_batch" ||
     pending.kind === "task_completion" ||
-    pending.kind === "fuel_draft"
+    pending.kind === "fuel_draft" ||
+    pending.kind === "semantic_draft"
   )
     return pending.question;
   if (pending.kind === "herd_registration") return registrationQuestion(pending.missing);
@@ -301,7 +302,12 @@ export async function handleGuardianMessage(
     }
     const previous = await store.receipt(input.phone, input.messageId);
     if (previous) return { reply: previous, activeProperty: false, persisted: true };
-    if (!deps.request && (!input.mediaType || input.mediaType === "audio")) {
+    if (
+      !deps.request &&
+      !deps.interpret &&
+      deps.store &&
+      (!input.mediaType || input.mediaType === "audio")
+    ) {
       const selection = await store.load(input.phone);
       initialSnapshot = selection;
       const named = namedProperty(input.text, selection);
@@ -342,15 +348,19 @@ export async function handleGuardianMessage(
     for (let attempt = 0; attempt < 4; attempt++) {
       const snapshot =
         attempt === 0 && initialSnapshot ? initialSnapshot : await store.load(input.phone);
-      if (!deps.request && snapshot.active && (deps.interpret || !deps.store)) {
-        if (semanticPropertyId && semanticPropertyId !== snapshot.active.id)
+      if (
+        !deps.request &&
+        (snapshot.active || snapshot.properties.length) &&
+        (deps.interpret || !deps.store)
+      ) {
+        if (semanticPropertyId && semanticPropertyId !== snapshot.active?.id)
           return {
             reply:
               "A fazenda selecionada mudou durante o pedido. Nenhum registro foi salvo; confira a fazenda correta antes de continuar.",
             activeProperty: true,
             persisted: false,
           };
-        semanticPropertyId = snapshot.active.id;
+        semanticPropertyId = snapshot.active?.id;
         attempted = true;
         const semantic = await handleSemanticTurn(
           input,
@@ -361,6 +371,10 @@ export async function handleGuardianMessage(
           deps.interpret ?? interpretFarmConversation,
         );
         if (semantic === "conflict") continue;
+        if (semantic && "scopeChanged" in semantic) {
+          semanticPropertyId = semantic.scopeChanged;
+          continue;
+        }
         if (semantic) return semantic;
       }
       if (
@@ -1640,7 +1654,8 @@ export async function handleGuardianMessage(
             if (
               pending.kind === "task_batch" ||
               pending.kind === "task_completion" ||
-              pending.kind === "fuel_draft"
+              pending.kind === "fuel_draft" ||
+              pending.kind === "semantic_draft"
             )
               return {
                 reply: pending.question,
