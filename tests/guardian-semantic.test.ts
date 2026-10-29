@@ -365,3 +365,26 @@ test("a question about registration remains conversational instead of falling in
   assert.equal(result?.reply, null);
   assert.match(result?.context ?? "", /sem brincos/);
 });
+
+test("an oversized request is never silently truncated into a partial saved census", async () => {
+  const s = snapshot();
+  const store = {
+    load: async () => s,
+    receipt: async () => null,
+    commit: async () => {
+      throw Error("must not write");
+    },
+  };
+  const r = await handleSemanticTurn(
+    { phone, messageId: "too-long", text: "Tenho 66 novilhas. ".repeat(400) },
+    s,
+    store,
+    now,
+    now,
+    async () => {
+      throw Error("must not interpret truncated text");
+    },
+  );
+  assert.match((r as { reply: string }).reply, /envie em partes menores/);
+  assert.equal(s.active!.book.operations, undefined);
+});

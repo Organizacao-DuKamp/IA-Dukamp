@@ -95,7 +95,11 @@ export function semanticContext(
   const recent = boundary >= 0 ? history.slice(boundary + 1) : history;
   const messages = recent.map((m) => ({
     role: m.role,
-    content: userStatement(m.content).slice(0, 3000),
+    content:
+      userStatement(m.content).slice(0, 5000) +
+      (userStatement(m.content).length > 5000
+        ? " [Relato truncado: não deduzir censo completo.]"
+        : ""),
   }));
   const current = userStatement(input.text, input.mediaType).slice(0, 5000);
   if (messages.at(-1)?.role !== "user" || messages.at(-1)?.content !== current)
@@ -144,6 +148,13 @@ export async function handleSemanticTurn(
   interpret: SemanticInterpreter,
 ): Promise<GuardianHandled | "conflict" | null> {
   if (!snapshot.active || (input.mediaType && input.mediaType !== "audio")) return null;
+  if (userStatement(input.text, input.mediaType).length > 5000)
+    return {
+      reply:
+        "Para preservar todos os dados desse relato, envie em partes menores. Ainda não salvei este pedido.",
+      activeProperty: true,
+      persisted: false,
+    };
   const active = snapshot.active;
   const pending = snapshot.pending && "action" in snapshot.pending ? snapshot.pending : null;
   const context = semanticContext(input, snapshot, referenceAt);
