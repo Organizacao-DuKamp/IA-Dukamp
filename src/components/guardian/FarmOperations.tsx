@@ -154,34 +154,35 @@ export function FarmOperations({ book, compact = false }: { book: FarmBook; comp
               <p className="mt-2 text-muted-foreground">{data.consumption.formula}</p>
             </div>
           )}
-          {Object.keys(data.categories).length > 0 && (
-            <div className="rounded-xl border p-4 text-sm">
-              <h3 className="font-semibold">Categorias informadas</h3>
-              <div className="mt-3 grid grid-cols-2 gap-3">
-                {Object.entries(data.categories).map(([category, c]) => (
-                  <p key={category}>
-                    {
-                      (
-                        {
-                          cows: "Vacas",
-                          oxen: "Bois",
-                          calves: "Bezerros",
-                          heifers: "Novilhas",
-                        } as Record<string, string>
-                      )[category]
-                    }
-                    : <strong>{c.count}</strong>
-                    <span className="block text-xs text-muted-foreground">
-                      Referência: {c.date}
-                    </span>
-                  </p>
-                ))}
+          {!operations.inventories?.some((i) => i.complete && i.date <= end) &&
+            Object.keys(data.categories).length > 0 && (
+              <div className="rounded-xl border p-4 text-sm">
+                <h3 className="font-semibold">Categorias informadas</h3>
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  {Object.entries(data.categories).map(([category, c]) => (
+                    <p key={category}>
+                      {
+                        (
+                          {
+                            cows: "Vacas",
+                            oxen: "Bois",
+                            calves: "Bezerros",
+                            heifers: "Novilhas",
+                          } as Record<string, string>
+                        )[category]
+                      }
+                      : <strong>{c.count}</strong>
+                      <span className="block text-xs text-muted-foreground">
+                        Referência: {c.date}
+                      </span>
+                    </p>
+                  ))}
+                </div>
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Não somamos as categorias ao total sem conferir se os grupos se sobrepõem.
+                </p>
               </div>
-              <p className="mt-3 text-xs text-muted-foreground">
-                Não somamos as categorias ao total sem conferir se os grupos se sobrepõem.
-              </p>
-            </div>
-          )}
+            )}
           {data.evolution && (
             <p className="text-sm text-muted-foreground">
               Contagens declaradas: {data.evolution.initial} ({data.evolution.from}) →{" "}

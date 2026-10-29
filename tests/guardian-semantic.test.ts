@@ -338,3 +338,30 @@ test("uncited facts, another property, invalid batches, unavailable interpretati
   assert.equal(writes, 0);
   assert.equal(s.active!.book.operations, undefined);
 });
+
+test("a question about registration remains conversational instead of falling into the failed-movement recognizer", async () => {
+  const s = snapshot();
+  const store = {
+    load: async () => s,
+    receipt: async () => null,
+    commit: async () => {
+      throw Error("a question cannot write");
+    },
+  };
+  const result = await handleGuardianMessage(
+    {
+      phone,
+      messageId: "registration-question",
+      text: audio("Para você cadastrar esses animais, que dados você precisa?"),
+      mediaType: "audio",
+    },
+    {
+      store,
+      now,
+      interpret: async () => ({ intent: "none", propertyId: "farm-a", question: "", entries: [] }),
+    },
+  );
+  assert.equal(result?.conversational, true);
+  assert.equal(result?.reply, null);
+  assert.match(result?.context ?? "", /sem brincos/);
+});
