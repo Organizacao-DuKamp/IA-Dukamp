@@ -396,3 +396,39 @@ test("a repeated generic completion after a notified task is closed never closes
     await f.db.close();
   }
 });
+
+test("losing access to one option cannot shift an ordinal reply onto a different farm's task", async () => {
+  const f = await fixture();
+  try {
+    const ids = [];
+    for (const name of ["A", "B", "C"]) {
+      const id = await create(f, name, [
+        [`task-${name}`, `dar ração ${name}`, "2026-10-29T13:00:00Z"],
+      ]);
+      ids.push(id);
+      await notify(f, id, `task-${name}`, "2026-10-29T11:00:00Z", `wamid.${name}`);
+    }
+    const r = await send(f, "multi-farm-choice", "Já concluí a tarefa");
+    assert.equal(r?.persisted, false);
+    const pending = (await f.guardian.load(phone)).pending;
+    assert.equal(pending?.kind, "task_completion");
+    if (pending?.kind !== "task_completion") throw Error("missing choices");
+    const revoked = pending.choices[1];
+    assert.notEqual(revoked.propertyId, (await f.guardian.load(phone)).active!.id);
+    await f.db.query(
+      "update guardian_members set active=false where phone_number=$1 and property_id=$2",
+      [phone, revoked.propertyId],
+    );
+    const answer = await send(f, "revoked-choice", "segunda", [
+      { role: "assistant", content: r!.reply! },
+    ]);
+    assert.notEqual(answer?.persisted, true);
+    const books = await f.db.query<{ book: { tasks: Array<{ status: string }> } }>(
+      "select book from guardian_properties where id=any($1::uuid[])",
+      [ids],
+    );
+    assert.ok(books.rows.every((p) => p.book.tasks[0].status === "open"));
+  } finally {
+    await f.db.close();
+  }
+});

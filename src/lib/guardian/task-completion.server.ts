@@ -241,7 +241,13 @@ export async function handleTaskCompletion(
             quarto: 4,
           } as Record<string, number>
         )[ordinal[1]] ?? Number(ordinal[1]);
-      selected = choices[index - 1] ? [choices[index - 1]] : [];
+      const originalChoice = draft.choices[index - 1];
+      selected = originalChoice
+        ? all.filter(
+            (c) =>
+              c.property.id === originalChoice.propertyId && c.task.id === originalChoice.taskId,
+          )
+        : [];
     } else if (
       /^(?:as duas|ambas|todas|todos)$/.test(t) &&
       new Set(choices.map((c) => c.property.id)).size === 1
