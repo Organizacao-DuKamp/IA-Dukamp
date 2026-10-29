@@ -289,6 +289,7 @@ export async function handleGuardianMessage(
   let attempted = false;
   let resolvedManagement: { propertyId: string; slots: ManagementSlots } | undefined;
   let initialSnapshot: GuardianSnapshot | undefined;
+  let semanticPropertyId: string | undefined;
   try {
     if (!deps.request) {
       const portalReply = await handlePanelCodeRequest(input, {
@@ -342,6 +343,14 @@ export async function handleGuardianMessage(
       const snapshot =
         attempt === 0 && initialSnapshot ? initialSnapshot : await store.load(input.phone);
       if (!deps.request && snapshot.active && (deps.interpret || !deps.store)) {
+        if (semanticPropertyId && semanticPropertyId !== snapshot.active.id)
+          return {
+            reply:
+              "A fazenda selecionada mudou durante o pedido. Nenhum registro foi salvo; confira a fazenda correta antes de continuar.",
+            activeProperty: true,
+            persisted: false,
+          };
+        semanticPropertyId = snapshot.active.id;
         attempted = true;
         const semantic = await handleSemanticTurn(
           input,

@@ -418,3 +418,81 @@ test("abbreviated evidence resolves to the complete original span without accept
   );
   assert.equal(groundSemanticEvidence(c, { messageIndex: 1, quote: "900 vacas" }), null);
 });
+
+test("a concurrent farm selection cannot move a contextual proposal into the new farm", async () => {
+  let s = snapshot(),
+    interpreted = 0,
+    commits = 0;
+  const store = {
+    load: async () => s,
+    receipt: async () => null,
+    commit: async () => {
+      commits++;
+      s = {
+        ...snapshot(),
+        active: { ...snapshot().active!, id: "farm-b" },
+        properties: [{ id: "farm-b", name: "Outra", role: "owner" as const }],
+      };
+      return "conflict";
+    },
+  };
+  const result = await handleGuardianMessage(
+    { phone, messageId: "scope-conflict", text: "Por favor registre os 202 animais" },
+    {
+      store,
+      now,
+      interpret: async (c) => {
+        interpreted++;
+        return {
+          intent: "propose",
+          propertyId: c.propertyId,
+          question: "",
+          entries: [
+            { action: inventory, evidence: [{ messageIndex: 0, quote: c.messages[0].content }] },
+          ],
+        };
+      },
+    },
+  );
+  assert.equal(interpreted, 1);
+  assert.equal(commits, 1);
+  assert.match(result?.reply ?? "", /fazenda selecionada mudou/);
+  assert.equal(s.active!.book.operations, undefined);
+});
+
+test("bounded model context retains authoritative full herd and individual-record totals", () => {
+  const s = snapshot();
+  const source = {
+    actor: phone,
+    messageId: "source",
+    at: now.toISOString(),
+    confirmed: true as const,
+  };
+  s.active!.book.animals = Array.from({ length: 70 }, (_, i) => ({
+    code: "a" + i,
+    sex: "unknown" as const,
+    weights: [],
+    source,
+  }));
+  s.active!.book.operations = {
+    lots: [],
+    counts: [{ id: "baseline", count: 100, date: "2026-10-28", source }],
+    movements: Array.from({ length: 20 }, (_, i) => ({
+      id: "birth" + i,
+      type: "birth" as const,
+      count: 1,
+      date: "2026-10-29",
+      description: "nascimento",
+      source,
+    })),
+  };
+  const c = semanticContext(
+    { phone, messageId: "summary", text: "Quantos animais tenho?" },
+    s,
+    now,
+  );
+  assert.equal(c.snapshot.active!.book.animals.length, 50);
+  assert.equal(c.snapshot.active!.book.operations!.movements.length, 10);
+  assert.equal(c.summary.animalCount, 70);
+  assert.equal(c.summary.stockCount, 120);
+});
