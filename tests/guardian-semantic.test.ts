@@ -31,22 +31,26 @@ const inventory: GuardianAction = {
   groups: [
     {
       name: "Novilhas",
+      species: "cattle",
       count: 66,
       description:
         "12 a 24 meses; 38 aptas para IATF acima de 15 meses e 360 kg; 28 fora da IATF por idade e peso.",
     },
     {
       name: "Vacas parideiras",
+      species: "cattle",
       count: 100,
       description: "40 paridas e vazias; 60 solteiras, sendo 40 prenhas e 20 vazias.",
     },
     {
       name: "Machos",
+      species: "cattle",
       count: 20,
       description: "10 de 12 a 24 meses, 5 de 18 a 24 meses e 5 acima de 36 meses.",
     },
     {
       name: "Novilhas Girolando",
+      species: "cattle",
       count: 16,
       description: "Receptoras de embriões das doadoras Nelore.",
     },
@@ -269,8 +273,8 @@ test("uncited facts, another property, invalid batches, unavailable interpretati
   const store = {
     load: async () => s,
     receipt: async () => null,
-    commit: async () => {
-      writes++;
+    commit: async (turn: { operation: string }) => {
+      if (turn.operation === "update" || turn.operation === "select") writes++;
       return "committed";
     },
   };

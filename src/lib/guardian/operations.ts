@@ -22,9 +22,31 @@ export const AlertRulesSchema = z
     mortalityWindowDays: z.number().int().min(1).max(90).default(7),
   })
   .strict();
+export const SpeciesSchema = z.enum([
+  "cattle",
+  "pig",
+  "poultry",
+  "sheep",
+  "goat",
+  "horse",
+  "buffalo",
+  "other",
+]);
+export type FarmSpecies = z.infer<typeof SpeciesSchema>;
+export const speciesNames: Record<FarmSpecies, string> = {
+  cattle: "Bovinos",
+  pig: "Suínos",
+  poultry: "Aves",
+  sheep: "Ovinos",
+  goat: "Caprinos",
+  horse: "Equinos",
+  buffalo: "Búfalos",
+  other: "Outros animais",
+};
 export const InventoryGroupSchema = z
   .object({
     name: label,
+    species: SpeciesSchema.optional(),
     count: count.min(1),
     description: z.string().trim().min(3).max(1500),
   })
@@ -38,7 +60,7 @@ export const InventorySchema = z
   .strict()
   .superRefine((v, ctx) => {
     const names = v.groups.map((g) =>
-      g.name
+      ((g.species ?? "cattle") + ":" + g.name)
         .normalize("NFD")
         .replace(/\p{Diacritic}/gu, "")
         .toLowerCase(),
@@ -78,6 +100,7 @@ export const OperationsActionSchemas = [
   z
     .object({
       kind: z.literal("herd_count"),
+      species: SpeciesSchema.optional(),
       count,
       date: day,
       lot: label.optional(),
@@ -86,6 +109,7 @@ export const OperationsActionSchemas = [
   z
     .object({
       kind: z.literal("herd_event"),
+      species: SpeciesSchema.optional(),
       type: z.enum(movementTypes),
       count: count.min(1),
       date: day,
@@ -97,6 +121,7 @@ export const OperationsActionSchemas = [
   z
     .object({
       kind: z.literal("lot_transfer"),
+      species: SpeciesSchema.optional(),
       from: label,
       to: label,
       count: count.min(1),
@@ -139,15 +164,15 @@ export function describeOperations(action: OperationsAction): string {
   const lot = (value?: string) => (value ? `, lote ${value}` : ", rebanho da fazenda");
   switch (action.kind) {
     case "herd_inventory":
-      return `Registrar o rebanho já existente em ${action.date}${action.complete ? `: ${action.groups.reduce((n, g) => n + g.count, 0)} animais no total` : " (levantamento parcial, sem alterar o total da fazenda)"}.\n${action.groups.map((g) => `• ${g.count} ${g.name}: ${g.description}`).join("\n")}\nOs subgrupos estão incluídos em seus grupos principais. Brincos e RGN podem ser preenchidos depois; não cria nascimentos, compras nem fichas individuais fictícias.`;
+      return `Registrar o rebanho já existente em ${action.date}${action.complete ? `: ${action.groups.reduce((n, g) => n + g.count, 0)} animais no total` : " (levantamento parcial, sem alterar o total da fazenda)"}.\n${action.groups.map((g) => `• ${g.count} ${g.name}${g.species && g.species !== "cattle" ? ` (${speciesNames[g.species]})` : ""}: ${g.description}`).join("\n")}\nOs subgrupos estão incluídos em seus grupos principais. Brincos e RGN podem ser preenchidos depois; não cria nascimentos, compras nem fichas individuais fictícias.`;
     case "property_transfer":
       return `Transferir ${action.count} animais da fazenda selecionada${action.fromLot ? `, lote ${action.fromLot}` : ""} para a propriedade ${action.toPropertyId}${action.toLot ? `, lote ${action.toLot}` : ""} em ${action.date}. As duas fazendas serão atualizadas juntas, após conferir acesso e saldo.`;
     case "herd_count":
-      return `Informar ${action.count} cabeças no fim do dia ${action.date}${lot(action.lot)}. A contagem anterior fica no histórico; não cria fichas individuais.`;
+      return `Informar ${action.count} ${speciesNames[action.species ?? "cattle"]} no fim do dia ${action.date}${lot(action.lot)}. A contagem anterior fica no histórico; não cria fichas individuais.`;
     case "herd_event":
-      return `Registrar ${{ birth: "nascimento", death: "morte", purchase: "compra", sale: "venda", transfer_in: "entrada", transfer_out: "saída" }[action.type]} de ${action.count} animais em ${action.date}${lot(action.lot)}: ${action.description}.${action.replaces ? ` Corrige o evento ${action.replaces}, preservando o original.` : ""}`;
+      return `Registrar ${{ birth: "nascimento", death: "morte", purchase: "compra", sale: "venda", transfer_in: "entrada", transfer_out: "saída" }[action.type]} de ${action.count} ${speciesNames[action.species ?? "cattle"]} em ${action.date}${lot(action.lot)}: ${action.description}.${action.replaces ? ` Corrige o evento ${action.replaces}, preservando o original.` : ""}`;
     case "lot_transfer":
-      return `Transferir ${action.count} animais do lote ${action.from} para o lote ${action.to} em ${action.date}. O total da fazenda permanece igual.`;
+      return `Transferir ${action.count} ${speciesNames[action.species ?? "cattle"]} do lote ${action.from} para o lote ${action.to} em ${action.date}. O total da fazenda permanece igual.`;
     case "lot_update":
       return `Atualizar o lote ${action.lot}${action.pasture ? `, pastagem ${action.pasture}` : ""}${action.areaHa ? `, área ${action.areaHa} ha` : ""}.`;
     case "feed_consumption":
@@ -234,6 +259,7 @@ export const OperationsSchema = z
             id: label,
             count,
             date: day,
+            species: SpeciesSchema.optional(),
             lot: label.optional(),
             source,
           })
@@ -247,6 +273,7 @@ export const OperationsSchema = z
           .object({
             id: label,
             type: z.enum(movementTypes),
+            species: SpeciesSchema.optional(),
             count: count.min(1),
             date: day,
             lot: label.optional(),
@@ -287,9 +314,14 @@ export const emptyOperations = (): Operations => ({
   lots: [],
 });
 const incoming = (type: string) => ["birth", "purchase", "transfer_in"].includes(type);
-export function stockAt(operations: Operations, date: string, lot?: string) {
+export function stockAt(
+  operations: Operations,
+  date: string,
+  lot?: string,
+  species: FarmSpecies = "cattle",
+) {
   const baseline = operations.counts
-    .filter((c) => c.date <= date && c.lot === lot)
+    .filter((c) => c.date <= date && c.lot === lot && (c.species ?? "cattle") === species)
     .sort((a, b) => a.date.localeCompare(b.date) || a.source.at.localeCompare(b.source.at))
     .at(-1);
   if (!baseline) return { count: null, baseline: null, included: [] as string[] };
@@ -297,7 +329,11 @@ export function stockAt(operations: Operations, date: string, lot?: string) {
   // A headcount is an end-of-day snapshot; same-day movements are already included.
   const included = operations.movements.filter(
     (m) =>
-      !replaced.has(m.id) && m.date > baseline.date && m.date <= date && (!lot || m.lot === lot),
+      !replaced.has(m.id) &&
+      (m.species ?? "cattle") === species &&
+      m.date > baseline.date &&
+      m.date <= date &&
+      (!lot || m.lot === lot),
   );
   return {
     count:
@@ -362,13 +398,25 @@ export function applyOperations(
     if (rows.length >= 1000) throw new Error("O volume atingiu o limite técnico de levantamentos.");
     const { kind: _, ...inventory } = action;
     rows.push({ ...inventory, id, source: provenance });
-    if (action.complete)
-      operations.counts.push({
-        id,
-        count: action.groups.reduce((n, g) => n + g.count, 0),
-        date: action.date,
-        source: provenance,
-      });
+    if (action.complete) {
+      const totals = new Map<FarmSpecies, number>();
+      for (const group of action.groups) {
+        const species = group.species ?? "cattle";
+        totals.set(species, (totals.get(species) ?? 0) + group.count);
+      }
+      for (const [species, total] of totals)
+        applyOperations(
+          book,
+          {
+            kind: "herd_count",
+            count: total,
+            date: action.date,
+            ...(species !== "cattle" ? { species } : {}),
+          },
+          provenance,
+          species === "cattle" ? id : `${id}:${species}`,
+        );
+    }
     return;
   }
   if (action.kind === "feed_consumption") {
@@ -385,13 +433,14 @@ export function applyOperations(
       count: action.count,
       date: action.date,
       lot: action.lot,
+      ...(action.species ? { species: action.species } : {}),
       source: provenance,
     });
   } else if (action.kind === "lot_transfer") {
     if (action.from === action.to)
       throw new Error("Escolha lotes diferentes para a transferência.");
-    const origin = stockAt(operations, action.date, action.from);
-    const destination = stockAt(operations, action.date, action.to);
+    const origin = stockAt(operations, action.date, action.from, action.species);
+    const destination = stockAt(operations, action.date, action.to, action.species);
     if (
       !origin.baseline ||
       !destination.baseline ||
@@ -417,6 +466,7 @@ export function applyOperations(
         date: action.date,
         lot,
         description: "Transferência entre lotes",
+        ...(action.species ? { species: action.species } : {}),
         source: provenance,
       });
   } else {
@@ -424,6 +474,8 @@ export function applyOperations(
       const prior = operations.movements.find((m) => m.id === action.replaces);
       if (!prior || operations.movements.some((m) => m.replaces === action.replaces))
         throw new Error("Não encontrei um evento disponível para correção nesta fazenda.");
+      if ((prior.species ?? "cattle") !== (action.species ?? "cattle"))
+        throw new Error("A correção deve preservar a espécie do movimento original.");
       if (prior.type.startsWith("transfer_"))
         throw new Error(
           "Uma transferência entre lotes precisa ser corrigida como uma operação completa.",
@@ -433,7 +485,7 @@ export function applyOperations(
     operations.movements.push({ ...event, id, source: provenance });
   }
   if (action.kind === "herd_event") {
-    const baseline = stockAt(operations, action.date, action.lot).baseline;
+    const baseline = stockAt(operations, action.date, action.lot, action.species).baseline;
     if (baseline && baseline.date === action.date)
       throw new Error(
         "A contagem representa o fim desse dia. Informe a data correta ou revise a contagem antes de lançar um movimento no mesmo dia.",
@@ -456,7 +508,7 @@ export function applyOperations(
     scopes.set(scope, entries);
   };
   for (const c of operations.counts)
-    add(c.lot ?? "", {
+    add((c.species ?? "cattle") + ":" + (c.lot ?? ""), {
       date: c.date,
       at: c.source.at,
       count: c.count,
@@ -470,8 +522,8 @@ export function applyOperations(
       count: (incoming(m.type) ? 1 : -1) * m.count,
       snapshot: false,
     };
-    add("", row);
-    if (m.lot) add(m.lot, row);
+    add((m.species ?? "cattle") + ":", row);
+    if (m.lot) add((m.species ?? "cattle") + ":" + m.lot, row);
   }
   for (const entries of scopes.values()) {
     let balance: number | null = null;
@@ -511,7 +563,11 @@ export function farmIndicators(book: FarmBook, start: string, end: string) {
   const stock = stockAt(operations, end);
   const replaced = new Set(operations.movements.map((m) => m.replaces).filter(Boolean));
   const movements = operations.movements.filter(
-    (m) => !replaced.has(m.id) && m.date >= start && m.date <= end,
+    (m) =>
+      !replaced.has(m.id) &&
+      (m.species ?? "cattle") === "cattle" &&
+      m.date >= start &&
+      m.date <= end,
   );
   const ledger = ledgerForTotals(book.ledger, start, end);
   const expenses = ledger
@@ -521,7 +577,7 @@ export function farmIndicators(book: FarmBook, start: string, end: string) {
     .filter((l) => l.direction === "income")
     .reduce((n, l) => n + l.amountCents, 0);
   const history = operations.counts
-    .filter((c) => !c.lot && c.date <= end)
+    .filter((c) => !c.lot && (c.species ?? "cattle") === "cattle" && c.date <= end)
     .sort((a, b) => a.date.localeCompare(b.date) || a.source.at.localeCompare(b.source.at));
   const firstCount = history.find((c) => c.date >= start) ?? history[0];
   const lastCount = history.at(-1);
@@ -571,6 +627,20 @@ export function farmIndicators(book: FarmBook, start: string, end: string) {
     ruleVersion: "guardian-operations-v1",
     start,
     end,
+    stocksBySpecies: Object.keys(speciesNames).flatMap((key) => {
+      const species = key as FarmSpecies;
+      const value = stockAt(operations, end, undefined, species);
+      return value.count === null
+        ? []
+        : [
+            {
+              species,
+              label: speciesNames[species],
+              count: value.count,
+              date: value.baseline!.date,
+            },
+          ];
+    }),
     stock: {
       ...stock,
       formula: "última contagem ao fim do dia + entradas posteriores − saídas posteriores",

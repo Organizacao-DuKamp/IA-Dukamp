@@ -384,7 +384,7 @@ export function farmReport(
     sections.push(
       stock.count === null
         ? "Estoque agregado: ainda sem contagem inicial declarada."
-        : `Estoque agregado calculado: ${stock.count} cabeças em ${end}, a partir da contagem de ${stock.baseline!.date} e ${stock.included.length} movimentações posteriores. Fórmula: última contagem + entradas posteriores − saídas posteriores.`,
+        : `Estoque agregado calculado: ${stock.count} ${indicators.stocksBySpecies.some((s) => s.species !== "cattle") ? "bovinos" : "cabeças"} em ${end}, a partir da contagem de ${stock.baseline!.date} e ${stock.included.length} movimentações posteriores. Fórmula: última contagem + entradas posteriores − saídas posteriores.`,
     );
     if (indicators.evolution && !input.lot)
       sections.push(
@@ -403,6 +403,11 @@ export function farmReport(
         "Subgrupos incluídos nos grupos principais; identificações individuais podem ser completadas depois.",
       );
     }
+    for (const item of indicators.stocksBySpecies)
+      if (item.species !== "cattle")
+        sections.push(
+          `${item.label}: ${item.count} animais contabilizados separadamente dos bovinos.`,
+        );
     const animals = book.animals.filter((a) => inLot(a.lot));
     sections.push(
       `Fichas individuais cadastradas: ${animals.length} animais; ${animals.filter((a) => a.sex === "female").length} fêmeas; ${animals.filter((a) => a.sex === "male").length} machos. Cadastro não equivale a censo completo da fazenda.`,

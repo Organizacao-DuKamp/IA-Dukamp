@@ -305,6 +305,16 @@ export interface FarmBook {
   ledger: LedgerEntry[];
   records: FieldRecord[];
 }
+export interface SemanticDraft {
+  kind: "semantic_draft";
+  propertyId: string | null;
+  createdAt: string;
+  expiresAt: string;
+  sourceMessageId: string;
+  sourceAt: string;
+  question: string;
+  messages: Array<{ role: string; content: string }>;
+}
 export interface PendingAction {
   semantic?: boolean;
   actions?: GuardianAction[];
@@ -427,6 +437,7 @@ export interface FuelDraft {
   previousPending?: GuardianPending;
 }
 export type GuardianPending =
+  | SemanticDraft
   | FuelDraft
   | PendingAction
   | TaskBatchDraft
