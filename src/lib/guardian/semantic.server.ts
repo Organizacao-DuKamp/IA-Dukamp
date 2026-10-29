@@ -360,7 +360,7 @@ export async function handleSemanticTurn(
         ? `Encontrei mais de uma fazenda com nome parecido: ${choices(resolution.choices)}. Qual delas você quer usar?`
         : `Qual das suas fazendas você quer usar: ${choices()}? Não criei nem selecionei uma fazenda com outro nome.`;
     base.operation = "pending";
-    base.pending = makeDraft(snapshot.active?.id ?? null, question);
+    base.pending = makeDraft(null, question);
     base.reply = question + "\nGuardei o pedido em aberto; nenhum registro foi alterado.";
     return finish();
   }
@@ -372,7 +372,10 @@ export async function handleSemanticTurn(
       : null;
   const active = snapshot.active;
   if (target.id !== active?.id) {
-    const followup = plan.intent !== "select" || !!previousDraft;
+    const followup =
+      plan.intent !== "select" ||
+      (!!previousDraft &&
+        (previousDraft.propertyId === null || previousDraft.propertyId === target.id));
     base.messageId = followup
       ? "scope:" +
         createHash("sha256")

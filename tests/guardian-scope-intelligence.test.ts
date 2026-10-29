@@ -356,3 +356,81 @@ test("a legacy guess about selection cannot fall through to a chatbot acknowledg
   assert.match(r!.reply!, /Não executei nenhuma seleção/);
   assert.equal(r!.conversational, undefined);
 });
+
+test("an explicit switch does not transplant an unrelated draft from the previous farm", async () => {
+  const f = await farms();
+  try {
+    const old = await f.guardian.load(phone);
+    await handleGuardianMessage(
+      {
+        phone,
+        messageId: "draft-eduardo",
+        text: "Registre uma despesa mas falta eu informar o valor",
+      },
+      {
+        store: f.guardian,
+        now,
+        interpret: async (c) => ({
+          intent: "clarify",
+          propertyId: c.propertyId,
+          question: "Qual valor?",
+          entries: [],
+        }),
+      },
+    );
+    let calls = 0;
+    await handleGuardianMessage(
+      { phone, messageId: "just-switch", text: "Selecione Tamburi" },
+      {
+        store: f.guardian,
+        now,
+        interpret: async (c) => {
+          calls++;
+          return plan(c, "select", "Tamburi");
+        },
+      },
+    );
+    assert.equal(calls, 1);
+    const current = await f.guardian.load(phone);
+    assert.equal(current.active!.book.name, "Tambori");
+    assert.equal(current.pending, null);
+    assert.equal(current.active!.book.ledger.length, 0);
+    assert.deepEqual(
+      (await f.guardian.loadProperty!(phone, old.active!.id))!.book,
+      old.active!.book,
+    );
+  } finally {
+    await f.db.close();
+  }
+});
+test("oversized clarification state is rejected before selecting or silently losing original facts", async () => {
+  const s = state();
+  s.active = { id: "a", version: 1, role: "owner", book: emptyFarm("Eduardo", "Tanabi", "SP") };
+  let writes = 0;
+  const r = await handleGuardianMessage(
+    {
+      phone,
+      messageId: "large-context",
+      text: census,
+      history: Array.from({ length: 5 }, (_, i) => ({
+        role: "user",
+        content: String(i) + " animais ".repeat(450),
+      })),
+    },
+    {
+      store: {
+        load: async () => s,
+        receipt: async () => null,
+        commit: async () => {
+          writes++;
+          return "committed";
+        },
+      },
+      now,
+      interpret: async (c) => plan(c, "apply", "Tamburi", mixed),
+    },
+  );
+  assert.equal(writes, 0);
+  assert.match(r!.reply!, /partes menores/);
+  assert.equal(r!.persisted, false);
+});
