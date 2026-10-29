@@ -22,7 +22,7 @@ A conclusão usa o fluxo existente para cancelar avisos pendentes ou já reivind
 
 ## Dados e validação
 
-Aplicar `20261029113610_guardian_cross_property_receipts.sql` antes da publicação. A migração substitui apenas o RPC existente para vincular auditoria e recibo à propriedade alterada nas operações `update`, mantendo a fazenda selecionada. Preserva assinatura, permissões, RLS, travas e verificação de versão; não reescreve dados anteriores. Sem segredo ou variável de ambiente novos. Os campos novos são opcionais no estado JSON e no envelope interno do WhatsApp. Os IDs continuam internos; não há mudança em RLS, sessões do painel ou isolamento das fazendas.
+Aplicar `20261029121331_guardian_cross_property_receipts.sql` antes da publicação. A migração substitui apenas o RPC existente para vincular auditoria e recibo à propriedade alterada nas operações `update`, mantendo a fazenda selecionada. Preserva assinatura, permissões, RLS, travas e verificação de versão; não reescreve dados anteriores. Sem segredo ou variável de ambiente novos. Os campos novos são opcionais no estado JSON e no envelope interno do WhatsApp. Os IDs continuam internos; não há mudança em RLS, sessões do painel ou isolamento das fazendas.
 
 `tests/guardian-natural-task-completion.test.ts` cobre linguagem natural, contexto entre fazendas, ambiguidades, resposta nativa, negativas, repetição, confirmação de todas as tarefas, tarefa concluída + novo lembrete, revogação, reagendamento, escolha expirada e mensagens atrasadas. `tests/whatsapp-webhook.test.ts` verifica a passagem do contexto de resposta em webhook assinado. As dependências de envio e de IA são substituídas nos testes; não enviar mensagens a clientes para homologar.
 
