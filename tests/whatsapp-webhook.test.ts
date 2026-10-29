@@ -335,3 +335,28 @@ test("mensagem já concluída reutiliza resposta sem chamar o modelo", async () 
   assert.equal(executed, false);
   assert.deepEqual(result, { reply: "Resposta já pronta", duplicate: true, shouldSend: true });
 });
+
+test("signed reply context reaches the task handler without asking the producer for an identifier", async () => {
+  const payload = textWebhook("já fiz", "wamid.completion");
+  Object.assign(payload.entry[0].changes[0].value.messages[0], {
+    context: { id: "wamid.task-notice" },
+  });
+  const body = JSON.stringify(payload);
+  let context: string | undefined;
+  const response = await handleWhatsAppWebhookRequest(
+    new Request("https://tpecia.netlify.app/api/public/whatsapp", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-hub-signature-256": signature(body) },
+      body,
+    }),
+    {
+      env,
+      dispatchChat: async (input) => {
+        context = input.replyToMessageId;
+        return { duplicate: false, shouldSend: false };
+      },
+    },
+  );
+  assert.equal(response.status, 200);
+  assert.equal(context, "wamid.task-notice");
+});

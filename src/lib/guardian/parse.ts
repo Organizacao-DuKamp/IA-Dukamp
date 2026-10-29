@@ -182,11 +182,7 @@ export function parseGuardianRequest(
   if (
     corrected &&
     snapshot?.pending &&
-    snapshot.pending.kind !== "herd_identification" &&
-    snapshot.pending.kind !== "herd_registration" &&
-    snapshot.pending.kind !== "record_draft" &&
-    snapshot.pending.kind !== "management_draft" &&
-    snapshot.pending.kind !== "task_batch" &&
+    "action" in snapshot.pending &&
     snapshot.pending.action.kind === "weighing"
   ) {
     const action = ActionSchema.safeParse({
@@ -204,15 +200,6 @@ export function parseGuardianRequest(
   if (/^(sim|confirmo|confirmar|pode salvar)[.! ]*$/.test(t) && snapshot?.pending)
     return { kind: "confirm" };
   if (/^(nao|cancelar)[.! ]*$/.test(t) && snapshot?.pending) return { kind: "cancel" };
-  if (
-    /^(sim|ja|ja conclui|feito)[.! ]*$/.test(t) &&
-    snapshot?.lastNotification?.taskId &&
-    Date.parse(snapshot.lastNotification.sentAt) > now.getTime() - 86400000
-  )
-    return {
-      kind: "action",
-      action: { kind: "task_update", task: snapshot.lastNotification.taskId, status: "done" },
-    };
   if (
     /^(?:ajuda |ativar |abrir )?(?:a )?guardia(?: da fazenda)?[.!? ]*$/.test(t) ||
     /como (?:usar|funciona).*guardia/.test(t)

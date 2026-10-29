@@ -17,6 +17,7 @@ export const WhatsAppChatInputSchema = z.object({
   text: z.string().min(1).max(2000),
   media: WhatsAppMediaSchema.optional(),
   sentAt: z.iso.datetime().optional(),
+  replyToMessageId: z.string().min(1).max(256).optional(),
 });
 
 export type WhatsAppChatInput = z.infer<typeof WhatsAppChatInputSchema>;

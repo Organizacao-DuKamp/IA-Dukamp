@@ -1,3 +1,4 @@
+import { naturalTaskReminder } from "./task-completion-language.ts";
 import { guardianDb, guardianStore } from "./store.server.ts";
 import { reportEvent } from "./reports.ts";
 import { deliverGuardianMessage, type DeliveryMessage, type DeliveryResult } from "./delivery.ts";
@@ -22,6 +23,27 @@ export const eventStore: EventStore = {
     return data ?? [];
   },
   async begin(c) {
+    const db = await guardianDb();
+    const { data: queued, error: readError } = await db
+      .from("guardian_events")
+      .select("type,message")
+      .eq("id", c.id)
+      .eq("lock_token", c.lock_token)
+      .eq("status", "claimed")
+      .maybeSingle();
+    if (readError) throw Error("guardian_prompt_refresh_failed");
+    if (queued?.type === "task_due") {
+      const message = naturalTaskReminder(queued.message);
+      if (message !== queued.message) {
+        const { error } = await db
+          .from("guardian_events")
+          .update({ message })
+          .eq("id", c.id)
+          .eq("lock_token", c.lock_token)
+          .eq("status", "claimed");
+        if (error) throw Error("guardian_prompt_refresh_failed");
+      }
+    }
     const { data, error } = await (
       await guardianDb()
     ).rpc("guardian_begin_delivery", { p_id: c.id, p_lock: c.lock_token });

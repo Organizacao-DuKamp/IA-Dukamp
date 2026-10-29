@@ -36,7 +36,24 @@ export interface GuardianCommit {
   reply: string;
   events?: GuardianEvent[];
 }
+export interface TaskNotification {
+  id: string;
+  propertyId: string;
+  taskId: string;
+  sentAt: string;
+  providerId: string | null;
+  answeredAt: string | null;
+  taskUpdatedAt?: string;
+}
 export interface GuardianStore {
+  taskNotifications?(
+    phone: string,
+    propertyIds: string[],
+    since: string,
+    providerId?: string,
+  ): Promise<TaskNotification[]>;
+  loadProperty?(phone: string, propertyId: string): Promise<GuardianSnapshot["active"]>;
+
   load(phone: string): Promise<GuardianSnapshot>;
   receipt(phone: string, messageId: string): Promise<string | null>;
   commit(turn: GuardianCommit): Promise<string>;
@@ -83,6 +100,53 @@ export function guardianRpcArgs(t: GuardianCommit) {
   };
 }
 export const guardianStore: GuardianStore = {
+  async taskNotifications(phone, propertyIds, since, providerId) {
+    if (!propertyIds.length) return [];
+    let q = (await guardianDb())
+      .from("guardian_events")
+      .select("id,property_id,evidence,sent_at,provider_message_id,answered_at")
+      .eq("recipient", phone)
+      .eq("type", "task_due")
+      .eq("status", "sent")
+      .in("property_id", propertyIds);
+    q = providerId ? q.eq("provider_message_id", providerId) : q.gte("sent_at", since);
+    const { data, error } = await q
+      .order("sent_at", { ascending: false })
+      .limit(30)
+      .abortSignal(AbortSignal.timeout(5000));
+    if (error) throw Error("guardian_task_context_unavailable");
+    return (data ?? [])
+      .filter((x) => typeof x.evidence?.taskId === "string" && x.sent_at)
+      .map((x) => ({
+        id: x.id,
+        propertyId: x.property_id,
+        taskId: x.evidence.taskId as string,
+        sentAt: x.sent_at!,
+        providerId: x.provider_message_id,
+        answeredAt: x.answered_at,
+        taskUpdatedAt: typeof x.evidence.updatedAt === "string" ? x.evidence.updatedAt : undefined,
+      }));
+  },
+  async loadProperty(phone, propertyId) {
+    const db = await guardianDb();
+    const { data: m, error: me } = await db
+      .from("guardian_members")
+      .select("role")
+      .eq("phone_number", phone)
+      .eq("property_id", propertyId)
+      .eq("active", true)
+      .maybeSingle();
+    if (me) throw Error("guardian_task_context_unavailable");
+    if (!m) return null;
+    const { data: p, error: pe } = await db
+      .from("guardian_properties")
+      .select("id,version,book")
+      .eq("id", propertyId)
+      .maybeSingle();
+    if (pe) throw Error("guardian_task_context_unavailable");
+    if (!p) return null;
+    return { id: p.id, version: p.version, role: m.role, book: FarmBookSchema.parse(p.book) };
+  },
   async load(phone) {
     const { data, error } = await (await guardianDb())
       .rpc("guardian_snapshot", { p_phone: phone })

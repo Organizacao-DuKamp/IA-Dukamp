@@ -40,6 +40,7 @@ export async function farmIntegration(
       "20261027111135_guardian_reviews_rules.sql",
       "20261027111144_guardian_property_transfers.sql",
       "20261028121145_guardian_installed_sessions.sql",
+      "20261029121331_guardian_cross_property_receipts.sql",
     ]) {
       if (name.endsWith("_guardian_farm_panel.sql") && beforeEvolution) await beforeEvolution(db);
       await db.exec(
@@ -48,6 +49,18 @@ export async function farmIntegration(
     }
   }
   const guardian: GuardianStore = {
+    taskNotifications: async (phone, ids, since, provider) =>
+      (
+        await db.query<import("../../src/lib/guardian/store.server.ts").TaskNotification>(
+          `select e.id,e.property_id as "propertyId",e.evidence->>'taskId' as "taskId",e.sent_at::text as "sentAt",e.provider_message_id as "providerId",e.answered_at::text as "answeredAt",e.evidence->>'updatedAt' as "taskUpdatedAt" from guardian_events e join guardian_members m on m.property_id=e.property_id and m.phone_number=$1 and m.active where e.recipient=$1 and e.type='task_due' and e.status='sent' and e.property_id=any($2::uuid[]) and (($4::text is not null and e.provider_message_id=$4) or ($4::text is null and e.sent_at>=$3::timestamptz)) order by e.sent_at desc limit 30`,
+          [phone, ids, since, provider ?? null],
+        )
+      ).rows,
+    loadProperty: (phone, id) =>
+      rpc(
+        `select jsonb_build_object('id',g.id,'version',g.version,'role',m.role,'book',g.book) data from guardian_properties g join guardian_members m on m.property_id=g.id and m.phone_number=$1 and m.active where g.id=$2`,
+        [phone, id],
+      ),
     load: async (phone) => mapSnapshot(await rpc("select guardian_snapshot($1) data", [phone])),
     receipt: async (phone, id) =>
       (

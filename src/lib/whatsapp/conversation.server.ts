@@ -495,6 +495,7 @@ export async function processClaimedWhatsAppChat(
             mediaType: input.media?.type,
             history: previous?.history,
             ...(input.sentAt ? { sentAt: input.sentAt } : {}),
+            ...(input.replyToMessageId ? { replyToMessageId: input.replyToMessageId } : {}),
           })
         : null;
       if (guardian?.reply) {

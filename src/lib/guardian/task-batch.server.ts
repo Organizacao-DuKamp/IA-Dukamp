@@ -86,6 +86,11 @@ export async function handleTaskBatch(
   store: GuardianStore,
   now: Date,
   reference: Date,
+  additional?: {
+    actions: GuardianAction[];
+    pending: GuardianSnapshot["pending"];
+    replyToEventId?: string;
+  },
 ): Promise<GuardianHandled | "conflict" | null> {
   if (input.mediaType && input.mediaType !== "audio") return null;
   const incomingText = input.text;
@@ -108,7 +113,8 @@ export async function handleTaskBatch(
   const newTaskWording = matches.some(
     (m) => !/^(?:me lembr[ae]|criar tarefa|crie uma tarefa|agende|agendar)$/i.test(m[0]),
   );
-  if (!combined && !spoken && !previous && !recovered && !newTaskWording) return null;
+  if (!additional && !combined && !spoken && !previous && !recovered && !newTaskWording)
+    return null;
   if (
     /\b(?:n[aã]o me (?:lembr[ae]|avis[ae]r?|mand[ae])|vizinh[oa]|disse|falou|suponha|hipot[eé]tic|exemplo|simule|ser[aá] que|como (?:criar|agendar))\b|["“”]|(?:^|\n)\s*>/i.test(
       input.text,
@@ -321,6 +327,7 @@ export async function handleTaskBatch(
       : observation.status === "action"
         ? [observation.action]
         : [];
+  if (additional) actions.unshift(...additional.actions);
   if (recovered) {
     const clocks = taskClocks(incomingText);
     if (clocks.length === 1 && texts.length === 1) {
@@ -476,7 +483,16 @@ export async function handleTaskBatch(
   }
   const identification = recovered
     ? snapshot.pending
-    : identificationAfterEntry(actions, book, null, active.id, sourceMessageId, now.toISOString());
+    : (identificationAfterEntry(
+        actions,
+        book,
+        null,
+        active.id,
+        sourceMessageId,
+        now.toISOString(),
+      ) ??
+      additional?.pending ??
+      null);
   const pending: GuardianSnapshot["pending"] = recordQuestion
     ? {
         kind: "task_batch",
@@ -498,7 +514,13 @@ export async function handleTaskBatch(
     : null;
   const reply =
     `Registros salvos em ${farmName(book)}:\n` +
-    actions.map((a) => `• ${describeAction(a)}`).join("\n") +
+    actions
+      .map((a) =>
+        a.kind === "task_update" && a.status === "done"
+          ? `• Tarefa concluída: ${book.tasks.find((t) => t.id === a.task)?.title ?? "atividade informada"}.`
+          : `• ${describeAction(a)}`,
+      )
+      .join("\n") +
     (actions.some((a) => a.kind === "herd_event")
       ? stock === null
         ? "\nEntrada salva; o saldo total depende da contagem inicial."
@@ -524,6 +546,7 @@ export async function handleTaskBatch(
     reply,
     details: {
       kind: actions[0].kind,
+      ...(additional?.replyToEventId ? { replyToEventId: additional.replyToEventId } : {}),
       batch: true,
       sourceMessageId,
       sourceAt,
