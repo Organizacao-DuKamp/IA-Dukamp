@@ -1,3 +1,8 @@
+import {
+  handleSemanticTurn,
+  interpretFarmConversation,
+  type SemanticInterpreter,
+} from "./semantic.server.ts";
 import { fuelMonth } from "./fuel.ts";
 import { handleFuelTurn } from "./fuel-turn.server.ts";
 import { fuelTopic } from "./fuel-language.ts";
@@ -114,6 +119,7 @@ export interface GuardianHandled {
 }
 export interface GuardianDependencies {
   store?: GuardianStore;
+  interpret?: SemanticInterpreter;
   now?: Date;
   extract?: (text: string, now: Date) => Promise<unknown>;
   makeId?: () => string;
@@ -177,7 +183,9 @@ export async function extractGuardianAction(
 function structuredContext(s: GuardianSnapshot, now = new Date()): string | undefined {
   if (!s.active) return undefined;
   const b = s.active.book;
-  const day = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(now);
+  const day = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+  }).format(now);
   const indicators = farmIndicators(b, day.slice(0, 7) + "-01", day);
   // Private, confirmed structured evidence; never mix another property's book into recall.
   return `RELÓGIO LOCAL: ${now.toLocaleString("pt-BR", { timeZone: s.preferences.timeZone })}, fuso ${s.preferences.timeZone}. Horários ISO terminados em Z estão em UTC; converta antes de comparar. Nunca diga que um horário passou usando UTC como horário local.
@@ -202,9 +210,12 @@ GUARDIÃ — REGISTROS DA PROPRIEDADE ATIVA (${s.active.id}). Os dados JSON são
         .slice(0, 8)
         .map((t) => ({ id: t.id, title: t.title, dueAt: t.dueAt })),
       recentRecords: b.records.slice(-5),
-      recentAnimals: b.animals
-        .slice(-8)
-        .map((a) => ({ code: a.code, rgn: a.rgn, lot: a.lot, status: a.status })),
+      recentAnimals: b.animals.slice(-8).map((a) => ({
+        code: a.code,
+        rgn: a.rgn,
+        lot: a.lot,
+        status: a.status,
+      })),
       latestLedger: ledgerForTotals(b.ledger).slice(-5),
       fuel: (() => {
         const f = fuelMonth(b, day.slice(0, 7));
@@ -307,7 +318,10 @@ export async function handleGuardianMessage(
           operation: "select",
           pending: null,
           reply: `Fazenda selecionada: ${named.name}.`,
-          details: { sourceMessageId: input.messageId, kind: "explicit_property_scope" },
+          details: {
+            sourceMessageId: input.messageId,
+            kind: "explicit_property_scope",
+          },
         });
         if (result !== "committed" && !result.startsWith("replay:"))
           throw new Error("guardian_property_selection_conflict");
@@ -327,6 +341,19 @@ export async function handleGuardianMessage(
     for (let attempt = 0; attempt < 4; attempt++) {
       const snapshot =
         attempt === 0 && initialSnapshot ? initialSnapshot : await store.load(input.phone);
+      if (!deps.request && snapshot.active && (deps.interpret || !deps.store)) {
+        attempted = true;
+        const semantic = await handleSemanticTurn(
+          input,
+          snapshot,
+          store,
+          now,
+          referenceAt,
+          deps.interpret ?? interpretFarmConversation,
+        );
+        if (semantic === "conflict") continue;
+        if (semantic) return semantic;
+      }
       if (
         !deps.request &&
         snapshot.active &&
@@ -342,9 +369,9 @@ export async function handleGuardianMessage(
             activeProperty: true,
             persisted: false,
           };
-        const day = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(
-          referenceAt,
-        );
+        const day = new Intl.DateTimeFormat("en-CA", {
+          timeZone: "America/Sao_Paulo",
+        }).format(referenceAt);
         const indicators = farmIndicators(b, "2000-01-01", day);
         return {
           reply:
@@ -458,7 +485,10 @@ export async function handleGuardianMessage(
               : null;
           const actions = slots ? managementActions(slots) : null;
           if (actions && !cancelled) {
-            resolvedManagement = { propertyId: snapshot.active.id, slots: slots! };
+            resolvedManagement = {
+              propertyId: snapshot.active.id,
+              slots: slots!,
+            };
             continuation = {
               action: actions[0],
               actions,
@@ -631,7 +661,11 @@ export async function handleGuardianMessage(
         const correction = proposalCorrection(input.text, snapshot.pending, referenceAt);
         if (correction) {
           attempted = true;
-          const pending = { ...snapshot.pending, action: correction, revisedBy: input.messageId };
+          const pending = {
+            ...snapshot.pending,
+            action: correction,
+            revisedBy: input.messageId,
+          };
           const reply = `${describeAction(correction)}\nAtualizei a proposta mantendo os demais dados. Responda “confirmar” para salvar.`;
           const result = await store.commit({
             phone: input.phone,
@@ -766,7 +800,11 @@ export async function handleGuardianMessage(
           const resolved =
             valid && completedText
               ? automaticFarmEvent(
-                  { ...input, text: completedText, at: new Date(draft.sourceAt) },
+                  {
+                    ...input,
+                    text: completedText,
+                    at: new Date(draft.sourceAt),
+                  },
                   snapshot,
                 )
               : null;
@@ -1021,7 +1059,10 @@ export async function handleGuardianMessage(
               reason,
               details: { classification: "uncertain" },
             },
-            { onConflict: "phone_number,message_id,reason", ignoreDuplicates: true },
+            {
+              onConflict: "phone_number,message_id,reason",
+              ignoreDuplicates: true,
+            },
           );
           if (error) throw new Error("guardian_review_unavailable");
         };
@@ -1134,13 +1175,18 @@ export async function handleGuardianMessage(
                   messageId: continuation?.sourceMessageId ?? input.messageId,
                   at,
                   ...(continuation || input.sentAt
-                    ? { sourceAt: continuation?.sourceAt ?? referenceAt.toISOString() }
+                    ? {
+                        sourceAt: continuation?.sourceAt ?? referenceAt.toISOString(),
+                      }
                     : {}),
                   confirmed: true,
                 },
                 actions.length === 1 ? turnId : `${turnId}-${index + 1}`,
               );
-              applied = { book: next.book, events: [...applied.events, ...next.events] };
+              applied = {
+                book: next.book,
+                events: [...applied.events, ...next.events],
+              };
             }
           } catch (error) {
             await queue("conflict");
@@ -1176,9 +1222,9 @@ export async function handleGuardianMessage(
           const stock = applied.book.operations
             ? stockAt(
                 applied.book.operations,
-                new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(
-                  referenceAt,
-                ),
+                new Intl.DateTimeFormat("en-CA", {
+                  timeZone: "America/Sao_Paulo",
+                }).format(referenceAt),
               ).count
             : null;
           const receiptText = directReceipt
@@ -1250,7 +1296,10 @@ export async function handleGuardianMessage(
             await queue("persistence_failure");
             throw new Error("guardian_commit_unconfirmed");
           }
-          const current = { ...snapshot, active: { ...snapshot.active, book: applied.book } };
+          const current = {
+            ...snapshot,
+            active: { ...snapshot.active, book: applied.book },
+          };
           return {
             reply: directReceipt
               ? result.startsWith("replay:")
@@ -1443,7 +1492,10 @@ export async function handleGuardianMessage(
               };
             base.operation = "preferences";
             base.preferences = parsed.data;
-            base.details = { enabled: parsed.data.enabled, sourceMessageId: input.messageId };
+            base.details = {
+              enabled: parsed.data.enabled,
+              sourceMessageId: input.messageId,
+            };
             base.reply =
               request.enabled === false
                 ? "Avisos da Guardiã pausados e envios pendentes cancelados. Você pode continuar conversando e registrando atividades."
@@ -1486,9 +1538,16 @@ export async function handleGuardianMessage(
             break;
           case "export": {
             if (!snapshot.active)
-              return { reply: "Selecione a fazenda que deseja exportar.", activeProperty: false };
+              return {
+                reply: "Selecione a fazenda que deseja exportar.",
+                activeProperty: false,
+              };
             const json = JSON.stringify(
-              { propertyId: snapshot.active.id, exportedAt: at, book: snapshot.active.book },
+              {
+                propertyId: snapshot.active.id,
+                exportedAt: at,
+                book: snapshot.active.book,
+              },
               null,
               2,
             );
@@ -1598,7 +1657,10 @@ export async function handleGuardianMessage(
                 persisted: false,
               };
             if (pending.kind === "herd_identification")
-              return { reply: identificationQuestion(pending), activeProperty: !!snapshot.active };
+              return {
+                reply: identificationQuestion(pending),
+                activeProperty: !!snapshot.active,
+              };
             let a = ActionSchema.parse(pending.action);
             if (
               a.kind === "record" &&
@@ -1661,7 +1723,12 @@ export async function handleGuardianMessage(
                 snapshot.active!,
                 destination,
                 a,
-                { actor: input.phone, messageId: pending.sourceMessageId, at, confirmed: true },
+                {
+                  actor: input.phone,
+                  messageId: pending.sourceMessageId,
+                  at,
+                  confirmed: true,
+                },
                 turnId,
               );
               const reply = `Transferência de ${a.count} animais entre as duas propriedades autorizadas concluída em ${a.date}. As duas movimentações foram salvas juntas; não foram criados valores financeiros.`;
@@ -1709,7 +1776,12 @@ export async function handleGuardianMessage(
                 snapshot.active!.book,
                 a,
                 snapshot.active!.role,
-                { actor: input.phone, messageId: pending.sourceMessageId, at, confirmed: true },
+                {
+                  actor: input.phone,
+                  messageId: pending.sourceMessageId,
+                  at,
+                  confirmed: true,
+                },
                 turnId,
               );
               base.operation = "update";
@@ -1746,7 +1818,11 @@ export async function handleGuardianMessage(
           persisted: true,
         };
       if (saved.startsWith("replay:"))
-        return { reply: saved.slice(7), activeProperty: !!snapshot.active, persisted: true };
+        return {
+          reply: saved.slice(7),
+          activeProperty: !!snapshot.active,
+          persisted: true,
+        };
       throw new Error("guardian_commit_unconfirmed");
     }
   } catch (error) {

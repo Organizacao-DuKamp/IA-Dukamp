@@ -5,9 +5,9 @@ import { farmIndicators, emptyOperations, stockAt } from "@/lib/guardian/operati
 import type { FarmBook } from "@/lib/guardian/schema";
 
 export function FarmOperations({ book, compact = false }: { book: FarmBook; compact?: boolean }) {
-  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(
-    new Date(),
-  );
+  const today = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+  }).format(new Date());
   const [start, setStart] = useState(today.slice(0, 7) + "-01"),
     [end, setEnd] = useState(today),
     [search, setSearch] = useState(""),
@@ -70,6 +70,35 @@ export function FarmOperations({ book, compact = false }: { book: FarmBook; comp
           tone={data.deaths > 0 ? "negative" : "neutral"}
         />
       </div>
+      {!!operations.inventories?.length &&
+        (() => {
+          const inventory = operations.inventories
+            .filter((i) => i.date <= end)
+            .sort((a, b) => a.date.localeCompare(b.date) || a.source.at.localeCompare(b.source.at))
+            .at(-1);
+          return inventory ? (
+            <section className="rounded-xl border p-4 text-sm" aria-label="Rebanho por grupos">
+              <h3 className="font-semibold">
+                Rebanho por grupos · {inventory.date.split("-").reverse().join("/")}
+              </h3>
+              <p className="mt-2 text-muted-foreground">
+                {inventory.complete ? "Levantamento do rebanho existente" : "Levantamento parcial"}.
+                Subgrupos incluídos nos grupos principais. Identificação individual pode ser
+                informada depois.
+              </p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                {inventory.groups.map((g) => (
+                  <article key={g.name} className="rounded-lg border p-3">
+                    <strong>
+                      {g.count} · {g.name}
+                    </strong>
+                    <p className="mt-1 whitespace-pre-wrap">{g.description}</p>
+                  </article>
+                ))}
+              </div>
+            </section>
+          ) : null;
+        })()}
       {!compact && (
         <>
           <div className="grid gap-3 sm:grid-cols-3">

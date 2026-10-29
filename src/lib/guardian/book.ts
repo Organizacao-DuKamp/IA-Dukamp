@@ -101,7 +101,11 @@ export function applyFarmAction(
   const fuel = FuelActionSchema.safeParse(action);
   if (fuel.success) {
     applyFuel(book, fuel.data, source, id);
-    return { book, events, result: `Combustível salvo. ${describeFuel(fuel.data)}` };
+    return {
+      book,
+      events,
+      result: `Combustível salvo. ${describeFuel(fuel.data)}`,
+    };
   }
   const operational = OperationsActionSchema.safeParse(action);
   if (operational.success) {
@@ -250,7 +254,10 @@ export function applyFarmAction(
           at: source.at,
           messageId: source.messageId,
         });
-        Object.assign(existing, source, { weightKg: action.weightKg, estimated: action.estimated });
+        Object.assign(existing, source, {
+          weightKg: action.weightKg,
+          estimated: action.estimated,
+        });
       } else
         animal.weights.push({
           ...source,
@@ -383,9 +390,22 @@ export function farmReport(
       sections.push(
         `Contagens declaradas: ${indicators.evolution.initial} (${indicators.evolution.from}) → ${indicators.evolution.final} (${indicators.evolution.to}), diferença ${indicators.evolution.change}${indicators.evolution.percent !== null ? ` (${num(indicators.evolution.percent)}%)` : ""}. A variação não comprova compra, nascimento ou outra causa.`,
       );
+    const inventory = book.operations?.inventories
+      ?.filter((i) => i.date <= end)
+      .sort((a, b) => a.date.localeCompare(b.date) || a.source.at.localeCompare(b.source.at))
+      .at(-1);
+    if (inventory && !input.lot) {
+      sections.push(
+        `Rebanho por grupos (${inventory.date}; ${inventory.complete ? "censo declarado" : "levantamento parcial"}):`,
+      );
+      for (const g of inventory.groups) sections.push(`${g.count} ${g.name}: ${g.description}`);
+      sections.push(
+        "Subgrupos incluídos nos grupos principais; identificações individuais podem ser completadas depois.",
+      );
+    }
     const animals = book.animals.filter((a) => inLot(a.lot));
     sections.push(
-      `Rebanho cadastrado: ${animals.length} animais; ${animals.filter((a) => a.sex === "female").length} fêmeas; ${animals.filter((a) => a.sex === "male").length} machos. Cadastro não equivale a censo completo da fazenda.`,
+      `Fichas individuais cadastradas: ${animals.length} animais; ${animals.filter((a) => a.sex === "female").length} fêmeas; ${animals.filter((a) => a.sex === "male").length} machos. Cadastro não equivale a censo completo da fazenda.`,
     );
     for (const a of animals) {
       const weights = a.weights.filter((w) => inPeriod(w.date));

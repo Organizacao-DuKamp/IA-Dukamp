@@ -78,6 +78,18 @@ export function farmCsv(book: FarmBook): string {
       "",
       "declarado",
     ]);
+  for (const inventory of book.operations?.inventories ?? [])
+    for (const group of inventory.groups)
+      rows.push([
+        "Rebanho por grupos",
+        inventory.id,
+        inventory.date,
+        group.name + ": " + group.description,
+        group.count,
+        "cabeças",
+        "",
+        inventory.complete ? "censo declarado" : "levantamento parcial",
+      ]);
   const replaced = new Set(book.operations?.movements.map((m) => m.replaces).filter(Boolean));
   for (const c of book.operations?.counts ?? [])
     rows.push([
