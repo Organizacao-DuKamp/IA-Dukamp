@@ -194,6 +194,10 @@ function extractIncomingMessages(payload: unknown): IncomingWhatsAppMessage[] {
           phone: message.from,
           messageId: message.id,
           sentAt: metaMessageSentAt(message.timestamp),
+          replyToMessageId:
+            typeof asRecord(message.context)?.id === "string"
+              ? asRecord(message.context)!.id
+              : undefined,
           text: textValue,
           ...(media ? { media } : {}),
         });
@@ -548,6 +552,7 @@ export async function handleEnhancedWhatsAppWebhookRequest(
           messageId: message.messageId,
           text: message.text,
           ...(message.sentAt ? { sentAt: message.sentAt } : {}),
+          ...(message.replyToMessageId ? { replyToMessageId: message.replyToMessageId } : {}),
           ...(message.media ? { media: message.media } : {}),
         }),
       );

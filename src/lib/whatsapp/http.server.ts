@@ -24,6 +24,7 @@ interface IncomingTextMessage {
   phone: string;
   messageId: string;
   sentAt?: string;
+  replyToMessageId?: string;
   text: string;
 }
 
@@ -134,6 +135,10 @@ function extractTextMessages(payload: unknown): IncomingTextMessage[] {
           phone: message.from,
           messageId: message.id,
           sentAt: metaMessageSentAt(message.timestamp),
+          replyToMessageId:
+            typeof asRecord(message.context)?.id === "string"
+              ? asRecord(message.context)!.id
+              : undefined,
           text: textObject.body,
         });
         if (!parsed.success) continue;
@@ -336,6 +341,7 @@ export async function handleWhatsAppWebhookRequest(
         messageId: message.messageId,
         text: message.text,
         ...(message.sentAt ? { sentAt: message.sentAt } : {}),
+        ...(message.replyToMessageId ? { replyToMessageId: message.replyToMessageId } : {}),
       });
       console.info(
         `[whatsapp] dispatch completed duration_ms=${Date.now() - started} should_send=${result.shouldSend} has_reply=${Boolean(result.reply)} reply_chars=${result.reply ? Array.from(result.reply).length : 0}`,

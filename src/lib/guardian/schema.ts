@@ -382,9 +382,21 @@ export interface TaskBatchDraft {
   completedTasks?: string[];
   question: string;
 }
+export interface TaskCompletionDraft {
+  kind: "task_completion";
+  propertyId: string | null;
+  createdAt: string;
+  expiresAt: string;
+  sourceMessageId: string;
+  sourceAt: string;
+  choices: Array<{ propertyId: string; taskId: string }>;
+  question: string;
+  previousPending?: GuardianPending;
+}
 export type GuardianPending =
   | PendingAction
   | TaskBatchDraft
+  | TaskCompletionDraft
   | HerdIdentification
   | HerdRegistrationDraft
   | ManagementDraft

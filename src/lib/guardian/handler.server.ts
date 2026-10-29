@@ -1,3 +1,5 @@
+import { handleTaskCompletion } from "./task-completion.server.ts";
+import { completionIntent } from "./task-completion-language.ts";
 import { hasTaskIntent } from "./task-language.ts";
 import { handleTaskBatch } from "./task-batch.server.ts";
 import {
@@ -96,6 +98,7 @@ export interface GuardianInput {
   text: string;
   mediaType?: string;
   sentAt?: string;
+  replyToMessageId?: string;
   history?: ChatMessage[];
 }
 export interface GuardianHandled {
@@ -207,7 +210,7 @@ function pendingQuestion(pending: GuardianPending | null | undefined): string | 
   if (!pending) return undefined;
   if (pending.kind === "herd_identification")
     return pending.repeatCheck ? repeatQuestion(pending) : identificationQuestion(pending);
-  if (pending.kind === "task_batch") return pending.question;
+  if (pending.kind === "task_batch" || pending.kind === "task_completion") return pending.question;
   if (pending.kind === "herd_registration") return registrationQuestion(pending.missing);
   if (pending.kind === "record_draft") return missingRecordSlot(pending)?.question;
   if (pending.kind === "management_draft") return managementQuestion(pending);
@@ -271,7 +274,11 @@ export async function handleGuardianMessage(
       const selection = await store.load(input.phone);
       initialSnapshot = selection;
       const named = namedProperty(input.text, selection);
-      if (named && named.id !== selection.active?.id) {
+      const completionFarmChoice =
+        selection.pending?.kind === "task_completion" &&
+        named &&
+        fold(input.text).replace(/[.!?]+$/, "") === fold(named.name);
+      if (named && named.id !== selection.active?.id && !completionFarmChoice) {
         const result = await store.commit({
           phone: input.phone,
           messageId: `scope:${turnId}`,
@@ -287,7 +294,11 @@ export async function handleGuardianMessage(
           throw new Error("guardian_property_selection_conflict");
         initialSnapshot = undefined;
       }
-      if (named && fold(input.text).replace(/[.!?]+$/, "") === fold(named.name))
+      if (
+        named &&
+        !completionFarmChoice &&
+        fold(input.text).replace(/[.!?]+$/, "") === fold(named.name)
+      )
         return {
           reply: `Fazenda selecionada: ${named.name}. Pode continuar o pedido nesta propriedade.`,
           activeProperty: true,
@@ -333,6 +344,11 @@ export async function handleGuardianMessage(
           persisted: false,
         };
       if (!deps.request) {
+        if (completionIntent(input.text) || snapshot.pending?.kind === "task_completion")
+          attempted = true;
+        const completion = await handleTaskCompletion(input, snapshot, store, now, referenceAt);
+        if (completion === "conflict") continue;
+        if (completion) return completion;
         const batch = await handleTaskBatch(input, snapshot, store, now, referenceAt);
         if (batch === "conflict") continue;
         if (batch) return batch;
@@ -585,11 +601,7 @@ export async function handleGuardianMessage(
       if (
         !deps.request &&
         snapshot.pending &&
-        snapshot.pending.kind !== "herd_identification" &&
-        snapshot.pending.kind !== "herd_registration" &&
-        snapshot.pending.kind !== "record_draft" &&
-        snapshot.pending.kind !== "management_draft" &&
-        snapshot.pending.kind !== "task_batch" &&
+        "action" in snapshot.pending &&
         Date.parse(snapshot.pending.expiresAt) > now.getTime() &&
         snapshot.pending.propertyId === snapshot.active?.id
       ) {
@@ -1534,7 +1546,7 @@ export async function handleGuardianMessage(
                 "A proposta expirou. Envie o registro novamente para eu mostrar os dados antes de salvar.";
               break;
             }
-            if (pending.kind === "task_batch")
+            if (pending.kind === "task_batch" || pending.kind === "task_completion")
               return {
                 reply: pending.question,
                 activeProperty: !!snapshot.active,

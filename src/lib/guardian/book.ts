@@ -124,7 +124,7 @@ export function applyFarmAction(
         source,
         updatedAt: source.at,
       });
-      result = `Tarefa ${id} criada: ${action.title}. Para concluir, diga “concluir tarefa ${id}”.`;
+      result = `Tarefa “${action.title}” criada. Quando terminar, diga “já concluí essa tarefa” ou descreva o que fez.`;
       break;
     case "task_update": {
       const task = book.tasks.find(
@@ -144,7 +144,7 @@ export function applyFarmAction(
       task.updatedAt = source.at;
       result =
         task.status === "done"
-          ? `Tarefa ${task.id} concluída e salva.${/pesar|pesagem/i.test(task.title) ? " Quer registrar os novos pesos? Envie o código de cada animal e o peso em kg." : ""}`
+          ? `Tarefa “${task.title}” concluída e salva.${/pesar|pesagem/i.test(task.title) ? " Quer registrar os novos pesos? Envie o código de cada animal e o peso em kg." : ""}`
           : `Tarefa ${task.id} atualizada e salva.`;
       break;
     }
@@ -331,7 +331,7 @@ export function applyFarmAction(
         updatedAt: task.updatedAt,
         sourceMessageId: source.messageId,
       },
-      message: `${farmName(book)}: a tarefa “${task.title}” está prevista para ${new Date(task.dueAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })} (Brasília). Você já concluiu? Se sim, responda “concluir tarefa ${task.id}”.`,
+      message: `${farmName(book)}: a tarefa “${task.title}” está prevista para ${new Date(task.dueAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })} (Brasília). Você já concluiu? Pode responder “já fiz” ou dizer qual atividade terminou.`,
     });
   }
   return { book, events, result };
@@ -417,7 +417,7 @@ export function farmReport(
         .filter((t) => inLot(t.lot) && inPeriod(t.dueAt.slice(0, 10)))
         .map(
           (t) =>
-            `${t.id} — ${t.title} — ${t.status === "open" ? "pendente" : t.status === "done" ? "concluída" : "cancelada"} — ${new Date(t.dueAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}`,
+            `• ${t.title} — ${t.status === "open" ? "pendente" : t.status === "done" ? "concluída" : "cancelada"} — ${new Date(t.dueAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}`,
         ),
     );
   if (all || input.section === "finance") {
