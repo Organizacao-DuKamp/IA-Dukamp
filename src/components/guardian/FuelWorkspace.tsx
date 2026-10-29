@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ArrowDownToLine, ArrowUpFromLine, Fuel, Wallet, Scale, Plus, X } from "lucide-react";
 import { ActionSchema, type FarmBook, type GuardianAction } from "@/lib/guardian/schema";
-import { fuelMonth, fuelNames, type FuelType } from "@/lib/guardian/fuel";
+import { fuelMonth, fuelNames, fuelNeedsTotalRelation, type FuelType } from "@/lib/guardian/fuel";
 import { PanelMetric } from "./PanelMetric";
 
 const cash = (n: number) =>
@@ -92,6 +92,7 @@ export function FuelWorkspace({
             amountCents: Math.round(Number(values.amount) * 100),
             date,
             ...(values.mode === "monthly" ? { periodMonth: values.periodMonth } : {}),
+            ...(values.totalRelation ? { totalRelation: values.totalRelation } : {}),
             ...(values.description?.trim() ? { description: values.description.trim() } : {}),
           }
         : {
@@ -305,6 +306,30 @@ export function FuelWorkspace({
                 />
               </label>
             )}
+            {form === "expense" &&
+              values.mode === "monthly" &&
+              fuelNeedsTotalRelation(book, {
+                kind: "fuel_expense",
+                fuel: (values.fuel ?? "diesel") as FuelType,
+                amountCents: 1,
+                date: today(),
+                periodMonth: values.periodMonth ?? month,
+              }) && (
+                <label className="text-sm font-medium">
+                  Relação com o total já informado
+                  <select
+                    required
+                    className={control}
+                    aria-label="Relação do combustível com o total mensal"
+                    value={values.totalRelation ?? ""}
+                    onChange={(e) => setValues((v) => ({ ...v, totalRelation: e.target.value }))}
+                  >
+                    <option value="">Escolha</option>
+                    <option value="included">Já está incluído no total</option>
+                    <option value="additional">É adicional ao total</option>
+                  </select>
+                </label>
+              )}
             {field(
               "date",
               form === "expense" && values.mode === "monthly" ? "Data da informação" : "Data",

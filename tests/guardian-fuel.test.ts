@@ -634,12 +634,16 @@ test("a natural cancellation preserves the original expense and audit rather tha
       fuelMonth((await f.guardian.load(phone)).active!.book, "2026-10").expenseCents,
       50000,
     );
-    const r = await send("cancel", "Cancele a última despesa de gasolina");
+    const r = await send(
+      "cancel",
+      "Cancele a última despesa de gasolina; me lembra amanhã às 13h30 de conferir o tanque",
+    );
     assert.equal(r?.persisted, true, r?.reply ?? "");
     const b = (await f.guardian.load(phone)).active!.book;
     assert.equal(b.ledger.length, 1);
     assert.ok(b.ledger[0].voided?.source);
     assert.equal(fuelMonth(b, "2026-10").expenseCents, 0);
+    assert.equal(b.tasks.length, 1);
   } finally {
     await f.db.close();
   }
@@ -678,6 +682,102 @@ test("spoken short answers retain the month and source, while an expired fuel an
     assert.equal(expired?.persisted, false);
     assert.match(expired!.reply!, /expirou/);
     assert.equal((await f.guardian.load(phone)).active!.book.fuel!.movements.length, 1);
+  } finally {
+    await f.db.close();
+  }
+});
+test("a fuel subtotal clarifies inclusion in the existing farm total and absorbs prior category details in either case", () => {
+  let b = apply(
+    fresh(),
+    {
+      kind: "ledger",
+      direction: "expense",
+      amountCents: 8000000,
+      date: "2026-10-29",
+      periodMonth: "2026-10",
+      description: "Total da fazenda",
+    },
+    1,
+  );
+  b = apply(
+    b,
+    { kind: "fuel_expense", fuel: "gasoline", amountCents: 50000, date: "2026-10-29" },
+    2,
+  );
+  assert.equal(
+    ledgerForTotals(b.ledger).reduce((n, e) => n + e.amountCents, 0),
+    8050000,
+  );
+  assert.throws(
+    () =>
+      apply(
+        b,
+        {
+          kind: "fuel_expense",
+          fuel: "gasoline",
+          amountCents: 200000,
+          date: "2026-10-29",
+          periodMonth: "2026-10",
+        },
+        3,
+      ),
+    /incluído/,
+  );
+  const included = apply(
+    b,
+    {
+      kind: "fuel_expense",
+      fuel: "gasoline",
+      amountCents: 200000,
+      date: "2026-10-29",
+      periodMonth: "2026-10",
+      totalRelation: "included",
+    },
+    3,
+  );
+  assert.equal(
+    ledgerForTotals(included.ledger).reduce((n, e) => n + e.amountCents, 0),
+    8000000,
+  );
+  const extra = apply(
+    b,
+    {
+      kind: "fuel_expense",
+      fuel: "gasoline",
+      amountCents: 200000,
+      date: "2026-10-29",
+      periodMonth: "2026-10",
+      totalRelation: "additional",
+    },
+    3,
+  );
+  assert.equal(
+    ledgerForTotals(extra.ledger).reduce((n, e) => n + e.amountCents, 0),
+    8200000,
+  );
+  assert.equal(fuelMonth(extra, "2026-10").expenseCents, 200000);
+});
+test("the farm-total question accepts a one-word answer and persists the explicit relation", async () => {
+  const f = await fixture();
+  let i = 0;
+  const send = (id: string, text: string) =>
+    handleGuardianMessage(
+      { phone, messageId: id, text },
+      { store: f.guardian, now: new Date(at.getTime() + ++i * 1000), extract: async () => null },
+    );
+  try {
+    await send("general", "Minha fazenda tem uma despesa de 80 mil nesse mês");
+    const q = await send("fuel-total", "Esse mês foi 2000 de gasolina");
+    assert.equal(q?.persisted, false);
+    assert.match(q!.reply!, /incluído/);
+    const r = await send("relation", "adicional");
+    assert.equal(r?.persisted, true, r?.reply ?? "");
+    const b = (await f.guardian.load(phone)).active!.book;
+    assert.equal(b.ledger[1].totalRelation, "additional");
+    assert.equal(
+      ledgerForTotals(b.ledger).reduce((n, e) => n + e.amountCents, 0),
+      8200000,
+    );
   } finally {
     await f.db.close();
   }

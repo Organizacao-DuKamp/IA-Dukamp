@@ -1,3 +1,4 @@
+import { fuelNeedsTotalRelation } from "./fuel.ts";
 import { fuelObservation } from "./fuel-language.ts";
 import { ActionSchema, type GuardianSnapshot, type GuardianAction } from "./schema.ts";
 import { OperationsActionSchema } from "./operations.ts";
@@ -66,6 +67,17 @@ export function automaticFarmEvent(
   if (fuel.status === "pending")
     return { status: "pending", reason: "ambiguous_date", reply: fuel.question };
   if (fuel.status === "ignored") return { status: "none" };
+  if (
+    fuel.status === "actions" &&
+    snapshot.active &&
+    fuel.actions.some((a) => fuelNeedsTotalRelation(snapshot.active!.book, a))
+  )
+    return {
+      status: "pending",
+      reason: "ambiguous_date",
+      reply:
+        "Esse total de combustível já está incluído no total mensal informado ou é adicional? Responda incluído ou adicional; nenhum gasto novo foi salvo.",
+    };
   const finance = financialObservation(fuel.residual, input.at);
   if (finance.status === "pending") return finance;
   const candidates: GuardianAction[] =

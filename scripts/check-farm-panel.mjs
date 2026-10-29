@@ -382,7 +382,7 @@ try {
   for (const [id, text] of [
     ["fuel-out", "Saíram 250 litros de diesel para o trator e saíram 20 litros para o caminhão"],
     ["fuel-expense", "Hoje o custo da gasolina foi 500"],
-    ["fuel-month", "Esse mês foi 2000 de gasolina"],
+    ["fuel-month", "Esse mês foi 2000 de gasolina já incluído no total"],
   ]) {
     const r = await handleGuardianMessage(
       { phone, messageId: "browser-" + id, text, mediaType: "audio" },

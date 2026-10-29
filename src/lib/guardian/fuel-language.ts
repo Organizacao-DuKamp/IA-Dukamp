@@ -324,9 +324,11 @@ export function fuelObservation(text: string, at: Date): FuelObservation {
         amountCents: money,
         date: date.day ?? localDay(at),
         ...(period ? { periodMonth: period } : {}),
-        ...(/\b(?:ja incluido|incluso|dentro do total)\b/.test(c)
+        ...(/\b(?:ja incluido|incluso|incluido|dentro do total)\b/.test(c)
           ? { totalRelation: "included" }
-          : {}),
+          : /\b(?:adicional|por fora|somar ao total)\b/.test(c)
+            ? { totalRelation: "additional" }
+            : {}),
       });
       if (!parsed.success)
         return {

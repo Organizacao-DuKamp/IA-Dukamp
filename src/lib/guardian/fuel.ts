@@ -165,6 +165,21 @@ export function describeFuel(a: FuelAction) {
     return `${a.periodMonth ? "Total mensal informado" : "Despesa"} de ${fuelNames[a.fuel].toLowerCase()}: ${(a.amountCents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}, ${a.periodMonth ?? a.date}.${a.periodMonth ? " Inclui os detalhes anteriores desse combustível no mês; não será somado a eles." : ""} Não altera litros no tanque.`;
   return `${a.type === "balance" ? "Informar saldo" : a.type === "in" ? "Registrar entrada" : "Registrar saída"} de ${liters(a.liters)} de ${fuelNames[a.fuel].toLowerCase()} no tanque ${a.tank}${a.destination ? `, para ${a.destination}` : ""}, em ${a.date}.${a.amountCents ? ` Custo: ${(a.amountCents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}, também no financeiro.` : ""}`;
 }
+export function fuelNeedsTotalRelation(book: FarmBook, a: FuelAction): boolean {
+  return (
+    a.kind === "fuel_expense" &&
+    !!a.periodMonth &&
+    !a.totalRelation &&
+    book.ledger.some(
+      (e) =>
+        !e.voided &&
+        e.direction === "expense" &&
+        e.periodMonth === a.periodMonth &&
+        !e.lot &&
+        (!e.categoryTotal || (e.category === "fuel:unspecified" && a.fuel !== "unspecified")),
+    )
+  );
+}
 export function applyFuel(book: FarmBook, a: FuelAction, s: Provenance, id: string) {
   const day = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(
     new Date(s.at),
@@ -203,6 +218,10 @@ export function applyFuel(book: FarmBook, a: FuelAction, s: Provenance, id: stri
         source: s,
       });
   } else {
+    if (fuelNeedsTotalRelation(book, a))
+      throw Error(
+        "Esse total de combustível já está incluído no total mensal informado ou é adicional? Informe essa relação antes de salvar.",
+      );
     if (book.ledger.some((x) => x.id === id)) throw Error("Esse lançamento já existe.");
     book.ledger.push({
       id,

@@ -44,41 +44,52 @@ export function ledgerForTotals(entries: LedgerEntry[], start = "", end = "9999-
     if (!prior || (prior.source.sourceAt ?? prior.source.at) <= (e.source.sourceAt ?? e.source.at))
       totals.set(key(e), e);
   }
+  const stamp = (e: LedgerEntry) => e.source.sourceAt ?? e.source.at;
   return entries.filter((e) => {
     const category = fuelCategory(e) ?? e.category;
-    if (e.periodMonth)
+    if (e.periodMonth) {
+      if (totals.get(key(e)) !== e || e.periodMonth + "-01" < start || coverageEnd(e) > end)
+        return false;
+      if (!e.categoryTotal) return !e.lot || !totals.has(`${e.periodMonth}:${e.direction}::`);
+      const parents = [
+        totals.get(key(e, e.periodMonth, "")),
+        totals.get(`${e.periodMonth}:${e.direction}::`),
+        ...(category?.startsWith("fuel:") && category !== "fuel:unspecified"
+          ? [
+              totals.get(key(e, e.periodMonth, "fuel:unspecified")),
+              totals.get(`${e.periodMonth}:${e.direction}::fuel:unspecified`),
+            ]
+          : []),
+      ].filter((p): p is LedgerEntry => !!p);
       return (
-        totals.get(key(e)) === e &&
-        e.periodMonth + "-01" >= start &&
-        coverageEnd(e) <= end &&
-        (!e.lot || !totals.has(`${e.periodMonth}:${e.direction}::`)) &&
-        (!e.categoryTotal ||
-          (!totals.has(key(e, e.periodMonth, "")) &&
-            !totals.has(`${e.periodMonth}:${e.direction}::`) &&
-            !(
-              category?.startsWith("fuel:") &&
-              category !== "fuel:unspecified" &&
-              (totals.has(key(e, e.periodMonth, "fuel:unspecified")) ||
-                totals.has(`${e.periodMonth}:${e.direction}::fuel:unspecified`))
-            )))
+        !parents.length ||
+        (e.totalRelation === "additional" && parents.every((p) => stamp(e) > stamp(p)))
       );
+    }
     if (e.date < start || e.date > end) return false;
-    // A whole-farm total also covers individually identified lots.
-    const total =
+    // A later, explicit category total also absorbs the category's earlier details.
+    // This remains true when that category total was already included in a farm total.
+    const general =
       totals.get(key(e, e.date.slice(0, 7), "")) ??
-      totals.get(`${e.date.slice(0, 7)}:${e.direction}::`) ??
-      (category?.startsWith("fuel:")
-        ? (totals.get(key(e, e.date.slice(0, 7), "fuel:unspecified")) ??
-          totals.get(`${e.date.slice(0, 7)}:${e.direction}::fuel:unspecified`))
-        : undefined) ??
-      (category
-        ? (totals.get(key(e, e.date.slice(0, 7), category)) ??
-          totals.get(`${e.date.slice(0, 7)}:${e.direction}::${category}`))
-        : undefined);
-    // A separately reported new expense after a total is an increment, including
-    // on the same date. A later revised total absorbs earlier increments again.
-    const after =
-      total && (e.source.sourceAt ?? e.source.at) > (total.source.sourceAt ?? total.source.at);
+      totals.get(`${e.date.slice(0, 7)}:${e.direction}::`);
+    const scoped = [
+      ...(category?.startsWith("fuel:")
+        ? [
+            totals.get(key(e, e.date.slice(0, 7), "fuel:unspecified")),
+            totals.get(`${e.date.slice(0, 7)}:${e.direction}::fuel:unspecified`),
+          ]
+        : []),
+      ...(category
+        ? [
+            totals.get(key(e, e.date.slice(0, 7), category)),
+            totals.get(`${e.date.slice(0, 7)}:${e.direction}::${category}`),
+          ]
+        : []),
+    ]
+      .filter((p): p is LedgerEntry => !!p)
+      .sort((a, b) => stamp(b).localeCompare(stamp(a)))[0];
+    const total = scoped && (!general || stamp(scoped) >= stamp(general)) ? scoped : general;
+    const after = total && stamp(e) > stamp(total);
     return (
       !total ||
       e.date > coverageEnd(total) ||

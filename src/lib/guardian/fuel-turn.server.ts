@@ -1,8 +1,9 @@
+import { handleTaskBatch } from "./task-batch.server.ts";
 import { amountIn, moneyValue } from "./record-dialogue.ts";
 import { userStatement } from "../whatsapp/learned-notes.ts";
 import { createHash } from "node:crypto";
-import { fuelObservation, fuelFold, fuelTopic, fuelPeriod } from "./fuel-language.ts";
-import { fuelMonth, fuelNames, fuelStocks, ledgerFuel } from "./fuel.ts";
+import { fuelObservation, fuelFold, fuelTopic, fuelPeriod, fuelClauses } from "./fuel-language.ts";
+import { fuelMonth, fuelNames, fuelStocks, ledgerFuel, fuelNeedsTotalRelation } from "./fuel.ts";
 import { applyFarmAction, describeAction } from "./book.ts";
 import {
   canEdit,
@@ -60,7 +61,13 @@ export async function handleFuelTurn(
     }
     if (!continuationText) return null;
   }
-  if (hasTaskIntent(input.text)) return null;
+  if (
+    hasTaskIntent(input.text) &&
+    !/\b(?:cancele|cancela|cancelar|desfaca|estorne|anule|apague|exclua)\b/.test(
+      fuelFold(input.text),
+    )
+  )
+    return null;
   const active = s.active;
   if (!active)
     return {
@@ -179,7 +186,11 @@ export async function handleFuelTurn(
     fuelFold(text),
   );
   if (cancel && observed.status !== "ignored") {
-    const t = fuelFold(text),
+    const cancellation =
+      fuelClauses(text).find((c) =>
+        /\b(?:cancele|cancela|cancelar|desfaca|estorne|anule|apague|exclua)\b/.test(fuelFold(c)),
+      ) ?? text;
+    const t = fuelFold(cancellation),
       fuel = /\bdiesel\b/.test(t)
         ? "diesel"
         : /\bgasolina\b/.test(t)
@@ -187,9 +198,9 @@ export async function handleFuelTurn(
           : /\b(?:etanol|alcool)\b/.test(t)
             ? "ethanol"
             : null;
-    const period = fuelPeriod(text, new Date(sourceAt)),
-      date = eventDay(text, new Date(sourceAt));
-    const money = amountIn(text)?.amount;
+    const period = fuelPeriod(cancellation, new Date(sourceAt)),
+      date = eventDay(cancellation, new Date(sourceAt));
+    const money = amountIn(cancellation)?.amount;
     const movements =
       /\b(?:entrada|saida|saldo|litros)\b/.test(t) && !/\b(?:gasto|despesa|valor)\b/.test(t);
     const quantity = t.match(/(\d+(?:[.,]\d+)?)\s*(?:litros?|l)\b/)?.[1];
@@ -302,6 +313,9 @@ export async function handleFuelTurn(
   let question = observed.status === "pending" ? observed.question : undefined;
   if (observed.status === "actions")
     for (const a of observed.actions) {
+      if (fuelNeedsTotalRelation(active.book, a))
+        question =
+          "Esse total de combustível já está incluído no total mensal informado ou é adicional? Pode responder “incluído” ou “adicional”.";
       if (a.kind !== "fuel_movement" || a.tank !== "Principal") continue;
       const tanks = fuelStocks(active.book).filter((x) => x.fuel === a.fuel);
       if (tanks.length > 1 && !/\btanque\s+/i.test(text))
@@ -327,9 +341,22 @@ export async function handleFuelTurn(
     return commit(undefined, pending, question + " Ainda não salvei esse pedido.", {});
   }
   if (observed.status !== "actions") return null;
-  const automatic = cancel
-    ? { status: "none" as const }
-    : automaticFarmEvent({ text, at: new Date(sourceAt) }, s);
+  const remaining = cancel
+    ? fuelClauses(text)
+        .filter(
+          (c) =>
+            !/\b(?:cancele|cancela|cancelar|desfaca|estorne|anule|apague|exclua)\b/.test(
+              fuelFold(c),
+            ),
+        )
+        .join("; ")
+    : text;
+  if (cancel && hasTaskIntent(remaining))
+    return handleTaskBatch({ ...input, text: remaining }, s, store, now, new Date(sourceAt), {
+      actions: observed.actions,
+      pending: draft ? restore : s.pending,
+    });
+  const automatic = automaticFarmEvent({ text: remaining, at: new Date(sourceAt) }, s);
   if (automatic.status === "pending")
     return {
       reply:
@@ -344,15 +371,13 @@ export async function handleFuelTurn(
       : automatic.status === "action"
         ? [automatic.action]
         : [];
-  const combined = cancel
-    ? { actions: observed.actions, question: undefined }
-    : complementaryFarmGoals(
-        text,
-        [...observed.actions, ...others.filter((a) => !a.kind.startsWith("fuel_"))],
-        s,
-        input.phone,
-        new Date(sourceAt),
-      );
+  const combined = complementaryFarmGoals(
+    remaining,
+    [...observed.actions, ...others.filter((a) => !a.kind.startsWith("fuel_"))],
+    s,
+    input.phone,
+    new Date(sourceAt),
+  );
   if (combined.question)
     return {
       reply: combined.question + " Nenhum item deste pedido foi salvo.",
