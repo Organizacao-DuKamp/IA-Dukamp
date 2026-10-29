@@ -1,3 +1,4 @@
+import { ledgerFuel } from "@/lib/guardian/fuel";
 import { useState } from "react";
 import { ArrowDownLeft, ArrowUpRight, Search, Wallet, X } from "lucide-react";
 import type { GuardianAction, LedgerEntry } from "@/lib/guardian/schema";
@@ -115,7 +116,10 @@ export function FinanceLedger({
                       <span className="rounded-full bg-slate-100 px-2 py-0.5">Mensal</span>
                     )}
                     {e.lot && <span>Lote {e.lot}</span>}
-                    {!totals.includes(e) && (
+                    {e.voided && (
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5">Cancelado</span>
+                    )}
+                    {!e.voided && !totals.includes(e) && (
                       <span className="rounded-full bg-slate-100 px-2 py-0.5">
                         Já incluído no total
                       </span>
@@ -129,7 +133,7 @@ export function FinanceLedger({
                       <p>{ledgerPeriod(e)}</p>
                       <p>Código: {e.id}</p>
                       {e.recurrence === "monthly" && <p>Valor mensal informado pelo produtor</p>}
-                      {!totals.includes(e) && (
+                      {!e.voided && !totals.includes(e) && (
                         <p>
                           Histórico ou detalhamento incluído no total mensal; não somado novamente.
                         </p>
@@ -140,17 +144,25 @@ export function FinanceLedger({
                           timeZone: "America/Sao_Paulo",
                         })}
                       </p>
-                      {canDelete && (
+                      {canDelete && !e.voided && !e.fuelMovementId && (
                         <button
                           disabled={busy}
                           onClick={() =>
-                            void onPropose({ kind: "delete_record", section: "ledger", id: e.id })
+                            void onPropose(
+                              ledgerFuel(e) !== null
+                                ? {
+                                    kind: "fuel_void",
+                                    id: e.id,
+                                    reason: "Cancelamento solicitado pelo produtor no financeiro",
+                                  }
+                                : { kind: "delete_record", section: "ledger", id: e.id },
+                            )
                           }
                           className="mt-2 inline-flex items-center gap-1 text-rose-700"
                           aria-label={`Revisar exclusão de ${e.description}`}
                         >
                           <X size={14} />
-                          Revisar exclusão
+                          {ledgerFuel(e) !== null ? "Revisar cancelamento" : "Revisar exclusão"}
                         </button>
                       )}
                     </div>

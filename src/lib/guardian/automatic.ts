@@ -1,3 +1,5 @@
+import { fuelNeedsTotalRelation } from "./fuel.ts";
+import { fuelObservation } from "./fuel-language.ts";
 import { ActionSchema, type GuardianSnapshot, type GuardianAction } from "./schema.ts";
 import { OperationsActionSchema } from "./operations.ts";
 import { certainStatement, userStatement } from "../whatsapp/learned-notes.ts";
@@ -61,7 +63,22 @@ export function automaticFarmEvent(
     )
   )
     return { status: "none" };
-  const finance = financialObservation(text, input.at);
+  const fuel = fuelObservation(text, input.at);
+  if (fuel.status === "pending")
+    return { status: "pending", reason: "ambiguous_date", reply: fuel.question };
+  if (fuel.status === "ignored") return { status: "none" };
+  if (
+    fuel.status === "actions" &&
+    snapshot.active &&
+    fuel.actions.some((a) => fuelNeedsTotalRelation(snapshot.active!.book, a))
+  )
+    return {
+      status: "pending",
+      reason: "ambiguous_date",
+      reply:
+        "Esse total de combustível já está incluído no total mensal informado ou é adicional? Responda incluído ou adicional; nenhum gasto novo foi salvo.",
+    };
+  const finance = financialObservation(fuel.residual, input.at);
   if (finance.status === "pending") return finance;
   const candidates: GuardianAction[] =
     finance.status === "action"
@@ -69,6 +86,7 @@ export function automaticFarmEvent(
       : finance.status === "batch"
         ? [...finance.actions]
         : [];
+  if (fuel.status === "actions") candidates.push(...fuel.actions);
   const selectedJustNow =
     input.history?.at(-1)?.role === "assistant" &&
     input.history.at(-1)!.content.startsWith("Fazenda selecionada:");

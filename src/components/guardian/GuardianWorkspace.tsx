@@ -1,3 +1,4 @@
+import { FuelWorkspace } from "./FuelWorkspace";
 import { FinanceLedger } from "./FinanceLedger";
 import { PanelMetric } from "./PanelMetric";
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
@@ -17,6 +18,7 @@ type Tab =
   | "herd"
   | "records"
   | "finance"
+  | "fuel"
   | "events"
   | "calculator"
   | "settings";
@@ -158,6 +160,7 @@ export function GuardianWorkspace({
   busy,
   ownPhone,
   loadEventHistory,
+  canManageFuel,
 }: {
   detail: GuardianDetail;
   tab: Tab;
@@ -165,6 +168,7 @@ export function GuardianWorkspace({
   busy: boolean;
   ownPhone?: string;
   loadEventHistory?: HistoryLoader;
+  canManageFuel?: boolean;
 }) {
   const book = detail.book,
     [start, setStart] = useState(""),
@@ -178,6 +182,15 @@ export function GuardianWorkspace({
       .filter((e) => e.direction === "income")
       .reduce((s, e) => s + e.amountCents, 0);
   const ownRole = detail.members.find((m) => m.phone_number === ownPhone && m.active)?.role;
+  if (tab === "fuel")
+    return (
+      <FuelWorkspace
+        book={book}
+        busy={busy}
+        onPropose={onPropose}
+        canEdit={canManageFuel ?? (!!ownRole && ["owner", "manager"].includes(ownRole))}
+      />
+    );
   if (tab === "calculator") return <GuardianCalculator />;
   return (
     <div className="space-y-5">

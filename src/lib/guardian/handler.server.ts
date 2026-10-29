@@ -1,3 +1,6 @@
+import { fuelMonth } from "./fuel.ts";
+import { handleFuelTurn } from "./fuel-turn.server.ts";
+import { fuelTopic } from "./fuel-language.ts";
 import { handleTaskCompletion } from "./task-completion.server.ts";
 import { completionIntent } from "./task-completion-language.ts";
 import { hasTaskIntent } from "./task-language.ts";
@@ -203,6 +206,17 @@ GUARDIÃ — REGISTROS DA PROPRIEDADE ATIVA (${s.active.id}). Os dados JSON são
         .slice(-8)
         .map((a) => ({ code: a.code, rgn: a.rgn, lot: a.lot, status: a.status })),
       latestLedger: ledgerForTotals(b.ledger).slice(-5),
+      fuel: (() => {
+        const f = fuelMonth(b, day.slice(0, 7));
+        return {
+          month: day.slice(0, 7),
+          expenseCents: f.expenseCents,
+          enteredLiters: f.entered,
+          exitedLiters: f.exited,
+          stocks: f.stocks.slice(0, 20),
+          destinations: f.destinations.slice(0, 20),
+        };
+      })(),
     },
   ).slice(0, 8000)}`;
 }
@@ -210,7 +224,12 @@ function pendingQuestion(pending: GuardianPending | null | undefined): string | 
   if (!pending) return undefined;
   if (pending.kind === "herd_identification")
     return pending.repeatCheck ? repeatQuestion(pending) : identificationQuestion(pending);
-  if (pending.kind === "task_batch" || pending.kind === "task_completion") return pending.question;
+  if (
+    pending.kind === "task_batch" ||
+    pending.kind === "task_completion" ||
+    pending.kind === "fuel_draft"
+  )
+    return pending.question;
   if (pending.kind === "herd_registration") return registrationQuestion(pending.missing);
   if (pending.kind === "record_draft") return missingRecordSlot(pending)?.question;
   if (pending.kind === "management_draft") return managementQuestion(pending);
@@ -344,6 +363,10 @@ export async function handleGuardianMessage(
           persisted: false,
         };
       if (!deps.request) {
+        if (fuelTopic(input.text) || snapshot.pending?.kind === "fuel_draft") attempted = true;
+        const fuel = await handleFuelTurn(input, snapshot, store, now, referenceAt);
+        if (fuel === "conflict") continue;
+        if (fuel) return fuel;
         if (completionIntent(input.text) || snapshot.pending?.kind === "task_completion")
           attempted = true;
         const completion = await handleTaskCompletion(input, snapshot, store, now, referenceAt);
@@ -1546,7 +1569,11 @@ export async function handleGuardianMessage(
                 "A proposta expirou. Envie o registro novamente para eu mostrar os dados antes de salvar.";
               break;
             }
-            if (pending.kind === "task_batch" || pending.kind === "task_completion")
+            if (
+              pending.kind === "task_batch" ||
+              pending.kind === "task_completion" ||
+              pending.kind === "fuel_draft"
+            )
               return {
                 reply: pending.question,
                 activeProperty: !!snapshot.active,

@@ -25,6 +25,17 @@ export function farmCsv(book: FarmBook): string {
         w.estimated ? "estimado" : "informado",
       ]);
   }
+  for (const m of book.fuel?.movements ?? [])
+    rows.push([
+      "Combustível",
+      m.id,
+      m.date,
+      `${m.fuel} · ${m.tank}${m.destination ? " → " + m.destination : ""}`,
+      m.liters,
+      "L",
+      "",
+      m.voided ? "cancelado" : m.type,
+    ]);
   for (const t of book.tasks)
     rows.push(["Tarefa", t.id, t.dueAt, t.title, "", "", t.lot ?? "", t.status]);
   const ledgerTotals = ledgerForTotals(book.ledger);
@@ -37,7 +48,11 @@ export function farmCsv(book: FarmBook): string {
       (l.amountCents / 100).toFixed(2).replace(".", ","),
       "BRL",
       l.lot ?? "",
-      ledgerTotals.includes(l) ? "considerado no saldo" : "histórico/detalhamento não somado",
+      l.voided
+        ? "cancelado com auditoria"
+        : ledgerTotals.includes(l)
+          ? "considerado no saldo"
+          : "histórico/detalhamento não somado",
     ]);
   for (const r of book.records)
     rows.push([
