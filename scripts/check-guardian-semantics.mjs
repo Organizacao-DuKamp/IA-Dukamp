@@ -44,7 +44,7 @@ async function main() {
     },
   });
   const census =
-    "Por favor, registre todo o rebanho existente: 66 novilhas de 12 a 24 meses, sendo 38 aptas para IATF acima de 15 meses e 360 quilos e 28 fora por idade e peso. 100 vacas parideiras, sendo 40 paridas e vazias e 60 solteiras, sendo dessas 40 prenhas e 20 vazias. E 20 machos, 10 de 12 a 24 meses, 5 de 18 a 24 e 5 acima de 36 meses. E 16 novilhas Girolando destinadas a receptoras de embriões.";
+    "Por favor, registre todo o rebanho existente: 66 novilhas de 12 a 24 meses, sendo 38 aptas para IATF acima de 15 meses e 360 quilos e 28 fora por idade e peso. 100 vacas parideiras, sendo 40 paridas e vazias e 60 solteiras, sendo dessas 40 prenhas e 20 vazias. E 20 machos, 10 de 12 a 24 meses, 5 de 18 a 24 e 5 acima de 36 meses. E temos também 16 novilhas Girolando destinadas a receptoras de embriões.";
   async function run(name, text, s = state(), history = []) {
     const context = semanticContext(
       { phone: "000000000000107", messageId: "qa-" + name, text, history },
@@ -147,6 +147,41 @@ async function main() {
     assert.ok(["none", "clarify"].includes(result.intent));
     assert.equal(result.entries.length, 0);
   }
+  const spoken = await run(
+    "spoken-herd",
+    "Cadastre trinta e oito novilhas Nelore PO de quinze a vinte e quatro meses na Estância de Teste.",
+  );
+  assert.equal(spoken.intent, "propose");
+  assert.ok(
+    spoken.entries.some(
+      (e) =>
+        e.action.kind === "herd_inventory" &&
+        e.action.groups.reduce((n, g) => n + g.count, 0) === 38,
+    ),
+  );
+  assert.ok(!spoken.entries.some((e) => ["animal", "herd_event"].includes(e.action.kind)));
+  const fuel = await run("daily-fuel", "Hoje o custo da gasolina foi quinhentos reais.");
+  assert.equal(fuel.intent, "propose");
+  assert.ok(
+    fuel.entries.some(
+      (e) =>
+        e.action.kind === "fuel_expense" &&
+        e.action.fuel === "gasoline" &&
+        e.action.amountCents === 50000,
+    ),
+  );
+  assert.ok(!fuel.entries.some((e) => e.action.kind === "fuel_movement"));
+  const tank = await run("tank-stock", "No tanque principal tem mil litros de diesel.");
+  assert.equal(tank.intent, "propose");
+  assert.ok(
+    tank.entries.some(
+      (e) =>
+        e.action.kind === "fuel_movement" &&
+        e.action.fuel === "diesel" &&
+        e.action.type === "balance" &&
+        e.action.liters === 1000,
+    ),
+  );
   console.log(
     "All live semantic evaluations passed. No messages sent; no farm data written; technical evaluation receipts only.",
   );
