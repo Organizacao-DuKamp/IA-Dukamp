@@ -14,6 +14,8 @@ export function resolveLotReference(reference: string, book: FarmBook): string {
     ...new Set([
       ...(book.operations?.lots.map((l) => l.name) ?? []),
       ...(book.operations?.counts.flatMap((c) => (c.lot ? [c.lot] : [])) ?? []),
+      ...(book.operations?.movements.flatMap((m) => (m.lot ? [m.lot] : [])) ?? []),
+      ...(book.operations?.lotTransfers?.flatMap((t) => [t.to, ...(t.from ? [t.from] : [])]) ?? []),
       ...book.animals.flatMap((a) => (a.lot ? [a.lot] : [])),
     ]),
   ];
@@ -33,7 +35,7 @@ export function resolveActionReferences(action: GuardianAction, book: FarmBook):
   if (action.kind === "lot_transfer")
     return {
       ...action,
-      from: resolveLotReference(action.from, book),
+      ...(action.from ? { from: resolveLotReference(action.from, book) } : {}),
       to: resolveLotReference(action.to, book),
     };
   if (action.kind === "property_transfer")

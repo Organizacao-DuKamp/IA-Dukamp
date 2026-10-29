@@ -1,5 +1,5 @@
 // Synthetic provider evaluation; never changes farms or sends WhatsApp.
-// A technical receipt makes failures inspectable with the existing database connection.
+// Results stay in the CI log; only an isolated PostgreSQL instance is mutated.
 import assert from "node:assert/strict";
 import {
   interpretFarmConversation,
@@ -175,6 +175,7 @@ async function main() {
   await endToEnd();
   await continuityConversation();
   await practicalConversation();
+  await groupedLotConversation();
   if (failures.length) throw Error(JSON.stringify(failures));
   console.log(
     "Live semantic and RPC conversation evaluations passed. No messages sent; no real farm data written.",
@@ -567,6 +568,169 @@ async function practicalConversation() {
   } catch (error) {
     failures.push({
       name: "practical-natural-rpc",
+      error: String(error?.message ?? error).slice(0, 1800),
+    });
+  } finally {
+    await f.db.close();
+  }
+}
+
+async function groupedLotConversation() {
+  const { farmIntegration } = await import("../tests/helpers/farm-integration.ts");
+  const { handleGuardianMessage } = await import("../src/lib/guardian/handler.server.ts");
+  const { prepareFarmBatch } = await import("../src/lib/guardian/execution.ts");
+  const { stockAt } = await import("../src/lib/guardian/operations.ts");
+  const { randomUUID } = await import("node:crypto");
+  const f = await farmIntegration(),
+    phone = "000000000000787",
+    history = [];
+  const seedSource = { actor: phone, messageId: "seed", at: at.toISOString(), confirmed: true };
+  try {
+    const propertyId = randomUUID();
+    const book = prepareFarmBatch({
+      book: emptyFarm("Eduardo", "Tanabi", "SP"),
+      role: "owner",
+      propertyId,
+      source: seedSource,
+      executedByMessageId: "seed",
+      actions: [
+        { kind: "herd_count", species: "cattle", count: 120, date: "2026-10-28" },
+        { kind: "herd_count", species: "pig", count: 20, date: "2026-10-28" },
+        { kind: "lot_update", lot: "2" },
+        { kind: "animal", code: "b01", lot: "2" },
+        {
+          kind: "herd_event",
+          type: "purchase",
+          species: "cattle",
+          count: 50,
+          date: "2026-10-29",
+          description: "50 bovinos Nelore recém comprados, sem lote definido",
+        },
+        {
+          kind: "fuel_movement",
+          fuel: "diesel",
+          type: "in",
+          liters: 200,
+          date: "2026-10-29",
+          tank: "Principal",
+        },
+      ],
+    }).book;
+    await f.guardian.commit({
+      phone,
+      messageId: "seed",
+      accountVersion: 0,
+      propertyId,
+      propertyVersion: null,
+      operation: "create",
+      book,
+      pending: null,
+      reply: "Criada",
+    });
+    const send = async (id, text) => {
+      const response = await handleGuardianMessage(
+        { phone, messageId: id, text, mediaType: "audio", history: [...history] },
+        { store: f.guardian, now: at, interpret: interpretFarmConversation },
+      );
+      history.push(
+        { role: "user", content: text },
+        { role: "assistant", content: response?.reply ?? "Sem alteração" },
+      );
+      results.push({ name: id, reply: response?.reply });
+      let snapshot = await f.guardian.load(phone);
+      if (snapshot.pending?.kind === "proposal") {
+        const confirmation = await handleGuardianMessage(
+          { phone, messageId: id + "-yes", text: "Exatamente, pode fazer", history: [...history] },
+          { store: f.guardian, now: at, interpret: interpretFarmConversation },
+        );
+        history.push(
+          { role: "user", content: "Exatamente, pode fazer" },
+          { role: "assistant", content: confirmation?.reply ?? "Sem alteração" },
+        );
+        snapshot = await f.guardian.load(phone);
+      }
+      return snapshot;
+    };
+    // Reproduce the old failed request, then change its destination in a short audio.
+    const old = await f.guardian.load(phone);
+    const literal =
+      "A última movimentação foi 50 bovinos no lote fazenda. Pode colocar esses 50 no lote 2 da fazenda?";
+    await handleGuardianMessage(
+      { phone, messageId: "old-lot-attempt", text: literal },
+      {
+        store: f.guardian,
+        now: at,
+        interpret: async (c) => ({
+          intent: "apply",
+          propertyId: c.propertyId,
+          question: "",
+          entries: [
+            {
+              action: {
+                kind: "lot_transfer",
+                species: "cattle",
+                from: "fazenda",
+                to: "2",
+                count: 50,
+                date: "2026-10-29",
+              },
+              evidence: [{ messageIndex: c.messages.length - 1, quote: literal }],
+            },
+          ],
+        }),
+      },
+    );
+    history.push(
+      { role: "user", content: literal },
+      {
+        role: "assistant",
+        content:
+          "Informe a contagem de ambos os lotes no fim de um dia anterior à transferência. Nenhum item deste pedido foi salvo.",
+      },
+    );
+    let s = await send(
+      "qa-group-lot-four",
+      "Melhor, Tpec, coloque esses 50 bovinos no lote quatro, que não existe ainda. Eles serão os primeiros a chegar nesse lote.",
+    );
+    assert.equal(s.pending, null, JSON.stringify(s.pending));
+    assert.equal(stockAt(s.active.book.operations, "2026-10-29", "4").count, 50);
+    assert.equal(stockAt(s.active.book.operations, "2026-10-29").count, 170);
+    assert.equal(
+      s.active.book.operations.movements.length,
+      old.active.book.operations.movements.length,
+    );
+    assert.equal(s.active.book.operations.lotTransfers.length, 1);
+    assert.equal(s.active.book.animals.length, 1);
+    assert.equal(s.active.book.animals[0].lot, "2");
+    assert.equal(s.active.book.fuel.movements.length, 1);
+    s = await send(
+      "qa-group-one-subset",
+      "Agora pegue só um desses 50 que estão no lote quatro e coloque no lote cinco, que também é novo.",
+    );
+    assert.equal(stockAt(s.active.book.operations, "2026-10-29", "4").count, 49);
+    assert.equal(stockAt(s.active.book.operations, "2026-10-29", "5").count, 1);
+    s = await send(
+      "qa-individual-lot-four",
+      "O bovino de brinco b01 que está no lote dois também vai para o lote quatro. Altere só a ficha dele.",
+    );
+    assert.equal(s.active.book.animals[0].lot, "4");
+    assert.equal(s.active.book.operations.lotTransfers.length, 2);
+    assert.equal(s.active.book.operations.movements.length, 1);
+    assert.equal(stockAt(s.active.book.operations, "2026-10-29").count, 170);
+    // General permission to inspect cannot authorize a guessed additional transfer.
+    const before = JSON.stringify(s.active.book);
+    s = await send(
+      "qa-no-guessed-group",
+      "Eu não sei quantos outros animais estão sem lote. Você consegue ver e estimar isso?",
+    );
+    assert.equal(JSON.stringify(s.active.book), before);
+    results.push({ name: "real-grouped-lot-rpc", status: "passed" });
+    console.log(
+      "Real model + SQL grouped lot acceptance passed: pending destination correction, new lot, partial transfer, real animal and no guessed counts.",
+    );
+  } catch (error) {
+    failures.push({
+      name: "real-grouped-lot-rpc",
       error: String(error?.message ?? error).slice(0, 1800),
     });
   } finally {

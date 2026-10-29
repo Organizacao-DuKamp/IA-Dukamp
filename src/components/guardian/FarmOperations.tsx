@@ -2,6 +2,7 @@ import { PanelMetric } from "./PanelMetric";
 import { Beef, Sprout, MinusCircle } from "lucide-react";
 import { useState } from "react";
 import { farmIndicators, emptyOperations, stockAt, speciesNames } from "@/lib/guardian/operations";
+import { herdGroupsAt } from "@/lib/guardian/herd-locations";
 import type { FarmBook } from "@/lib/guardian/schema";
 
 export function FarmOperations({ book, compact = false }: { book: FarmBook; compact?: boolean }) {
@@ -14,6 +15,7 @@ export function FarmOperations({ book, compact = false }: { book: FarmBook; comp
     [page, setPage] = useState(0);
   const data = farmIndicators(book, start, end),
     operations = book.operations ?? emptyOperations();
+  const groups = herdGroupsAt(operations, end);
   const rows = [
     ...operations.counts.map((c) => ({
       ...c,
@@ -30,6 +32,13 @@ export function FarmOperations({ book, compact = false }: { book: FarmBook; comp
         transfer_in: "Entrada de lote",
         transfer_out: "Saída de lote",
       }[m.type],
+    })),
+    ...(operations.lotTransfers ?? []).map((t) => ({
+      ...t,
+      lot: t.to,
+      species: operations.movements.find((m) => m.id === t.movementId)?.species,
+      type: "Transferência de grupo",
+      description: `${t.from ? `Lote ${t.from}` : "Sem lote definido"} → Lote ${t.to}. Grupo de origem: ${t.movementId}. Total da fazenda preservado.`,
     })),
   ]
     .filter(
@@ -301,7 +310,7 @@ export function FarmOperations({ book, compact = false }: { book: FarmBook; comp
                     <td className="p-2">
                       {r.count} {speciesNames[r.species ?? "cattle"]}
                     </td>
-                    <td className="p-2">{r.lot ?? "Fazenda"}</td>
+                    <td className="p-2">{r.lot ?? "Sem lote definido (fazenda)"}</td>
                     <td className="p-2">
                       <details>
                         <summary className="cursor-pointer">
@@ -352,15 +361,35 @@ export function FarmOperations({ book, compact = false }: { book: FarmBook; comp
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 {operations.lots.map((l) => (
                   <article key={l.name} className="rounded-lg border p-3 text-sm">
-                    <strong>{l.name}</strong>
+                    <strong>Lote {l.name}</strong>
                     <p>
                       {l.pasture ?? "Piquete não informado"}
                       {l.areaHa ? ` · ${l.areaHa} ha` : ""}
                     </p>
-                    <p className="mt-2">
-                      Saldo:{" "}
-                      {stockAt(operations, end, l.name).count ?? "contagem inicial não informada"}
-                    </p>
+                    {Object.entries(speciesNames).flatMap(([species, label]) => {
+                      const count = stockAt(
+                        operations,
+                        end,
+                        l.name,
+                        species as keyof typeof speciesNames,
+                      ).count;
+                      const allocated = groups
+                        .filter((g) => g.species === species)
+                        .flatMap((g) => g.locations)
+                        .filter((p) => p.lot === l.name)
+                        .reduce((n, p) => n + p.available, 0);
+                      if (species !== "cattle" && !count && !allocated) return [];
+                      return [
+                        <p key={species} className="mt-2">
+                          {label}: {count ?? "total ainda não informado"}
+                          {count === null && allocated > 0 && (
+                            <span className="block text-xs text-muted-foreground">
+                              {allocated} com alocação registrada neste lote.
+                            </span>
+                          )}
+                        </p>,
+                      ];
+                    })}
                   </article>
                 ))}
               </div>

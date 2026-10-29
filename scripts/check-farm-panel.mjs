@@ -428,6 +428,63 @@ try {
       { phone, messageId: id, text, mediaType: "audio" },
       { store: f.guardian, now: new Date(), interpret: makePlan },
     );
+  const cohortPlan = (action) => async (c) => ({
+    intent: "apply",
+    propertyId: c.propertyId,
+    question: "",
+    entries: [
+      {
+        action,
+        evidence: [{ messageIndex: c.messages.length - 1, quote: c.messages.at(-1).content }],
+      },
+    ],
+  });
+  const purchased = await runSemantic(
+    "ui-group-purchase",
+    "Chegaram cinquenta bovinos que comprei hoje",
+    cohortPlan({
+      kind: "herd_event",
+      type: "purchase",
+      species: "cattle",
+      count: 50,
+      date: day,
+      description: "50 bovinos comprados hoje, ainda sem lote definido",
+    }),
+  );
+  assert.equal(purchased.persisted, true, purchased.reply);
+  const beforeMove = (await f.guardian.load(phone)).active.book;
+  const groupId = beforeMove.operations.movements.at(-1).id;
+  const moved = await runSemantic(
+    "ui-group-lot-four",
+    "Coloque esses 50 no lote quatro, que ainda é novo",
+    cohortPlan({
+      kind: "lot_transfer",
+      movementId: groupId,
+      species: "cattle",
+      to: "lote quatro",
+      count: 50,
+      date: day,
+      createDestination: true,
+    }),
+  );
+  assert.equal(moved.persisted, true, moved.reply);
+  await page.reload({ waitUntil: "networkidle" });
+  await page.getByRole("button", { name: "Rebanho e lotes", exact: true }).click();
+  const lotFour = page
+    .getByRole("article")
+    .filter({ has: page.getByText("Lote 4", { exact: true }) });
+  assert.match(await lotFour.innerText(), /Bovinos: 50/);
+  assert.match(
+    await page.getByRole("row").filter({ hasText: "Transferência de grupo" }).innerText(),
+    /50 Bovinos/,
+  );
+  const afterMove = (await f.guardian.load(phone)).active.book;
+  assert.equal(afterMove.operations.movements.length, beforeMove.operations.movements.length);
+  assert.equal(afterMove.operations.counts.length, beforeMove.operations.counts.length);
+  assert.equal(afterMove.animals.length, beforeMove.animals.length);
+  const { stockAt } = await import("../src/lib/guardian/operations.ts");
+  assert.equal(stockAt(afterMove.operations, day).count, stockAt(beforeMove.operations, day).count);
+  assert.equal(stockAt(afterMove.operations, day, "4").count, 50);
   await runSemantic(
     "ui-species-base",
     "Na fazenda já tenho 100 bovinos, 40 porcos e 2 galinhas.",
