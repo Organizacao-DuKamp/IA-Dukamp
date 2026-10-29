@@ -17,7 +17,7 @@ O interpretador considera a descrição antes ou depois da data e preserva o nom
 ## Validação
 
 - `tests/guardian-semantic.test.ts`: banco PostgreSQL isolado com RPCs reais, censo sem duplicar subgrupos, referências de contexto, proposta e confirmação por áudio, tarefa persistente, repetição, auditoria, expiração, permissão e lote inválido sem gravação parcial.
-- `scripts/check-guardian-semantics.mjs`: avaliação com o modelo real e propriedades fictícias, incluindo censo, fala coloquial, ordem da data, referência a dados anteriores, transcrição de confirmação, contradição, hipótese, terceiro e prompt injection. Não grava no banco nem envia WhatsApp. Executado no deploy preview com a configuração OpenAI já existente.
+- `scripts/check-guardian-semantics.mjs`: avaliação com o modelo real e propriedades fictícias, incluindo censo, fala coloquial, ordem da data, referência a dados anteriores, transcrição de confirmação, contradição, hipótese, terceiro e prompt injection. Não altera fazendas nem envia WhatsApp. A prévia conserva apenas um recibo técnico sob o identificador fictício de QA para inspecionar falhas; não usa conversas reais. Executado no deploy preview com a configuração OpenAI já existente.
 - Executar também auditoria de imports, testes, lint e build. Não reprocessar automaticamente históricos reais na publicação. Qualquer recuperação deve usar os relatos explícitos mais recentes, conferir duplicatas e preservar a auditoria.
 
 A interpretação por modelo não promete compreender toda fala sem ambiguidade. Quando há conflito ou falta um dado necessário, pede esclarecimento específico em vez de presumir um registro.
