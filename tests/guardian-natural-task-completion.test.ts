@@ -157,6 +157,27 @@ test("the producer's exact greeting completes the actual notified task even whil
       "select answered_at is not null answered from guardian_events where provider_message_id='wamid.feed'",
     );
     assert.equal(answered.rows[0].answered, true);
+    const links = await f.db.query<{ audit: string; receipt: string }>(
+      "select a.property_id::text audit,r.property_id::text receipt from guardian_audit a join guardian_turn_receipts r on r.message_id=a.message_id and r.phone_number=a.actor where a.message_id='exact-audio'",
+    );
+    assert.deepEqual(links.rows, [{ audit: edu, receipt: edu }]);
+    await f.db.query(
+      "update guardian_members set active=false where property_id=$1 and phone_number=$2",
+      [edu, phone],
+    );
+    await assert.rejects(
+      f.guardian.commit({
+        phone,
+        messageId: "exact-audio",
+        accountVersion: 0,
+        propertyId: edu,
+        propertyVersion: null,
+        operation: "noop",
+        pending: null,
+        reply: "replay",
+      }),
+      /guardian_access_denied/,
+    );
   } finally {
     await f.db.close();
   }
