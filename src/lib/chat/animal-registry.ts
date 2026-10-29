@@ -122,6 +122,16 @@ export function extractAnimalRegistrations(text: string): AnimalRegistration[] {
       (!contextual && series.length < 3 && !(bareCode && match[1] === series))
     )
       continue;
+    // Ordinary lowercase prose + a quantity is not a registry series. Even herd
+    // context cannot promote a verb such as "ficar 190" to an animal identity.
+    const explicitIdentity =
+      /\b(?:ABCZ|RGN|RGD|GENEALOG\w*|PEDIGREE|SERIE|REGISTRO|CODIGO|RACA)\b/.test(normalized);
+    const lookupReference =
+      /^(?:E\s+)?(?:QUEM\s+E|CONSULTE|PESQUISE|BUSQUE|IDENTIFIQUE|E\s+[A-Z]|[A-Z]{2,6}[ .-]*\d)/.test(
+        normalized.trim(),
+      );
+    if (!bareCode && !explicitIdentity && !lookupReference) continue;
+    if (!bareCode && match[1] !== series && !explicitIdentity) continue;
     if (!contextual && !bareCode && match[1] !== series) continue;
     const number = normalize(match[2]);
     if (!/[1-9]/.test(number)) continue;

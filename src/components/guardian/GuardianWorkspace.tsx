@@ -1,3 +1,4 @@
+import { SuppliesWorkspace } from "./SuppliesWorkspace";
 import { FuelWorkspace } from "./FuelWorkspace";
 import { FinanceLedger } from "./FinanceLedger";
 import { PanelMetric } from "./PanelMetric";
@@ -19,6 +20,7 @@ type Tab =
   | "records"
   | "finance"
   | "fuel"
+  | "supplies"
   | "events"
   | "calculator"
   | "settings";
@@ -182,6 +184,15 @@ export function GuardianWorkspace({
       .filter((e) => e.direction === "income")
       .reduce((s, e) => s + e.amountCents, 0);
   const ownRole = detail.members.find((m) => m.phone_number === ownPhone && m.active)?.role;
+  if (tab === "supplies")
+    return (
+      <SuppliesWorkspace
+        book={book}
+        busy={busy}
+        onPropose={onPropose}
+        canEdit={canManageFuel ?? (!!ownRole && ["owner", "manager"].includes(ownRole))}
+      />
+    );
   if (tab === "fuel")
     return (
       <FuelWorkspace
@@ -659,7 +670,7 @@ export function GuardianWorkspace({
           <section className="rounded-2xl border border-border bg-card p-5">
             <h2 className="text-lg font-semibold">Histórico de alterações</h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              Últimas 50 operações. Cada gravação exige confirmação e registra a origem.
+              Últimas 50 operações. Cada gravação registra a origem e o recibo de execução.
             </p>
             <div className="mt-4 space-y-2">
               {detail.audit.map((a) => (

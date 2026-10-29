@@ -435,3 +435,28 @@ export const guardianReviewSource = createServerFn({ method: "GET" })
       at: source.data?.created_at ?? null,
     };
   });
+
+/** Operational diagnostics only; no message bodies, phone numbers or credentials. */
+export const guardianOperationTraces = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((value: unknown) => z.object({ id: z.uuid() }).strict().parse(value))
+  .handler(async ({ context, data }) => {
+    const ctx = context as Context;
+    const role = await ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "admin" });
+    if (role.error || role.data !== true) throw Error("Acesso restrito a administradores.");
+    const rows = await ctx.supabase
+      .from("ai_chat_turns")
+      .select("id,created_at,metadata")
+      .eq("metadata->guardian->>propertyId", data.id)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (rows.error) throw Error("Não foi possível carregar os diagnósticos operacionais.");
+    const { GuardianTraceSchema } = await import("./guardian/trace.ts");
+    return (rows.data ?? []).flatMap((row) => {
+      const metadata = row.metadata as Record<string, unknown> | null;
+      const trace = GuardianTraceSchema.safeParse(metadata?.guardian);
+      return trace.success
+        ? [{ id: row.id as string, at: row.created_at as string, trace: trace.data }]
+        : [];
+    });
+  });

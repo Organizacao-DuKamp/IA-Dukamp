@@ -1,3 +1,4 @@
+import { userStatement } from "../whatsapp/learned-notes.ts";
 import { referencesPriorContext } from "./context/recall.ts";
 import { parseCalculation } from "../guardian/calculation-intent.ts";
 import { calculate, renderCalculation } from "../guardian/calculators.ts";
@@ -282,11 +283,14 @@ async function runTurn(
   text: string,
   conversationId: string,
 ): Promise<ChatResult> {
+  // The media wrapper is transport metadata, not the producer's intent/topic.
+  if (input.channelEvidence?.kind === "audio") text = userStatement(input.channelEvidence.text);
+  else text = userStatement(text);
   const rawHistory: ChatMessage[] = (input.history ?? [])
     .filter((m) => m && typeof m.content === "string" && m.content.length > 0)
     .map((m) => ({
       role: m.role,
-      content: sanitize(m.content).slice(0, 8000),
+      content: sanitize(m.role === "user" ? userStatement(m.content) : m.content).slice(0, 8000),
     }));
 
   const windowed = buildHistoryWindow(rawHistory, HISTORY_TOKEN_BUDGET, MAX_HISTORY_TURNS);

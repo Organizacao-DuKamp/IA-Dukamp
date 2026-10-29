@@ -1,3 +1,4 @@
+import { SupplyActionSchema, applySupply, describeSupply } from "./supplies.ts";
 import { FuelActionSchema, applyFuel, describeFuel } from "./fuel.ts";
 import {
   OperationsActionSchema,
@@ -30,6 +31,8 @@ const num = (v: number) => v.toLocaleString("pt-BR", { maximumFractionDigits: 3 
 const money = (cents: number) =>
   (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 export function describeAction(a: GuardianAction): string {
+  const supply = SupplyActionSchema.safeParse(a);
+  if (supply.success) return describeSupply(supply.data);
   const fuel = FuelActionSchema.safeParse(a);
   if (fuel.success) return describeFuel(fuel.data);
   const operational = OperationsActionSchema.safeParse(a);
@@ -98,6 +101,11 @@ export function applyFarmAction(
       );
     return animal;
   };
+  const supply = SupplyActionSchema.safeParse(action);
+  if (supply.success) {
+    applySupply(book, supply.data, source, id);
+    return { book, events, result: describeSupply(supply.data) };
+  }
   const fuel = FuelActionSchema.safeParse(action);
   if (fuel.success) {
     applyFuel(book, fuel.data, source, id);

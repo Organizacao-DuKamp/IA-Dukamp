@@ -417,6 +417,137 @@ try {
     .waitFor();
   if (screenshots)
     await page.screenshot({ path: screenshots + "/farm-fuel-desktop.png", fullPage: true });
+
+  // Structural continuity: literal producer facts survive citation failure, and
+  // the public panel must show the committed species totals after reloading.
+  const day = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(
+    new Date(),
+  );
+  const runSemantic = async (id, text, makePlan) =>
+    handleGuardianMessage(
+      { phone, messageId: id, text, mediaType: "audio" },
+      { store: f.guardian, now: new Date(), interpret: makePlan },
+    );
+  await runSemantic(
+    "ui-species-base",
+    "Na fazenda já tenho 100 bovinos, 40 porcos e 2 galinhas.",
+    async (c) => ({
+      intent: "apply",
+      propertyId: c.propertyId,
+      question: "",
+      entries: [
+        {
+          action: {
+            kind: "herd_inventory",
+            date: day,
+            complete: true,
+            groups: [
+              { name: "Bovinos", species: "cattle", count: 100, description: "Já contabilizados." },
+              { name: "Porcos", species: "pig", count: 40, description: "Já contabilizados." },
+              { name: "Galinhas", species: "poultry", count: 2, description: "Já contabilizadas." },
+            ],
+          },
+          evidence: [{ messageIndex: c.messages.length - 1, quote: c.messages.at(-1).content }],
+        },
+      ],
+    }),
+  );
+  const literal =
+    "Além desses, aqui tem mais cinco gados Nelore, sete porcos e duas galinhas, para somar aos já contabilizados.";
+  await runSemantic("ui-quote-failure", literal, async (c) => ({
+    intent: "apply",
+    propertyId: c.propertyId,
+    question: "",
+    entries: [
+      {
+        action: { kind: "herd_count", species: "cattle", count: 105, date: day },
+        evidence: [{ messageIndex: 0, quote: "5 bovinos que não foram informados" }],
+      },
+    ],
+  }));
+  const complete = await runSemantic("ui-short-answer", "Exatamente.", async (c) => ({
+    intent: "apply",
+    propertyId: c.propertyId,
+    question: "",
+    entries: [
+      {
+        action: {
+          kind: "herd_inventory",
+          date: day,
+          complete: false,
+          mode: "additional",
+          groups: [
+            {
+              name: "Gados Nelore",
+              species: "cattle",
+              count: 5,
+              description: "Adicionais ainda não contabilizados.",
+            },
+            {
+              name: "Porcos",
+              species: "pig",
+              count: 7,
+              description: "Adicionais ainda não contabilizados.",
+            },
+            {
+              name: "Galinhas",
+              species: "poultry",
+              count: 2,
+              description: "Adicionais ainda não contabilizadas.",
+            },
+          ],
+        },
+        evidence: [
+          { messageIndex: c.messages.findIndex((m) => m.content === literal), quote: literal },
+        ],
+      },
+    ],
+  }));
+  assert.equal(complete.persisted, true, complete.reply);
+  await page.reload({ waitUntil: "networkidle" });
+  await page.getByRole("button", { name: "Rebanho e lotes", exact: true }).click();
+  assert.match(
+    await page.getByRole("article").filter({ hasText: "Bovinos contabilizados" }).innerText(),
+    /105/,
+  );
+  const species = page.getByRole("region", { name: "Animais por espécie" });
+  assert.match(await species.innerText(), /Suínos[\s\S]*47/);
+  assert.match(await species.innerText(), /Aves[\s\S]*4/);
+  assert.match(await species.innerText(), /156 animais/);
+  await runSemantic(
+    "ui-supply-chat",
+    "Tenho dez sacos de ração e usei três deles hoje.",
+    async (c) => ({
+      intent: "apply",
+      propertyId: c.propertyId,
+      question: "",
+      entries: [
+        { kind: "balance", quantity: 10 },
+        { kind: "out", quantity: 3 },
+      ].map((m) => ({
+        action: {
+          kind: "supply_movement",
+          item: "Ração",
+          unit: "saco",
+          type: m.kind,
+          quantity: m.quantity,
+          date: day,
+        },
+        evidence: [{ messageIndex: c.messages.length - 1, quote: c.messages.at(-1).content }],
+      })),
+    }),
+  );
+  await page.reload({ waitUntil: "networkidle" });
+  await page.getByRole("button", { name: "Estoque e insumos", exact: true }).click();
+  assert.match(await page.getByRole("row").filter({ hasText: "Ração" }).innerText(), /7/);
+  await page.getByLabel("Nome do insumo").fill("Sal mineral");
+  await page.getByLabel("Quantidade do insumo").fill("25");
+  await page.getByRole("button", { name: "Revisar movimentação do insumo" }).click();
+  await page.getByRole("button", { name: "Confirmar e salvar", exact: true }).click();
+  await page.getByRole("row").filter({ hasText: "Sal mineral" }).waitFor();
+  await page.reload({ waitUntil: "networkidle" });
+  await page.getByRole("button", { name: "Estoque e insumos", exact: true }).click();
+  assert.match(await page.getByRole("row").filter({ hasText: "Sal mineral" }).innerText(), /25/);
   await page.setViewportSize({ width: 390, height: 844 });
   assert.equal(
     await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1),
@@ -431,6 +562,7 @@ try {
     "Tarefas",
     "Caderno de campo",
     "Combustível",
+    "Estoque e insumos",
     "Calculadoras",
   ]) {
     await page.getByLabel("Área da fazenda", { exact: true }).selectOption({ label: area });

@@ -9,29 +9,6 @@ import {
 import { emptyFarm, PreferencesSchema } from "../src/lib/guardian/schema.ts";
 const results = [];
 const failures = [];
-async function report(status, error = null) {
-  if (!process.env.DEPLOY_ID || !process.env.SUPABASE_SERVICE_ROLE_KEY) return;
-  const { guardianStore } = await import("../src/lib/guardian/store.server.ts");
-  const phone = "000000000000994";
-  for (let i = 0; i < 3; i++) {
-    const snapshot = await guardianStore.load(phone);
-    const result = await guardianStore.commit({
-      phone,
-      messageId: `semantic-eval:${process.env.DEPLOY_ID}:${status}`,
-      accountVersion: snapshot.accountVersion,
-      propertyId: null,
-      propertyVersion: null,
-      operation: "noop",
-      pending: null,
-      reply: JSON.stringify({ deploy: process.env.DEPLOY_ID, status, results, error }),
-      details: { kind: "synthetic_semantic_evaluation" },
-      events: [],
-    });
-    if (result === "committed" || result.startsWith("replay:")) return;
-    if (result !== "conflict") throw Error("semantic evaluation receipt not confirmed");
-  }
-  throw Error("semantic evaluation receipt conflicted");
-}
 const at = new Date("2026-10-29T15:00:00Z");
 const state = () => ({
   accountVersion: 1,
@@ -196,6 +173,8 @@ async function main() {
     );
   });
   await endToEnd();
+  await continuityConversation();
+  await practicalConversation();
   if (failures.length) throw Error(JSON.stringify(failures));
   console.log(
     "Live semantic and RPC conversation evaluations passed. No messages sent; no real farm data written.",
@@ -310,14 +289,298 @@ async function endToEnd() {
     await f.db.close();
   }
 }
+// Uses only synthetic producer statements and an isolated PostgreSQL engine.
+async function continuityConversation() {
+  const { farmIntegration } = await import("../tests/helpers/farm-integration.ts");
+  const { handleGuardianMessage } = await import("../src/lib/guardian/handler.server.ts");
+  const { applyFarmAction } = await import("../src/lib/guardian/book.ts");
+  const { stockAt } = await import("../src/lib/guardian/operations.ts");
+  const { randomUUID } = await import("node:crypto");
+  const f = await farmIntegration();
+  const phone = "000000000000484";
+  const original =
+    "Na minha fazenda Tamburi tem 100 bovinos contabilizados, tá? Mas na verdade aqui, além desses bovinos que já tem, né, que é 100, aqui na minha fazenda ainda tem mais duas galinhas, mais cinco gados nelore e mais sete porcos, tá? Se você puder...";
+  try {
+    const book = applyFarmAction(
+      emptyFarm("Tambori", "Tanabi", "SP"),
+      {
+        kind: "herd_inventory",
+        date: "2026-10-29",
+        complete: true,
+        groups: [
+          { name: "Bovinos", species: "cattle", count: 100, description: "Já contabilizados." },
+          { name: "Porcos", species: "pig", count: 40, description: "Já contabilizados." },
+          { name: "Galinhas", species: "poultry", count: 2, description: "Já contabilizadas." },
+        ],
+      },
+      "owner",
+      { actor: phone, messageId: "seed", at: at.toISOString(), confirmed: true },
+      "seed",
+    ).book;
+    await f.guardian.commit({
+      phone,
+      messageId: "seed",
+      accountVersion: 0,
+      propertyId: randomUUID(),
+      propertyVersion: null,
+      operation: "create",
+      book,
+      pending: null,
+      reply: "Criada",
+    });
+    const send = async (id, text, history = [], interpret = interpretFarmConversation) => {
+      const r = await handleGuardianMessage(
+        { phone, messageId: id, text, history, mediaType: "audio" },
+        { store: f.guardian, now: at, interpret },
+      );
+      results.push({ name: id, reply: r?.reply });
+      return r;
+    };
+    // Reproduce the old citation failure: the stored literal transcript is Portuguese words,
+    // while a model tries to cite its own normalized numerical paraphrase twice.
+    await send("qa-context-initial-failure", original, [], async (c) => ({
+      intent: "apply",
+      propertyId: c.propertyId,
+      question: "",
+      entries: [
+        {
+          action: { kind: "herd_count", species: "cattle", date: "2026-10-29", count: 105 },
+          evidence: [{ messageIndex: 0, quote: "5 bovinos Nelore e 7 porcos" }],
+        },
+      ],
+    }));
+    let s = await f.guardian.load(phone);
+    assert.equal(s.pending?.kind, "semantic_draft");
+    // Simulate a rolled recent window, including a general answer on an unrelated topic.
+    const rolled = Array.from({ length: 40 }, (_, i) => ({
+      role: i % 2 ? "assistant" : "user",
+      content: i % 2 ? "A resposta é dez." : "Quanto é cinco mais cinco?",
+    }));
+    await send("qa-context-short-answer", "É para somar.", rolled);
+    s = await f.guardian.load(phone);
+    if (s.pending?.kind === "proposal") {
+      await send("qa-context-exactly", "Exatamente.", [
+        { role: "assistant", content: "Posso salvar a soma desses animais ao saldo anterior?" },
+      ]);
+      s = await f.guardian.load(phone);
+    }
+    for (const [species, total] of [
+      ["cattle", 105],
+      ["pig", 47],
+      ["poultry", 4],
+    ])
+      assert.equal(
+        stockAt(s.active.book.operations, "2026-10-29", undefined, species).count,
+        total,
+        "contextual addition: " + species,
+      );
+    assert.equal(s.active.book.operations.movements.length, 0);
+    assert.equal(s.active.book.operations.inventories.length, 2);
+    assert.equal(s.pending, null);
+    // A new 'exactly' after the receipt must not apply the history a second time.
+    await send("qa-context-after-saved", "Exatamente.", [
+      { role: "user", content: original },
+      { role: "user", content: "É para somar." },
+      {
+        role: "assistant",
+        content:
+          "Salvo no painel de Tambori: acrescentei cinco bovinos, sete suínos e duas aves. O saldo é 105 bovinos, 47 suínos e 4 aves.",
+      },
+    ]);
+    s = await f.guardian.load(phone);
+    assert.equal(
+      s.active.book.operations.inventories.length,
+      2,
+      "a receipt is not a new producer order",
+    );
+    for (const [species, total] of [
+      ["cattle", 105],
+      ["pig", 47],
+      ["poultry", 4],
+    ])
+      assert.equal(
+        stockAt(s.active.book.operations, "2026-10-29", undefined, species).count,
+        total,
+      );
+    // Focus: a bare yes to a different question cannot execute a suspended operation.
+    await send("qa-context-focus-draft", "Anota os animais que falei.", [], async (c) => ({
+      intent: "clarify",
+      propertyId: c.propertyId,
+      question: "Você quer corrigir o total ou somar animais adicionais?",
+      entries: [],
+    }));
+    await send("qa-context-other-focus", "Exatamente.", [
+      { role: "user", content: "Você consegue explicar a diferença entre bovinos e suínos?" },
+      { role: "assistant", content: "São espécies diferentes. Era essa sua dúvida?" },
+    ]);
+    s = await f.guardian.load(phone);
+    assert.equal(
+      s.active.book.operations.inventories.length,
+      2,
+      "another topic cannot confirm animals",
+    );
+    assert.equal(s.pending?.kind, "semantic_draft", "interruption preserves the real draft");
+    results.push({ name: "context-continuity-rpc", status: "passed" });
+    console.log(
+      "Real model + SQL context continuity passed: pinned audio, short answer, species totals, replay and dialogue focus.",
+    );
+  } catch (error) {
+    failures.push({
+      name: "context-continuity-rpc",
+      error: String(error?.message ?? error).slice(0, 1800),
+    });
+  } finally {
+    await f.db.close();
+  }
+}
+
+async function practicalConversation() {
+  const { farmIntegration } = await import("../tests/helpers/farm-integration.ts");
+  const { handleGuardianMessage } = await import("../src/lib/guardian/handler.server.ts");
+  const { applyFarmAction } = await import("../src/lib/guardian/book.ts");
+  const { stockAt } = await import("../src/lib/guardian/operations.ts");
+  const { supplyBalances } = await import("../src/lib/guardian/supplies.ts");
+  const { randomUUID } = await import("node:crypto");
+  const f = await farmIntegration(),
+    phone = "000000000000686",
+    history = [];
+  try {
+    let book = emptyFarm("Eduardo", "Tanabi", "SP");
+    const source = { actor: phone, messageId: "seed", at: at.toISOString(), confirmed: true };
+    for (const [i, action] of [
+      { kind: "herd_count", species: "cattle", count: 120, date: "2026-10-28" },
+      { kind: "herd_count", species: "pig", count: 0, date: "2026-10-28" },
+      { kind: "animal", code: "b01", sex: "male" },
+      { kind: "animal", code: "b02", sex: "male" },
+    ].entries())
+      book = applyFarmAction(book, action, "owner", source, "seed-" + i).book;
+    await f.guardian.commit({
+      phone,
+      messageId: "seed",
+      accountVersion: 0,
+      propertyId: randomUUID(),
+      propertyVersion: null,
+      operation: "create",
+      book,
+      pending: null,
+      reply: "Criada",
+    });
+    const send = async (id, text) => {
+      const r = await handleGuardianMessage(
+        { phone, messageId: id, text, history: [...history], mediaType: "audio" },
+        { store: f.guardian, now: at, interpret: interpretFarmConversation },
+      );
+      history.push(
+        { role: "user", content: text },
+        { role: "assistant", content: r?.reply ?? "Nenhuma gravação foi executada neste turno." },
+      );
+      results.push({ name: id, reply: r?.reply });
+      return r;
+    };
+    const confirmed = async (id, text) => {
+      await send(id, text);
+      let s = await f.guardian.load(phone);
+      if (s.pending?.kind === "proposal") {
+        await send(id + "-yes", "Exatamente, pode fazer.");
+        s = await f.guardian.load(phone);
+      }
+      return s;
+    };
+    let s = await confirmed(
+      "qa-existing-context",
+      "Nesta fazenda há 120 cabeças de gado já contabilizadas. Adicione mais 50 gados Nelore e 20 porcos.",
+    );
+    if (s.pending?.kind === "semantic_draft")
+      s = await confirmed(
+        "qa-already-existed",
+        "Eles já existiam na fazenda, só não tinha te contado. É para somar aos que já estavam contabilizados.",
+      );
+    assert.equal(stockAt(s.active.book.operations, "2026-10-29").count, 170);
+    assert.equal(stockAt(s.active.book.operations, "2026-10-29", undefined, "pig").count, 20);
+    assert.equal(s.active.book.animals.length, 2);
+    s = await confirmed(
+      "qa-correct-count",
+      "Quero corrigir só o total de bovinos para 190 cabeças. Os 20 porcos continuam à parte. Isso é ajuste da contagem, não compra nem nascimento.",
+    );
+    assert.equal(stockAt(s.active.book.operations, "2026-10-29").count, 190);
+    assert.equal(stockAt(s.active.book.operations, "2026-10-29", undefined, "pig").count, 20);
+    assert.equal(s.active.book.operations.movements.length, 0);
+    s = await confirmed(
+      "qa-last-two",
+      "Os dois últimos animais cadastrados podem ficar no lote três.",
+    );
+    assert.deepEqual(
+      s.active.book.animals.map((a) => [a.code, a.lot]),
+      [
+        ["b01", "3"],
+        ["b02", "3"],
+      ],
+    );
+    s = await confirmed(
+      "qa-supplies",
+      "No estoque tem dez sacos de ração e hoje usei três deles no lote três. Pode anotar.",
+    );
+    assert.equal(supplyBalances(s.active.book).find((r) => r.unit === "saco")?.quantity, 7);
+    // New farm for a real same-request purchase/expense/schedule test. Baseline is
+    // explicitly a previous-day count, so no same-day census ordering is inferred.
+    const book2 = applyFarmAction(
+      emptyFarm("Boa Vista", "Tanabi", "SP"),
+      { kind: "herd_count", species: "cattle", count: 10, date: "2026-10-28" },
+      "owner",
+      source,
+      "base-b",
+    ).book;
+    await f.guardian.commit({
+      phone,
+      messageId: "farm-b",
+      accountVersion: s.accountVersion,
+      propertyId: randomUUID(),
+      propertyVersion: null,
+      operation: "create",
+      book: book2,
+      pending: null,
+      reply: "Criada",
+    });
+    history.length = 0;
+    s = await confirmed(
+      "qa-natural-multi",
+      "Hoje fui num leilão e comprei quatro bois para a fazenda Boa Vista. Gastei uns 600 reais de diesel hoje. Amanhã às 13h vem o veterinário, deixa agendado.",
+    );
+    assert.equal(stockAt(s.active.book.operations, "2026-10-29").count, 14);
+    assert.equal(s.active.book.ledger.filter((e) => e.amountCents === 60000).length, 1);
+    assert.equal(s.active.book.tasks.length, 1);
+    assert.equal(Date.parse(s.active.book.tasks[0].dueAt), Date.parse("2026-10-30T16:00:00Z"));
+    assert.equal(s.active.book.animals.length, 0);
+    s = await confirmed(
+      "qa-natural-correction",
+      "Na verdade os bois que comprei foram cinco, não quatro. Corrige só essa compra.",
+    );
+    assert.equal(stockAt(s.active.book.operations, "2026-10-29").count, 15);
+    assert.equal(s.active.book.ledger.filter((e) => e.amountCents === 60000).length, 1);
+    assert.equal(s.active.book.tasks.length, 1);
+    assert.equal(s.active.book.operations.movements.length, 2);
+    assert.ok(s.active.book.operations.movements[1].replaces);
+    results.push({ name: "practical-natural-rpc", status: "passed" });
+    console.log(
+      "Real model + SQL practical acceptance passed: additions, total corrections, real animal targets, supplies, purchase, diesel, schedule and purchase revision.",
+    );
+  } catch (error) {
+    failures.push({
+      name: "practical-natural-rpc",
+      error: String(error?.message ?? error).slice(0, 1800),
+    });
+  } finally {
+    await f.db.close();
+  }
+}
+
 try {
   await main();
-  await report("passed");
+  console.log("Semantic evaluation summary:", JSON.stringify({ status: "passed", results }));
 } catch (error) {
-  try {
-    await report("failed", String(error?.message ?? error).slice(0, 6000));
-  } catch {
-    console.error("Could not save synthetic evaluation diagnostic receipt.");
-  }
+  console.error(
+    "Semantic evaluation summary:",
+    JSON.stringify({ status: "failed", results, failures }),
+  );
   throw error;
 }

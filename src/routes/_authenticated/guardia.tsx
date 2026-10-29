@@ -1,3 +1,4 @@
+import { GuardianOperationLog } from "@/components/guardian/GuardianOperationLog";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -50,6 +51,8 @@ const tabs = [
   { id: "herd", label: "Rebanho", icon: Leaf },
   { id: "records", label: "Caderno de campo", icon: BookOpen },
   { id: "finance", label: "Financeiro", icon: Wallet },
+  { id: "fuel", label: "Combustível", icon: Wallet },
+  { id: "supplies", label: "Estoque e insumos", icon: Leaf },
   { id: "events", label: "Eventos e avisos", icon: Bell },
   { id: "calculator", label: "Calculadoras", icon: Calculator },
   { id: "settings", label: "Equipe e dados", icon: Settings2 },
@@ -435,15 +438,20 @@ function GuardianPage() {
             tab !== "calculator" &&
             tab !== "profiles" &&
             (detail ? (
-              <GuardianWorkspace
-                key={detail.id}
-                detail={detail}
-                tab={tab}
-                onPropose={propose}
-                busy={busy || !overview?.enabled || !overview?.account}
-                ownPhone={overview?.account?.phone_number}
-                loadEventHistory={(eventId) => historyFn({ data: { eventId } })}
-              />
+              <>
+                {overview?.isAdmin && tab === "events" && (
+                  <GuardianOperationLog propertyId={detail.id} />
+                )}
+                <GuardianWorkspace
+                  key={detail.id}
+                  detail={detail}
+                  tab={tab}
+                  onPropose={propose}
+                  busy={busy || !overview?.enabled || !overview?.account}
+                  ownPhone={overview?.account?.phone_number}
+                  loadEventHistory={(eventId) => historyFn({ data: { eventId } })}
+                />
+              </>
             ) : (
               <Empty>
                 {overview?.account
