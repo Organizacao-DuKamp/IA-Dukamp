@@ -653,3 +653,32 @@ test("a declared unit price is multiplied only by declared liters and retains it
   assert.equal(b.fuel!.movements[0].unitPriceCents, 650);
   assert.equal(fuelObservation("Comprei diesel por R$ 6,50 por litro", at).status, "pending");
 });
+test("spoken short answers retain the month and source, while an expired fuel answer cannot execute a hidden request", async () => {
+  const f = await fixture();
+  let i = 0;
+  const send = (id: string, text: string, now = new Date(at.getTime() + ++i * 1000)) =>
+    handleGuardianMessage(
+      { phone, messageId: id, text },
+      { store: f.guardian, now, extract: async () => null },
+    );
+  try {
+    await send("draft", "Esse mês foi tanto de gasolina");
+    const r = await send("spoken", "foi dois mil de gasolina");
+    assert.equal(r?.persisted, true, r?.reply ?? "");
+    let s = await f.guardian.load(phone);
+    assert.equal(s.active!.book.ledger[0].periodMonth, "2026-10");
+    assert.equal(s.active!.book.ledger[0].source.messageId, "draft");
+    await send("entry", "Entrou diesel no tanque principal");
+    const liters = await send("liters", "duzentos e cinquenta");
+    assert.equal(liters?.persisted, true, liters?.reply ?? "");
+    s = await f.guardian.load(phone);
+    assert.equal(s.active!.book.fuel!.movements[0].liters, 250);
+    await send("unknown-fuel", "Entrou 100 litros de combustível");
+    const expired = await send("expired", "é o diesel", new Date(at.getTime() + 40 * 60000));
+    assert.equal(expired?.persisted, false);
+    assert.match(expired!.reply!, /expirou/);
+    assert.equal((await f.guardian.load(phone)).active!.book.fuel!.movements.length, 1);
+  } finally {
+    await f.db.close();
+  }
+});

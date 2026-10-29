@@ -125,7 +125,14 @@ export async function handleFuelTurn(
     repeatConfirmed = /^(?:outro|outra|e outro|e outra|novo|nova)[.! ]*$/.test(fuelFold(text));
     if (!repeatConfirmed) return { reply: draft.question, activeProperty: true, persisted: false };
   }
-  if (draft && !fuelTopic(text)) {
+  const slotFuel = fuelFold(text).match(
+    /^(?:(?:foi|e|deu|foram|era|de|o valor foi)\s+(?:o\s+)?)?(.*?)\b(diesel|gasolina|etanol)[.! ]*$/,
+  );
+  const slotMoney = slotFuel
+    ? moneyValue(slotFuel[1].replace(/\s+(?:de|em|com)\s*$/, "").trim())
+    : null;
+  const shortFuelAnswer = !!slotFuel && (!slotFuel[1].trim() || slotMoney !== null);
+  if (draft && (!fuelTopic(text) || shortFuelAnswer)) {
     if (draft.propertyId !== active.id || Date.parse(draft.expiresAt) <= now.getTime())
       return commit(
         undefined,
@@ -138,16 +145,23 @@ export async function handleFuelTurn(
     const answer = fuelFold(text);
     if (/\b(?:rebanho|bezerro|nasceu|nasceram|racao|tarefa|clima|chuva|tempo)\b/.test(answer))
       return null;
-    if (/litros/.test(draft.question) && /^\d+(?:[.,]\d+)?$/.test(answer)) text += " litros";
-    else if (/tanque/.test(draft.question)) text = "tanque " + text;
+    const moneyAnswer = shortFuelAnswer ? slotMoney : moneyValue(text);
+    if (shortFuelAnswer)
+      text =
+        (slotMoney !== null ? `R$ ${(slotMoney / 100).toFixed(2).replace(".", ",")} ` : "") +
+        slotFuel![2];
+    else if (
+      /litros/.test(draft.question) &&
+      (moneyAnswer !== null || /^0(?:[.,]0+)?$/.test(answer))
+    )
+      text = (moneyAnswer === null ? "0" : String(moneyAnswer / 100).replace(".", ",")) + " litros";
+    else if (/^De qual tanque/.test(draft.question)) text = "tanque " + text;
     else if (/Para onde/.test(draft.question)) text = "para " + text;
-    else if (/valor gasto/.test(draft.question) && /^\d+(?:[.,]\d+)?$/.test(answer))
-      text = "R$ " + text;
-    text = draft.text + (repeatConfirmed ? " outro lançamento" : " " + text);
-    origin = draft.sourceMessageId;
-    sourceAt = draft.sourceAt;
-  } else if (draft && /^(?:diesel|gasolina|etanol)[.! ]*$/.test(fuelFold(text))) {
-    text = draft.text + " " + text;
+    else if (/valor gasto/.test(draft.question) && moneyAnswer !== null)
+      text = `R$ ${(moneyAnswer / 100).toFixed(2).replace(".", ",")}`;
+    text = /^De qual tanque/.test(draft.question)
+      ? text + ": " + draft.text
+      : draft.text + (repeatConfirmed ? " outro lançamento" : " " + text);
     origin = draft.sourceMessageId;
     sourceAt = draft.sourceAt;
   }
