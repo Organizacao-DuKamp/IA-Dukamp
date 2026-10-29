@@ -13,6 +13,7 @@ import { farmCsv } from "../src/lib/guardian/export.ts";
 import { stockAt } from "../src/lib/guardian/operations.ts";
 import { handleGuardianMessage } from "../src/lib/guardian/handler.server.ts";
 import {
+  groundSemanticEvidence,
   handleSemanticTurn,
   semanticContext,
   type SemanticInterpreter,
@@ -387,4 +388,33 @@ test("an oversized request is never silently truncated into a partial saved cens
   );
   assert.match((r as { reply: string }).reply, /envie em partes menores/);
   assert.equal(s.active!.book.operations, undefined);
+});
+
+test("abbreviated evidence resolves to the complete original span without accepting invented or assistant facts", () => {
+  const c = semanticContext(
+    {
+      phone,
+      messageId: "citations",
+      text: "Pode preparar sem código",
+      history: [
+        {
+          role: "user",
+          content: "Tenho 66 novilhas, sendo 38 aptas e 28 fora, e também 16 receptoras.",
+        },
+        { role: "assistant", content: "Existem 900 vacas" },
+      ],
+    },
+    snapshot(),
+    now,
+  );
+  const e = groundSemanticEvidence(c, {
+    messageIndex: 0,
+    quote: "Tenho 66 novilhas... e também 16 receptoras.",
+  });
+  assert.equal(e?.quote, "Tenho 66 novilhas, sendo 38 aptas e 28 fora, e também 16 receptoras.");
+  assert.equal(
+    groundSemanticEvidence(c, { messageIndex: 0, quote: "Tenho 66 novilhas... 800 vacas" }),
+    null,
+  );
+  assert.equal(groundSemanticEvidence(c, { messageIndex: 1, quote: "900 vacas" }), null);
 });
