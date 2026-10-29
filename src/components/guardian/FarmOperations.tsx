@@ -98,6 +98,10 @@ export function FarmOperations({ book, compact = false }: { book: FarmBook; comp
               </div>
             ))}
           </div>
+          <p className="mt-3 font-semibold">
+            Total das espécies com contagem: {data.stocksBySpecies.reduce((n, s) => n + s.count, 0)}{" "}
+            animais.
+          </p>
           <p className="mt-3 text-xs text-muted-foreground">
             As espécies têm saldos separados. Porcos e aves não são somados aos bovinos.
           </p>
@@ -115,8 +119,12 @@ export function FarmOperations({ book, compact = false }: { book: FarmBook; comp
                 Rebanho por grupos · {inventory.date.split("-").reverse().join("/")}
               </h3>
               <p className="mt-2 text-muted-foreground">
-                {inventory.complete ? "Levantamento do rebanho existente" : "Levantamento parcial"}.
-                Subgrupos incluídos nos grupos principais. Identificação individual pode ser
+                {inventory.mode === "additional"
+                  ? "Animais adicionais já somados aos saldos por espécie"
+                  : inventory.complete
+                    ? "Levantamento do rebanho existente"
+                    : "Levantamento parcial"}
+                . Subgrupos incluídos nos grupos principais. Identificação individual pode ser
                 informada depois.
               </p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">

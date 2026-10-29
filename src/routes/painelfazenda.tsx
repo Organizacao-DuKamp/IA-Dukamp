@@ -8,6 +8,7 @@ import {
   NotebookPen,
   Wallet,
   Fuel,
+  Package,
   Bell,
   Calculator,
   Plus,
@@ -61,6 +62,7 @@ const tabs = [
   ["records", "Caderno de campo"],
   ["finance", "Financeiro"],
   ["fuel", "Combustível"],
+  ["supplies", "Estoque e insumos"],
   ["events", "Avisos e histórico"],
   ["calculator", "Calculadoras"],
 ] as const;
@@ -72,6 +74,7 @@ const tabIcons = {
   records: NotebookPen,
   finance: Wallet,
   fuel: Fuel,
+  supplies: Package,
   events: Bell,
   calculator: Calculator,
 };
@@ -375,7 +378,7 @@ function FarmPanel() {
                 >
                   <RefreshCw size={16} /> Atualizar
                 </button>
-                {tab !== "fuel" && (
+                {!["fuel", "supplies"].includes(tab) && (
                   <button
                     disabled={busy}
                     onClick={() => setForm((f) => !f)}
@@ -458,7 +461,7 @@ function FarmPanel() {
                   </div>
                 </section>
               )}
-              {form && tab !== "fuel" && (
+              {form && !["fuel", "supplies"].includes(tab) && (
                 <GuardianActionForm
                   key={`${view.propertyId}:${tab}`}
                   initialKind={

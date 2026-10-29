@@ -1,3 +1,4 @@
+import type { GuardianTrace } from "./trace.ts";
 import {
   handleSemanticTurn,
   interpretFarmConversation,
@@ -110,6 +111,7 @@ export interface GuardianInput {
   history?: ChatMessage[];
 }
 export interface GuardianHandled {
+  trace?: GuardianTrace;
   reply: string | null;
   context?: string;
   activeProperty: boolean;
@@ -291,6 +293,7 @@ export async function handleGuardianMessage(
   let resolvedManagement: { propertyId: string; slots: ManagementSlots } | undefined;
   let initialSnapshot: GuardianSnapshot | undefined;
   let semanticPropertyId: string | undefined;
+  let semanticPlanCache: unknown;
   try {
     if (!deps.request) {
       const portalReply = await handlePanelCodeRequest(input, {
@@ -368,11 +371,17 @@ export async function handleGuardianMessage(
           store,
           now,
           referenceAt,
-          deps.interpret ?? interpretFarmConversation,
+          async (context) => {
+            if (!context.validation && semanticPlanCache !== undefined) return semanticPlanCache;
+            const plan = await (deps.interpret ?? interpretFarmConversation)(context);
+            semanticPlanCache = plan;
+            return plan;
+          },
         );
         if (semantic === "conflict") continue;
         if (semantic && "scopeChanged" in semantic) {
           semanticPropertyId = semantic.scopeChanged;
+          semanticPlanCache = undefined; // target reload requires a new interpretation
           continue;
         }
         if (semantic) return semantic;

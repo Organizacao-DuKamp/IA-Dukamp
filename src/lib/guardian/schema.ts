@@ -1,3 +1,4 @@
+import { SupplyActionSchema, SupplyBookSchema, type SupplyBook } from "./supplies.ts";
 import { FuelActionSchemas, FuelBookSchema, FuelVoidSchema, type FuelBook } from "./fuel.ts";
 import { z } from "zod";
 import { OperationsActionSchemas, OperationsSchema, type Operations } from "./operations.ts";
@@ -44,6 +45,7 @@ export type GuardianPreferences = z.infer<typeof PreferencesSchema>;
 export const ActionSchema = z.discriminatedUnion("kind", [
   ...OperationsActionSchemas,
   ...FuelActionSchemas,
+  SupplyActionSchema,
   z
     .object({
       kind: z.literal("property_create"),
@@ -194,6 +196,7 @@ export type GuardianAction = z.infer<typeof ActionSchema>;
  * their exact action and prior values in the book/audit, not a new access right. */
 export function farmActionFamily(action: GuardianAction): string {
   if (action.kind === "herd_inventory") return "herd_count";
+  if (action.kind === "supply_movement") return "record";
   if (action.kind.startsWith("fuel_")) return "ledger";
   return action.kind === "edit_record"
     ? action.section === "ledger"
@@ -292,6 +295,16 @@ export interface FarmBook {
   uf: string | null;
   operations?: Operations;
   fuel?: FuelBook;
+  supplies?: SupplyBook;
+  lastOperation?: {
+    id: string;
+    propertyId: string;
+    sourceMessageId: string;
+    executedByMessageId: string;
+    at: string;
+    actions: GuardianAction[];
+    resultIds: string[];
+  };
   profile: {
     activity?: string;
     species?: string[];
@@ -307,6 +320,7 @@ export interface FarmBook {
 }
 export interface SemanticDraft {
   kind: "semantic_draft";
+  operationId?: string;
   propertyId: string | null;
   createdAt: string;
   expiresAt: string;
@@ -320,6 +334,7 @@ export interface PendingAction {
   actions?: GuardianAction[];
   sourceAt?: string;
   evidence?: Array<{ messageIndex: number; quote: string }>;
+  messages?: Array<{ role: string; content: string }>;
   kind?: "proposal";
   action: GuardianAction;
   propertyId: string | null;
@@ -556,6 +571,19 @@ export const FarmBookSchema = z
       .nullable(),
     operations: OperationsSchema.optional(),
     fuel: FuelBookSchema.optional(),
+    supplies: SupplyBookSchema.optional(),
+    lastOperation: z
+      .object({
+        id: z.string().max(128),
+        propertyId: z.string().max(128),
+        sourceMessageId: z.string().max(128),
+        executedByMessageId: z.string().max(128),
+        at: z.iso.datetime(),
+        actions: z.array(ActionSchema).max(20),
+        resultIds: z.array(z.string().max(160)).max(20),
+      })
+      .strict()
+      .optional(),
     profile: z
       .object({
         activity: label.optional(),

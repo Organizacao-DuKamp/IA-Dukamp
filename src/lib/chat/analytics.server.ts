@@ -1,3 +1,4 @@
+import { GuardianTraceSchema } from "../guardian/trace.ts";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { supabaseAdmin } from "../../integrations/supabase/client.server.ts";
 import { createHash } from "node:crypto";
@@ -284,7 +285,12 @@ export async function recordAIChatTurn(input: AIChatTurnTelemetryInput): Promise
     duration_ms: durationMs,
     created_at: createdAt,
     completed_at: completedAt,
-    metadata: aggregateMetadata(aggregate, retrieved, events),
+    metadata: {
+      ...aggregateMetadata(aggregate, retrieved, events),
+      ...(GuardianTraceSchema.safeParse(diagnostics.guardian_trace).success
+        ? { guardian: GuardianTraceSchema.parse(diagnostics.guardian_trace) }
+        : {}),
+    },
   };
 
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()) {

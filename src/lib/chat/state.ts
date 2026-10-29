@@ -1,3 +1,4 @@
+import { userStatement } from "../whatsapp/learned-notes.ts";
 // Conversation State — camada 2 da arquitetura de contexto da TPEC-IA.
 //
 // Módulo PURO (sem I/O, sem dependência de servidor) para que possa ser usado
@@ -51,6 +52,12 @@ export interface ConversationSummary {
 }
 
 export interface ConversationState {
+  guardian?: {
+    propertyId: string | null;
+    operationId: string;
+    status: string;
+    receiptMessageId: string;
+  };
   conversation_id: string;
   version: number;
   current_topic: string | null;
@@ -559,7 +566,14 @@ const TOPIC_PATTERNS: Array<[RegExp, string]> = [
     /cota[çc][ãa]o|pre[çc]o|arroba|saca|mercado|d[óo]lar|boi\s+gordo/i,
     "cotações e preços de mercado",
   ],
-  [/vendedor|representante|contato|whats/i, "vendedores e atendimento comercial"],
+  [
+    /\b(?:vendedor(?:es)?|representante(?:s)?|contato(?:s)?)\b/i,
+    "vendedores e atendimento comercial",
+  ],
+  [
+    /\b(?:rebanho|fazenda|bovinos?|su[ií]nos?|cabe[çc]as de gado|galinhas?|lote)\b/i,
+    "gestão da fazenda",
+  ],
   [/unidade|filial|matriz|endere[çc]o|cnpj/i, "unidades da DuKamp"],
   [/pasto|pastagem|lota[çc][ãa]o|brachiaria|capim/i, "pastagens e lotação"],
   [/iatf|reprodu[çc][ãa]o|prenhez|cio|insemina/i, "reprodução"],
@@ -612,7 +626,7 @@ export function applyUserTurn(
   }
   next.missing_data = next.missing_data.filter((f) => next.confirmed_data[f] === undefined);
 
-  const topic = detectTopic(text);
+  const topic = detectTopic(userStatement(text));
   if (topic && analysis.intent !== "mudanca_de_assunto") next.current_topic = topic;
 
   if (analysis.intent === "pedido_de_calculo") {
@@ -946,7 +960,11 @@ export function buildInterpretationDirective(
     );
     return lines.join("\n");
   }
-  if (analysis.intent === "resposta_a_confirmacao" && analysis.affirmative && pq)
+  if (stateBefore.guardian && stateBefore.pending_action === "guardian_pending")
+    lines.push(
+      "Há uma operação pendente na Guardiã. O executor já recebeu este turno; esta resposta geral não executa gravações. Só declare persistência com recibo confirmado. Responda perguntas intermediárias sem cancelar nem confirmar o pedido operacional.",
+    );
+  else if (analysis.intent === "resposta_a_confirmacao" && analysis.affirmative && pq)
     lines.push(
       `A mensagem atual ("${text}") é uma CONFIRMAÇÃO POSITIVA da sua pergunta anterior: "${pq}".`,
       `EXECUTE AGORA a ação pendente (${stateBefore.pending_action ?? "responder o que foi oferecido"}) usando os dados já confirmados.`,

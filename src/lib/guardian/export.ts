@@ -12,6 +12,17 @@ export function farmCsv(book: FarmBook): string {
   const rows: unknown[][] = [
     ["Seção", "Código", "Data", "Descrição", "Valor", "Unidade", "Lote", "Estado"],
   ];
+  for (const m of book.supplies?.movements ?? [])
+    rows.push([
+      "Estoque de insumos",
+      m.id,
+      m.date,
+      m.item,
+      m.quantity,
+      m.unit,
+      m.destination ?? "",
+      m.type,
+    ]);
   for (const a of book.animals) {
     rows.push(["Animal", a.code, a.birthDate ?? "", a.breed ?? "", "", "", a.lot ?? "", a.sex]);
     for (const w of a.weights)
@@ -89,7 +100,11 @@ export function farmCsv(book: FarmBook): string {
         group.count,
         "cabeças",
         "",
-        inventory.complete ? "censo declarado" : "levantamento parcial",
+        inventory.mode === "additional"
+          ? "acréscimo ao saldo declarado"
+          : inventory.complete
+            ? "censo declarado"
+            : "levantamento parcial",
       ]);
   const replaced = new Set(book.operations?.movements.map((m) => m.replaces).filter(Boolean));
   for (const c of book.operations?.counts ?? [])

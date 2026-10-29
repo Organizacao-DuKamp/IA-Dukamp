@@ -55,6 +55,8 @@ export const InventorySchema = z
   .object({
     date: day,
     complete: z.boolean(),
+    // Previously uncounted animals already on the farm; never fabricate an arrival/birth.
+    mode: z.literal("additional").optional(),
     groups: z.array(InventoryGroupSchema).min(1).max(100),
   })
   .strict()
@@ -164,7 +166,7 @@ export function describeOperations(action: OperationsAction): string {
   const lot = (value?: string) => (value ? `, lote ${value}` : ", rebanho da fazenda");
   switch (action.kind) {
     case "herd_inventory":
-      return `Registrar o rebanho já existente em ${action.date}${action.complete ? `: ${action.groups.reduce((n, g) => n + g.count, 0)} animais no total` : " (levantamento parcial, sem alterar o total da fazenda)"}.\n${action.groups.map((g) => `• ${g.count} ${g.name}${g.species && g.species !== "cattle" ? ` (${speciesNames[g.species]})` : ""}: ${g.description}`).join("\n")}\nOs subgrupos estão incluídos em seus grupos principais. Brincos e RGN podem ser preenchidos depois; não cria nascimentos, compras nem fichas individuais fictícias.`;
+      return `${action.mode === "additional" ? "Acrescentar animais ainda não contabilizados ao rebanho existente" : "Registrar o rebanho já existente"} em ${action.date}${action.mode === "additional" ? " (o servidor soma os grupos ao saldo de cada espécie)" : action.complete ? `: ${action.groups.reduce((n, g) => n + g.count, 0)} animais no total` : " (levantamento parcial, sem alterar o total da fazenda)"}.\n${action.groups.map((g) => `• ${g.count} ${g.name}${g.species && g.species !== "cattle" ? ` (${speciesNames[g.species]})` : ""}: ${g.description}`).join("\n")}\nOs subgrupos estão incluídos em seus grupos principais. Brincos e RGN podem ser preenchidos depois; não cria nascimentos, compras nem fichas individuais fictícias.`;
     case "property_transfer":
       return `Transferir ${action.count} animais da fazenda selecionada${action.fromLot ? `, lote ${action.fromLot}` : ""} para a propriedade ${action.toPropertyId}${action.toLot ? `, lote ${action.toLot}` : ""} em ${action.date}. As duas fazendas serão atualizadas juntas, após conferir acesso e saldo.`;
     case "herd_count":
@@ -398,24 +400,30 @@ export function applyOperations(
     if (rows.length >= 1000) throw new Error("O volume atingiu o limite técnico de levantamentos.");
     const { kind: _, ...inventory } = action;
     rows.push({ ...inventory, id, source: provenance });
-    if (action.complete) {
+    if (action.complete || action.mode === "additional") {
       const totals = new Map<FarmSpecies, number>();
       for (const group of action.groups) {
         const species = group.species ?? "cattle";
         totals.set(species, (totals.get(species) ?? 0) + group.count);
       }
-      for (const [species, total] of totals)
+      for (const [species, total] of totals) {
+        const current = stockAt(operations, action.date, undefined, species).count;
+        if (action.mode === "additional" && current === null)
+          throw new Error(
+            `Falta a contagem anterior de ${speciesNames[species]} para somar esses animais. Qual era o total já contabilizado?`,
+          );
         applyOperations(
           book,
           {
             kind: "herd_count",
-            count: total,
+            count: total + (action.mode === "additional" ? current! : 0),
             date: action.date,
             ...(species !== "cattle" ? { species } : {}),
           },
           provenance,
           species === "cattle" ? id : `${id}:${species}`,
         );
+      }
     }
     return;
   }

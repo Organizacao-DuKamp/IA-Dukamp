@@ -1,3 +1,4 @@
+import { guardianConversationState } from "../guardian/conversation-state.ts";
 import { recordAIChatTurn } from "../chat/analytics.server.ts";
 import { withAIUsageContext } from "../chat/usage.server.ts";
 import { ChatCoreResultSchema, type ChatInput } from "../chat/input.ts";
@@ -511,6 +512,7 @@ export async function processClaimedWhatsAppChat(
           diagnostics: {
             retrieved_blocks: ["guardian:confirmed-operations"],
             response_mode: "knowledge",
+            ...(guardian.trace ? { guardian_trace: guardian.trace } : {}),
           },
           usageEvents: [...usageEvents],
           startedAt,
@@ -520,7 +522,13 @@ export async function processClaimedWhatsAppChat(
         try {
           await deps.saveConversation(input.phone, {
             conversationId,
-            state: previous?.state,
+            state: guardianConversationState(
+              previous?.state,
+              conversationId,
+              userText,
+              guardian.reply,
+              guardian.trace,
+            ),
             history: appendTurn(previous?.history ?? [], userText, guardian.reply.slice(0, 8000)),
           });
         } catch {
