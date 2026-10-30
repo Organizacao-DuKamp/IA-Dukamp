@@ -131,5 +131,29 @@ export function farmCsv(book: FarmBook): string {
     ]);
   for (const l of book.operations?.lots ?? [])
     rows.push(["Lote", l.name, "", l.pasture ?? "", l.areaHa ?? "", "ha", l.name, "informado"]);
+  for (const t of book.operations?.lotTransfers ?? []) {
+    const group = book.operations!.movements.find((m) => m.id === t.movementId);
+    rows.push([
+      "Transferência de grupo",
+      t.id,
+      t.date,
+      `${speciesNames[group?.species ?? "cattle"]} — ${t.from ?? "Sem lote definido"} → ${t.to}; grupo ${t.movementId}`,
+      t.count,
+      "cabeças",
+      t.to,
+      "localização alterada; total da fazenda preservado",
+    ]);
+  }
+  for (const p of book.operations?.lotPlacements ?? [])
+    rows.push([
+      "Localização de todo o rebanho",
+      p.id,
+      p.date,
+      speciesNames[p.species],
+      p.count ?? "Não informado",
+      "cabeças",
+      p.to,
+      "total da fazenda preservado",
+    ]);
   return "\ufeff" + rows.map((row) => row.map(cell).join(";")).join("\r\n");
 }

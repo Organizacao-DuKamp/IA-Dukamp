@@ -1,5 +1,6 @@
 import { prepareFarmBatch, operationalId } from "./execution.ts";
 import { supplyBalances } from "./supplies.ts";
+import { herdGroupsAt } from "./herd-locations.ts";
 import { z } from "zod";
 import { createHash } from "node:crypto";
 import {
@@ -93,6 +94,7 @@ export interface SemanticContext {
     collectionsArePartial: true;
     stockBySpecies: Record<string, number>;
     supplies?: ReturnType<typeof supplyBalances>;
+    herdGroups?: ReturnType<typeof herdGroupsAt>;
   };
   messages: Array<{ role: string; content: string; messageIndex?: number }>;
   validation?: {
@@ -166,6 +168,8 @@ Referências e correções: snapshot.active.book.lastOperation é memória persi
 Insumos: supply_movement registra item, unidade explícita (kg/L/un/saco), quantidade, data, tipo balance/in/out e destino opcional. Não transforme saco em kg sem peso informado, nem invente saldo inicial, preço ou despesa. Compra de insumos e seu pagamento são operações distintas; quando ambos constam da fala, registre ambas no mesmo lote atômico. Combustível usa as ações fuel_* específicas, não supply_movement. Uma hora amanhã é ambígua entre 01h e 13h: pergunte o período se o contexto não resolver; não assuma silenciosamente.
 Confirmação: se existe proposta pendente válida, entenda pelo sentido respostas como 'isso mesmo', 'pode deixar desse jeito', 'pode lançar' e erros claros de transcrição de áudio como 'Confirmer'. intent confirm não traz novas entries; executa apenas a proposta persistida. Se a resposta contiver correção ou negação, não confirme a proposta antiga: proponha a revisão completa ou esclareça. Perguntas como 'já salvou?' não confirmam. Confirmar e cancelar exigem referência à proposta pendente que está em foco na conversa: uma resposta à pergunta mais recente sobre outro assunto não confirma uma tarefa antiga. Use cancel somente quando o produtor pede para descartar aquela proposta. Uma negativa sobre outro registro, uma hipótese ou um exemplo de terceiro deve retornar none ou clarify e preservar a proposta pendente; por exemplo, negar o cadastro de animais não cancela uma visita veterinária pendente. Sem proposta, não afirme confirmação. Nunca produza property_transfer, property_create, property_delete, invite, revoke ou delete_record. Dinheiro em centavos; litros e reais separados; totais e subtotais financeiros respeitam inclusão/adicional. Não invente valores, entidades, datas, produtos, doses nem evidência.`;
 
+const GROUPED_LOT_DIRECTIVE = `Lotes de grupos coletivos: summary.herdGroups vem dos movimentos reais e das transferências já executadas, calculado sobre TODO o livro. Cada grupo tem movementId, species e locations com lot opcional e available (limite seguro). Para "esses 50 da última compra no lote 4", use lot_transfer com movementId desse grupo real, count 50, species do grupo, to "4", date da mudança. Se locations não tem lot, omita from: o grupo está SEM LOTE, não em um lote chamado "fazenda". A palavra "Fazenda" na tabela antiga significa rebanho sem lote definido; só use from "fazenda" se existir um lote real com esse nome. Se o grupo está no lote 4 e vai para o 5, from é "4". Não crie herd_count nem invente um censo de ontem, não substitua a compra para mudar sua localização atual, não refaça a compra/nascimento e não crie fichas individuais. Quando o destino ainda não existe e o produtor pede colocar/criar o grupo lá, use createDestination true: criar lote na fazenda selecionada é autorizado pelo pedido; não exige contagem histórica fictícia. Em lote já conhecido sem contagem, o executor registra a alocação mas mantém desconhecido o total desse lote. Use movementId somente se o grupo referido corresponder a um único movimento real e available cobrir a quantidade. Se faltam origem, grupo ou saldo seguros, pergunte só isso, sem estimar a quantidade. Uma ficha individual real usa move com seu code, não um grupo coletivo. Se não é um grupo identificável, lot_transfer sem movementId continua exigindo contagens reais dos lotes. Corrigir o destino de uma operação pendente usa a última fala explícita ("melhor, no lote 4" substitui o 2); não execute a antiga. Uma operação já salva no livro/lastOperation é contexto, não uma nova ordem para registrá-la outra vez.`;
+
 export async function interpretFarmConversation(context: SemanticContext): Promise<SemanticPlan> {
   const { askOpenAI } = await import("../chat/openai.server.ts");
   const response = await askOpenAI([{ role: "user", content: JSON.stringify(context) }], {
@@ -179,6 +183,9 @@ export async function interpretFarmConversation(context: SemanticContext): Promi
     stage: "guardian_semantic_plan",
     directive:
       SEMANTIC_DIRECTIVE +
+      "\n" +
+      GROUPED_LOT_DIRECTIVE +
+      "\nGestão de lotes e áreas: lot_update cria um lote vazio de metadados ou edita sua areaHa e pasture; área de um lote/piquete usa lot_update, área TOTAL da propriedade usa property_update. Não exija contagem de animais para criar/editar pastagem ou hectares. Um lote criado sem informação de animais não tem contagem presumida. Para uma ordem explícita de mover TODOS os animais da fazenda (ou todos os bovinos/suínos de uma espécie) ao mesmo lote, use herd_relocate com to e a data atual; omita species para todos os animais, informe species somente quando o produtor restringir a espécie. Não envie count: o servidor lê o livro inteiro, atualiza as fichas ativas e a localização dos grupos sem alterar compras, nascimentos ou totais. Quantidades desconhecidas permanecem desconhecidas. Não substitua mover TODOS por mover só o último grupo de 50 ou por uma nova contagem; a ordem atual explícita prevalece sobre um rascunho anterior de subconjunto. herd_relocate não serve para 'esses 50', 'um dos animais', 'alguns', uma pergunta hipotética ou somente animais de um lote; esses casos usam as referências individuais/coletivas reais ou esclarecimento. Nem a solicitação de código do painel nem uma pergunta sobre como criar lotes autoriza herd_relocate.\n" +
       "\nEsquema: " +
       JSON.stringify(z.toJSONSchema(ProviderPlanSchema, { unrepresentable: "any" })),
   });
@@ -255,6 +262,13 @@ export function semanticContext(
         : null,
       collectionsArePartial: true,
       supplies: book ? supplyBalances(book) : [],
+      herdGroups: book?.operations
+        ? herdGroupsAt(
+            book.operations,
+            new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(now),
+            { limit: 30 },
+          )
+        : [],
       stockBySpecies: book?.operations
         ? Object.fromEntries(
             Object.keys(speciesNames).flatMap((key) => {
@@ -294,6 +308,13 @@ export function semanticContext(
                       counts: book.operations.counts.slice(-10),
                       movements: book.operations.movements.slice(-10),
                       inventories: book.operations.inventories?.slice(-3),
+                      lotTransfers: book.operations.lotTransfers?.slice(-20),
+                      lotPlacements: book.operations.lotPlacements?.slice(-8).map((p) => ({
+                        ...p,
+                        includedMovements: [],
+                        includedTransfers: [],
+                        includedCounts: [],
+                      })),
                     }
                   : undefined,
                 fuel: book.fuel ? { movements: book.fuel.movements.slice(-30) } : undefined,

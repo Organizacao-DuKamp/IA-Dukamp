@@ -196,6 +196,7 @@ export type GuardianAction = z.infer<typeof ActionSchema>;
  * their exact action and prior values in the book/audit, not a new access right. */
 export function farmActionFamily(action: GuardianAction): string {
   if (action.kind === "herd_inventory") return "herd_count";
+  if (action.kind === "herd_relocate") return "lot_transfer";
   if (action.kind === "supply_movement") return "record";
   if (action.kind.startsWith("fuel_")) return "ledger";
   return action.kind === "edit_record"

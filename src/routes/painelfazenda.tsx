@@ -208,6 +208,7 @@ function FarmPanel() {
           "herd_count",
           "herd_event",
           "lot_transfer",
+          "herd_relocate",
           "lot_update",
           "task_create",
           "expense",

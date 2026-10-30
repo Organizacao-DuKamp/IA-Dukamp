@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { FarmBook, Provenance } from "./schema.ts";
 import { ledgerForTotals } from "./finance.ts";
+import { applyGroupedLotTransfer } from "./herd-locations.ts";
 
 const label = z.string().trim().min(1).max(160);
 const count = z.number().int().min(0).max(1e7);
@@ -124,9 +125,22 @@ export const OperationsActionSchemas = [
     .object({
       kind: z.literal("lot_transfer"),
       species: SpeciesSchema.optional(),
-      from: label,
+      // With movementId, an omitted source means that real group has no lot yet.
+      from: label.optional(),
       to: label,
       count: count.min(1),
+      date: day,
+      movementId: label.optional(),
+      createDestination: z.literal(true).optional(),
+    })
+    .strict()
+    .refine((a) => !!a.from || !!a.movementId, "Informe o lote ou o grupo de origem."),
+  z
+    .object({
+      kind: z.literal("herd_relocate"),
+      // No model-produced count: the executor reads the whole, current book.
+      to: label,
+      species: SpeciesSchema.optional(),
       date: day,
     })
     .strict(),
@@ -174,9 +188,11 @@ export function describeOperations(action: OperationsAction): string {
     case "herd_event":
       return `Registrar ${{ birth: "nascimento", death: "morte", purchase: "compra", sale: "venda", transfer_in: "entrada", transfer_out: "saída" }[action.type]} de ${action.count} ${speciesNames[action.species ?? "cattle"]} em ${action.date}${lot(action.lot)}: ${action.description}.${action.replaces ? ` Corrige o evento ${action.replaces}, preservando o original.` : ""}`;
     case "lot_transfer":
-      return `Transferir ${action.count} ${speciesNames[action.species ?? "cattle"]} do lote ${action.from} para o lote ${action.to} em ${action.date}. O total da fazenda permanece igual.`;
+      return `Transferir ${action.count} ${speciesNames[action.species ?? "cattle"]} ${action.from ? `do lote ${action.from}` : "do grupo ainda sem lote definido"} para o lote ${action.to} em ${action.date}.${action.createDestination ? " Criar esse lote para receber o grupo." : ""} O total da fazenda permanece igual.`;
     case "lot_update":
       return `Atualizar o lote ${action.lot}${action.pasture ? `, pastagem ${action.pasture}` : ""}${action.areaHa ? `, área ${action.areaHa} ha` : ""}.`;
+    case "herd_relocate":
+      return `Mover ${action.species ? `todos os ${speciesNames[action.species]}` : "todos os animais registrados"} desta fazenda para o lote ${action.to} em ${action.date}. Preserva os totais por espécie e as origens; quantidades desconhecidas continuam desconhecidas.`;
     case "feed_consumption":
       return `Registrar consumo ${action.basis === "measured" ? "informado como medido" : "estimado"} de ${action.kg} kg de ${action.feed} em ${action.date}${lot(action.lot)}. Não é uma recomendação de alimentação.`;
     case "property_update": {
@@ -287,11 +303,48 @@ export const OperationsSchema = z
       )
       .max(10000)
       .default([]),
+    lotPlacements: z
+      .array(
+        z
+          .object({
+            id: label,
+            species: SpeciesSchema,
+            to: label,
+            date: day,
+            count: count.nullable(),
+            includedMovements: z.array(label).max(10000),
+            includedTransfers: z.array(label).max(10000),
+            includedCounts: z.array(label).max(10000),
+            source,
+          })
+          .strict(),
+      )
+      .max(1000)
+      .optional(),
+    lotTransfers: z
+      .array(
+        z
+          .object({
+            id: label,
+            movementId: label,
+            from: label.optional(),
+            to: label,
+            count: count.min(1),
+            date: day,
+            source,
+          })
+          .strict(),
+      )
+      .max(10000)
+      .optional(),
     lots: z
       .array(
         z
           .object({
             name: label,
+            // A newly created, explicitly empty lot starts at zero on this day;
+            // existing lots never acquire an invented historical opening count.
+            openedOn: day.optional(),
             pasture: label.optional(),
             areaHa: z.number().positive().max(1e7).optional(),
           })
@@ -322,26 +375,109 @@ export function stockAt(
   lot?: string,
   species: FarmSpecies = "cattle",
 ) {
+  if (lot && operations.lotPlacements?.length) {
+    const placement = operations.lotPlacements
+      .filter((p) => p.species === species && p.date <= date)
+      .sort((a, b) => a.date.localeCompare(b.date) || a.source.at.localeCompare(b.source.at))
+      .at(-1);
+    const countAfter = operations.counts.some(
+      (c) =>
+        c.lot === lot &&
+        (c.species ?? "cattle") === species &&
+        c.date <= date &&
+        placement &&
+        (c.date > placement.date ||
+          (c.date === placement.date && c.source.at > placement.source.at)),
+    );
+    if (placement && !countAfter) {
+      const newCensus = operations.counts.some(
+        (c) =>
+          !c.lot &&
+          (c.species ?? "cattle") === species &&
+          c.date >= placement.date &&
+          c.date <= date &&
+          !placement.includedCounts.includes(c.id),
+      );
+      const initial = lot === placement.to ? (newCensus ? null : placement.count) : 0;
+      const replaced = new Set(operations.movements.map((m) => m.replaces).filter(Boolean));
+      const seenMovements = new Set(placement.includedMovements),
+        seenTransfers = new Set(placement.includedTransfers);
+      const included = operations.movements.filter(
+        (m) =>
+          !replaced.has(m.id) &&
+          !seenMovements.has(m.id) &&
+          (m.species ?? "cattle") === species &&
+          m.lot === lot &&
+          m.date >= placement.date &&
+          m.date <= date,
+      );
+      const unlocatedDeparture = operations.movements.some(
+        (m) =>
+          !replaced.has(m.id) &&
+          !seenMovements.has(m.id) &&
+          (m.species ?? "cattle") === species &&
+          !m.lot &&
+          !incoming(m.type) &&
+          m.date >= placement.date &&
+          m.date <= date,
+      );
+      const kinds = new Map(operations.movements.map((m) => [m.id, m.species ?? "cattle"]));
+      const transfers = (operations.lotTransfers ?? []).filter(
+        (t) =>
+          !seenTransfers.has(t.id) &&
+          kinds.get(t.movementId) === species &&
+          t.date >= placement.date &&
+          t.date <= date &&
+          (t.from === lot || t.to === lot),
+      );
+      return {
+        count:
+          initial === null || (lot === placement.to && unlocatedDeparture)
+            ? null
+            : initial +
+              included.reduce((n, m) => n + (incoming(m.type) ? m.count : -m.count), 0) +
+              transfers.reduce((n, t) => n + (t.to === lot ? t.count : -t.count), 0),
+        baseline: null,
+        included: [placement.id, ...included.map((m) => m.id), ...transfers.map((t) => t.id)],
+      };
+    }
+  }
   const baseline = operations.counts
     .filter((c) => c.date <= date && c.lot === lot && (c.species ?? "cattle") === species)
     .sort((a, b) => a.date.localeCompare(b.date) || a.source.at.localeCompare(b.source.at))
     .at(-1);
-  if (!baseline) return { count: null, baseline: null, included: [] as string[] };
+  const opening = lot ? operations.lots.find((l) => l.name === lot)?.openedOn : undefined;
+  if (!baseline && (!opening || opening > date))
+    return { count: null, baseline: null, included: [] as string[] };
+  const afterStart = (d: string) => (baseline ? d > baseline.date : d >= opening!);
   const replaced = new Set(operations.movements.map((m) => m.replaces).filter(Boolean));
   // A headcount is an end-of-day snapshot; same-day movements are already included.
   const included = operations.movements.filter(
     (m) =>
       !replaced.has(m.id) &&
       (m.species ?? "cattle") === species &&
-      m.date > baseline.date &&
+      afterStart(m.date) &&
       m.date <= date &&
       (!lot || m.lot === lot),
   );
+  const speciesByMovement = new Map(operations.movements.map((m) => [m.id, m.species ?? "cattle"]));
+  const transfers = lot
+    ? (operations.lotTransfers ?? []).filter((t) => {
+        return (
+          speciesByMovement.get(t.movementId) === species &&
+          afterStart(t.date) &&
+          t.date <= date &&
+          (t.from === lot || t.to === lot)
+        );
+      })
+    : [];
   return {
     count:
-      baseline.count + included.reduce((n, m) => n + (incoming(m.type) ? m.count : -m.count), 0),
-    baseline,
-    included: included.map((m) => m.id),
+      (baseline?.count ?? 0) +
+      included.reduce((n, m) => n + (incoming(m.type) ? m.count : -m.count), 0) +
+      transfers.reduce((n, t) => n + (t.to === lot ? t.count : -t.count), 0),
+    baseline: baseline ?? null,
+    included: [...included.map((m) => m.id), ...transfers.map((t) => t.id)],
   };
 }
 export function applyOperations(
@@ -395,6 +531,91 @@ export function applyOperations(
   }).format(new Date(provenance.at));
   if (action.date > today)
     throw new Error("A data de um evento realizado não pode estar no futuro.");
+  if (
+    action.kind === "lot_transfer" &&
+    operations.lotPlacements?.some(
+      (p) => p.date > action.date && (action.species ? p.species === action.species : true),
+    )
+  )
+    throw Error(
+      "Há uma mudança posterior de localização do rebanho. Confira a data antes de transferir esse grupo.",
+    );
+  if (action.kind === "herd_relocate") {
+    if (action.date !== today)
+      throw Error(
+        "Para mover todo o rebanho, informe a localização atual. Uma mudança retroativa exige revisão do histórico.",
+      );
+    const registered = [
+      ...new Set<FarmSpecies>([
+        ...operations.counts.map((c) => c.species ?? "cattle"),
+        ...operations.movements.map((m) => m.species ?? "cattle"),
+        ...(book.animals.some((a) => !a.status || a.status === "active")
+          ? ["cattle" as const]
+          : []),
+      ]),
+    ];
+    const species = action.species ? registered.filter((s) => s === action.species) : registered;
+    if (!species.length)
+      throw Error("Ainda não há animais registrados nesta fazenda para mudar de lote.");
+    const placements = (operations.lotPlacements ??= []);
+    if (placements.length + species.length > 1000)
+      throw Error("O volume atingiu o limite técnico de mudanças de localização.");
+    if (!operations.lots.some((l) => l.name === action.to)) {
+      if (operations.lots.length >= 1000)
+        throw Error("O volume atingiu o limite técnico de lotes.");
+      operations.lots.push({ name: action.to });
+    }
+    for (const kind of species) {
+      const movements = operations.movements.filter(
+        (m) => (m.species ?? "cattle") === kind && m.date <= action.date,
+      );
+      const ids = new Set(movements.map((m) => m.id));
+      placements.push({
+        id: `${id}:${kind}`,
+        species: kind,
+        to: action.to,
+        date: action.date,
+        count: stockAt(operations, action.date, undefined, kind).count,
+        includedMovements: [...ids],
+        includedTransfers: (operations.lotTransfers ?? [])
+          .filter((t) => ids.has(t.movementId) && t.date <= action.date)
+          .map((t) => t.id),
+        includedCounts: operations.counts
+          .filter((c) => (c.species ?? "cattle") === kind && c.date <= action.date)
+          .map((c) => c.id),
+        source: provenance,
+      });
+    }
+    if (species.includes("cattle"))
+      for (const animal of book.animals)
+        if (!animal.status || animal.status === "active") animal.lot = action.to;
+    validateHerdBalances(operations);
+    return;
+  }
+  // A whole-herd placement captures the actual book at that point. Earlier
+  // stock changes must be reconciled, rather than silently invalidating it.
+  if (
+    action.kind === "herd_event" ||
+    action.kind === "herd_count" ||
+    action.kind === "herd_inventory"
+  ) {
+    const affected =
+      action.kind === "herd_inventory"
+        ? new Set(action.groups.map((g) => g.species ?? "cattle"))
+        : new Set([action.species ?? "cattle"]);
+    if (operations.lotPlacements?.some((p) => affected.has(p.species) && action.date < p.date))
+      throw Error(
+        "Há uma mudança posterior de localização do rebanho. Revise essa mudança antes de alterar contagens ou movimentos anteriores.",
+      );
+    if (
+      action.kind === "herd_event" &&
+      action.replaces &&
+      operations.lotPlacements?.some((p) => p.includedMovements.includes(action.replaces!))
+    )
+      throw Error(
+        "Esse movimento já compõe uma mudança de localização do rebanho. A correção exige reconciliar essa mudança.",
+      );
+  }
   if (action.kind === "herd_inventory") {
     const rows = (operations.inventories ??= []);
     if (rows.length >= 1000) throw new Error("O volume atingiu o limite técnico de levantamentos.");
@@ -445,15 +666,31 @@ export function applyOperations(
       source: provenance,
     });
   } else if (action.kind === "lot_transfer") {
+    if (action.movementId) {
+      applyGroupedLotTransfer(book, action, provenance, id);
+      validateHerdBalances(operations);
+      return;
+    }
     if (action.from === action.to)
       throw new Error("Escolha lotes diferentes para a transferência.");
+    const knownDestination =
+      operations.lots.some((l) => l.name === action.to) ||
+      operations.counts.some((c) => c.lot === action.to) ||
+      operations.movements.some((m) => m.lot === action.to) ||
+      book.animals.some((a) => a.lot === action.to) ||
+      operations.lotTransfers?.some((t) => t.from === action.to || t.to === action.to);
+    if (!knownDestination && action.createDestination) {
+      if (operations.lots.length >= 1000)
+        throw Error("O volume atingiu o limite técnico de lotes.");
+      operations.lots.push({ name: action.to, openedOn: action.date });
+    }
     const origin = stockAt(operations, action.date, action.from, action.species);
     const destination = stockAt(operations, action.date, action.to, action.species);
     if (
-      !origin.baseline ||
-      !destination.baseline ||
-      action.date <= origin.baseline.date ||
-      action.date <= destination.baseline.date
+      origin.count === null ||
+      destination.count === null ||
+      (origin.baseline && action.date <= origin.baseline.date) ||
+      (destination.baseline && action.date <= destination.baseline.date)
     )
       throw new Error(
         "Informe a contagem de ambos os lotes no fim de um dia anterior à transferência.",
@@ -479,6 +716,10 @@ export function applyOperations(
       });
   } else {
     if (action.replaces) {
+      if (operations.lotTransfers?.some((t) => t.movementId === action.replaces))
+        throw new Error(
+          "Esse grupo já foi movimentado entre lotes. A correção precisa preservar e reconciliar essas movimentações; não substituí a compra ou o nascimento.",
+        );
       const prior = operations.movements.find((m) => m.id === action.replaces);
       if (!prior || operations.movements.some((m) => m.replaces === action.replaces))
         throw new Error("Não encontrei um evento disponível para correção nesta fazenda.");
@@ -493,23 +734,28 @@ export function applyOperations(
     operations.movements.push({ ...event, id, source: provenance });
   }
   if (action.kind === "herd_event") {
-    const baseline = stockAt(operations, action.date, action.lot, action.species).baseline;
+    const stock = stockAt(operations, action.date, action.lot, action.species);
+    const baseline = stock.baseline;
     if (baseline && baseline.date === action.date)
       throw new Error(
         "A contagem representa o fim desse dia. Informe a data correta ou revise a contagem antes de lançar um movimento no mesmo dia.",
       );
-    if (!incoming(action.type) && !baseline)
+    if (!incoming(action.type) && stock.count === null)
       throw new Error("Informe uma contagem anterior para conferir o saldo antes desta saída.");
   }
+  validateHerdBalances(operations);
+}
+
+function validateHerdBalances(operations: Operations) {
   // One chronological sweep per scope, not repeated scans for every event/date.
   const replaced = new Set(operations.movements.map((m) => m.replaces).filter(Boolean));
   const scopes = new Map<
     string,
-    Array<{ date: string; at: string; count: number; snapshot: boolean }>
+    Array<{ date: string; at: string; count: number; snapshot: boolean; opening?: boolean }>
   >();
   const add = (
     scope: string,
-    row: { date: string; at: string; count: number; snapshot: boolean },
+    row: { date: string; at: string; count: number; snapshot: boolean; opening?: boolean },
   ) => {
     const entries = scopes.get(scope) ?? [];
     entries.push(row);
@@ -533,7 +779,58 @@ export function applyOperations(
     add((m.species ?? "cattle") + ":", row);
     if (m.lot) add((m.species ?? "cattle") + ":" + m.lot, row);
   }
-  for (const entries of scopes.values()) {
+  for (const lot of operations.lots)
+    if (lot.openedOn)
+      for (const species of Object.keys(speciesNames))
+        add(species + ":" + lot.name, {
+          date: lot.openedOn,
+          at: "",
+          count: 0,
+          snapshot: false,
+          opening: true,
+        });
+  const speciesByMovement = new Map(operations.movements.map((m) => [m.id, m.species ?? "cattle"]));
+  for (const t of operations.lotTransfers ?? []) {
+    const species = speciesByMovement.get(t.movementId);
+    if (!species) throw Error("Uma transferência perdeu o grupo de origem; revise o histórico.");
+    for (const [lot, sign] of [
+      [t.from, -1],
+      [t.to, 1],
+    ] as const)
+      if (lot)
+        add(species + ":" + lot, {
+          date: t.date,
+          at: t.source.at,
+          count: sign * t.count,
+          snapshot: false,
+        });
+  }
+  const placedScopes = new Map<string, { species: FarmSpecies; lot: string }>();
+  for (const placement of operations.lotPlacements ?? []) {
+    const names = new Set([
+      ...operations.lots.map((l) => l.name),
+      ...operations.counts.flatMap((c) => (c.lot ? [c.lot] : [])),
+      ...operations.movements.flatMap((m) => (m.lot ? [m.lot] : [])),
+      ...(operations.lotTransfers ?? []).flatMap((t) => [t.to, ...(t.from ? [t.from] : [])]),
+    ]);
+    for (const lot of names) {
+      const scope = placement.species + ":" + lot;
+      placedScopes.set(scope, { species: placement.species, lot });
+      add(scope, { date: placement.date, at: placement.source.at, count: 0, snapshot: true });
+    }
+  }
+  for (const [scope, entries] of scopes) {
+    const placed = placedScopes.get(scope);
+    if (placed) {
+      for (const date of new Set(entries.map((e) => e.date))) {
+        const balance = stockAt(operations, date, placed.lot, placed.species).count;
+        if (balance !== null && balance < 0)
+          throw Error(
+            "A movimentação produziria saldo negativo. Confira quantidade, fazenda e data antes de salvar.",
+          );
+      }
+      continue;
+    }
     let balance: number | null = null;
     const days = new Map<string, typeof entries>();
     for (const row of entries) {
@@ -548,8 +845,11 @@ export function applyOperations(
         .sort((a, b) => a.at.localeCompare(b.at))
         .at(-1);
       if (snapshot) balance = snapshot.count;
-      else if (balance !== null)
-        balance += group.filter((e) => !e.snapshot).reduce((n, e) => n + e.count, 0);
+      else {
+        if (group.some((e) => e.opening)) balance = 0;
+        if (balance !== null)
+          balance += group.filter((e) => !e.snapshot).reduce((n, e) => n + e.count, 0);
+      }
       if (balance !== null && balance < 0)
         throw new Error(
           "A movimentação produziria saldo negativo. Confira quantidade, fazenda e data antes de salvar.",
@@ -559,6 +859,8 @@ export function applyOperations(
   if (
     operations.counts.length > 10000 ||
     operations.movements.length > 10000 ||
+    (operations.lotTransfers?.length ?? 0) > 10000 ||
+    (operations.lotPlacements?.length ?? 0) > 1000 ||
     operations.lots.length > 1000
   )
     throw new Error(

@@ -1,7 +1,7 @@
 import { cardinal, foldHerd } from "./herd-language.ts";
 import type { FarmBook, GuardianAction } from "./schema.ts";
 function lotKey(value: string) {
-  const text = foldHerd(value).replace(/^lote\s+/u, "");
+  const text = foldHerd(value).replace(/^(?:lote|piquete|area)\s+/u, "");
   // Real identifiers may have meaningful leading zeros.
   if (/^\d+$/.test(text)) return text;
   const number = cardinal(text);
@@ -14,6 +14,9 @@ export function resolveLotReference(reference: string, book: FarmBook): string {
     ...new Set([
       ...(book.operations?.lots.map((l) => l.name) ?? []),
       ...(book.operations?.counts.flatMap((c) => (c.lot ? [c.lot] : [])) ?? []),
+      ...(book.operations?.movements.flatMap((m) => (m.lot ? [m.lot] : [])) ?? []),
+      ...(book.operations?.lotTransfers?.flatMap((t) => [t.to, ...(t.from ? [t.from] : [])]) ?? []),
+      ...(book.operations?.lotPlacements?.map((p) => p.to) ?? []),
       ...book.animals.flatMap((a) => (a.lot ? [a.lot] : [])),
     ]),
   ];
@@ -25,15 +28,17 @@ export function resolveLotReference(reference: string, book: FarmBook): string {
       "Há mais de um lote com referência equivalente. Informe o nome cadastrado completo.",
     );
   if (matches.length === 1) return matches[0];
-  const stripped = reference.trim().replace(/^lote\s+/iu, "");
+  const stripped = reference.trim().replace(/^(?:lote|piquete|[aá]rea)\s+/iu, "");
   const number = cardinal(stripped);
   return /^\d+$/.test(stripped) ? stripped : number === null ? stripped : String(number);
 }
 export function resolveActionReferences(action: GuardianAction, book: FarmBook): GuardianAction {
+  if (action.kind === "herd_relocate")
+    return { ...action, to: resolveLotReference(action.to, book) };
   if (action.kind === "lot_transfer")
     return {
       ...action,
-      from: resolveLotReference(action.from, book),
+      ...(action.from ? { from: resolveLotReference(action.from, book) } : {}),
       to: resolveLotReference(action.to, book),
     };
   if (action.kind === "property_transfer")
