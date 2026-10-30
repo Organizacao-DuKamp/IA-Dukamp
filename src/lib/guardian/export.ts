@@ -144,5 +144,16 @@ export function farmCsv(book: FarmBook): string {
       "localização alterada; total da fazenda preservado",
     ]);
   }
+  for (const p of book.operations?.lotPlacements ?? [])
+    rows.push([
+      "Localização de todo o rebanho",
+      p.id,
+      p.date,
+      speciesNames[p.species],
+      p.count ?? "Não informado",
+      "cabeças",
+      p.to,
+      "total da fazenda preservado",
+    ]);
   return "\ufeff" + rows.map((row) => row.map(cell).join(";")).join("\r\n");
 }

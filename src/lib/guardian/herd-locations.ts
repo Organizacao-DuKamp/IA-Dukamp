@@ -63,10 +63,21 @@ export function herdGroupsAt(
   if (options.movementId) groups = groups.filter((g) => g.id === options.movementId);
   if (options.limit) groups = groups.slice(-options.limit);
   return groups.map((group) => {
-    const positions = new Map<string | undefined, number>([[group.lot, group.count]]);
-    const transfers = (transfersByGroup.get(group.id) ?? []).sort(
-      (a, b) => a.date.localeCompare(b.date) || a.source.at.localeCompare(b.source.at),
-    );
+    const placement = operations.lotPlacements
+      ?.filter(
+        (p) =>
+          p.species === (group.species ?? "cattle") &&
+          p.date <= date &&
+          p.includedMovements.includes(group.id),
+      )
+      .sort((a, b) => a.date.localeCompare(b.date) || a.source.at.localeCompare(b.source.at))
+      .at(-1);
+    const positions = new Map<string | undefined, number>([
+      [placement?.to ?? group.lot, group.count],
+    ]);
+    const transfers = (transfersByGroup.get(group.id) ?? [])
+      .filter((t) => !placement?.includedTransfers.includes(t.id))
+      .sort((a, b) => a.date.localeCompare(b.date) || a.source.at.localeCompare(b.source.at));
     for (const t of transfers) {
       positions.set(t.from, (positions.get(t.from) ?? 0) - t.count);
       positions.set(t.to, (positions.get(t.to) ?? 0) + t.count);

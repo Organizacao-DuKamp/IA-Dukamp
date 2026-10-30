@@ -10,7 +10,8 @@ import {
   type FarmBook,
   type GuardianRole,
 } from "./schema.ts";
-import { applyFarmAction, fold } from "./book.ts";
+import { applyFarmAction } from "./book.ts";
+import { panelAccessRequest, panelFarmKey } from "./panel-access.ts";
 import { farmIndicators } from "./operations.ts";
 
 export const PANEL_COOKIE = "tpec_farm_session";
@@ -148,24 +149,13 @@ export async function handlePanelCodeRequest(
   } = {},
 ): Promise<string | null> {
   if (input.mediaType && input.mediaType !== "audio") return null;
-  const original = fold(input.text);
   const last = input.history?.at(-1);
-  const choiceReply =
-    last?.role === "assistant" && last.content.startsWith("Escolha a fazenda para abrir no painel:")
-      ? original.match(/^(\d+)(?:[.)]?\s+(.+))?[.! ]*$/)
-      : null;
-  const farmAlias = original.match(
-    /^(?:(?:quero|preciso|pode)\s+)?(?:(?:gerar|gere|criar|crie)\s+)?(?:um\s+)?codigo(?:\s+de acesso)?\s+(?:para|pra|da)\s+(?:(?:a|minha|nossa)\s+)?fazenda(?:\s+(.+?))?[.! ]*$/,
+  const access = panelAccessRequest(
+    input.text,
+    last?.role === "assistant" &&
+      last.content.startsWith("Escolha a fazenda para abrir no painel:"),
   );
-  const text = choiceReply
-    ? `gerar codigo do painel para ${choiceReply[1]}`
-    : farmAlias
-      ? "gerar codigo do painel" + (farmAlias[1] ? " para " + farmAlias[1] : "")
-      : original;
-  const match = text.match(
-    /^(?:(?:quero|preciso|pode|me|por favor)\s+)*(?:(?:gerar|gere|criar|crie|obter|abrir|acessar|acesso|ver|entrar)(?:\s+(?:um|o|meu|no|ao))?\s+)?(?:codigo\s+(?:do|para o|de acesso ao|para acessar o)\s+)?painel(?:\s+(?:da|de)\s+fazenda)?(?:\s+(?:para|da|de)\s+(.+?))?[.! ]*$/,
-  );
-  if (!match) return null;
+  if (!access) return null;
   if (!/^\d{6,20}$/.test(input.phone) || !input.messageId || input.messageId.length > 128)
     throw new Error("invalid_guardian_sender");
   try {
@@ -173,20 +163,24 @@ export async function handlePanelCodeRequest(
     const properties = snapshot.properties;
     if (!properties.length)
       return "Ainda não encontrei uma fazenda sua. Conte o nome, onde ela fica e o rebanho, ou diga “cadastrar fazenda Boa Vista em Tanabi/SP”. Depois, peça “gerar código do painel”.";
-    const choice = match[1];
+    const choice = access.reference;
+    const exact = choice ? properties.filter((p) => p.id === choice) : [];
     const candidates = choice
-      ? properties.filter(
-          (p, i) => p.id === choice || fold(p.name) === choice || String(i + 1) === choice,
-        )
+      ? exact.length
+        ? exact
+        : properties.filter(
+            (p, i) => panelFarmKey(p.name) === panelFarmKey(choice) || String(i + 1) === choice,
+          )
       : properties;
+    if ("choiceOnly" in access && !candidates.length) return null;
     if (candidates.length !== 1)
       return (
         "Escolha a fazenda para abrir no painel:\n" +
         properties.map((p, i) => `${i + 1}. ${p.name}`).join("\n") +
-        "\nResponda “gerar código do painel para 1” ou use o nome da fazenda."
+        "\nQual delas? Pode responder com o nome da fazenda ou o número."
       );
     const property = candidates[0];
-    if (choiceReply?.[2] && fold(property.name) !== choiceReply[2].trim())
+    if (access.expectedName && panelFarmKey(property.name) !== panelFarmKey(access.expectedName))
       return "O número e o nome não correspondem à mesma fazenda. Escolha novamente pelo nome completo; nenhum código foi emitido.";
     const code = normalizeCode((deps.code ?? makePanelCode)());
     const issue =

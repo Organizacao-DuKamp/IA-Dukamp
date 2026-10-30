@@ -4,7 +4,7 @@
 
 [context.deploy-preview]
   # O deploy preview funciona como CI desta integração.
-  command = "npm run audit:privileged && npm test && npm run lint && node scripts/check-guardian-semantics.mjs && npm run build"
+  command = "npm run audit:privileged && npm test && npm run lint && node scripts/check-lot-semantics.mjs && npm run build"
 
 [functions]
   external_node_modules = ["ffmpeg-static"]

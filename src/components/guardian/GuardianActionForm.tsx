@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ActionSchema, type GuardianAction } from "@/lib/guardian/schema";
+import { speciesNames } from "@/lib/guardian/operations";
 
 type FormKind =
   | "feed_consumption"
@@ -7,6 +8,7 @@ type FormKind =
   | "herd_count"
   | "herd_event"
   | "lot_transfer"
+  | "herd_relocate"
   | "lot_update"
   | "property_update"
   | "property_create"
@@ -24,6 +26,7 @@ const names: Record<FormKind, string> = {
   herd_count: "Informar contagem do rebanho",
   herd_event: "Movimentação do rebanho",
   lot_transfer: "Transferir entre lotes",
+  herd_relocate: "Mover todo o rebanho para um lote",
   lot_update: "Lotes e piquetes",
   property_update: "Dados da propriedade",
   property_create: "Nova propriedade",
@@ -130,6 +133,14 @@ export function GuardianActionForm({
           to: values.to,
           count: Number(values.count),
           date: values.date || today(),
+        };
+        break;
+      case "herd_relocate":
+        input = {
+          kind,
+          to: values.to,
+          date: today(),
+          ...(values.species ? { species: values.species } : {}),
         };
         break;
       case "lot_update":
@@ -358,6 +369,19 @@ export function GuardianActionForm({
             ) : (
               field("lot", "Lote (vazio: rebanho da fazenda)", "text", false)
             )}
+          </>
+        )}
+        {kind === "herd_relocate" && (
+          <>
+            {field("to", "Lote de destino")}
+            {select("species", "Animais a mover", [
+              ["", "Todos os animais registrados"],
+              ...Object.entries(speciesNames),
+            ])}
+            <p className="text-sm text-muted-foreground">
+              A mudança vale para hoje e preserva os totais por espécie. Revise o destino antes de
+              confirmar.
+            </p>
           </>
         )}
         {kind === "lot_update" && (

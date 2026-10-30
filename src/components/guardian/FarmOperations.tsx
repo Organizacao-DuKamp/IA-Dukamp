@@ -40,6 +40,13 @@ export function FarmOperations({ book, compact = false }: { book: FarmBook; comp
       type: "Transferência de grupo",
       description: `${t.from ? `Lote ${t.from}` : "Sem lote definido"} → Lote ${t.to}. Grupo de origem: ${t.movementId}. Total da fazenda preservado.`,
     })),
+    ...(operations.lotPlacements ?? []).map((p) => ({
+      ...p,
+      count: p.count,
+      lot: p.to,
+      type: "Mudança de todo o rebanho",
+      description: `${speciesNames[p.species]} → Lote ${p.to}. ${p.count === null ? "Quantidade total não informada." : `${p.count} animais já contabilizados.`} Total da fazenda preservado.`,
+    })),
   ]
     .filter(
       (r) =>
@@ -308,7 +315,7 @@ export function FarmOperations({ book, compact = false }: { book: FarmBook; comp
                       </span>
                     </td>
                     <td className="p-2">
-                      {r.count} {speciesNames[r.species ?? "cattle"]}
+                      {r.count ?? "Quantidade não informada"} {speciesNames[r.species ?? "cattle"]}
                     </td>
                     <td className="p-2">{r.lot ?? "Sem lote definido (fazenda)"}</td>
                     <td className="p-2">

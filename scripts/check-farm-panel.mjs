@@ -485,6 +485,25 @@ try {
   const { stockAt } = await import("../src/lib/guardian/operations.ts");
   assert.equal(stockAt(afterMove.operations, day).count, stockAt(beforeMove.operations, day).count);
   assert.equal(stockAt(afterMove.operations, day, "4").count, 50);
+  const relocated = await runSemantic(
+    "ui-all-animals-lot-two",
+    "Mova todos os animais registrados para o lote dois",
+    cohortPlan({ kind: "herd_relocate", to: "2", date: day }),
+  );
+  assert.equal(relocated.persisted, true, relocated.reply);
+  await page.reload({ waitUntil: "networkidle" });
+  await page.getByRole("button", { name: "Rebanho e lotes", exact: true }).click();
+  const whole = (await f.guardian.load(phone)).active.book;
+  const lotTwo = page
+    .getByRole("article")
+    .filter({ has: page.getByText("Lote 2", { exact: true }) });
+  assert.match(
+    await lotTwo.innerText(),
+    new RegExp(`Bovinos: ${stockAt(whole.operations, day).count}`),
+  );
+  assert.equal(whole.operations.counts.length, afterMove.operations.counts.length);
+  assert.equal(whole.operations.movements.length, afterMove.operations.movements.length);
+  assert.equal(stockAt(whole.operations, day, "4").count, 0);
   await runSemantic(
     "ui-species-base",
     "Na fazenda já tenho 100 bovinos, 40 porcos e 2 galinhas.",

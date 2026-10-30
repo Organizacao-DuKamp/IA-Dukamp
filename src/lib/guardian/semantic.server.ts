@@ -185,6 +185,7 @@ export async function interpretFarmConversation(context: SemanticContext): Promi
       SEMANTIC_DIRECTIVE +
       "\n" +
       GROUPED_LOT_DIRECTIVE +
+      "\nGestão de lotes e áreas: lot_update cria um lote vazio de metadados ou edita sua areaHa e pasture; área de um lote/piquete usa lot_update, área TOTAL da propriedade usa property_update. Não exija contagem de animais para criar/editar pastagem ou hectares. Um lote criado sem informação de animais não tem contagem presumida. Para uma ordem explícita de mover TODOS os animais da fazenda (ou todos os bovinos/suínos de uma espécie) ao mesmo lote, use herd_relocate com to e a data atual; omita species para todos os animais, informe species somente quando o produtor restringir a espécie. Não envie count: o servidor lê o livro inteiro, atualiza as fichas ativas e a localização dos grupos sem alterar compras, nascimentos ou totais. Quantidades desconhecidas permanecem desconhecidas. Não substitua mover TODOS por mover só o último grupo de 50 ou por uma nova contagem; a ordem atual explícita prevalece sobre um rascunho anterior de subconjunto. herd_relocate não serve para 'esses 50', 'um dos animais', 'alguns', uma pergunta hipotética ou somente animais de um lote; esses casos usam as referências individuais/coletivas reais ou esclarecimento. Nem a solicitação de código do painel nem uma pergunta sobre como criar lotes autoriza herd_relocate.\n" +
       "\nEsquema: " +
       JSON.stringify(z.toJSONSchema(ProviderPlanSchema, { unrepresentable: "any" })),
   });
@@ -307,6 +308,13 @@ export function semanticContext(
                       counts: book.operations.counts.slice(-10),
                       movements: book.operations.movements.slice(-10),
                       inventories: book.operations.inventories?.slice(-3),
+                      lotTransfers: book.operations.lotTransfers?.slice(-20),
+                      lotPlacements: book.operations.lotPlacements?.slice(-8).map((p) => ({
+                        ...p,
+                        includedMovements: [],
+                        includedTransfers: [],
+                        includedCounts: [],
+                      })),
                     }
                   : undefined,
                 fuel: book.fuel ? { movements: book.fuel.movements.slice(-30) } : undefined,
