@@ -270,6 +270,62 @@ test("lot creation and area edits need no census and preserve all animal data", 
   assert.deepEqual(book.animals, before.animals);
 });
 
+test("a whole-herd move never restores group availability lost to a departure from its previous lot", () => {
+  let book = seed();
+  const group = book.operations!.movements.find((m) => m.count === 50)!;
+  book = apply(book, [
+    {
+      kind: "lot_transfer",
+      movementId: group.id,
+      to: "4",
+      count: 50,
+      date: day,
+      createDestination: true,
+    },
+  ]);
+  book = apply(
+    book,
+    [
+      {
+        kind: "herd_event",
+        species: "cattle",
+        lot: "4",
+        type: "sale",
+        count: 20,
+        date: day,
+        description: "Vinte bovinos vendidos do lote quatro",
+      },
+    ],
+    "2026-10-30T13:00:00Z",
+  );
+  book = apply(book, [{ kind: "herd_relocate", to: "2", date: day }], "2026-10-30T14:00:00Z");
+  assert.equal(stockAt(book.operations!, day, "2").count, 150);
+  assert.equal(
+    herdGroupsAt(book.operations!, day).find((g) => g.movementId === group.id)!.locations[0]
+      .available,
+    30,
+  );
+  assert.throws(
+    () =>
+      apply(
+        book,
+        [
+          {
+            kind: "lot_transfer",
+            movementId: group.id,
+            from: "2",
+            to: "5",
+            count: 31,
+            date: day,
+            createDestination: true,
+          },
+        ],
+        "2026-10-30T15:00:00Z",
+      ),
+    /quantidade disponível/,
+  );
+});
+
 test("known live lot balances allow quantitative transfers into a new lot without fabricated historical censuses", () => {
   let book = apply(seed(), [{ kind: "herd_relocate", to: "2", date: day }]);
   const counts = structuredClone(book.operations!.counts);

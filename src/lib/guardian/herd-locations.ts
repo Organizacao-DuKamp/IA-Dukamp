@@ -83,14 +83,27 @@ export function herdGroupsAt(
       positions.set(t.to, (positions.get(t.to) ?? 0) + t.count);
     }
     const species = group.species ?? "cattle";
+    // A later whole-herd move cannot resurrect animals that previously left
+    // this group's old lot. Anonymous departures remain conservative across
+    // all locations that the group has occupied, including before placements.
+    const historicalLots = new Set([
+      group.lot,
+      ...(transfersByGroup.get(group.id) ?? []).flatMap((t) => [t.from, t.to]),
+      ...(operations.lotPlacements ?? [])
+        .filter((p) => p.date <= date && p.includedMovements.includes(group.id))
+        .map((p) => p.to),
+    ]);
+    const order = group.date + ":" + group.source.at;
+    const departed =
+      departingAfter(key(species), order) +
+      [...historicalLots]
+        .filter((l) => l !== undefined)
+        .reduce((total, lot) => total + departingAfter(key(species, lot), order), 0);
     const locations = [...positions].flatMap(([lot, count]) => {
       if (count <= 0) return [];
       const recounted =
         (latestCounts.get(key(species)) ?? "") >= group.date ||
         (!!lot && (latestCounts.get(key(species, lot)) ?? "") >= group.date);
-      const order = group.date + ":" + group.source.at;
-      const departed =
-        departingAfter(key(species), order) + (lot ? departingAfter(key(species, lot), order) : 0);
       return [
         {
           ...(lot ? { lot } : {}),
