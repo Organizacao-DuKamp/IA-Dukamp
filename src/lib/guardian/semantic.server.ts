@@ -1,6 +1,12 @@
 import { prepareFarmBatch, operationalId } from "./execution.ts";
 import { supplyBalances } from "./supplies.ts";
 import { herdGroupsAt } from "./herd-locations.ts";
+import {
+  herdLocationContext,
+  describeHerdLocations,
+  herdLocationRequest,
+} from "./herd-location-report.ts";
+import { resolveLotReference } from "./references.ts";
 import { z } from "zod";
 import { createHash } from "node:crypto";
 import {
@@ -42,9 +48,18 @@ export const SemanticPlanSchema = z
       "apply",
       "confirm",
       "cancel",
+      "inspect",
+      "panel",
     ]),
     propertyId: z.string().nullable(),
     question: z.string().max(1000),
+    inspection: z
+      .object({
+        kind: z.literal("herd_locations"),
+        lot: z.string().trim().min(1).max(160).optional(),
+      })
+      .strict()
+      .optional(),
     entries: z
       .array(
         z
@@ -95,6 +110,7 @@ export interface SemanticContext {
     stockBySpecies: Record<string, number>;
     supplies?: ReturnType<typeof supplyBalances>;
     herdGroups?: ReturnType<typeof herdGroupsAt>;
+    herdLocations?: ReturnType<typeof herdLocationContext>;
   };
   messages: Array<{ role: string; content: string; messageIndex?: number }>;
   validation?: {
@@ -185,6 +201,7 @@ export async function interpretFarmConversation(context: SemanticContext): Promi
       SEMANTIC_DIRECTIVE +
       "\n" +
       GROUPED_LOT_DIRECTIVE +
+      "\nEstado atual: summary.herdLocations é a localização atual calculada pelo servidor sobre o livro completo. O lote de uma compra/nascimento em operations.movements é o lote HISTÓRICO da chegada, não a localização atual. lotPlacements e lotTransfers já podem ter movido esse grupo. Uma ordem de mover inclui grupos sem identificação e sem lote; ausência de brinco/RGN não bloqueia lot_transfer com movimento real nem herd_relocate. Quantidade total desconhecida de uma espécie não impede registrar sua localização. Se um pedido já foi cumprido (ex.: o produtor vê as linhas antigas sem lote e pede colocar esses animais no destino onde já estão), use intent inspect, inspection {kind:'herd_locations',lot:destino}, entries vazio: o servidor confere e responde com os registros reais. Use inspect também para consultar onde estão os grupos/animais ou conferir o resultado; nunca responda none a um pedido operacional só porque acha que já foi feito. Se ainda há grupos sem lote, execute a movimentação dos grupos/fichas reais, sem duplicar a chegada nem repetir movimentos de quem já está no destino. Se não consegue identificar um subconjunto, esclareça apenas a dúvida concreta; não prometa sem executar. Pedido de código do painel é intent panel com a propertyId resolvida e entries vazio, inclusive com vocativo mal transcrito; não transforme esse pedido em select nem apenas confirme o nome da fazenda. Só emita panel quando há pedido de acesso, não em explicação, hipótese ou relato de terceiro.\n" +
       "\nGestão de lotes e áreas: lot_update cria um lote vazio de metadados ou edita sua areaHa e pasture; área de um lote/piquete usa lot_update, área TOTAL da propriedade usa property_update. Não exija contagem de animais para criar/editar pastagem ou hectares. Um lote criado sem informação de animais não tem contagem presumida. Para uma ordem explícita de mover TODOS os animais da fazenda (ou todos os bovinos/suínos de uma espécie) ao mesmo lote, use herd_relocate com to e a data atual; omita species para todos os animais, informe species somente quando o produtor restringir a espécie. Não envie count: o servidor lê o livro inteiro, atualiza as fichas ativas e a localização dos grupos sem alterar compras, nascimentos ou totais. Quantidades desconhecidas permanecem desconhecidas. Não substitua mover TODOS por mover só o último grupo de 50 ou por uma nova contagem; a ordem atual explícita prevalece sobre um rascunho anterior de subconjunto. herd_relocate não serve para 'esses 50', 'um dos animais', 'alguns', uma pergunta hipotética ou somente animais de um lote; esses casos usam as referências individuais/coletivas reais ou esclarecimento. Nem a solicitação de código do painel nem uma pergunta sobre como criar lotes autoriza herd_relocate.\n" +
       "\nEsquema: " +
       JSON.stringify(z.toJSONSchema(ProviderPlanSchema, { unrepresentable: "any" })),
@@ -262,6 +279,12 @@ export function semanticContext(
         : null,
       collectionsArePartial: true,
       supplies: book ? supplyBalances(book) : [],
+      herdLocations: book
+        ? herdLocationContext(
+            book,
+            new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(now),
+          )
+        : undefined,
       herdGroups: book?.operations
         ? herdGroupsAt(
             book.operations,
@@ -328,7 +351,12 @@ export function semanticContext(
   };
 }
 
-export type SemanticTurnResult = GuardianHandled | "conflict" | { scopeChanged: string } | null;
+export type SemanticTurnResult =
+  | GuardianHandled
+  | "conflict"
+  | { scopeChanged: string }
+  | { panelRequest: string }
+  | null;
 
 export async function handleSemanticTurn(
   input: GuardianInput,
@@ -483,6 +511,24 @@ export async function handleSemanticTurn(
   let plan: SemanticPlan;
   try {
     plan = SemanticPlanSchema.parse(ProviderPlanSchema.parse(await interpret(context)));
+    if (plan.intent === "none" && herdLocationRequest(userStatement(input.text, input.mediaType))) {
+      plan = SemanticPlanSchema.parse(
+        ProviderPlanSchema.parse(
+          await interpret({
+            ...context,
+            validation: {
+              invalidEvidence: [],
+              instruction:
+                "A mensagem atual contém um pedido de movimentação do rebanho. Confira summary.herdLocations, incluindo grupos sem lote e fichas ativas. Se já estão no destino pedido, retorne inspect com herd_locations para o servidor verificar; se não estão, retorne apply com as ações necessárias e evidências literais do produtor. Não devolva none nem deixe uma ordem operacional cair na resposta geral. Não repita a compra nem uma mudança já concluída e não invente contagens. Se falta um alvo inequívoco, use clarify com a dúvida concreta.",
+            },
+          }),
+        ),
+      );
+      if (plan.intent === "none")
+        return preserveFailure(
+          "Guardei o pedido de movimentação, mas ainda não consegui identificar com segurança os animais e o destino. Nenhuma nova mudança foi feita; informe somente qual grupo deseja mover e o lote de destino.",
+        );
+    }
     if (plan.intent === "confirm" && snapshot.pending?.kind === "semantic_draft") {
       plan = SemanticPlanSchema.parse(
         ProviderPlanSchema.parse(
@@ -556,6 +602,7 @@ export async function handleSemanticTurn(
     return finish();
   }
   const target = resolution.property;
+  if (plan.intent === "panel") return { panelRequest: target.id };
   const previousDraft =
     snapshot.pending?.kind === "semantic_draft" &&
     Date.parse(snapshot.pending.expiresAt) > now.getTime()
@@ -612,6 +659,22 @@ export async function handleSemanticTurn(
   }
   // target equals the active property; no model-generated or inaccessible IDs reach writes.
   if (!active) throw Error("guardian_scope_unavailable");
+  if (plan.intent === "inspect") {
+    if (plan.entries.length || plan.inspection?.kind !== "herd_locations")
+      return preserveFailure(
+        "Não consegui validar a consulta de localização. Nenhuma movimentação foi feita.",
+      );
+    const date = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(
+      referenceAt,
+    );
+    const lot = plan.inspection.lot
+      ? resolveLotReference(plan.inspection.lot, active.book)
+      : undefined;
+    base.operation = "noop";
+    base.reply = describeHerdLocations(active.book, date, lot);
+    base.details = { kind: "herd_location_inspection", date, ...(lot ? { lot } : {}) };
+    return finish();
+  }
   if (plan.intent === "clarify") {
     const question = plan.question.trim() || "Qual dado falta completar nesse pedido?";
     base.operation = "pending";
