@@ -55,6 +55,20 @@ const snapshot = {
   active: { id: "synthetic-farm", version: 1, role: "owner", book },
   properties: [{ id: "synthetic-farm", name: "Fazenda QA Cedro", role: "owner" }],
 };
+const relocated = {
+  ...snapshot,
+  active: {
+    ...snapshot.active,
+    book: prepareFarmBatch({
+      book,
+      role: "owner",
+      propertyId: "synthetic-farm",
+      source: { ...source, messageId: "synthetic-relocation", at: now.toISOString() },
+      executedByMessageId: "synthetic-relocation",
+      actions: [{ kind: "herd_relocate", to: "Pastagem QA", date: "2026-10-30" }],
+    }).book,
+  },
+};
 const cases = [
   {
     name: "create-area",
@@ -100,11 +114,43 @@ const cases = [
       assert.equal(p.entries[0].action.count, 12);
     },
   },
+  {
+    name: "already-moved-unassigned-followup",
+    state: relocated,
+    text: "Os animais que aparecem sem lote definido na lista antiga pode colocar na Pastagem QA também, tá?",
+    intents: ["inspect"],
+    verify: (p) => {
+      assert.equal(p.intent, "inspect");
+      assert.equal(p.inspection?.kind, "herd_locations");
+      assert.equal(p.entries.length, 0);
+    },
+  },
+  {
+    name: "read-current-locations",
+    state: relocated,
+    text: "Confere pra mim onde estão os grupos de animais dessa fazenda agora.",
+    intents: ["inspect"],
+    verify: (p) => {
+      assert.equal(p.intent, "inspect");
+      assert.equal(p.inspection?.kind, "herd_locations");
+      assert.equal(p.entries.length, 0);
+    },
+  },
+  {
+    name: "spoken-panel-access",
+    text: "Tê pequi, gere o código do painel para a Fazenda QA Cedro, por favor.",
+    intents: ["panel"],
+    verify: (p) => {
+      assert.equal(p.intent, "panel");
+      assert.equal(p.propertyId, "synthetic-farm");
+      assert.equal(p.entries.length, 0);
+    },
+  },
 ];
 const contexts = cases.map((c) =>
   semanticContext(
     { phone, messageId: "synthetic-" + c.name, text: c.text, history: [] },
-    snapshot,
+    c.state ?? snapshot,
     now,
   ),
 );
@@ -116,7 +162,7 @@ for (const context of contexts) {
 }
 if (process.argv.includes("--offline")) {
   console.log(
-    "Synthetic preflight passed: 5 literal fixtures, invented farm/phone, no production history or database access.",
+    `Synthetic preflight passed: ${cases.length} literal fixtures, invented farm/phone, no production history or database access.`,
   );
 } else {
   for (const key of ["SUPABASE_SERVICE_ROLE_KEY", "WHATSAPP_ACCESS_TOKEN"])
@@ -126,7 +172,7 @@ if (process.argv.includes("--offline")) {
     );
   for (let i = 0; i < cases.length; i++) {
     const plan = await interpretFarmConversation(contexts[i]);
-    assert.ok(["apply", "propose"].includes(plan.intent));
+    assert.ok((cases[i].intents ?? ["apply", "propose"]).includes(plan.intent));
     for (const entry of plan.entries)
       for (const e of entry.evidence) assert.ok(groundSemanticEvidence(contexts[i], e));
     cases[i].verify(plan);

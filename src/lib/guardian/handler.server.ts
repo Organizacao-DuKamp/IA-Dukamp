@@ -384,6 +384,17 @@ export async function handleGuardianMessage(
           semanticPlanCache = undefined; // target reload requires a new interpretation
           continue;
         }
+        if (semantic && "panelRequest" in semantic) {
+          const reply = await handlePanelCodeRequest(
+            { ...input, text: `gerar código do painel para ${semantic.panelRequest}` },
+            {
+              load: store.load.bind(store),
+              issue: deps.issuePanelCode,
+              code: deps.panelCode,
+            },
+          );
+          return { reply, activeProperty: !!snapshot.active, persisted: false };
+        }
         if (semantic) return semantic;
       }
       if (

@@ -474,6 +474,7 @@ try {
     .getByRole("article")
     .filter({ has: page.getByText("Lote 4", { exact: true }) });
   assert.match(await lotFour.innerText(), /Bovinos: 50/);
+  await page.getByText("Histórico de movimentações", { exact: true }).click();
   assert.match(
     await page.getByRole("row").filter({ hasText: "Transferência de grupo" }).innerText(),
     /50 Bovinos/,
@@ -504,6 +505,19 @@ try {
   assert.equal(whole.operations.counts.length, afterMove.operations.counts.length);
   assert.equal(whole.operations.movements.length, afterMove.operations.movements.length);
   assert.equal(stockAt(whole.operations, day, "4").count, 0);
+  const currentLocations = page.getByRole("region", {
+    name: "Localização atual do rebanho",
+    exact: true,
+  });
+  assert.doesNotMatch(await currentLocations.innerText(), /Sem lote definido/);
+  const cattleLocation = currentLocations.getByRole("row").filter({ hasText: "Bovinos" });
+  assert.match(await cattleLocation.innerText(), /2/);
+  await cattleLocation.getByText("Ver grupos e fichas", { exact: true }).click();
+  assert.match(await cattleLocation.innerText(), /50 bovinos/);
+  assert.equal(
+    await page.getByRole("row").filter({ hasText: "Transferência de grupo" }).isVisible(),
+    false,
+  );
   await runSemantic(
     "ui-species-base",
     "Na fazenda já tenho 100 bovinos, 40 porcos e 2 galinhas.",

@@ -1,4 +1,5 @@
 import { PanelMetric } from "./PanelMetric";
+import { HerdLocations } from "./HerdLocations";
 import { Beef, Sprout, MinusCircle } from "lucide-react";
 import { useState } from "react";
 import { farmIndicators, emptyOperations, stockAt, speciesNames } from "@/lib/guardian/operations";
@@ -287,81 +288,91 @@ export function FarmOperations({ book, compact = false }: { book: FarmBook; comp
               com cobertura desconhecida.
             </p>
           </details>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <caption className="mb-3 text-left font-semibold">
-                Movimentações · {rows.length} registros
-              </caption>
-              <thead>
-                <tr className="border-b">
-                  <th className="p-2">Data</th>
-                  <th className="p-2">Tipo</th>
-                  <th className="p-2">Quantidade</th>
-                  <th className="p-2">Lote</th>
-                  <th className="p-2">Detalhes</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.slice(page * 20, page * 20 + 20).map((r) => (
-                  <tr key={r.id} className="border-b">
-                    <td className="whitespace-nowrap p-2">
-                      {r.date.split("-").reverse().join("/")}
-                    </td>
-                    <td className="p-2">
-                      <span
-                        className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${["Nascimento", "Compra", "Entrada de lote"].includes(r.type) ? "bg-emerald-50 text-emerald-800" : ["Morte", "Venda", "Saída de lote"].includes(r.type) ? "bg-rose-50 text-rose-700" : "bg-sky-50 text-sky-800"}`}
-                      >
-                        {r.type}
-                      </span>
-                    </td>
-                    <td className="p-2">
-                      {r.count ?? "Quantidade não informada"} {speciesNames[r.species ?? "cattle"]}
-                    </td>
-                    <td className="p-2">{r.lot ?? "Sem lote definido (fazenda)"}</td>
-                    <td className="p-2">
-                      <details>
-                        <summary className="cursor-pointer">
-                          {replaced.has(r.id) ? "Substituído por correção" : "Ver origem"}
-                        </summary>
-                        <p className="mt-2">{r.description}</p>
-                        <p className="mt-1 break-all text-xs">
-                          Código: {r.id}. Registrado em{" "}
-                          {new Date(r.source.at).toLocaleString("pt-BR", {
-                            timeZone: "America/Sao_Paulo",
-                          })}
-                          .
-                        </p>
-                      </details>
-                    </td>
+          <HerdLocations book={book} date={end} />
+          <details className="rounded-xl border p-4">
+            <summary className="cursor-pointer font-semibold">Histórico de movimentações</summary>
+            <p className="my-3 text-sm text-muted-foreground">
+              Este histórico mostra o lote informado na data de cada registro. Uma entrada antiga
+              sem lote não significa que os animais continuam sem lote; confira a localização atual
+              acima.
+            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <caption className="mb-3 text-left font-semibold">
+                  Histórico · {rows.length} registros
+                </caption>
+                <thead>
+                  <tr className="border-b">
+                    <th className="p-2">Data</th>
+                    <th className="p-2">Tipo</th>
+                    <th className="p-2">Quantidade</th>
+                    <th className="p-2">Lote no registro</th>
+                    <th className="p-2">Detalhes</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            {!rows.length && (
-              <p className="py-6 text-sm text-muted-foreground">Nenhum registro neste período.</p>
-            )}
-          </div>
-          {rows.length > 20 && (
-            <div className="flex items-center gap-4 text-sm">
-              <button
-                disabled={!page}
-                onClick={() => setPage((p) => p - 1)}
-                className="rounded border px-3 py-2 disabled:opacity-40"
-              >
-                Anterior
-              </button>
-              <span>
-                Página {page + 1} de {Math.ceil(rows.length / 20)}
-              </span>
-              <button
-                disabled={(page + 1) * 20 >= rows.length}
-                onClick={() => setPage((p) => p + 1)}
-                className="rounded border px-3 py-2 disabled:opacity-40"
-              >
-                Próxima
-              </button>
+                </thead>
+                <tbody>
+                  {rows.slice(page * 20, page * 20 + 20).map((r) => (
+                    <tr key={r.id} className="border-b">
+                      <td className="whitespace-nowrap p-2">
+                        {r.date.split("-").reverse().join("/")}
+                      </td>
+                      <td className="p-2">
+                        <span
+                          className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${["Nascimento", "Compra", "Entrada de lote"].includes(r.type) ? "bg-emerald-50 text-emerald-800" : ["Morte", "Venda", "Saída de lote"].includes(r.type) ? "bg-rose-50 text-rose-700" : "bg-sky-50 text-sky-800"}`}
+                        >
+                          {r.type}
+                        </span>
+                      </td>
+                      <td className="p-2">
+                        {r.count ?? "Quantidade não informada"}{" "}
+                        {speciesNames[r.species ?? "cattle"]}
+                      </td>
+                      <td className="p-2">{r.lot ?? "Sem lote definido (fazenda)"}</td>
+                      <td className="p-2">
+                        <details>
+                          <summary className="cursor-pointer">
+                            {replaced.has(r.id) ? "Substituído por correção" : "Ver origem"}
+                          </summary>
+                          <p className="mt-2">{r.description}</p>
+                          <p className="mt-1 break-all text-xs">
+                            Código: {r.id}. Registrado em{" "}
+                            {new Date(r.source.at).toLocaleString("pt-BR", {
+                              timeZone: "America/Sao_Paulo",
+                            })}
+                            .
+                          </p>
+                        </details>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {!rows.length && (
+                <p className="py-6 text-sm text-muted-foreground">Nenhum registro neste período.</p>
+              )}
             </div>
-          )}
+            {rows.length > 20 && (
+              <div className="flex items-center gap-4 text-sm">
+                <button
+                  disabled={!page}
+                  onClick={() => setPage((p) => p - 1)}
+                  className="rounded border px-3 py-2 disabled:opacity-40"
+                >
+                  Anterior
+                </button>
+                <span>
+                  Página {page + 1} de {Math.ceil(rows.length / 20)}
+                </span>
+                <button
+                  disabled={(page + 1) * 20 >= rows.length}
+                  onClick={() => setPage((p) => p + 1)}
+                  className="rounded border px-3 py-2 disabled:opacity-40"
+                >
+                  Próxima
+                </button>
+              </div>
+            )}
+          </details>
           {!!operations.lots.length && (
             <div>
               <h3 className="font-semibold">Lotes e pastagens</h3>
