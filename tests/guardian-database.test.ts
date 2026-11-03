@@ -38,6 +38,7 @@ async function setup() {
     "guardian_optional_reports.sql",
     "knowledge_atomic_replacement.sql",
     "guardian_event_history_access.sql",
+    "guardian_requested_reminder_times.sql",
   ]) {
     const file = (await readdir(new URL("../supabase/migrations/", import.meta.url))).find((f) =>
       f.endsWith(suffix),
