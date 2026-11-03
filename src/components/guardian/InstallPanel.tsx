@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Download, Smartphone, Check } from "lucide-react";
+import { nativeAndroid } from "@/lib/guardian/android-bridge";
 import { installedPanel } from "@/lib/guardian/app-mode";
 type InstallEvent = Event & {
   prompt: () => Promise<void>;
@@ -38,6 +39,7 @@ export function InstallPanel({ authenticated = false }: { authenticated?: boolea
       window.removeEventListener("appinstalled", done);
     };
   }, []);
+  if (installed && nativeAndroid()) return null;
   return (
     <section
       className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4 sm:p-5"

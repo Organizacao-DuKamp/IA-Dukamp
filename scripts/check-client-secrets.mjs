@@ -15,6 +15,8 @@ const forbidden = [
   "WHATSAPP_ACCESS_TOKEN",
   "WHATSAPP_APP_SECRET",
   "WHATSAPP_VERIFY_TOKEN",
+  "TPEC_FCM_PRIVATE_KEY",
+  "TPEC_FCM_CLIENT_EMAIL",
 ];
 const extensions = /\.(?:js|mjs|cjs|map|html)$/i;
 

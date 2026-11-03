@@ -27,6 +27,7 @@ import { Route as ApiPublicDiagRouteImport } from './routes/api/public/diag'
 import { Route as ApiPublicFarmPanelRouteImport } from './routes/api/public/farm-panel'
 import { Route as ApiPublicMarketIngestRouteImport } from './routes/api/public/market-ingest'
 import { Route as ApiPublicWhatsappRouteImport } from './routes/api/public/whatsapp'
+import { Route as ApiPublicFarmPanelAppRouteImport } from './routes/api/public/farm-panel.app'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -120,6 +121,11 @@ const ApiPublicWhatsappRoute = ApiPublicWhatsappRouteImport.update({
   path: '/api/public/whatsapp',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicFarmPanelAppRoute = ApiPublicFarmPanelAppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => ApiPublicFarmPanelRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -136,9 +142,10 @@ export interface FileRoutesByFullPath {
   '/api/public/chat': typeof ApiPublicChatRoute
   '/api/public/chat-test': typeof ApiPublicChatTestRoute
   '/api/public/diag': typeof ApiPublicDiagRoute
-  '/api/public/farm-panel': typeof ApiPublicFarmPanelRoute
+  '/api/public/farm-panel': typeof ApiPublicFarmPanelRouteWithChildren
   '/api/public/market-ingest': typeof ApiPublicMarketIngestRoute
   '/api/public/whatsapp': typeof ApiPublicWhatsappRoute
+  '/api/public/farm-panel/app': typeof ApiPublicFarmPanelAppRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -155,9 +162,10 @@ export interface FileRoutesByTo {
   '/api/public/chat': typeof ApiPublicChatRoute
   '/api/public/chat-test': typeof ApiPublicChatTestRoute
   '/api/public/diag': typeof ApiPublicDiagRoute
-  '/api/public/farm-panel': typeof ApiPublicFarmPanelRoute
+  '/api/public/farm-panel': typeof ApiPublicFarmPanelRouteWithChildren
   '/api/public/market-ingest': typeof ApiPublicMarketIngestRoute
   '/api/public/whatsapp': typeof ApiPublicWhatsappRoute
+  '/api/public/farm-panel/app': typeof ApiPublicFarmPanelAppRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -176,9 +184,10 @@ export interface FileRoutesById {
   '/api/public/chat': typeof ApiPublicChatRoute
   '/api/public/chat-test': typeof ApiPublicChatTestRoute
   '/api/public/diag': typeof ApiPublicDiagRoute
-  '/api/public/farm-panel': typeof ApiPublicFarmPanelRoute
+  '/api/public/farm-panel': typeof ApiPublicFarmPanelRouteWithChildren
   '/api/public/market-ingest': typeof ApiPublicMarketIngestRoute
   '/api/public/whatsapp': typeof ApiPublicWhatsappRoute
+  '/api/public/farm-panel/app': typeof ApiPublicFarmPanelAppRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -200,6 +209,7 @@ export interface FileRouteTypes {
     | '/api/public/farm-panel'
     | '/api/public/market-ingest'
     | '/api/public/whatsapp'
+    | '/api/public/farm-panel/app'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -219,6 +229,7 @@ export interface FileRouteTypes {
     | '/api/public/farm-panel'
     | '/api/public/market-ingest'
     | '/api/public/whatsapp'
+    | '/api/public/farm-panel/app'
   id:
     | '__root__'
     | '/'
@@ -239,6 +250,7 @@ export interface FileRouteTypes {
     | '/api/public/farm-panel'
     | '/api/public/market-ingest'
     | '/api/public/whatsapp'
+    | '/api/public/farm-panel/app'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -252,7 +264,7 @@ export interface RootRouteChildren {
   ApiPublicChatRoute: typeof ApiPublicChatRoute
   ApiPublicChatTestRoute: typeof ApiPublicChatTestRoute
   ApiPublicDiagRoute: typeof ApiPublicDiagRoute
-  ApiPublicFarmPanelRoute: typeof ApiPublicFarmPanelRoute
+  ApiPublicFarmPanelRoute: typeof ApiPublicFarmPanelRouteWithChildren
   ApiPublicMarketIngestRoute: typeof ApiPublicMarketIngestRoute
   ApiPublicWhatsappRoute: typeof ApiPublicWhatsappRoute
 }
@@ -385,6 +397,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWhatsappRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/farm-panel/app': {
+      id: '/api/public/farm-panel/app'
+      path: '/app'
+      fullPath: '/api/public/farm-panel/app'
+      preLoaderRoute: typeof ApiPublicFarmPanelAppRouteImport
+      parentRoute: typeof ApiPublicFarmPanelRoute
+    }
   }
 }
 
@@ -408,6 +427,17 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface ApiPublicFarmPanelRouteChildren {
+  ApiPublicFarmPanelAppRoute: typeof ApiPublicFarmPanelAppRoute
+}
+
+const ApiPublicFarmPanelRouteChildren: ApiPublicFarmPanelRouteChildren = {
+  ApiPublicFarmPanelAppRoute: ApiPublicFarmPanelAppRoute,
+}
+
+const ApiPublicFarmPanelRouteWithChildren =
+  ApiPublicFarmPanelRoute._addFileChildren(ApiPublicFarmPanelRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
@@ -419,7 +449,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicChatRoute: ApiPublicChatRoute,
   ApiPublicChatTestRoute: ApiPublicChatTestRoute,
   ApiPublicDiagRoute: ApiPublicDiagRoute,
-  ApiPublicFarmPanelRoute: ApiPublicFarmPanelRoute,
+  ApiPublicFarmPanelRoute: ApiPublicFarmPanelRouteWithChildren,
   ApiPublicMarketIngestRoute: ApiPublicMarketIngestRoute,
   ApiPublicWhatsappRoute: ApiPublicWhatsappRoute,
 }

@@ -14,6 +14,8 @@ export default tseslint.config(
       ".netlify",
       ".tanstack",
       ".wrangler",
+      "android/.gradle",
+      "android/**/build",
       // Arquivo regenerado pelo Supabase; não deve criar centenas de falhas de
       // formatação sempre que a tipagem remota é atualizada.
       "src/integrations/supabase/types.ts",

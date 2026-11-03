@@ -1,0 +1,42 @@
+.farm-panel :is(button, a, input, select, textarea):focus-visible {
+  outline: 3px solid #059669;
+  outline-offset: 3px;
+}
+.farm-panel button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+.farm-more-dialog {
+  margin: auto auto 0;
+  width: min(100%, 40rem);
+  max-height: 85dvh;
+  border: 0;
+  border-radius: 1.5rem 1.5rem 0 0;
+  padding: 1.25rem;
+  padding-bottom: calc(1.25rem + env(safe-area-inset-bottom));
+  color: #0f172a;
+  overflow-y: auto;
+}
+.farm-more-dialog::backdrop {
+  background: rgb(2 44 34 / 0.55);
+}
+@media (max-width: 767px) {
+  .farm-panel {
+    padding-bottom: calc(6.5rem + env(safe-area-inset-bottom));
+  }
+  .farm-panel :is(button, input, select, textarea) {
+    min-height: 44px;
+  }
+  .farm-panel :is(input, select, textarea) {
+    font-size: 16px;
+  }
+  .farm-panel table {
+    font-size: 13px;
+  }
+  .farm-panel h1 {
+    overflow-wrap: anywhere;
+  }
+  .farm-bottom-nav {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
