@@ -42,3 +42,12 @@ dist-ssr
 
 # Supabase CLI local cache
 supabase/.temp/
+
+# Android Studio, signing and Firebase account configuration
+android/.gradle/
+android/.kotlin/
+android/**/build/
+android/local.properties
+android/app/google-services.json
+*.jks
+*.keystore
