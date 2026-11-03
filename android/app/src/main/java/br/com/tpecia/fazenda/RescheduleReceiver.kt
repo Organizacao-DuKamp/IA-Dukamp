@@ -1,0 +1,13 @@
+package br.com.tpecia.fazenda
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+class RescheduleReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        val allowed = setOf(Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED, Intent.ACTION_TIME_CHANGED,
+            Intent.ACTION_TIMEZONE_CHANGED, "android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED")
+        if (!allowed.contains(intent.action)) return
+        ReminderEngine.reschedule(context)
+        if (DeviceStore.read(context).optBoolean("enabled")) { ReminderWorker.periodic(context); ReminderWorker.now(context) }
+    }
+}
