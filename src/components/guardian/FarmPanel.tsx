@@ -525,7 +525,6 @@ export function FarmPanel() {
                   book={view.book}
                   busy={busy}
                   navigate={navigate}
-                  talkUrl="https://wa.me/5516992256069"
                   complete={(task) => {
                     setProposal({
                       action: { kind: "task_update", task, status: "done" },

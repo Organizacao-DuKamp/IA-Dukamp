@@ -4,7 +4,6 @@ import {
   ChevronRight,
   ClipboardList,
   Fuel,
-  MessageCircle,
   NotebookPen,
   Package,
   Wallet,
@@ -26,13 +25,11 @@ export function FarmMobileHome({
   book,
   busy,
   navigate,
-  talkUrl,
   complete,
 }: {
   book: FarmBook;
   busy: boolean;
   navigate(area: Area): void;
-  talkUrl: string;
   complete(id: string): void;
 }) {
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(
@@ -52,21 +49,6 @@ export function FarmMobileHome({
     .sort((a, b) => a.dueAt.localeCompare(b.dueAt));
   return (
     <div className="space-y-6 md:hidden">
-      <a
-        href={talkUrl}
-        target="_blank"
-        rel="noreferrer"
-        className="flex items-center gap-4 rounded-2xl bg-emerald-900 p-5 text-white shadow-sm"
-      >
-        <MessageCircle size={30} aria-hidden="true" className="shrink-0" />
-        <span className="flex-1">
-          <strong className="block text-lg">Falar com a TPEC-IA</strong>
-          <span className="mt-1 block text-sm text-emerald-100">
-            Peça, registre ou tire dúvidas no WhatsApp
-          </span>
-        </span>
-        <ChevronRight size={23} aria-hidden="true" />
-      </a>
       <div className="grid grid-cols-2 gap-3">
         <button
           disabled={busy}
