@@ -353,6 +353,7 @@ export function applyFarmAction(
         dueAt: task.dueAt,
         updatedAt: task.updatedAt,
         sourceMessageId: source.messageId,
+        requestedBy: source.actor,
       },
       message: `${farmName(book)}: a tarefa “${task.title}” está prevista para ${new Date(task.dueAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })} (Brasília). Você já concluiu? Pode responder “já fiz” ou dizer qual atividade terminou.`,
     });

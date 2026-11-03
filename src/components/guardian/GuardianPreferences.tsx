@@ -52,7 +52,9 @@ export function GuardianPreferences({
       <h2 className="text-lg font-semibold">Meus avisos pelo WhatsApp</h2>
       <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
         Os avisos são gratuitos e dependem de eventos válidos. Sem fonte ou dados suficientes, a
-        Guardiã não cria alertas. Você pode interromper a qualquer momento.
+        Guardiã não cria alertas. O horário e a frequência abaixo se aplicam aos avisos espontâneos.
+        Lembretes que você agenda para si seguem o horário combinado, inclusive à noite ou de
+        madrugada. Você pode interromper a qualquer momento.
       </p>
       <label className="mt-4 flex items-start gap-3 rounded-xl border border-border p-4 text-sm">
         <input
