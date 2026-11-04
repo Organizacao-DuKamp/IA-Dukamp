@@ -85,7 +85,7 @@ export const ActionSchema = z.discriminatedUnion("kind", [
   z
     .object({
       kind: z.literal("task_update"),
-      recurrence: z.literal("daily").nullable().optional(),
+      recurrence: z.literal("daily").optional(),
       occurrenceAt: z.iso.datetime().optional(),
       task: label,
       status: z.enum(["done", "cancelled"]).optional(),

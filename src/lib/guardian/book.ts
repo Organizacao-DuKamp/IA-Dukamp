@@ -52,7 +52,7 @@ export function describeAction(a: GuardianAction): string {
     case "task_create":
       return `Agendar “${a.title}”${a.recurrence === "daily" ? " todos os dias, a partir de" : " para"} ${new Date(a.dueAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })} (horário de Brasília)${a.lot ? `, lote ${a.lot}` : ""}.`;
     case "task_update":
-      return `Alterar a tarefa ${a.task}: ${a.status === "done" ? "concluir" : a.status === "cancelled" ? "cancelar" : ""}${a.dueAt ? ` reagendar para ${new Date(a.dueAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}` : ""}${a.title ? ` título: ${a.title}` : ""}${a.recurrence === "daily" ? " repetir todos os dias" : a.recurrence === null ? " sem repetição" : ""}${a.status === "done" ? " (se diária, conclui só a ocorrência e mantém os próximos dias)" : ""}.`;
+      return `Alterar a tarefa ${a.task}: ${a.status === "done" ? "concluir" : a.status === "cancelled" ? "cancelar" : ""}${a.dueAt ? ` reagendar para ${new Date(a.dueAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}` : ""}${a.title ? ` título: ${a.title}` : ""}${a.recurrence === "daily" ? " repetir todos os dias" : ""}${a.status === "done" ? " (se diária, conclui só a ocorrência e mantém os próximos dias)" : ""}.`;
     case "ledger":
       return `${a.direction === "expense" ? "Despesa" : "Receita"} de ${money(a.amountCents)} em ${ledgerPeriod(a)}: ${a.description}${a.lot ? `, lote ${a.lot}` : ""}${a.recurrence ? " (valor mensal informado)" : ""}.`;
     case "edit_record":
@@ -173,11 +173,7 @@ export function applyFarmAction(
           );
         task.completedThrough = due;
       } else if (action.status) task.status = action.status;
-      if (action.recurrence === null) {
-        task.dueAt = taskDisplayDueAt(task, new Date(source.at));
-        delete task.recurrence;
-        delete task.completedThrough;
-      } else if (action.recurrence === "daily") task.recurrence = "daily";
+      if (action.recurrence === "daily") task.recurrence = "daily";
       if (action.dueAt) {
         task.dueAt = action.dueAt;
         delete task.completedThrough;

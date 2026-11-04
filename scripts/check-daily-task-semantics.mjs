@@ -113,7 +113,10 @@ for (const c of cases) {
     source: { actor: phone, messageId: "synthetic-" + c.name, at: c.now, confirmed: true },
     executedByMessageId: "synthetic-" + c.name,
   });
-  if (c.update === "done") assert.equal(prepared.book.tasks[0].status, "open");
+  if (c.update === "done") {
+    assert.equal(prepared.book.tasks[0].status, "open");
+    assert.equal(prepared.book.tasks[0].recurrence, "daily");
+  }
   console.log("Synthetic daily semantic check passed:", c.name);
 }
 if (process.argv.includes("--offline"))

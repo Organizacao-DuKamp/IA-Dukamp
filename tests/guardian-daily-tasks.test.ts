@@ -367,3 +367,69 @@ test("SQL daily FCM jobs get distinct keys tomorrow and revalidate completion/re
     await f.db.close();
   }
 });
+
+test("editing a daily reminder title retains Android's delivered key and cannot resend the same WhatsApp occurrence", async () => {
+  const f = await fixture();
+  try {
+    await f.setClock(dueAt);
+    const c = (
+      await f.db.query<{ id: string; lock_token: string }>(
+        "select id,lock_token from guardian_claim_events(1)",
+      )
+    ).rows[0];
+    assert.ok(await f.rpc("select guardian_begin_delivery($1,$2) data", [c.id, c.lock_token]));
+    await f.db.query("select guardian_finish_delivery($1,$2,'sent','qa-first',null)", [
+      c.id,
+      c.lock_token,
+    ]);
+    const s = await f.guardian.load(phone);
+    const identity = {
+      phone,
+      propertyId: f.propertyId,
+      role: "owner" as const,
+      version: 1,
+      expiresAt: "2027-01-01T00:00:00Z",
+      book: s.active!.book,
+    };
+    const before = appReminderSnapshot(identity, new Date(dueAt));
+    const updated = applyFarmAction(
+      s.active!.book,
+      { kind: "task_update", task: "daily-feed", title: "Dar ração no cocho para os gados" },
+      "owner",
+      at("2026-11-04T11:01:00Z"),
+      "rename",
+    );
+    const after = appReminderSnapshot({ ...identity, book: updated.book }, new Date(dueAt));
+    assert.equal(after.reminders[0].key, before.reminders[0].key);
+    assert.notEqual(after.reminders[0].revision, before.reminders[0].revision);
+    await f.guardian.commit({
+      phone,
+      messageId: "qa-rename",
+      accountVersion: s.accountVersion,
+      propertyId: f.propertyId,
+      propertyVersion: s.active!.version,
+      operation: "update",
+      book: updated.book,
+      events: updated.events,
+      pending: null,
+      reply: "ok",
+      details: { kind: "task_update" },
+    });
+    const repeat = (
+      await f.db.query<{ id: string; lock_token: string }>(
+        "select id,lock_token from guardian_claim_events(1)",
+      )
+    ).rows[0];
+    assert.ok(repeat);
+    assert.equal(
+      await f.rpc("select guardian_begin_delivery($1,$2) data", [repeat.id, repeat.lock_token]),
+      null,
+    );
+    assert.equal(
+      await f.rpc("select last_error data from guardian_events where id=$1", [repeat.id]),
+      "occurrence_already_delivered",
+    );
+  } finally {
+    await f.db.close();
+  }
+});
