@@ -175,6 +175,7 @@ export function GuardianActionForm({
         input = {
           kind,
           title: values.title,
+          ...(values.recurrence === "daily" ? { recurrence: "daily" } : {}),
           dueAt: values.dueAt ? new Date(values.dueAt + ":00-03:00").toISOString() : "",
           ...(values.lot ? { lot: values.lot } : {}),
           ...(values.responsiblePhone
@@ -401,7 +402,11 @@ export function GuardianActionForm({
         {kind === "task_create" && (
           <>
             {field("title", "Atividade")}
-            {field("dueAt", "Data e horário (Brasília)", "datetime-local")}
+            {field("dueAt", "Primeira data e horário (Brasília)", "datetime-local")}
+            {select("recurrence", "Repetir", [
+              ["", "Não repetir"],
+              ["daily", "Todos os dias"],
+            ])}
             {field("lot", "Lote (opcional)", "text", false)}
             {field("responsiblePhone", "WhatsApp do responsável (opcional)", "tel", false)}
           </>

@@ -53,7 +53,7 @@ export async function farmIntegration(
     taskNotifications: async (phone, ids, since, provider) =>
       (
         await db.query<import("../../src/lib/guardian/store.server.ts").TaskNotification>(
-          `select e.id,e.property_id as "propertyId",e.evidence->>'taskId' as "taskId",e.sent_at::text as "sentAt",e.provider_message_id as "providerId",e.answered_at::text as "answeredAt",e.evidence->>'updatedAt' as "taskUpdatedAt" from guardian_events e join guardian_members m on m.property_id=e.property_id and m.phone_number=$1 and m.active where e.recipient=$1 and e.type='task_due' and e.status='sent' and e.property_id=any($2::uuid[]) and (($4::text is not null and e.provider_message_id=$4) or ($4::text is null and e.sent_at>=$3::timestamptz)) order by e.sent_at desc limit 30`,
+          `select e.id,e.property_id as "propertyId",e.evidence->>'taskId' as "taskId",e.sent_at::text as "sentAt",e.provider_message_id as "providerId",e.answered_at::text as "answeredAt",e.evidence->>'dueAt' as "taskDueAt",e.evidence->>'updatedAt' as "taskUpdatedAt" from guardian_events e join guardian_members m on m.property_id=e.property_id and m.phone_number=$1 and m.active where e.recipient=$1 and e.type='task_due' and e.status='sent' and e.property_id=any($2::uuid[]) and (($4::text is not null and e.provider_message_id=$4) or ($4::text is null and e.sent_at>=$3::timestamptz)) order by e.sent_at desc limit 30`,
           [phone, ids, since, provider ?? null],
         )
       ).rows,

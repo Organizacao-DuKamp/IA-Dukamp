@@ -1,3 +1,4 @@
+import { taskDisplayDueAt } from "@/lib/guardian/task-recurrence";
 import {
   Beef,
   Check,
@@ -45,6 +46,7 @@ export function FarmMobileHome({
     0,
   );
   const tasks = book.tasks
+    .map((task) => ({ ...task, dueAt: taskDisplayDueAt(task) }))
     .filter((task) => task.status === "open")
     .sort((a, b) => a.dueAt.localeCompare(b.dueAt));
   return (
@@ -94,7 +96,10 @@ export function FarmMobileHome({
             {tasks.slice(0, 3).map((task) => (
               <li key={task.id} className="flex items-center gap-3 py-4">
                 <span className="min-w-0 flex-1">
-                  <strong className="block break-words text-sm font-semibold">{task.title}</strong>
+                  <strong className="block break-words text-sm font-semibold">
+                    {task.title}
+                    {task.recurrence === "daily" ? " · Todos os dias" : ""}
+                  </strong>
                   <span className="mt-1 block text-xs text-slate-500">
                     {new Date(task.dueAt).toLocaleString("pt-BR", {
                       timeZone: "America/Sao_Paulo",
@@ -109,7 +114,7 @@ export function FarmMobileHome({
                 <button
                   disabled={busy}
                   onClick={() => complete(task.id)}
-                  aria-label={`Concluir ${task.title}`}
+                  aria-label={`Concluir ${task.title}{task.recurrence === "daily" ? " · Todos os dias" : ""}`}
                   className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800"
                 >
                   <Check size={20} aria-hidden="true" />

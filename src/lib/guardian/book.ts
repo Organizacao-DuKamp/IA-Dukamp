@@ -1,3 +1,4 @@
+import { taskDisplayDueAt, isTaskOccurrence, taskOccurrenceOn } from "./task-recurrence.ts";
 import { SupplyActionSchema, applySupply, describeSupply } from "./supplies.ts";
 import { FuelActionSchema, applyFuel, describeFuel } from "./fuel.ts";
 import {
@@ -49,9 +50,9 @@ export function describeAction(a: GuardianAction): string {
         )
         .join("; ")}.`;
     case "task_create":
-      return `Agendar “${a.title}” para ${new Date(a.dueAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })} (horário de Brasília)${a.lot ? `, lote ${a.lot}` : ""}.`;
+      return `Agendar “${a.title}”${a.recurrence === "daily" ? " todos os dias, a partir de" : " para"} ${new Date(a.dueAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })} (horário de Brasília)${a.lot ? `, lote ${a.lot}` : ""}.`;
     case "task_update":
-      return `Alterar a tarefa ${a.task}: ${a.status === "done" ? "concluir" : a.status === "cancelled" ? "cancelar" : ""}${a.dueAt ? ` reagendar para ${new Date(a.dueAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}` : ""}${a.title ? ` título: ${a.title}` : ""}.`;
+      return `Alterar a tarefa ${a.task}: ${a.status === "done" ? "concluir" : a.status === "cancelled" ? "cancelar" : ""}${a.dueAt ? ` reagendar para ${new Date(a.dueAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}` : ""}${a.title ? ` título: ${a.title}` : ""}${a.recurrence === "daily" ? " repetir todos os dias" : a.recurrence === null ? " sem repetição" : ""}${a.status === "done" ? " (se diária, conclui só a ocorrência e mantém os próximos dias)" : ""}.`;
     case "ledger":
       return `${a.direction === "expense" ? "Despesa" : "Receita"} de ${money(a.amountCents)} em ${ledgerPeriod(a)}: ${a.description}${a.lot ? `, lote ${a.lot}` : ""}${a.recurrence ? " (valor mensal informado)" : ""}.`;
     case "edit_record":
@@ -138,13 +139,14 @@ export function applyFarmAction(
         id,
         title: action.title,
         dueAt: action.dueAt,
+        ...(action.recurrence ? { recurrence: action.recurrence } : {}),
         status: "open",
         lot: action.lot,
         responsiblePhone: action.responsiblePhone ?? source.actor,
         source,
         updatedAt: source.at,
       });
-      result = `Tarefa “${action.title}” criada. Quando terminar, diga “já concluí essa tarefa” ou descreva o que fez.`;
+      result = `Tarefa “${action.title}” criada${action.recurrence === "daily" ? " para repetir todos os dias, no horário de Brasília" : ""}. Quando terminar, diga “já concluí essa tarefa” ou descreva o que fez.`;
       break;
     case "task_update": {
       const task = book.tasks.find(
@@ -156,16 +158,38 @@ export function applyFarmAction(
         );
       if (action.dueAt && Date.parse(action.dueAt) <= Date.parse(source.at))
         throw new Error("O novo horário deve ser futuro.");
-      if (action.dueAt && task.status !== "open")
+      if (
+        (action.dueAt || action.status === "done" || action.recurrence !== undefined) &&
+        task.status !== "open"
+      )
         throw new Error("Essa tarefa já foi encerrada. Crie uma nova tarefa para outro manejo.");
-      if (action.status) task.status = action.status;
-      if (action.dueAt) task.dueAt = action.dueAt;
+      if (action.status === "done" && task.recurrence === "daily") {
+        const due = action.occurrenceAt ?? taskOccurrenceOn(task, localDay);
+        if (!isTaskOccurrence(task, due) || localDateForTimeZone(new Date(due)) > localDay)
+          throw new Error("Não é possível concluir essa ocorrência da tarefa diária.");
+        if (task.completedThrough && Date.parse(due) <= Date.parse(task.completedThrough))
+          throw new Error(
+            "Essa ocorrência já está concluída. O lembrete dos próximos dias continua ativo.",
+          );
+        task.completedThrough = due;
+      } else if (action.status) task.status = action.status;
+      if (action.recurrence === null) {
+        task.dueAt = taskDisplayDueAt(task, new Date(source.at));
+        delete task.recurrence;
+        delete task.completedThrough;
+      } else if (action.recurrence === "daily") task.recurrence = "daily";
+      if (action.dueAt) {
+        task.dueAt = action.dueAt;
+        delete task.completedThrough;
+      }
       if (action.title) task.title = action.title;
       task.updatedAt = source.at;
       result =
-        task.status === "done"
-          ? `Tarefa “${task.title}” concluída e salva.${/pesar|pesagem/i.test(task.title) ? " Quer registrar os novos pesos? Envie o código de cada animal e o peso em kg." : ""}`
-          : `Tarefa ${task.id} atualizada e salva.`;
+        action.status === "done" && task.recurrence === "daily"
+          ? `Ocorrência de “${task.title}” concluída e salva. O lembrete continua todos os dias; próximo horário: ${new Date(taskDisplayDueAt(task, new Date(source.at))).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })} (Brasília).`
+          : task.status === "done"
+            ? `Tarefa “${task.title}” concluída e salva.${/pesar|pesagem/i.test(task.title) ? " Quer registrar os novos pesos? Envie o código de cada animal e o peso em kg." : ""}`
+            : `Tarefa ${task.id} atualizada e salva.`;
       break;
     }
     case "ledger": {
@@ -338,24 +362,31 @@ export function applyFarmAction(
   for (const task of book.tasks) {
     if (task.status !== "open") continue;
     const before = original.tasks.find((t) => t.id === task.id);
-    if (before?.status === "open" && before.dueAt === task.dueAt && before.title === task.title)
+    if (
+      before?.status === "open" &&
+      before.dueAt === task.dueAt &&
+      before.title === task.title &&
+      before.recurrence === task.recurrence &&
+      before.completedThrough === task.completedThrough
+    )
       continue;
+    const due = taskDisplayDueAt(task, new Date(source.at));
     events.push({
       type: "task_due",
       topic: "tasks",
-      key: `task:${task.id}:${task.updatedAt}`,
+      key: `task:${task.id}:${task.updatedAt}${task.recurrence === "daily" ? `:${Date.parse(due)}` : ""}`,
       recipient: task.responsiblePhone ?? source.actor,
-      notBefore: task.dueAt,
-      expiresAt: new Date(Date.parse(task.dueAt) + 86400000).toISOString(),
+      notBefore: due,
+      expiresAt: new Date(Date.parse(due) + 86400000).toISOString(),
       priority: 3,
       evidence: {
         taskId: task.id,
-        dueAt: task.dueAt,
+        dueAt: due,
         updatedAt: task.updatedAt,
         sourceMessageId: source.messageId,
         requestedBy: source.actor,
       },
-      message: `${farmName(book)}: a tarefa “${task.title}” está prevista para ${new Date(task.dueAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })} (Brasília). Você já concluiu? Pode responder “já fiz” ou dizer qual atividade terminou.`,
+      message: `${farmName(book)}: a tarefa “${task.title}” está prevista para ${new Date(due).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })} (Brasília)${task.recurrence === "daily" ? "; repete todos os dias" : ""}. Você já concluiu? Pode responder “já fiz” ou dizer qual atividade terminou.`,
     });
   }
   return { book, events, result };
@@ -456,10 +487,11 @@ export function farmReport(
     sections.push(
       "Tarefas:",
       ...book.tasks
+        .map((t) => ({ ...t, dueAt: taskDisplayDueAt(t) }))
         .filter((t) => inLot(t.lot) && inPeriod(t.dueAt.slice(0, 10)))
         .map(
           (t) =>
-            `• ${t.title} — ${t.status === "open" ? "pendente" : t.status === "done" ? "concluída" : "cancelada"} — ${new Date(t.dueAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}`,
+            `• ${t.title} — ${t.status === "open" ? "pendente" : t.status === "done" ? "concluída" : "cancelada"} — ${new Date(t.dueAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}${t.recurrence === "daily" ? " — todos os dias" : ""}`,
         ),
     );
   if (all || input.section === "finance") {

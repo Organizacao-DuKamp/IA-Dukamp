@@ -1,3 +1,4 @@
+import { taskDisplayDueAt } from "./task-recurrence.ts";
 import { createHash } from "node:crypto";
 import { completionIntent, completionTokens, completionText } from "./task-completion-language.ts";
 import { applyFarmAction, describeAction, fold } from "./book.ts";
@@ -192,7 +193,14 @@ export async function handleTaskCompletion(
           n.taskId === task.id &&
           (task.status !== "open" || !n.taskUpdatedAt || n.taskUpdatedAt === task.updatedAt),
       );
-      all.push({ property: p, task, ...(n ? { notification: n } : {}) });
+      all.push({
+        property: p,
+        task:
+          task.recurrence === "daily"
+            ? { ...task, dueAt: n?.taskDueAt ?? taskDisplayDueAt(task, reference) }
+            : task,
+        ...(n ? { notification: n } : {}),
+      });
     }
   let choices: Candidate[] = [],
     selected: Candidate[] = [],
@@ -399,7 +407,12 @@ export async function handleTaskCompletion(
     };
   const actions: GuardianAction[] = selected
     .filter((c) => c.task.status === "open")
-    .map((c) => ({ kind: "task_update", task: c.task.id, status: "done" }));
+    .map((c) => ({
+      kind: "task_update",
+      task: c.task.id,
+      status: "done",
+      ...(c.task.recurrence === "daily" ? { occurrenceAt: c.task.dueAt } : {}),
+    }));
   const previous = draft?.previousPending;
   const pending = draft
     ? previous && Date.parse(previous.expiresAt) > now.getTime()
@@ -482,6 +495,9 @@ export async function handleTaskCompletion(
   }
   const reply =
     `Concluída${selected.length > 1 ? "s" : ""} e salva${selected.length > 1 ? "s" : ""} em ${farmName(book)}: ${selected.map((c) => `“${c.task.title}”`).join("; ")}.` +
+    (selected.some((c) => c.task.recurrence === "daily")
+      ? " O lembrete diário continua nos próximos dias."
+      : "") +
     (actions.length > selected.length
       ? "\n" +
         actions

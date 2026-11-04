@@ -1,3 +1,4 @@
+import { hasDailyRecurrence, firstDailyDueAt } from "./task-recurrence.ts";
 import { normalizeTaskClock } from "./task-time.ts";
 import type { ChatMessage } from "../chat/types.ts";
 import { localDateForTimeZone, localDateTimeToUtc } from "../whatsapp/proactive.ts";
@@ -84,6 +85,7 @@ export function parseDueDate(
   text: string,
   now: Date,
   timeZone = "America/Sao_Paulo",
+  allowPast = false,
 ): string | null {
   const t = normalizeTaskClock(text),
     today = localDateForTimeZone(now, timeZone);
@@ -123,7 +125,7 @@ export function parseDueDate(
   let due = localDateTimeToUtc(day, h * 60 + m, timeZone);
   if (due <= now && /\b(domingo|segunda|terca|quarta|quinta|sexta|sabado)\b/.test(t) && !iso && !br)
     due = localDateTimeToUtc(dayAdd(day, 7), h * 60 + m, timeZone);
-  return due > now ? due.toISOString() : null;
+  return due > now || allowPast ? due.toISOString() : null;
 }
 export function guardianCandidate(text: string, snapshot?: GuardianSnapshot | null): boolean {
   const t = fold(text);
@@ -355,7 +357,11 @@ export function parseGuardianRequest(
     };
   }
   if (/\b(me lembr[ae]|criar tarefa|crie uma tarefa|agende|agendar)\b/.test(t)) {
-    const due = parseDueDate(text, now, snapshot?.preferences.timeZone);
+    const daily = hasDailyRecurrence(text);
+    const parsedDue =
+      parseDueDate(text, now, snapshot?.preferences.timeZone, daily) ??
+      (daily ? parseDueDate(`${text} hoje`, now, snapshot?.preferences.timeZone, true) : null);
+    const due = parsedDue && daily ? firstDailyDueAt(parsedDue, now) : parsedDue;
     if (!due)
       return {
         kind: "clarify",
@@ -377,7 +383,13 @@ export function parseGuardianRequest(
       .trim();
     return {
       kind: "action",
-      action: { kind: "task_create", title, dueAt: due, ...(lot ? { lot } : {}) },
+      action: {
+        kind: "task_create",
+        title,
+        dueAt: due,
+        ...(daily ? { recurrence: "daily" } : {}),
+        ...(lot ? { lot } : {}),
+      },
     };
   }
   const finance = text.match(
