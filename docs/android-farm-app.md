@@ -18,7 +18,7 @@ O Android combina FCM, WorkManager periódico (mínimo de 15 minutos, sujeito ao
 
 Aplicar a migração `supabase/migrations/20261103165643_guardian_android_reminders.sql` antes de publicar o backend que registra dispositivos. Ela cria `guardian_app_devices`, `guardian_app_push_jobs`, as funções `guardian_app_*` e um trigger de mudanças da agenda. É aditiva, com RLS habilitada e acesso restrito a `service_role`; não há políticas para clientes anônimos ou autenticados do Supabase.
 
-As variáveis `TPEC_FCM_PROJECT_ID`, `TPEC_FCM_CLIENT_EMAIL` e `TPEC_FCM_PRIVATE_KEY` pertencem somente ao servidor. O envio fica inativo enquanto estiverem ausentes. A credencial privada Firebase nunca é incluída no bundle web ou APK. `google-services.json` é uma configuração de cliente distinta e fica ignorada pelo Git.
+As variáveis `TPEC_FCM_PROJECT_ID`, `TPEC_FCM_CLIENT_EMAIL` e `TPEC_FCM_PRIVATE_KEY` pertencem somente ao servidor. O envio fica inativo enquanto estiverem ausentes. A credencial privada Firebase nunca é incluída no bundle web ou APK. `google-services.json` é uma configuração pública de cliente distinta, incluída em `android/app/` para o projeto `tpec-ia-688a5`. Arquivos de chave privada da conta de serviço não devem ser versionados.
 
 Publicar a `main` na Netlify pelo fluxo Git já existente. As duas funções de manutenção são empacotadas junto do backend atual. O segredo existente `WHATSAPP_APP_SECRET` autentica o acionamento da função de background. O agendador não envia mensagens de WhatsApp.
 

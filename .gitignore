@@ -50,3 +50,7 @@ android/**/build/
 android/local.properties
 *.jks
 *.keystore
+
+# Firebase server service-account private keys
+*firebase-adminsdk*.json
+*.service-account.json
