@@ -1,3 +1,4 @@
+import { hasDailyRecurrence, firstDailyDueAt } from "./task-recurrence.ts";
 import { complementaryFarmGoals, compoundRestAnswer } from "./compound-goals.ts";
 import { taskMarkers, recoverTaskContext } from "./task-language.ts";
 import { createHash } from "node:crypto";
@@ -29,8 +30,14 @@ function task(text: string, reference: Date, now: Date, zone: string) {
   const days = text.match(dayPattern) ?? [];
   // Clock-only scheduling explicitly means today; never silently move it to tomorrow.
   const dated = days.length ? normalized : `${normalized} hoje`;
-  const due = parseDueDate(dated, reference, zone);
+  const daily = hasDailyRecurrence(text);
+  const parsedDue = parseDueDate(dated, reference, zone, daily);
+  const due = parsedDue && daily && !days.length ? firstDailyDueAt(parsedDue, now) : parsedDue;
   const title = removeTaskClocks(text)
+    .replace(
+      /\b(?:todos? (?:os )?dias?|todo dia|diariamente|di[aá]ri[oa]|cada dia|todas? (?:as )?manh[ãa]s?)\b/giu,
+      " ",
+    )
     .replace(dayPattern, " ")
     .replace(/^(?:[\s,.:;!]+|(?:tamb[eé]m|de|para|pra|eu|uma|outra|primeira|segunda)\b\s*)+/gi, "")
     .replace(/(?:[, ]*(?:ok|t[aá]|por favor|por a[ií])[.!?]*)+$/i, "")
@@ -63,7 +70,13 @@ function task(text: string, reference: Date, now: Date, zone: string) {
     return { missing: "title" as const, question: "O que devo lembrar você de fazer?" };
   const lot = title.match(/\blote\s+([\p{L}\d_-]+)/iu)?.[1];
   return {
-    action: { kind: "task_create", title, dueAt: due, ...(lot ? { lot } : {}) } as GuardianAction,
+    action: {
+      kind: "task_create",
+      title,
+      dueAt: due,
+      ...(daily ? { recurrence: "daily" } : {}),
+      ...(lot ? { lot } : {}),
+    } as GuardianAction,
   };
 }
 
@@ -113,7 +126,15 @@ export async function handleTaskBatch(
   const newTaskWording = matches.some(
     (m) => !/^(?:me lembr[ae]|criar tarefa|crie uma tarefa|agende|agendar)$/i.test(m[0]),
   );
-  if (!additional && !combined && !spoken && !previous && !recovered && !newTaskWording)
+  if (
+    !additional &&
+    !combined &&
+    !spoken &&
+    !previous &&
+    !recovered &&
+    !newTaskWording &&
+    !(matches.length && hasDailyRecurrence(input.text))
+  )
     return null;
   if (
     /\b(?:n[aã]o me (?:lembr[ae]|avis[ae]r?|mand[ae])|vizinh[oa]|disse|falou|suponha|hipot[eé]tic|exemplo|simule|ser[aá] que|como (?:criar|agendar))\b|["“”]|(?:^|\n)\s*>/i.test(
@@ -424,7 +445,13 @@ export async function handleTaskBatch(
   const taskAlreadySaved = (a: GuardianAction) =>
     a.kind === "task_create" &&
     active.book.tasks.some(
-      (t) => t.status === "open" && t.dueAt === a.dueAt && fold(t.title) === fold(a.title),
+      (t) =>
+        t.status === "open" &&
+        t.recurrence === a.recurrence &&
+        (a.recurrence === "daily"
+          ? t.dueAt.slice(11) === a.dueAt.slice(11)
+          : t.dueAt === a.dueAt) &&
+        fold(t.title) === fold(a.title),
     );
   const duplicate = actions.every(
     (a) =>

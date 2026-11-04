@@ -1,3 +1,4 @@
+import { taskDisplayDueAt } from "@/lib/guardian/task-recurrence";
 import { SuppliesWorkspace } from "./SuppliesWorkspace";
 import { FuelWorkspace } from "./FuelWorkspace";
 import { FinanceLedger } from "./FinanceLedger";
@@ -176,6 +177,7 @@ export function GuardianWorkspace({
     [start, setStart] = useState(""),
     [end, setEnd] = useState(""),
     [lot, setLot] = useState("");
+  const tasks = book.tasks.map((t) => ({ ...t, dueAt: taskDisplayDueAt(t) }));
   const ledgerTotals = ledgerForTotals(book.ledger);
   const expense = ledgerTotals
       .filter((e) => e.direction === "expense")
@@ -231,7 +233,7 @@ export function GuardianWorkspace({
             />
             <PanelMetric
               label="Tarefas pendentes"
-              value={book.tasks.filter((t) => t.status === "open").length}
+              value={tasks.filter((t) => t.status === "open").length}
               icon={ClipboardList}
               tone="warning"
             />
@@ -240,7 +242,7 @@ export function GuardianWorkspace({
             <section className="rounded-2xl border border-border bg-card p-5">
               <h2 className="font-semibold">Próximas atividades</h2>
               <div className="mt-4 space-y-3">
-                {book.tasks
+                {tasks
                   .filter((t) => t.status === "open")
                   .sort((a, b) => a.dueAt.localeCompare(b.dueAt))
                   .slice(0, 5)
@@ -253,12 +255,13 @@ export function GuardianWorkspace({
                         <p className="text-sm font-medium">{t.title}</p>
                         <p className="mt-1 text-xs text-muted-foreground">
                           {when(t.dueAt)} · Brasília
+                          {t.recurrence === "daily" ? " · Todos os dias" : ""}
                         </p>
                       </div>
                       <Badge value="open" />
                     </div>
                   ))}
-                {!book.tasks.some((t) => t.status === "open") && (
+                {!tasks.some((t) => t.status === "open") && (
                   <Empty>Tudo em dia. Nenhuma tarefa pendente.</Empty>
                 )}
               </div>
@@ -367,13 +370,14 @@ export function GuardianWorkspace({
           <h2 className="text-lg font-semibold">Tarefas da propriedade</h2>
 
           <div className="mt-5 space-y-3">
-            {book.tasks.map((t) => (
+            {tasks.map((t) => (
               <article key={t.id} className="rounded-xl border border-border p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <h3 className="font-medium">{t.title}</h3>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {when(t.dueAt)} · Brasília{t.lot ? ` · Lote ${t.lot}` : ""}
+                      {when(t.dueAt)} · Brasília{t.recurrence === "daily" ? " · Todos os dias" : ""}
+                      {t.lot ? ` · Lote ${t.lot}` : ""}
                     </p>
                   </div>
                   <Badge value={t.status} />
@@ -384,11 +388,16 @@ export function GuardianWorkspace({
                       disabled={busy}
                       className="inline-flex items-center gap-1 font-medium text-emerald-700 disabled:opacity-50"
                       onClick={() =>
-                        void onPropose({ kind: "task_update", task: t.id, status: "done" })
+                        void onPropose({
+                          kind: "task_update",
+                          task: t.id,
+                          status: "done",
+                          ...(t.recurrence === "daily" ? { occurrenceAt: t.dueAt } : {}),
+                        })
                       }
                     >
                       <Check size={16} />
-                      Concluir
+                      {t.recurrence === "daily" ? "Concluir ocorrência" : "Concluir"}
                     </button>
                     <button
                       disabled={busy}
@@ -397,13 +406,13 @@ export function GuardianWorkspace({
                         void onPropose({ kind: "task_update", task: t.id, status: "cancelled" })
                       }
                     >
-                      Cancelar
+                      {t.recurrence === "daily" ? "Cancelar repetição" : "Cancelar"}
                     </button>
                   </div>
                 )}
               </article>
             ))}
-            {!book.tasks.length && <Empty>Você ainda não cadastrou tarefas nesta fazenda.</Empty>}
+            {!tasks.length && <Empty>Você ainda não cadastrou tarefas nesta fazenda.</Empty>}
           </div>
         </section>
       )}

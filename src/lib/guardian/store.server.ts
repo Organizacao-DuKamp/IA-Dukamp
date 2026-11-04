@@ -43,6 +43,7 @@ export interface TaskNotification {
   sentAt: string;
   providerId: string | null;
   answeredAt: string | null;
+  taskDueAt?: string;
   taskUpdatedAt?: string;
 }
 export interface GuardianStore {
@@ -124,6 +125,7 @@ export const guardianStore: GuardianStore = {
         sentAt: x.sent_at!,
         providerId: x.provider_message_id,
         answeredAt: x.answered_at,
+        taskDueAt: typeof x.evidence.dueAt === "string" ? x.evidence.dueAt : undefined,
         taskUpdatedAt: typeof x.evidence.updatedAt === "string" ? x.evidence.updatedAt : undefined,
       }));
   },

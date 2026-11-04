@@ -72,6 +72,7 @@ export const ActionSchema = z.discriminatedUnion("kind", [
   z
     .object({
       kind: z.literal("task_create"),
+      recurrence: z.literal("daily").optional(),
       title: label,
       dueAt: z.iso.datetime(),
       lot: label.optional(),
@@ -84,13 +85,18 @@ export const ActionSchema = z.discriminatedUnion("kind", [
   z
     .object({
       kind: z.literal("task_update"),
+      recurrence: z.literal("daily").optional(),
+      occurrenceAt: z.iso.datetime().optional(),
       task: label,
       status: z.enum(["done", "cancelled"]).optional(),
       dueAt: z.iso.datetime().optional(),
       title: label.optional(),
     })
     .strict()
-    .refine((a) => !!a.status || !!a.dueAt || !!a.title, "Informe a alteração."),
+    .refine(
+      (a) => !!a.status || !!a.dueAt || !!a.title || a.recurrence !== undefined,
+      "Informe a alteração.",
+    ),
   z
     .object({
       kind: z.literal("ledger"),
@@ -241,6 +247,8 @@ export interface GuardianAnimal {
   source: Provenance;
 }
 export interface GuardianTask {
+  recurrence?: "daily";
+  completedThrough?: string;
   id: string;
   title: string;
   dueAt: string;
@@ -624,6 +632,8 @@ export const FarmBookSchema = z
             id: label,
             title: label,
             dueAt: z.iso.datetime(),
+            recurrence: z.literal("daily").optional(),
+            completedThrough: z.iso.datetime().optional(),
             status: z.enum(["open", "done", "cancelled"]),
             lot: label.optional(),
             responsiblePhone: z
