@@ -167,8 +167,8 @@ export function ManagementWorkspace({ book, area, busy, canEdit, onPropose }: Pr
                   {...{ book, busy, canEdit }}
                   section={selected}
                   onPropose={async (action) => {
-                    await onPropose(action);
                     setSelected(null);
+                    await onPropose(action);
                   }}
                 />
               </div>
