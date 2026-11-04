@@ -1,3 +1,24 @@
+import {
+  ChevronRight,
+  ChevronDown,
+  MapPin,
+  Sprout,
+  FlaskConical,
+  Syringe,
+  Stethoscope,
+  Heart,
+  Baby,
+  ClipboardCheck,
+  Wallet,
+  Package,
+  Warehouse,
+  Wheat,
+  Tractor,
+  Wrench,
+  Receipt,
+  AlertTriangle,
+  Footprints,
+} from "lucide-react";
 import { useState } from "react";
 import type { FarmBook, GuardianAction } from "@/lib/guardian/schema";
 import {
@@ -59,29 +80,79 @@ export function ManagementWorkspace({ book, area, busy, canEdit, onPropose }: Pr
                 : "rotina da fazenda"}
       </h2>
       <p className="text-sm text-slate-600">
-        Abra uma função para consultar ou registrar. Você também pode pedir essas alterações à
+        Toque em um cartão para abrir os registros e fazer alterações. Você também pode pedir à
         TPEC-IA pelo WhatsApp.
       </p>
-      <div className="flex flex-wrap gap-2">
-        {sections.map((s) => (
-          <button
-            key={s}
-            aria-pressed={selected === s}
-            onClick={() => setSelected(selected === s ? null : s)}
-            className={`rounded-xl border px-3 py-2 text-left text-sm ${selected === s ? "border-emerald-800 bg-emerald-50 text-emerald-900" : "bg-white"}`}
-          >
-            {managementSections[s].label}{" "}
-            <span className="text-xs">({managementEntries(book, s).length})</span>
-          </button>
-        ))}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {sections.map((s) => {
+          const active = selected === s;
+          const count = managementEntries(book, s).length;
+          const Icon = {
+            pasture: MapPin,
+            pasture_management: Sprout,
+            soil_analysis: FlaskConical,
+            health: Syringe,
+            exam: Stethoscope,
+            insemination: Heart,
+            pregnancy: Heart,
+            calving: Baby,
+            fecal: ClipboardCheck,
+            payable: Wallet,
+            receivable: Wallet,
+            product: Package,
+            storage: Warehouse,
+            formula: Wheat,
+            feeding: Wheat,
+            vehicle: Tractor,
+            maintenance: Wrench,
+            vehicle_cost: Receipt,
+            occurrence: AlertTriangle,
+            round: Footprints,
+          }[s];
+          return (
+            <button
+              key={s}
+              type="button"
+              disabled={busy}
+              aria-expanded={active}
+              aria-controls={`farm-function-${area}`}
+              onClick={() => setSelected(active ? null : s)}
+              className={`group flex min-h-24 cursor-pointer items-center gap-3 rounded-2xl border-2 p-4 text-left shadow-sm transition duration-150 hover:-translate-y-0.5 hover:border-emerald-600 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-200 disabled:cursor-wait disabled:opacity-50 motion-reduce:transform-none ${active ? "border-emerald-700 bg-emerald-50 text-emerald-950" : "border-slate-200 bg-white text-slate-900 hover:bg-emerald-50/50"}`}
+            >
+              <span
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${active ? "bg-emerald-800 text-white" : "bg-emerald-100 text-emerald-800 group-hover:bg-emerald-200"}`}
+              >
+                <Icon size={23} aria-hidden="true" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <strong className="block text-sm leading-snug">
+                  {managementSections[s].label}
+                </strong>
+                <span className="mt-1 block text-xs text-slate-500">
+                  {count ? `${count} ${count === 1 ? "registro" : "registros"}` : "Nenhum registro"}
+                </span>
+              </span>
+              <span className="flex shrink-0 flex-col items-center gap-1 text-xs font-semibold text-emerald-800">
+                {active ? (
+                  <ChevronDown size={20} aria-hidden="true" />
+                ) : (
+                  <ChevronRight size={20} aria-hidden="true" />
+                )}
+                {active ? "Fechar" : "Abrir"}
+              </span>
+            </button>
+          );
+        })}
       </div>
-      {selected && (
-        <ManagementSectionView
-          key={selected}
-          {...{ book, busy, canEdit, onPropose }}
-          section={selected}
-        />
-      )}
+      <div id={`farm-function-${area}`}>
+        {selected && (
+          <ManagementSectionView
+            key={selected}
+            {...{ book, busy, canEdit, onPropose }}
+            section={selected}
+          />
+        )}
+      </div>
     </section>
   );
 }

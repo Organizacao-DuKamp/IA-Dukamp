@@ -152,11 +152,16 @@ export function FarmMobileHome({
               key={id}
               disabled={busy}
               onClick={() => navigate(id)}
-              className="flex flex-col items-start rounded-2xl border border-emerald-950/10 bg-white p-4 text-left"
+              className="group relative flex cursor-pointer flex-col items-start rounded-2xl border-2 border-emerald-950/15 bg-white p-4 text-left shadow-sm transition hover:border-emerald-600 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-200 active:bg-emerald-50"
             >
               <span className={`rounded-xl p-3 ${color}`}>
                 <Icon size={24} aria-hidden="true" />
               </span>
+              <ChevronRight
+                size={22}
+                aria-hidden="true"
+                className="absolute right-3 top-4 text-emerald-800"
+              />
               <strong className="mt-3 text-base">{label}</strong>
               <span className="mt-1 text-xs text-slate-500">{description}</span>
             </button>

@@ -447,7 +447,7 @@ export function FarmPanel() {
                     key={id}
                     onClick={() => navigate(id)}
                     aria-current={tab === id ? "page" : undefined}
-                    className={`inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium ${tab === id ? "bg-emerald-900 text-white" : "text-slate-600 hover:bg-slate-50"}`}
+                    className={`inline-flex min-h-12 shrink-0 cursor-pointer items-center gap-2 rounded-xl border-2 px-3 py-2.5 text-sm font-semibold shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-200 motion-reduce:transform-none ${tab === id ? "border-emerald-900 bg-emerald-900 text-white" : "border-slate-200 bg-white text-slate-700 hover:border-emerald-600 hover:bg-emerald-50"}`}
                   >
                     <Icon size={17} aria-hidden="true" />
                     {label}
