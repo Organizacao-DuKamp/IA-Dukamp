@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "484694862849",
+    "project_id": "tpec-ia-688a5",
+    "storage_bucket": "tpec-ia-688a5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:484694862849:android:89d73cd5b81c7a2ef62400",
+        "android_client_info": {
+          "package_name": "br.com.tpecia.fazenda"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA-dVNykTmQ-2YQoe64Ty6pRehKb881cG8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

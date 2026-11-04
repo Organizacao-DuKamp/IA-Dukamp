@@ -27,7 +27,7 @@ O Firebase Cloud Messaging (FCM) avisa o Android para buscar os agendamentos nov
 4. Baixe **`google-services.json`** e coloque-o em **`android/app/google-services.json`**, a partir da raiz do repositório.
 5. Faça **Sync Project with Gradle Files** no Android Studio e compile novamente. O plugin Google Services e a dependência Firebase Messaging já estão configurados; não adicione outra cópia.
 
-O arquivo de configuração deve pertencer ao mesmo projeto usado pelo servidor. Ele está ignorado pelo Git. Sem ele, o projeto ainda compila e os horários sincronizados manualmente continuam funcionando, mas o aparelho não recebe FCM.
+O arquivo de configuração deve pertencer ao mesmo projeto usado pelo servidor. A configuração de cliente do projeto `tpec-ia-688a5` está incluída no repositório. Ela contém identificadores públicos do aplicativo; a chave privada da conta de serviço permanece exclusiva do servidor. Sem o arquivo de cliente, o projeto ainda compila e os horários sincronizados manualmente continuam funcionando, mas o aparelho não recebe FCM.
 
 ### 2. Habilitar o servidor
 
