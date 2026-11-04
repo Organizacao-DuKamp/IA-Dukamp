@@ -1,3 +1,4 @@
+import { managementSections } from "./management.ts";
 import { speciesNames } from "./operations.ts";
 import type { FarmBook } from "./schema.ts";
 import { ledgerForTotals, ledgerPeriod } from "./finance.ts";
@@ -12,6 +13,17 @@ export function farmCsv(book: FarmBook): string {
   const rows: unknown[][] = [
     ["Seção", "Código", "Data", "Descrição", "Valor", "Unidade", "Lote", "Estado"],
   ];
+  for (const e of book.management?.entries ?? [])
+    rows.push([
+      managementSections[e.section].label,
+      e.id,
+      e.values.date ?? e.values.dueDate ?? "",
+      JSON.stringify(e.values),
+      e.values.amountCents ? (e.values.amountCents / 100).toFixed(2) : "",
+      e.values.unit ?? "",
+      e.values.lot ?? "",
+      e.removed ? "removido com histórico" : e.settlement ? "quitado" : "registrado",
+    ]);
   for (const m of book.supplies?.movements ?? [])
     rows.push([
       "Estoque de insumos",

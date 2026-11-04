@@ -1,3 +1,9 @@
+import {
+  ManagementActionSchema,
+  applyManagement,
+  describeManagement,
+  managementReport,
+} from "./management.ts";
 import { taskDisplayDueAt, isTaskOccurrence, taskOccurrenceOn } from "./task-recurrence.ts";
 import { SupplyActionSchema, applySupply, describeSupply } from "./supplies.ts";
 import { FuelActionSchema, applyFuel, describeFuel } from "./fuel.ts";
@@ -32,6 +38,8 @@ const num = (v: number) => v.toLocaleString("pt-BR", { maximumFractionDigits: 3 
 const money = (cents: number) =>
   (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 export function describeAction(a: GuardianAction): string {
+  const management = ManagementActionSchema.safeParse(a);
+  if (management.success) return describeManagement(management.data);
   const supply = SupplyActionSchema.safeParse(a);
   if (supply.success) return describeSupply(supply.data);
   const fuel = FuelActionSchema.safeParse(a);
@@ -102,6 +110,11 @@ export function applyFarmAction(
       );
     return animal;
   };
+  const management = ManagementActionSchema.safeParse(action);
+  if (management.success) {
+    applyManagement(book, management.data, source, id);
+    return { book, events, result: describeManagement(management.data) + " Salvo na fazenda." };
+  }
   const supply = SupplyActionSchema.safeParse(action);
   if (supply.success) {
     applySupply(book, supply.data, source, id);
@@ -409,6 +422,13 @@ export function farmReport(
       : "Dados confirmados desta propriedade.",
   ];
   const all = !input.section || input.section === "all";
+  const management = (book.management?.entries ?? []).filter(
+    (e) => !e.removed && (!e.values.date || inPeriod(e.values.date)) && inLot(e.values.lot),
+  );
+  if (management.length)
+    sections.push(
+      "Gestão da fazenda:\n" + managementReport({ ...book, management: { entries: management } }),
+    );
   if (all || input.section === "herd") {
     const today = localDateForTimeZone(new Date());
     const end = input.end

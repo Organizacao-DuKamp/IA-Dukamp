@@ -15,12 +15,18 @@ import { ledgerForTotals } from "@/lib/guardian/finance";
 
 type Area = "herd" | "tasks" | "finance" | "fuel" | "supplies" | "records";
 const areas = [
-  ["herd", "Rebanho", "Animais e lotes", Beef, "bg-emerald-100 text-emerald-800"],
+  ["herd", "Rebanho", "Animais, sanidade e pastagens", Beef, "bg-emerald-100 text-emerald-800"],
   ["tasks", "Tarefas", "Agenda e alarmes", ClipboardList, "bg-amber-100 text-amber-900"],
-  ["finance", "Finanças", "Entradas e despesas", Wallet, "bg-sky-100 text-sky-800"],
-  ["fuel", "Combustível", "Abastecimentos", Fuel, "bg-orange-100 text-orange-800"],
-  ["supplies", "Estoque", "Insumos da fazenda", Package, "bg-violet-100 text-violet-800"],
-  ["records", "Caderno", "Anotações do campo", NotebookPen, "bg-lime-100 text-lime-800"],
+  ["finance", "Finanças", "Entradas, despesas e contas", Wallet, "bg-sky-100 text-sky-800"],
+  ["fuel", "Combustível", "Veículos e abastecimentos", Fuel, "bg-orange-100 text-orange-800"],
+  ["supplies", "Estoque", "Insumos, locais e fórmulas", Package, "bg-violet-100 text-violet-800"],
+  [
+    "records",
+    "Caderno",
+    "Anotações, rondas e ocorrências",
+    NotebookPen,
+    "bg-lime-100 text-lime-800",
+  ],
 ] as const;
 export function FarmMobileHome({
   book,
