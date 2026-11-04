@@ -250,6 +250,7 @@ export const managementSections = {
       "notes",
     ],
     required: ["name", "date", "status"],
+    event: true,
   },
   round: {
     label: "Rondas da fazenda",
@@ -542,7 +543,10 @@ export function applyManagement(
   for (const field of def.required)
     if (values[field] === undefined || values[field] === "")
       throw Error(`Falta informar ${managementFieldLabels[field]} para ${def.label}.`);
-  if (def.event && values.date! > today)
+  if (
+    (def.event || (action.section === "maintenance" && values.status === "done")) &&
+    values.date! > today
+  )
     throw Error(
       "Evento realizado não pode ter data futura. Agende uma tarefa para o planejamento.",
     );

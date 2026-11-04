@@ -520,3 +520,40 @@ test("optional fields can be cleared, required fields and invalid statuses canno
     /Situação inválida/,
   );
 });
+
+test("realized occurrences and completed maintenance reject future dates while planned service remains schedulable", () => {
+  const b = apply(empty(), {
+    kind: "management_save",
+    section: "vehicle",
+    values: examples.vehicle,
+  });
+  assert.throws(
+    () =>
+      apply(b, {
+        kind: "management_save",
+        section: "occurrence",
+        values: { name: "Ocorrência futura", date: "2026-11-05", status: "open" },
+      }),
+    /data futura/,
+  );
+  assert.throws(
+    () =>
+      apply(b, {
+        kind: "management_save",
+        section: "maintenance",
+        values: { ...examples.maintenance, date: "2026-11-05", status: "done" },
+      }),
+    /data futura/,
+  );
+  assert.equal(
+    managementEntries(
+      apply(b, {
+        kind: "management_save",
+        section: "maintenance",
+        values: { ...examples.maintenance, date: "2026-11-05", status: "open" },
+      }),
+      "maintenance",
+    ).length,
+    1,
+  );
+});
