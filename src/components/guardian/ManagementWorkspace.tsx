@@ -20,6 +20,13 @@ import {
   Footprints,
 } from "lucide-react";
 import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type { FarmBook, GuardianAction } from "@/lib/guardian/schema";
 import {
   ManagementValuesSchema,
@@ -115,7 +122,7 @@ export function ManagementWorkspace({ book, area, busy, canEdit, onPropose }: Pr
               type="button"
               disabled={busy}
               aria-expanded={active}
-              aria-controls={`farm-function-${area}`}
+              aria-haspopup="dialog"
               onClick={() => setSelected(active ? null : s)}
               className={`group flex min-h-24 cursor-pointer items-center gap-3 rounded-2xl border-2 p-4 text-left shadow-sm transition duration-150 hover:-translate-y-0.5 hover:border-emerald-600 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-200 disabled:cursor-wait disabled:opacity-50 motion-reduce:transform-none ${active ? "border-emerald-700 bg-emerald-50 text-emerald-950" : "border-slate-200 bg-white text-slate-900 hover:bg-emerald-50/50"}`}
             >
@@ -144,15 +151,31 @@ export function ManagementWorkspace({ book, area, busy, canEdit, onPropose }: Pr
           );
         })}
       </div>
-      <div id={`farm-function-${area}`}>
-        {selected && (
-          <ManagementSectionView
-            key={selected}
-            {...{ book, busy, canEdit, onPropose }}
-            section={selected}
-          />
-        )}
-      </div>
+      <Dialog open={selected !== null} onOpenChange={(open) => !open && setSelected(null)}>
+        <DialogContent className="flex h-[min(92dvh,920px)] w-[calc(100vw-1rem)] max-w-5xl flex-col gap-0 overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-2xl sm:h-[min(88dvh,920px)]">
+          {selected && (
+            <>
+              <DialogHeader className="shrink-0 space-y-1 border-b border-slate-200 px-5 py-4 pr-14 text-left sm:px-6">
+                <DialogTitle className="text-xl">{managementSections[selected].label}</DialogTitle>
+                <DialogDescription>
+                  Consulte, adicione, edite e remova registros sem sair desta tela.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6">
+                <ManagementSectionView
+                  key={selected}
+                  {...{ book, busy, canEdit }}
+                  section={selected}
+                  onPropose={async (action) => {
+                    setSelected(null);
+                    await onPropose(action);
+                  }}
+                />
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
@@ -201,7 +224,7 @@ function ManagementSectionView({
     );
   }
   return (
-    <div className="space-y-4 border-t pt-4">
+    <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h3 className="font-semibold">{def.label}</h3>
         {canEdit && (

@@ -24,6 +24,13 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { FarmMobileHome } from "@/components/guardian/FarmMobileHome";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { AndroidReminders } from "@/components/guardian/AndroidReminders";
 import { androidCommand } from "@/lib/guardian/android-bridge";
 import "./mobile-panel.css";
@@ -108,8 +115,7 @@ export function FarmPanel() {
     } | null>(null);
   const generation = useRef(0),
     inFlight = useRef(false),
-    moreDialog = useRef<HTMLDialogElement>(null),
-    review = useRef<HTMLDivElement>(null);
+    moreDialog = useRef<HTMLDialogElement>(null);
   const hasView = !!view,
     propertyId = view?.propertyId,
     propertyVersion = view?.version;
@@ -152,9 +158,7 @@ export function FarmPanel() {
   useEffect(() => {
     if (propertyId) androidCommand({ type: "sync" });
   }, [propertyId, propertyVersion]);
-  useEffect(() => {
-    if (proposal || form) review.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [proposal, form]);
+
   function navigate(next: Tab) {
     if (inFlight.current) return;
     if (proposal && !window.confirm("Descartar a alteração que ainda não foi salva?")) return;
@@ -468,58 +472,7 @@ export function FarmPanel() {
                 <h2 className="text-xl font-semibold">{tabs.find(([id]) => id === tab)?.[1]}</h2>
               </div>
             )}
-            <div className="space-y-6" ref={review}>
-              {proposal && (
-                <section
-                  aria-label="Revisar alteração"
-                  className="rounded-2xl border-2 border-amber-600/40 bg-amber-50 p-5"
-                >
-                  <h2 className="font-semibold">Confira antes de salvar</h2>
-                  <p className="mt-3 whitespace-pre-wrap text-sm">
-                    {reviewAction && describeAction(reviewAction)}
-                  </p>
-                  <p className="mt-2 text-sm">Fazenda: {view.name}.</p>
-                  <div className="mt-4 flex gap-3">
-                    <button
-                      disabled={busy}
-                      onClick={() => void save()}
-                      className="flex items-center gap-2 rounded-lg bg-emerald-900 px-4 py-3 text-sm font-semibold text-white"
-                    >
-                      <Check size={17} />
-                      {busy ? "Salvando…" : "Confirmar e salvar"}
-                    </button>
-                    <button
-                      disabled={busy}
-                      onClick={() => setProposal(null)}
-                      className="rounded-lg border bg-white px-4 py-3 text-sm"
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-                </section>
-              )}
-              {form && !["fuel", "supplies"].includes(tab) && (
-                <GuardianActionForm
-                  key={`${view.propertyId}:${tab}`}
-                  initialKind={
-                    tab === "finance"
-                      ? "expense"
-                      : tab === "herd"
-                        ? "herd_event"
-                        : tab === "records"
-                          ? "record"
-                          : "task_create"
-                  }
-                  hasProperty
-                  busy={busy}
-                  allowedKinds={allowed}
-                  onPropose={async (action) => {
-                    setProposal({ action, requestId: crypto.randomUUID(), version: view.version });
-                    setError("");
-                    setNotice("");
-                  }}
-                />
-              )}
+            <div className="space-y-6">
               {tab === "overview" && (
                 <FarmMobileHome
                   book={view.book}
@@ -558,6 +511,93 @@ export function FarmPanel() {
                 />
               </div>
             </div>
+            <Dialog
+              open={form && !["fuel", "supplies"].includes(tab)}
+              onOpenChange={(open) => {
+                if (!open && !busy) setForm(false);
+              }}
+            >
+              <DialogContent className="flex max-h-[92dvh] w-[calc(100vw-1rem)] max-w-3xl flex-col gap-0 overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-2xl">
+                <DialogHeader className="shrink-0 space-y-1 border-b border-slate-200 px-5 py-4 pr-14 text-left sm:px-6">
+                  <DialogTitle className="text-xl">Novo registro</DialogTitle>
+                  <DialogDescription>
+                    Preencha os dados e revise a alteração antes de salvar.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-6">
+                  {form && view && (
+                    <GuardianActionForm
+                      key={`${view.propertyId}:${tab}`}
+                      initialKind={
+                        tab === "finance"
+                          ? "expense"
+                          : tab === "herd"
+                            ? "herd_event"
+                            : tab === "records"
+                              ? "record"
+                              : "task_create"
+                      }
+                      hasProperty
+                      busy={busy}
+                      allowedKinds={allowed}
+                      onPropose={async (action) => {
+                        setForm(false);
+                        setProposal({
+                          action,
+                          requestId: crypto.randomUUID(),
+                          version: view.version,
+                        });
+                        setError("");
+                        setNotice("");
+                      }}
+                    />
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
+            <Dialog
+              open={!!proposal}
+              onOpenChange={(open) => {
+                if (!open && !busy) setProposal(null);
+              }}
+            >
+              <DialogContent className="max-h-[90dvh] w-[calc(100vw-1rem)] max-w-xl overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl sm:p-6">
+                <DialogHeader className="pr-6 text-left">
+                  <DialogTitle className="text-xl">Confira antes de salvar</DialogTitle>
+                  <DialogDescription>
+                    Confirme os dados antes de registrar a alteração na fazenda.
+                  </DialogDescription>
+                </DialogHeader>
+                {reviewAction && (
+                  <p className="whitespace-pre-wrap rounded-xl bg-amber-50 p-4 text-sm text-slate-800">
+                    {describeAction(reviewAction)}
+                  </p>
+                )}
+                <p className="text-sm text-slate-600">Fazenda: {view.name}.</p>
+                {error && (
+                  <p role="alert" className="text-sm text-rose-700">
+                    {error}
+                  </p>
+                )}
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    disabled={busy}
+                    onClick={() => void save()}
+                    className="flex items-center gap-2 rounded-xl bg-emerald-900 px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
+                  >
+                    <Check size={17} aria-hidden="true" />
+                    {busy ? "Salvando…" : "Confirmar e salvar"}
+                  </button>
+                  <button
+                    disabled={busy}
+                    onClick={() => setProposal(null)}
+                    className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </DialogContent>
+            </Dialog>
             <details className="mt-8 text-xs text-slate-500">
               <summary className="w-fit cursor-pointer">Acesso e informações dos dados</summary>
               <p className="mt-3 max-w-2xl leading-relaxed">
