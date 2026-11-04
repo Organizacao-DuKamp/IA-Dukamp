@@ -97,6 +97,79 @@ try {
   await page.getByRole("heading", { name: "Propriedade sem nome — Tanabi", exact: true }).waitFor();
   await page.getByRole("button", { name: "Financeiro", exact: true }).click();
   await page.getByText("Ração registrada pelo painel", { exact: true }).waitFor();
+  // New functions use the real panel HTTP boundary and the same PostgreSQL book.
+  const managementDay = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(
+    new Date(),
+  );
+  const newFunctions = [
+    [
+      "Rebanho e lotes",
+      "Medicações e vacinas aplicadas",
+      {
+        "Nome ou descrição *": "Vacinação QA",
+        "Data *": managementDay,
+        "Medicamento ou vacina *": "Produto informado",
+      },
+      "health",
+    ],
+    [
+      "Financeiro",
+      "Contas a pagar",
+      {
+        "Nome ou descrição *": "Conta QA",
+        "Valor (R$) *": "123.45",
+        "Vencimento *": managementDay,
+      },
+      "payable",
+    ],
+    [
+      "Combustível",
+      "Veículos e máquinas",
+      { "Nome ou descrição *": "Trator QA", "Tipo de veículo *": "Trator" },
+      "vehicle",
+    ],
+    [
+      "Estoque e insumos",
+      "Produtos e matérias-primas",
+      { "Nome ou descrição *": "Milho QA", "Unidade *": "kg" },
+      "product",
+    ],
+    [
+      "Caderno de campo",
+      "Rondas da fazenda",
+      { "Nome ou descrição *": "Ronda QA", "Data *": managementDay },
+      "round",
+    ],
+  ];
+  for (const [area, label, fields, section] of newFunctions) {
+    await page.getByRole("button", { name: area, exact: true }).click();
+    const workspace = page.getByRole("region", { name: "Funções da fazenda" });
+    await workspace.getByRole("button", { name: new RegExp("^" + label) }).click();
+    await workspace.getByRole("button", { name: "Adicionar registro", exact: true }).click();
+    for (const [field, value] of Object.entries(fields)) {
+      const input = workspace.getByLabel(field, { exact: true });
+      if (field === "Unidade *") await input.selectOption(value);
+      else await input.fill(value);
+    }
+    await workspace.getByRole("button", { name: "Revisar registro", exact: true }).click();
+    const previous = (await f.guardian.load(phone)).active.book.management?.entries.length ?? 0;
+    await page.getByRole("button", { name: "Confirmar e salvar", exact: true }).click();
+    await page.getByRole("status").filter({ hasText: "Salvo na fazenda" }).waitFor();
+    const persisted = (await f.guardian.load(phone)).active.book.management.entries;
+    assert.equal(persisted.length, previous + 1);
+    assert.equal(persisted.at(-1).section, section);
+    await workspace.getByRole("button", { name: "Editar", exact: true }).last().click();
+    await workspace.getByLabel("Observações", { exact: true }).fill("Revisado no navegador");
+    await workspace.getByRole("button", { name: "Revisar registro", exact: true }).click();
+    await page.getByRole("button", { name: "Confirmar e salvar", exact: true }).click();
+    await page.getByRole("status").filter({ hasText: "Salvo na fazenda" }).waitFor();
+    assert.equal(
+      (await f.guardian.load(phone)).active.book.management.entries.at(-1).revisions.length,
+      1,
+    );
+    console.log("PASS management UI:", section);
+  }
+  await page.getByRole("button", { name: "Financeiro", exact: true }).click();
   // Natural WhatsApp reports must reach the same database and visible sections.
   const reportAt = new Date();
   const financial = await handleGuardianMessage(

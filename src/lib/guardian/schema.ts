@@ -1,4 +1,9 @@
-import { SupplyActionSchema, SupplyBookSchema, type SupplyBook } from "./supplies.ts";
+import {
+  ManagementActionSchemas,
+  ManagementBookSchema,
+  type ManagementBook,
+} from "./management.ts";
+import { SupplyActionSchemas, SupplyBookSchema, type SupplyBook } from "./supplies.ts";
 import { FuelActionSchemas, FuelBookSchema, FuelVoidSchema, type FuelBook } from "./fuel.ts";
 import { z } from "zod";
 import { OperationsActionSchemas, OperationsSchema, type Operations } from "./operations.ts";
@@ -43,9 +48,10 @@ export const PreferencesSchema = z
   .refine((v) => v.startHour < v.endHour, "O horário inicial deve vir antes do final.");
 export type GuardianPreferences = z.infer<typeof PreferencesSchema>;
 export const ActionSchema = z.discriminatedUnion("kind", [
+  ...ManagementActionSchemas,
   ...OperationsActionSchemas,
   ...FuelActionSchemas,
-  SupplyActionSchema,
+  ...SupplyActionSchemas,
   z
     .object({
       kind: z.literal("property_create"),
@@ -201,9 +207,11 @@ export type GuardianAction = z.infer<typeof ActionSchema>;
 /** Keep SQL authorization in the existing operation family. Corrections carry
  * their exact action and prior values in the book/audit, not a new access right. */
 export function farmActionFamily(action: GuardianAction): string {
+  if (action.kind.startsWith("management_")) return "ledger";
   if (action.kind === "herd_inventory") return "herd_count";
   if (action.kind === "herd_relocate") return "lot_transfer";
   if (action.kind === "supply_movement") return "record";
+  if (action.kind.startsWith("supply_")) return "ledger";
   if (action.kind.startsWith("fuel_")) return "ledger";
   return action.kind === "edit_record"
     ? action.section === "ledger"
@@ -302,6 +310,7 @@ export interface FarmBook {
   name: string | null;
   city: string | null;
   uf: string | null;
+  management?: ManagementBook;
   operations?: Operations;
   fuel?: FuelBook;
   supplies?: SupplyBook;
@@ -578,6 +587,7 @@ export const FarmBookSchema = z
       .string()
       .regex(/^[A-Z]{2}$/)
       .nullable(),
+    management: ManagementBookSchema.optional(),
     operations: OperationsSchema.optional(),
     fuel: FuelBookSchema.optional(),
     supplies: SupplyBookSchema.optional(),

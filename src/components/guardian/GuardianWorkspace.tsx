@@ -1,3 +1,4 @@
+import { ManagementWorkspace } from "./ManagementWorkspace";
 import { taskDisplayDueAt } from "@/lib/guardian/task-recurrence";
 import { SuppliesWorkspace } from "./SuppliesWorkspace";
 import { FuelWorkspace } from "./FuelWorkspace";
@@ -186,27 +187,44 @@ export function GuardianWorkspace({
       .filter((e) => e.direction === "income")
       .reduce((s, e) => s + e.amountCents, 0);
   const ownRole = detail.members.find((m) => m.phone_number === ownPhone && m.active)?.role;
+  const management = (
+    <ManagementWorkspace
+      key={tab}
+      book={book}
+      area={tab}
+      busy={busy}
+      onPropose={onPropose}
+      canEdit={canManageFuel ?? (!!ownRole && ["owner", "manager"].includes(ownRole))}
+    />
+  );
   if (tab === "supplies")
     return (
-      <SuppliesWorkspace
-        book={book}
-        busy={busy}
-        onPropose={onPropose}
-        canEdit={canManageFuel ?? (!!ownRole && ["owner", "manager"].includes(ownRole))}
-      />
+      <div className="space-y-5">
+        {management}
+        <SuppliesWorkspace
+          book={book}
+          busy={busy}
+          onPropose={onPropose}
+          canEdit={canManageFuel ?? (!!ownRole && ["owner", "manager"].includes(ownRole))}
+        />
+      </div>
     );
   if (tab === "fuel")
     return (
-      <FuelWorkspace
-        book={book}
-        busy={busy}
-        onPropose={onPropose}
-        canEdit={canManageFuel ?? (!!ownRole && ["owner", "manager"].includes(ownRole))}
-      />
+      <div className="space-y-5">
+        {management}
+        <FuelWorkspace
+          book={book}
+          busy={busy}
+          onPropose={onPropose}
+          canEdit={canManageFuel ?? (!!ownRole && ["owner", "manager"].includes(ownRole))}
+        />
+      </div>
     );
   if (tab === "calculator") return <GuardianCalculator />;
   return (
     <div className="space-y-5">
+      {management}
       {(tab === "overview" || tab === "herd") && (
         <FarmOperations book={book} compact={tab === "overview"} />
       )}

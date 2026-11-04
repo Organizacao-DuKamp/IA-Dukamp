@@ -1,3 +1,9 @@
+import {
+  MANAGEMENT_DIRECTIVE,
+  ManagementSectionSchema,
+  managementReport,
+  managementEntries,
+} from "./management.ts";
 import { taskDisplayDueAt } from "./task-recurrence.ts";
 import { prepareFarmBatch, operationalId } from "./execution.ts";
 import { supplyBalances } from "./supplies.ts";
@@ -56,7 +62,9 @@ export const SemanticPlanSchema = z
     question: z.string().max(1000),
     inspection: z
       .object({
-        kind: z.literal("herd_locations"),
+        kind: z.enum(["herd_locations", "management"]),
+        section: ManagementSectionSchema.optional(),
+        reference: z.string().trim().min(1).max(160).optional(),
         lot: z.string().trim().min(1).max(160).optional(),
       })
       .strict()
@@ -202,6 +210,8 @@ export async function interpretFarmConversation(context: SemanticContext): Promi
     directive:
       SEMANTIC_DIRECTIVE +
       "\n" +
+      MANAGEMENT_DIRECTIVE +
+      "\n" +
       GROUPED_LOT_DIRECTIVE +
       "\nEstado atual: summary.herdLocations é a localização atual calculada pelo servidor sobre o livro completo. O lote de uma compra/nascimento em operations.movements é o lote HISTÓRICO da chegada, não a localização atual. lotPlacements e lotTransfers já podem ter movido esse grupo. Uma ordem de mover inclui grupos sem identificação e sem lote; ausência de brinco/RGN não bloqueia lot_transfer com movimento real nem herd_relocate. Quantidade total desconhecida de uma espécie não impede registrar sua localização. Se um pedido já foi cumprido (ex.: o produtor vê as linhas antigas sem lote e pede colocar esses animais no destino onde já estão), use intent inspect, inspection {kind:'herd_locations',lot:destino}, entries vazio: o servidor confere e responde com os registros reais. Use inspect também para consultar onde estão os grupos/animais ou conferir o resultado; nunca responda none a um pedido operacional só porque acha que já foi feito. Se ainda há grupos sem lote, execute a movimentação dos grupos/fichas reais, sem duplicar a chegada nem repetir movimentos de quem já está no destino. Se não consegue identificar um subconjunto, esclareça apenas a dúvida concreta; não prometa sem executar. Pedido de código do painel é intent panel com a propertyId resolvida e entries vazio, inclusive com vocativo mal transcrito; não transforme esse pedido em select nem apenas confirme o nome da fazenda. Só emita panel quando há pedido de acesso, não em explicação, hipótese ou relato de terceiro.\n" +
       "\nGestão de lotes e áreas: lot_update cria um lote vazio de metadados ou edita sua areaHa e pasture; área de um lote/piquete usa lot_update, área TOTAL da propriedade usa property_update. Não exija contagem de animais para criar/editar pastagem ou hectares. Um lote criado sem informação de animais não tem contagem presumida. Para uma ordem explícita de mover TODOS os animais da fazenda (ou todos os bovinos/suínos de uma espécie) ao mesmo lote, use herd_relocate com to e a data atual; omita species para todos os animais, informe species somente quando o produtor restringir a espécie. Não envie count: o servidor lê o livro inteiro, atualiza as fichas ativas e a localização dos grupos sem alterar compras, nascimentos ou totais. Quantidades desconhecidas permanecem desconhecidas. Não substitua mover TODOS por mover só o último grupo de 50 ou por uma nova contagem; a ordem atual explícita prevalece sobre um rascunho anterior de subconjunto. herd_relocate não serve para 'esses 50', 'um dos animais', 'alguns', uma pergunta hipotética ou somente animais de um lote; esses casos usam as referências individuais/coletivas reais ou esclarecimento. Nem a solicitação de código do painel nem uma pergunta sobre como criar lotes autoriza herd_relocate.\n" +
@@ -320,6 +330,20 @@ export function semanticContext(
               ...active,
               book: {
                 ...book,
+                management: book.management
+                  ? {
+                      entries: [
+                        ...new Map(
+                          [
+                            ...managementEntries(book).filter((e) =>
+                              current.toLowerCase().includes((e.values.name ?? "").toLowerCase()),
+                            ),
+                            ...managementEntries(book).slice(-50),
+                          ].map((e) => [e.id, { ...e, revisions: [] }]),
+                        ).values(),
+                      ].slice(0, 100),
+                    }
+                  : undefined,
                 animals: book.animals.slice(-50),
                 tasks: book.tasks
                   .filter((t) => t.status === "open")
@@ -664,6 +688,13 @@ export async function handleSemanticTurn(
   }
   // target equals the active property; no model-generated or inaccessible IDs reach writes.
   if (!active) throw Error("guardian_scope_unavailable");
+  if (plan.intent === "inspect" && plan.inspection?.kind === "management") {
+    if (plan.entries.length) return preserveFailure("Uma consulta não pode alterar registros.");
+    base.operation = "noop";
+    base.reply = managementReport(active.book, plan.inspection.section, plan.inspection.reference);
+    base.details = { kind: "management_inspection", section: plan.inspection.section };
+    return finish();
+  }
   if (plan.intent === "inspect") {
     if (plan.entries.length || plan.inspection?.kind !== "herd_locations")
       return preserveFailure(
