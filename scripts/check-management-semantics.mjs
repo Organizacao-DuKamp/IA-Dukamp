@@ -153,9 +153,11 @@ if (!process.env.OPENAI_API_KEY)
   throw Error("Model evaluation requires the configured server-side key.");
 const failures = [];
 for (const [name, text, verify] of cases) {
+  if (process.argv[2] && process.argv[2] !== name) continue;
+  let plan;
   try {
-    const context = semanticContext({ phone, messageId: name, text }, snapshot, now),
-      plan = await interpretFarmConversation(context);
+    const context = semanticContext({ phone, messageId: name, text }, snapshot, now);
+    plan = await interpretFarmConversation(context);
     for (const e of plan.entries)
       for (const v of e.evidence) assert.ok(groundSemanticEvidence(context, v));
     verify(plan);
@@ -171,6 +173,7 @@ for (const [name, text, verify] of cases) {
     console.log(`Management semantic evaluation: ${name} passed`);
   } catch (e) {
     failures.push(name);
+    console.error("Synthetic plan:", JSON.stringify(plan));
     console.error(
       `Management semantic evaluation: ${name} failed: ${String(e.message).slice(0, 600)}`,
     );
