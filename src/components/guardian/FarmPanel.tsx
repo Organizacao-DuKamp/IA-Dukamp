@@ -561,7 +561,7 @@ export function FarmPanel() {
                 if (!open && !busy) setProposal(null);
               }}
             >
-              <DialogContent className="w-[calc(100vw-1rem)] max-w-xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl sm:p-6">
+              <DialogContent className="max-h-[90dvh] w-[calc(100vw-1rem)] max-w-xl overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl sm:p-6">
                 <DialogHeader className="pr-6 text-left">
                   <DialogTitle className="text-xl">Confira antes de salvar</DialogTitle>
                   <DialogDescription>
