@@ -870,3 +870,76 @@
     transform-origin: right center !important;
   }
 }
+
+
+/* Farm management: scoped to the section that replaces the generic benefits. */
+.tpec-landing .poster.poster-farm-management {
+  min-height: 0;
+  padding: 66px clamp(22px, 4vw, 68px) 64px;
+  scroll-margin-top: 90px;
+}
+.tpec-landing .poster-farm-management .benefits-head {
+  position: relative;
+  z-index: 2;
+  max-width: 1000px;
+  padding-inline: 100px;
+}
+.tpec-landing .poster-farm-management .benefits-head h2 { margin-bottom: 16px; }
+.tpec-landing .farm-management-intro {
+  max-width: 700px;
+  margin: 0 auto 32px;
+  color: #46564b;
+  font-size: 17px;
+  line-height: 1.7;
+  text-wrap: pretty;
+}
+.tpec-landing .farm-management-example {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr 44px 1fr;
+  gap: 28px;
+  align-items: center;
+  max-width: 1080px;
+  margin: 0 auto 28px;
+  padding: 30px 34px;
+  background: #123e2c;
+  border: 1px solid #315840;
+  border-radius: 22px;
+  color: #fffdf7;
+}
+.tpec-landing .farm-management-label { font-size: 11px; font-weight: 600; letter-spacing: .1em; color: #e6ce99; }
+.tpec-landing .farm-management-message blockquote { margin: 14px 0 10px; font-size: clamp(19px, 1.8vw, 25px); line-height: 1.5; font-weight: 500; }
+.tpec-landing .farm-management-example-caption { font-size: 12px; color: #bacdbd; }
+.tpec-landing .farm-management-arrow { display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid #55715d; border-radius: 50%; color: #e6ce99; }
+.tpec-landing .farm-management-arrow svg { width: 22px; height: 22px; }
+.tpec-landing .farm-management-result p { display: flex; align-items: center; gap: 10px; margin: 17px 0; font-size: 18px; line-height: 1.5; }
+.tpec-landing .farm-management-result p svg { width: 20px; height: 20px; flex: 0 0 auto; color: #afd9ad; }
+.tpec-landing .farm-management-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.tpec-landing .farm-management-tags span { border: 1px solid #52715a; border-radius: 7px; padding: 6px 12px; font-size: 13px; color: #edf4e9; background: #214d36; }
+.tpec-landing .farm-management-grid { position: relative; z-index: 2; display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 18px; max-width: 1080px; margin: 0 auto; }
+.tpec-landing .farm-management-grid article { border: 1px solid #dbd6c7; border-radius: 16px; background: rgba(255,253,247,.9); padding: 25px 22px; text-align: left; }
+.tpec-landing .farm-management-icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 12px; background: #e9eedf; color: var(--forest); margin-bottom: 18px; }
+.tpec-landing .farm-management-icon svg { width: 24px; height: 24px; }
+.tpec-landing .farm-management-grid h3 { margin: 0 0 10px; color: var(--forest); font-size: 17px; line-height: 1.4; }
+.tpec-landing .farm-management-grid p { margin: 0; color: #526054; font-size: 14px; line-height: 1.7; }
+.tpec-landing .farm-management-actions { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 14px; margin-top: 30px; text-align: center; }
+.tpec-landing .farm-management-actions p { margin: 0; font-size: 14px; line-height: 1.6; color: #526054; }
+.tpec-landing .farm-management-actions p a { color: var(--forest); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.tpec-landing .farm-management-actions p svg { display: inline; width: 16px; height: 16px; vertical-align: middle; }
+.tpec-landing .farm-management-actions a:focus-visible { outline: 3px solid var(--forest); outline-offset: 5px; }
+@media (max-width: 1080px) {
+  .tpec-landing .poster-farm-management .benefits-head { padding-inline: 0; max-width: 800px; }
+  .tpec-landing .farm-management-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .tpec-landing .farm-management-example { gap: 20px; padding: 26px; }
+}
+@media (max-width: 680px) {
+  .tpec-landing .poster.poster-farm-management { padding: 38px 18px 40px; }
+  .tpec-landing .farm-management-intro { font-size: 16px; line-height: 1.6; margin-bottom: 24px; }
+  .tpec-landing .farm-management-example { grid-template-columns: 1fr; gap: 20px; padding: 24px; }
+  .tpec-landing .farm-management-arrow { width: 34px; height: 34px; transform: rotate(90deg); }
+  .tpec-landing .farm-management-grid { grid-template-columns: 1fr; gap: 12px; }
+  .tpec-landing .farm-management-grid article { padding: 20px; }
+  .tpec-landing .farm-management-grid p { font-size: 16px; }
+  .tpec-landing .farm-management-actions .reference-button { width: 100%; justify-content: center; font-size: 12px; padding-inline: 14px; }
+}

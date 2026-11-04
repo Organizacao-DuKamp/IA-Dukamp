@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Boxes, CalendarClock, Fence, Wallet } from "lucide-react";
 import "../landing.css";
 
 const whatsappUrl =
@@ -33,6 +34,29 @@ const benefits = [
     icon: "chart",
     title: "Tecnologia no campo",
     text: "Inteligência artificial aplicada à rotina da fazenda, sem complicação.",
+  },
+];
+
+const farmManagement = [
+  {
+    icon: Fence,
+    title: "Rebanho e lotes",
+    text: "Registre compras, nascimentos, vendas e movimentações dos animais pela conversa.",
+  },
+  {
+    icon: Wallet,
+    title: "Finanças da fazenda",
+    text: "Conte o que entrou e o que gastou. Acompanhe receitas e despesas no painel.",
+  },
+  {
+    icon: Boxes,
+    title: "Estoque e combustível",
+    text: "Organize insumos, entradas, saídas e abastecimentos da sua propriedade.",
+  },
+  {
+    icon: CalendarClock,
+    title: "Tarefas e lembretes",
+    text: "Agende atividades e lembretes diários para acompanhar a rotina do campo.",
   },
 ];
 
@@ -332,7 +356,7 @@ function LandingPage() {
           <a href="#whatsapp">WhatsApp</a>
           <a href="#analise">Análise por foto</a>
           <a href="#como-funciona">Como funciona</a>
-          <a href="#beneficios">Benefícios</a>
+          <a href="#beneficios">Gestão da fazenda</a>
           <a href="#areas">Áreas</a>
         </nav>
         <a className="header-cta" href={whatsappUrl} target="_blank" rel="noreferrer">
@@ -689,31 +713,72 @@ function LandingPage() {
         <div className="poster-swoosh" aria-hidden="true" />
       </section>
 
-      <section className="poster poster-benefits" id="beneficios">
+      <section
+        className="poster poster-benefits poster-farm-management"
+        id="beneficios"
+        aria-labelledby="farm-management-title"
+      >
         <div className="benefits-landscape" aria-hidden="true">
           <img src={cattleWide} alt="" />
         </div>
         <BrandSeal />
         <div className="benefits-head">
-          <span className="gold-title">BENEFÍCIOS</span>
+          <span className="gold-title">GESTÃO DA FAZENDA</span>
           <span className="gold-divider wide" aria-hidden="true">
             <i />
           </span>
-          <h2>Tecnologia simples para o dia a dia da pecuária.</h2>
+          <h2 id="farm-management-title">Você fala. A TPEC-IA organiza.</h2>
+          <p className="farm-management-intro">
+            Envie áudios ou mensagens pelo WhatsApp. A TPEC-IA registra o que acontece na sua
+            fazenda e atualiza seu painel para você acompanhar tudo em um só lugar.
+          </p>
         </div>
-        <div className="reference-benefits-grid">
-          {benefits.map((item) => (
-            <article key={item.title}>
-              <span className="benefit-round-icon">
-                <FeatureIcon name={item.icon} />
+        <div
+          className="farm-management-example"
+          aria-label="Exemplo ilustrativo de gestão pela conversa"
+        >
+          <div className="farm-management-message">
+            <span className="farm-management-label">VOCÊ CONTA NO WHATSAPP</span>
+            <blockquote>“Comprei 4 bezerros hoje. Coloque no lote 2.”</blockquote>
+            <span className="farm-management-example-caption">Exemplo de uso</span>
+          </div>
+          <span className="farm-management-arrow" aria-hidden="true">
+            <ArrowIcon />
+          </span>
+          <div className="farm-management-result">
+            <span className="farm-management-label">A TPEC-IA REGISTRA NO PAINEL</span>
+            <p>
+              <CheckIcon /> Compra registrada no rebanho
+            </p>
+            <div className="farm-management-tags">
+              <span>+4 bovinos</span>
+              <span>Lote 2</span>
+            </div>
+          </div>
+        </div>
+        <div className="farm-management-grid">
+          {farmManagement.map(({ icon: Icon, title, text }) => (
+            <article key={title}>
+              <span className="farm-management-icon">
+                <Icon aria-hidden="true" />
               </span>
-              <i className="card-divider" />
-              <h3>{item.title}</h3>
-              <p>{item.text}</p>
+              <h3>{title}</h3>
+              <p>{text}</p>
             </article>
           ))}
         </div>
-        <div className="poster-swoosh" aria-hidden="true" />
+        <div className="farm-management-actions">
+          <a className="reference-button" href={whatsappUrl} target="_blank" rel="noreferrer">
+            <WhatsappIcon /> GERENCIAR MINHA FAZENDA
+          </a>
+          <p>
+            Peça seu código de acesso pelo WhatsApp e abra o{" "}
+            <a href="/painelfazenda">
+              painel da fazenda <ArrowIcon />
+            </a>
+            .
+          </p>
+        </div>
       </section>
 
       <section className="poster poster-areas" id="areas">
