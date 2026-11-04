@@ -443,6 +443,26 @@ function resolveEntry(book: FarmBook, section: ManagementSection, reference: str
     );
   return matches[0];
 }
+export function managementValueText(field: string, value: unknown): string {
+  if (field === "amountCents")
+    return (Number(value) / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  if (Array.isArray(value))
+    return value.map((i) => `${i.product}: ${i.quantity} ${i.unit}`).join("; ");
+  const states: Record<string, string> = {
+    open: "pendente",
+    in_progress: "em andamento",
+    done: "concluído",
+    cancelled: "cancelado",
+    active: "ativo",
+    inactive: "inativo",
+    low: "baixa",
+    medium: "média",
+    high: "alta",
+  };
+  return ["status", "severity"].includes(field)
+    ? (states[String(value)] ?? String(value))
+    : String(value);
+}
 export function describeManagement(a: ManagementAction) {
   const label = managementSections[a.section].label;
   if (a.kind === "management_unsettle")
@@ -452,10 +472,7 @@ export function describeManagement(a: ManagementAction) {
   if (a.kind === "management_settle")
     return `Registrar ${a.section === "payable" ? "pagamento" : "recebimento"} de ${a.reference} em ${a.date}, uma única vez no financeiro.`;
   return `${a.reference ? "Alterar" : "Adicionar"} em ${label}: ${Object.entries(a.values)
-    .map(
-      ([k, v]) =>
-        `${managementFieldLabels[k as Field]}: ${k === "amountCents" ? (Number(v) / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : typeof v === "object" ? JSON.stringify(v) : v}`,
-    )
+    .map(([k, v]) => `${managementFieldLabels[k as Field]}: ${managementValueText(k, v)}`)
     .join(
       "; ",
     )}${a.clear?.length ? "; limpar: " + a.clear.map((k) => managementFieldLabels[k]).join(", ") : ""}.`;
@@ -595,10 +612,7 @@ export function managementReport(book: FarmBook, section?: ManagementSection, re
         .map(
           (e) =>
             `${managementSections[e.section].label}: ${Object.entries(e.values)
-              .map(
-                ([k, v]) =>
-                  `${managementFieldLabels[k as Field]}: ${k === "amountCents" ? (Number(v) / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : typeof v === "object" ? JSON.stringify(v) : v}`,
-              )
+              .map(([k, v]) => `${managementFieldLabels[k as Field]}: ${managementValueText(k, v)}`)
               .join(
                 "; ",
               )}${e.settlement ? `; quitada em ${e.settlement.date}` : ["payable", "receivable"].includes(e.section) ? "; pendente" : ""} [${e.id}]`,
@@ -607,4 +621,4 @@ export function managementReport(book: FarmBook, section?: ManagementSection, re
         (rows.length > 40 ? `\nMostrando 40 de ${rows.length} registros; refine a consulta.` : "")
     : "Nenhum registro encontrado nessa consulta da fazenda.";
 }
-export const MANAGEMENT_DIRECTIVE = `Gestão ampliada: use management_save para adicionar/alterar, management_remove para remover com motivo e histórico, management_settle para quitar contas (date do pagamento/recebimento real). Para corrigir quitação use management_unsettle com reference/reason; depois pode editar a conta e quitar novamente, preservando estorno. Limpar campo opcional usa clear com nomes de campos; nunca limpar campo obrigatório. Na alteração forneça reference do registro REAL (id ou nome exato) e apenas values alterados; não recrie nem complete campos não informados. Em remoção informe referência inequívoca; duplicidade de nomes exige esclarecer. Nunca invente um ID. Consulta usa intent inspect, inspection {kind:'management',section opcional,reference opcional}, entries vazio; servidor lê o livro completo. Livros parciais não autorizam presumir ausência de registros. Nome de registro novo deve resumir a descrição do produtor, não inventar fatos. Dinheiro em amountCents. Não registre planos como procedimentos realizados. Contas futuras usam payable/receivable e dueDate, nunca ledger até a quitação real. Quitar gera receita/despesa uma vez. Não registre ledger junto de management_settle. Valores de procedimentos/OS são informativos; registrar despesa exige ledger explícito no mesmo lote. Ficha de parto complementa o evento herd_event birth; quando o produtor relata nascimento, preserve o evento que atualiza a contagem e não o substitua somente por calving. Não duplique nascimentos antigos. Fórmulas usam ingredients [{product,quantity,unit}] com unidades explícitas. Fornecimento feeding registra consumo informado, sem prescrever dose, converter sacos, inferir baixa de estoque ou pagamento. Dose, resultados de exame e gestação são exclusivamente os relatados pelo produtor. Evento por lote não exige brincos individuais. Rondas e ocorrências podem acompanhar task_create quando o produtor pede uma tarefa com data/hora. Use as ações atuais de pesagem, movimentação de rebanho, estoque, combustível e tarefas para seus saldos reais. Campos permitidos e obrigatórios por seção: ${JSON.stringify(managementSections)}. Estados: open pendente/aberta; in_progress em andamento; done concluída; cancelled cancelada; active ativo; inactive inativo. Severidade low baixa, medium média, high alta. Estoque usa supply_movement com location opcional e supply_transfer entre from/to com item/unit/quantity/date. Contagem inicial por local (balance) exige quantidade relatada, inclusive zero: não invente contagem. Correção de movimento real usa supply_edit id/quantity/date; cancelamento usa supply_void id/reason e cancela as duas pontas da transferência. Não use management para alterar contas, acessos ou permissões do sistema.`;
+export const MANAGEMENT_DIRECTIVE = `Gestão ampliada: use management_save para adicionar/alterar, management_remove para remover com motivo e histórico, management_settle para quitar contas (date do pagamento/recebimento real). Para corrigir quitação use management_unsettle com reference/reason; depois pode editar a conta e quitar novamente, preservando estorno. Limpar campo opcional usa clear com nomes de campos; nunca limpar campo obrigatório. Na alteração forneça reference do registro REAL (id ou nome exato) e apenas values alterados; não recrie nem complete campos não informados. Em remoção informe referência inequívoca; duplicidade de nomes exige esclarecer. Nunca invente um ID. Consulta usa intent inspect, inspection {kind:'management',section opcional,reference opcional}, entries vazio; servidor lê o livro completo. Livros parciais não autorizam presumir ausência de registros. Nome de registro novo deve resumir a descrição do produtor, não inventar fatos. Dinheiro em amountCents. Não registre planos como procedimentos realizados. Contas futuras usam payable/receivable e dueDate, nunca ledger até a quitação real. Quitar gera receita/despesa uma vez. Não registre ledger junto de management_settle. Valores de procedimentos/OS são informativos; registrar despesa exige ledger explícito no mesmo lote. Ficha de parto complementa o evento herd_event birth; quando o produtor relata nascimento, preserve o evento que atualiza a contagem e não o substitua somente por calving. Não duplique nascimentos antigos. Fórmulas usam ingredients [{product,quantity,unit}] com unidades explícitas. Fornecimento feeding registra consumo informado, sem prescrever dose, converter sacos, inferir baixa de estoque ou pagamento. Dose, resultados de exame e gestação são exclusivamente os relatados pelo produtor. Evento por lote não exige brincos individuais. Rondas e ocorrências podem acompanhar task_create quando o produtor pede uma tarefa com data/hora. Use as ações atuais de pesagem, movimentação de rebanho, estoque, combustível e tarefas para seus saldos reais. Campos permitidos e obrigatórios por seção: ${JSON.stringify(managementSections)}. Estados: open pendente/aberta; in_progress em andamento; done concluída; cancelled cancelada; active ativo; inactive inativo. Severidade low baixa, medium média, high alta. Estoque usa supply_movement com location opcional e supply_transfer entre from/to com item/unit/quantity/date. Contagem inicial por local (balance) exige quantidade relatada, inclusive zero: não invente contagem. Correção de movimento real usa supply_edit id/quantity/date; cancelamento usa supply_void id/reason e cancela as duas pontas da transferência. Agenda tem prioridade sobre alimentação quando o pedido é um lembrete: “amanhã às 8h me lembre de dar ração” é somente task_create, intent apply, com a primeira data/hora informadas. Isso não é feeding nem um evento realizado. Para ordem direta de nova tarefa com data/hora explícitas, não peça conferência: use apply, inclusive lembrete único; propose só quando faltar uma informação e for preciso sugerir um padrão. Não use management para alterar contas, acessos ou permissões do sistema.`;

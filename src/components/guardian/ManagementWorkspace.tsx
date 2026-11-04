@@ -239,6 +239,7 @@ function ManagementSectionView({
                     {required ? " *" : ""}
                     {options ? (
                       <select
+                        aria-label={label + (required ? " *" : "")}
                         required={required}
                         value={form[field] ?? ""}
                         onChange={(e) => setForm({ ...form, [field]: e.target.value })}
@@ -253,6 +254,7 @@ function ManagementSectionView({
                       </select>
                     ) : field === "notes" || field === "action" ? (
                       <textarea
+                        aria-label={label + (required ? " *" : "")}
                         maxLength={1500}
                         value={form[field] ?? ""}
                         onChange={(e) => setForm({ ...form, [field]: e.target.value })}
@@ -260,6 +262,7 @@ function ManagementSectionView({
                       />
                     ) : (
                       <input
+                        aria-label={label + (required ? " *" : "")}
                         required={required}
                         type={
                           field.toLowerCase().includes("date")

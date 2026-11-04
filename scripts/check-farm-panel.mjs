@@ -728,7 +728,14 @@ try {
     "Estoque e insumos",
     "Calculadoras",
   ]) {
-    await page.getByLabel("Área da fazenda", { exact: true }).selectOption({ label: area });
+    await page
+      .getByRole("navigation", { name: "Navegação principal" })
+      .getByRole("button", { name: "Mais", exact: true })
+      .click();
+    await page
+      .getByRole("dialog", { name: "Sua fazenda" })
+      .getByRole("button", { name: area, exact: true })
+      .click();
     assert.equal(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1),
       true,
@@ -742,7 +749,14 @@ try {
         fullPage: true,
       });
   }
-  await page.getByRole("button", { name: "Sair", exact: true }).click();
+  await page
+    .getByRole("navigation", { name: "Navegação principal" })
+    .getByRole("button", { name: "Mais", exact: true })
+    .click();
+  await page
+    .getByRole("dialog", { name: "Sua fazenda" })
+    .getByRole("button", { name: "Sair desta fazenda", exact: true })
+    .click();
   await page.getByRole("heading", { name: "Acesse sua fazenda" }).waitFor();
   if (screenshots) {
     await page.screenshot({ path: screenshots + "/farm-panel-access-mobile.png", fullPage: true });
@@ -797,7 +811,7 @@ try {
   await appPage.goto(origin + "/painelfazenda?app=1", { waitUntil: "networkidle" });
   await appPage.getByLabel("Código de acesso", { exact: true }).fill(appCode);
   await appPage.getByRole("button", { name: "Entrar no painel", exact: true }).click();
-  await appPage.getByRole("button", { name: "Sair", exact: true }).waitFor();
+  await appPage.getByRole("navigation", { name: "Navegação principal" }).waitFor();
   const appState = await appContext.storageState();
   assert.ok(
     appState.cookies.some(
@@ -811,8 +825,10 @@ try {
   });
   const reopened = await prepareApp(restoredContext);
   await reopened.goto(origin + "/painelfazenda?app=1", { waitUntil: "networkidle" });
-  await reopened.getByRole("button", { name: "Sair", exact: true }).waitFor();
-  await reopened.getByText("Acesso mantido neste aplicativo.", { exact: true }).waitFor();
+  await reopened.getByRole("navigation", { name: "Navegação principal" }).waitFor();
+  await reopened
+    .getByText("Acesso mantido neste aplicativo.", { exact: true })
+    .waitFor({ state: "attached" });
   if (screenshots)
     await reopened.screenshot({
       path: screenshots + "/farm-panel-installed-mobile.png",

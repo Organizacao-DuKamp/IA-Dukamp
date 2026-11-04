@@ -52,6 +52,8 @@ export interface PromptTelemetry {
 export interface OpenAIOptions {
   /** Internal validated JSON planner; omit conversational and technical answer instructions. */
   structuredTask?: boolean;
+  /** Constrain internal planner responses to a JSON object; domain schemas still validate it. */
+  jsonOutput?: boolean;
   model?: ModelSelection;
   channel?: ChatChannel;
   summary?: string | null;
@@ -412,6 +414,7 @@ export async function askOpenAI(
       store: false,
       prompt_cache_key: promptCacheKey,
       text: {
+        ...(options.jsonOutput ? { format: { type: "json_object" } } : {}),
         verbosity: whatsappStyle && modelTier !== "sol" ? "low" : "medium",
       },
     };

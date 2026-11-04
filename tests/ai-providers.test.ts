@@ -300,3 +300,31 @@ test("migração separa espaços vetoriais e mantém RAG privado", async () => {
   assert.match(sql, /FROM PUBLIC, anon, authenticated/);
   assert.match(sql, /GRANT EXECUTE[\s\S]*TO service_role/);
 });
+
+test("internal farm planner requests constrained JSON without affecting normal text answers", async () => {
+  const previous = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "openai-test-key";
+  try {
+    let sent: Record<string, unknown> | undefined;
+    const result = await askOpenAI(
+      [{ role: "user", content: "Retorne JSON para os dados sintéticos" }],
+      {
+        model: "terra",
+        structuredTask: true,
+        jsonOutput: true,
+        researchDepth: "none",
+        maxToolCalls: 0,
+        fetchImpl: async (_url, init) => {
+          sent = JSON.parse(String(init?.body));
+          return openAIResponse('{"intent":"none"}');
+        },
+      },
+    );
+    assert.equal(result, '{"intent":"none"}');
+    assert.deepEqual((sent!.text as { format: unknown }).format, { type: "json_object" });
+    assert.equal(sent!.store, false);
+  } finally {
+    if (previous === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = previous;
+  }
+});
