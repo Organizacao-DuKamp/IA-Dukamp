@@ -32,7 +32,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { AndroidReminders } from "@/components/guardian/AndroidReminders";
-import { androidCommand } from "@/lib/guardian/android-bridge";
+import { androidCommand, nativeAndroid } from "@/lib/guardian/android-bridge";
 import "./mobile-panel.css";
 import { InstallPanel } from "@/components/guardian/InstallPanel";
 import { installedPanel } from "@/lib/guardian/app-mode";
@@ -113,6 +113,8 @@ export function FarmPanel() {
       requestId: string;
       version: number;
     } | null>(null);
+  const [nativeApp, setNativeApp] = useState(false);
+  useEffect(() => setNativeApp(nativeAndroid()), []);
   const generation = useRef(0),
     inFlight = useRef(false),
     moreDialog = useRef<HTMLDialogElement>(null);
@@ -260,7 +262,10 @@ export function FarmPanel() {
     <div className="farm-panel min-h-screen bg-[#f4f6f2] text-slate-900">
       <header className="border-b border-emerald-950/10 bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 md:px-5 md:py-5">
-          <Link to="/" className="flex items-center gap-3 font-semibold">
+          <Link
+            to={nativeApp ? "/painelfazenda" : "/"}
+            className="flex items-center gap-3 font-semibold"
+          >
             <span className="rounded-xl bg-emerald-900 p-2.5 text-white">
               <Leaf size={23} />
             </span>
@@ -699,9 +704,11 @@ export function FarmPanel() {
             </nav>
           </>
         )}
-        <Link to="/" className="mt-10 inline-flex items-center gap-2 text-sm text-slate-600">
-          <ArrowLeft size={15} /> Voltar ao site
-        </Link>
+        {!nativeApp && (
+          <Link to="/" className="mt-10 inline-flex items-center gap-2 text-sm text-slate-600">
+            <ArrowLeft size={15} /> Voltar ao site
+          </Link>
+        )}
       </main>
     </div>
   );

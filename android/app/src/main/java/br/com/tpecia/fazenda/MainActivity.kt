@@ -31,7 +31,14 @@ class MainActivity : ComponentActivity() {
     private val network = FarmApi.executor
     private val notifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) { publish() }
     private fun trusted(uri: Uri) = uri.scheme == "https" && uri.host == Uri.parse(BuildConfig.PANEL_ORIGIN).host && (uri.port == -1 || uri.port == 443) && uri.userInfo == null
-    private fun inPanel() = web.url?.let { trusted(Uri.parse(it)) && Uri.parse(it).path == "/painelfazenda" } == true
+    private val panelUrl get() = BuildConfig.PANEL_ORIGIN + "/painelfazenda"
+    private fun panelUrl(url: String) = PanelNavigation.allows(url, BuildConfig.PANEL_ORIGIN)
+    private fun inPanel() = web.url?.let { panelUrl(it) } == true
+    private fun openOutsidePanel(uri: Uri) {
+        if (uri.scheme !in setOf("https", "http", "whatsapp", "mailto", "tel")) return
+        try { startActivity(Intent(Intent.ACTION_VIEW, uri).addCategory(Intent.CATEGORY_BROWSABLE)) }
+        catch (_: Exception) { publish("Não foi possível abrir este link.") }
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState); WindowCompat.setDecorFitsSystemWindows(window, false)
         val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(Color.WHITE) }
@@ -44,7 +51,7 @@ class MainActivity : ComponentActivity() {
         offline = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL; setPadding(32, 60, 32, 32); visibility = View.GONE
             addView(TextView(this@MainActivity).apply { text = "Não foi possível abrir sua fazenda. Confira sua conexão e tente novamente."; textSize = 20f })
-            addView(Button(this@MainActivity).apply { text = "Tentar novamente"; setOnClickListener { web.loadUrl(BuildConfig.PANEL_ORIGIN + "/painelfazenda") } })
+            addView(Button(this@MainActivity).apply { text = "Tentar novamente"; setOnClickListener { web.loadUrl(panelUrl) } })
         }
         root.addView(offline); web = WebView(this); root.addView(web, LinearLayout.LayoutParams(-1, 0, 1f)); setContentView(root)
         with(web.settings) { javaScriptEnabled = true; domStorageEnabled = true; allowFileAccess = false; allowContentAccess = false
@@ -63,13 +70,23 @@ class MainActivity : ComponentActivity() {
         }
         web.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-                if (trusted(request.url)) return false
-                if (request.isForMainFrame && request.url.scheme in setOf("https", "whatsapp")) {
-                    try { startActivity(Intent(Intent.ACTION_VIEW, request.url).addCategory(Intent.CATEGORY_BROWSABLE)) }
-                    catch (_: Exception) { publish("Não foi possível abrir este link.") }
-                }; return true
+                if (!request.isForMainFrame) return !trusted(request.url)
+                if (panelUrl(request.url.toString())) return false
+                openOutsidePanel(request.url)
+                return true
             }
-            override fun onPageStarted(view: WebView, url: String, favicon: android.graphics.Bitmap?) { offline.visibility = View.GONE; web.visibility = View.VISIBLE }
+            override fun onPageStarted(view: WebView, url: String, favicon: android.graphics.Bitmap?) {
+                if (!panelUrl(url)) {
+                    view.stopLoading(); openOutsidePanel(Uri.parse(url)); view.loadUrl(panelUrl); return
+                }
+                offline.visibility = View.GONE; web.visibility = View.VISIBLE
+            }
+            override fun doUpdateVisitedHistory(view: WebView, url: String, isReload: Boolean) {
+                // Client-side router transitions do not call shouldOverrideUrlLoading.
+                if (!panelUrl(url)) {
+                    view.stopLoading(); openOutsidePanel(Uri.parse(url)); view.loadUrl(panelUrl)
+                }
+            }
             override fun onPageFinished(view: WebView, url: String) { CookieManager.getInstance().flush(); publish() }
             override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
                 if (request.isForMainFrame) { offline.visibility = View.VISIBLE; web.visibility = View.GONE }
@@ -78,7 +95,7 @@ class MainActivity : ComponentActivity() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() { if (web.canGoBack()) web.goBack() else finish() }
         })
-        web.loadUrl(BuildConfig.PANEL_ORIGIN + "/painelfazenda")
+        web.loadUrl(panelUrl)
     }
     private fun command(message: JSONObject) {
         when (message.optString("type")) {

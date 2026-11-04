@@ -2,6 +2,8 @@
 
 Abra **esta pasta `android/`** no Android Studio. O painel usa `https://www.tpecia.com.br/painelfazenda`; agenda, notificações, armazenamento e alarme são nativos. O acesso continua pelo código enviado pela TPEC-IA no WhatsApp.
 
+O aplicativo fica restrito a `/painelfazenda`, incluindo a tela de acesso. O logotipo permanece no painel e o link “Voltar ao site” fica oculto no Android. Links para outras páginas abrem no navegador; links do WhatsApp abrem no aplicativo correspondente. A landing page continua disponível no site.
+
 ## Compilar
 
 - JDK 17 e Android SDK 36 / Build Tools 36.0.0. Android mínimo: 8.0 (API 26).
