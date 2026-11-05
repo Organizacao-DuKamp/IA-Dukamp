@@ -26,6 +26,12 @@ import {
 } from "./schema.ts";
 import { localDateForTimeZone } from "../whatsapp/proactive.ts";
 import { ledgerForTotals, ledgerPeriod } from "./finance.ts";
+import {
+  animalFieldLabels,
+  animalFieldValue,
+  pedigreeLabel,
+  type AnimalProfile,
+} from "./animal-profile.ts";
 
 export const fold = (text: string) =>
   text
@@ -75,7 +81,15 @@ export function describeAction(a: GuardianAction): string {
     case "record":
       return `Anotar em ${a.date}: ${a.description}${a.count ? ` (quantidade informada: ${a.count})` : ""}${a.lot ? `, lote ${a.lot}` : ""}.`;
     case "animal":
-      return `Cadastrar/atualizar o animal ${a.code}${a.sex ? `, sexo: ${{ male: "macho", female: "fêmea", unknown: "não informado" }[a.sex]}` : ""}${a.breed ? `, raça: ${a.breed}` : ""}${a.birthDate ? `, nascimento: ${a.birthDate}` : ""}${a.lot ? `, lote ${a.lot}` : ""}.`;
+      return `Cadastrar/atualizar o animal ${a.code}: ${Object.entries(a)
+        .filter(([key, value]) => !["kind", "code"].includes(key) && value !== undefined)
+        .map(
+          ([key, value]) =>
+            `${animalFieldLabels[key as keyof AnimalProfile]}: ${key === "pedigree" ? a.pedigree?.map((node) => `${pedigreeLabel(node.relation)}: ${node.code}${node.name ? ` · ${node.name}` : ""}`).join("; ") : animalFieldValue(key as keyof AnimalProfile, value)}`,
+        )
+        .join(
+          "; ",
+        )}. Os valores de compra/venda ficam na ficha; lançamentos financeiros e movimentações do rebanho são registrados separadamente.`;
     case "weighing":
       return `${a.correction ? "Corrigir" : "Registrar"} peso do animal ${a.code}: ${num(a.weightKg)} kg em ${a.date}${a.estimated ? " (estimado)" : " (informado por você)"}.`;
     case "move":
@@ -265,11 +279,45 @@ export function applyFarmAction(
     }
     case "animal": {
       const { kind: _kind, ...attrs } = action;
+      const prior = book.animals.find((a) => fold(a.code) === fold(action.code));
       if (action.birthDate && action.birthDate > localDay)
         throw new Error("O nascimento informado está no futuro.");
-      const prior = book.animals.find((a) => fold(a.code) === fold(action.code));
+      if ([action.entryDate, action.weaningDate].some((date) => date && date > localDay))
+        throw new Error("Datas de entrada e desmame realizados não podem estar no futuro.");
+      const birthDate = action.birthDate ?? prior?.birthDate;
+      const weaningDate = action.weaningDate ?? prior?.weaningDate;
+      if (birthDate && weaningDate && weaningDate < birthDate)
+        throw new Error("O desmame não pode ser anterior ao nascimento.");
+      const oldWeight = prior?.weights.at(-1)?.weightKg;
       if (prior) Object.assign(prior, attrs, { source });
       else book.animals.push({ sex: "unknown", ...attrs, weights: [], source });
+      if (action.currentWeightKg !== undefined && action.currentWeightKg !== oldWeight) {
+        const animal = prior ?? book.animals.at(-1)!;
+        const sameDay = animal.weights.find((weight) => weight.date === localDay);
+        if (sameDay) {
+          sameDay.corrections.push({
+            weightKg: sameDay.weightKg,
+            estimated: sameDay.estimated,
+            previousSource: {
+              actor: sameDay.actor,
+              at: sameDay.at,
+              messageId: sameDay.messageId,
+              confirmed: true,
+            },
+            at: source.at,
+            messageId: source.messageId,
+          });
+          Object.assign(sameDay, source, { weightKg: action.currentWeightKg, estimated: false });
+        } else
+          animal.weights.push({
+            ...source,
+            date: localDay,
+            weightKg: action.currentWeightKg,
+            estimated: false,
+            corrections: [],
+          });
+        animal.weights.sort((a, b) => a.date.localeCompare(b.date));
+      }
       result = `Animal ${action.code} salvo nesta fazenda.`;
       break;
     }
@@ -308,6 +356,7 @@ export function applyFarmAction(
           corrections: [],
         });
       animal.weights.sort((a, b) => a.date.localeCompare(b.date));
+      animal.currentWeightKg = animal.weights.at(-1)?.weightKg;
       result = `Pesagem de ${animal.code} salva: ${num(action.weightKg)} kg em ${action.date}${action.estimated ? " (estimativa)" : ""}.`;
       const measured = animal.weights.filter((w) => !w.estimated);
       if (measured.length >= 2 && !action.estimated) {

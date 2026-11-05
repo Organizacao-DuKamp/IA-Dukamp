@@ -232,6 +232,10 @@ function cookieToken(request: Request): string | null {
     ?.slice(name.length + 1);
   return value && /^[a-f0-9]{64}$/.test(value) ? value : null;
 }
+export async function authorizePanelRequest(request: Request, store: PanelStore = panelStore) {
+  const token = cookieToken(request);
+  return token ? store.authorize(hashToken(token), installedRequest(request)) : null;
+}
 function response(data: unknown, status = 200, cookie?: string) {
   const headers = new Headers({
     "content-type": "application/json; charset=utf-8",

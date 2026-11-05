@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { ActionSchema, type GuardianAction } from "@/lib/guardian/schema";
+import { ActionSchema, type GuardianAction, type FarmBook } from "@/lib/guardian/schema";
+import { AnimalProfileFields } from "./AnimalProfileFields";
+import { animalActionFromForm } from "@/lib/guardian/animal-profile";
 import { speciesNames } from "@/lib/guardian/operations";
 
 type FormKind =
@@ -45,12 +47,14 @@ export function GuardianActionForm({
   onPropose,
   allowedKinds,
   initialKind,
+  book,
 }: {
   initialKind?: FormKind;
   allowedKinds?: string[];
   hasProperty: boolean;
   busy: boolean;
   onPropose: (action: GuardianAction) => Promise<void>;
+  book?: FarmBook;
 }) {
   const [kind, setKind] = useState<FormKind>(
       (() => {
@@ -205,19 +209,14 @@ export function GuardianActionForm({
         };
         break;
       case "animal":
-        input = {
-          kind,
-          code: values.code,
-          ...Object.fromEntries(
-            ["name", "rgn", "rgd", "category", "sire", "dam", "status"].flatMap((key) =>
-              values[key] ? [[key, values[key]]] : [],
-            ),
-          ),
-          sex: values.sex || "unknown",
-          ...(values.breed ? { breed: values.breed } : {}),
-          ...(values.lot ? { lot: values.lot } : {}),
-          ...(values.birthDate ? { birthDate: values.birthDate } : {}),
-        };
+        try {
+          input = animalActionFromForm(values);
+        } catch {
+          setError(
+            "Confira a identificação, os valores, as datas e os campos da ficha antes de revisar.",
+          );
+          return;
+        }
         break;
       case "weighing":
         input = {
@@ -435,23 +434,7 @@ export function GuardianActionForm({
           </>
         )}
         {kind === "animal" && (
-          <>
-            {field("code", "Identificação do animal")}
-            {field("name", "Nome do animal (opcional)", "text", false)}
-            {field("rgn", "RGN informado (opcional)", "text", false)}
-            {field("rgd", "RGD informado (opcional)", "text", false)}
-            {field("category", "Categoria (opcional)", "text", false)}
-            {field("sire", "Pai informado (opcional)", "text", false)}
-            {field("dam", "Mãe informada (opcional)", "text", false)}
-            {select("sex", "Sexo", [
-              ["unknown", "Não informado"],
-              ["female", "Fêmea"],
-              ["male", "Macho"],
-            ])}
-            {field("breed", "Raça (opcional)", "text", false)}
-            {field("lot", "Lote (opcional)", "text", false)}
-            {field("birthDate", "Nascimento (opcional)", "date", false)}
-          </>
+          <AnimalProfileFields values={values} onChange={setValues} book={book} disabled={busy} />
         )}
         {kind === "weighing" && (
           <>

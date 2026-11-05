@@ -1,0 +1,185 @@
+import { z } from "zod";
+
+const text = z.string().trim().min(1).max(160);
+const weight = z.number().finite().positive().max(5000);
+const money = z.number().int().nonnegative().max(1e12);
+export const PedigreeNodeSchema = z
+  .object({
+    relation: z.string().regex(/^(?:sire|dam)(?:\.(?:sire|dam)){0,2}$/),
+    code: text,
+    name: text.optional(),
+    registrySeries: text.optional(),
+    rgn: text.optional(),
+    rgd: text.optional(),
+    breed: text.optional(),
+    birthDate: z.iso.date().optional(),
+    sex: z.enum(["male", "female", "unknown"]).optional(),
+  })
+  .strict();
+export type PedigreeNode = z.infer<typeof PedigreeNodeSchema>;
+
+/** Optional additions preserve every existing animal and WhatsApp action. */
+export const AnimalProfileShape = {
+  code: text,
+  name: text.optional(),
+  earTag: text.optional(),
+  electronicTag: text.optional(),
+  registry: text.optional(),
+  registrySeries: text.optional(),
+  rgn: text.optional(),
+  rgd: text.optional(),
+  category: text.optional(),
+  sire: text.optional(),
+  dam: text.optional(),
+  kinship: text.optional(),
+  pedigree: z.array(PedigreeNodeSchema).max(14).optional(),
+  status: z.enum(["active", "sold", "dead", "transferred"]).optional(),
+  sex: z.enum(["male", "female", "unknown"]).optional(),
+  breed: text.optional(),
+  coat: text.optional(),
+  birthDate: z.iso.date().optional(),
+  lot: text.optional(),
+  responsible: text.optional(),
+  pasture: text.optional(),
+  pen: text.optional(),
+  origin: text.optional(),
+  destination: text.optional(),
+  entryDate: z.iso.date().optional(),
+  weaningDate: z.iso.date().optional(),
+  entryWeightKg: weight.optional(),
+  currentWeightKg: weight.optional(),
+  dailyIntakeKg: z.number().finite().nonnegative().max(1000).optional(),
+  purchasePriceCents: money.optional(),
+  salePriceCents: money.optional(),
+  seller: text.optional(),
+  carcassPercent: z.number().finite().min(0).max(100).optional(),
+  notes: z.string().trim().max(1500).optional(),
+};
+export const AnimalProfileSchema = z.object(AnimalProfileShape).strict();
+export const AnimalActionSchema = z
+  .object({ kind: z.literal("animal"), ...AnimalProfileShape })
+  .strict();
+export type AnimalProfile = z.infer<typeof AnimalProfileSchema>;
+
+export const animalFieldLabels: Record<keyof AnimalProfile, string> = {
+  code: "Identificação do animal",
+  name: "Nome",
+  earTag: "Brinco",
+  electronicTag: "Brinco eletrônico",
+  registry: "Registro",
+  registrySeries: "Série ABCZ",
+  rgn: "RGN",
+  rgd: "RGD",
+  category: "Categoria",
+  sire: "Pai",
+  dam: "Mãe",
+  kinship: "Parentesco",
+  pedigree: "Genealogia",
+  status: "Status",
+  sex: "Sexo",
+  breed: "Raça",
+  coat: "Pelagem",
+  birthDate: "Nascimento",
+  lot: "Lote",
+  responsible: "Responsável",
+  pasture: "Pasto",
+  pen: "Piquete / curral",
+  origin: "Origem",
+  destination: "Destino",
+  entryDate: "Entrada",
+  weaningDate: "Desmame",
+  entryWeightKg: "Peso de entrada (kg)",
+  currentWeightKg: "Peso atual (kg)",
+  dailyIntakeKg: "Consumo diário (kg)",
+  purchasePriceCents: "Valor de compra",
+  salePriceCents: "Valor de venda",
+  seller: "Pessoa que vendeu",
+  carcassPercent: "Carcaça (%)",
+  notes: "Observações",
+};
+export function animalFieldValue(key: keyof AnimalProfile, value: unknown): string {
+  if (value === undefined || value === null || value === "") return "Não informado";
+  if (key === "pedigree") return `${(value as PedigreeNode[]).length} ascendentes informados`;
+  if (key === "purchasePriceCents" || key === "salePriceCents")
+    return (Number(value) / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  if (key === "sex")
+    return (
+      ({ male: "Macho", female: "Fêmea", unknown: "Não informado" } as Record<string, string>)[
+        String(value)
+      ] ?? String(value)
+    );
+  if (key === "status")
+    return (
+      (
+        { active: "Ativo", sold: "Vendido", dead: "Morto", transferred: "Transferido" } as Record<
+          string,
+          string
+        >
+      )[String(value)] ?? String(value)
+    );
+  if (/Date$/.test(key)) return String(value).split("-").reverse().join("/");
+  return typeof value === "number"
+    ? value.toLocaleString("pt-BR", { maximumFractionDigits: 3 })
+    : String(value);
+}
+export function pedigreeLabel(path: string) {
+  return path
+    .split(".")
+    .map((part, index) =>
+      index === 0 ? (part === "sire" ? "Pai" : "Mãe") : part === "sire" ? "pai" : "mãe",
+    )
+    .reverse()
+    .join(" de ");
+}
+
+const numberFields = new Set([
+  "entryWeightKg",
+  "currentWeightKg",
+  "dailyIntakeKg",
+  "carcassPercent",
+]);
+export function animalActionFromForm(values: Record<string, string>) {
+  const profile: Record<string, unknown> = {};
+  for (const key of Object.keys(AnimalProfileShape)) {
+    const value = values[key]?.trim();
+    if (value === undefined || value === "") continue;
+    if (key === "pedigree") profile[key] = JSON.parse(value);
+    else if (numberFields.has(key)) profile[key] = Number(value.replace(",", "."));
+    else if (key === "purchasePriceCents" || key === "salePriceCents")
+      profile[key] = Math.round(Number(value.replace(",", ".")) * 100);
+    else profile[key] = value;
+  }
+  // Editing a parent removes that imported branch rather than retaining stale ancestry.
+  if (Array.isArray(profile.pedigree)) {
+    const roots = profile.pedigree as PedigreeNode[];
+    profile.pedigree = roots.filter((node) => {
+      const side = node.relation.split(".")[0];
+      const root = roots.find((item) => item.relation === side);
+      return (
+        !root ||
+        profile[side] === root.code ||
+        profile[side] === root.name ||
+        profile[side] === `${root.code} · ${root.name}`
+      );
+    });
+  }
+  return AnimalActionSchema.parse({ kind: "animal", ...profile });
+}
+export function animalFormValues(profile: Partial<AnimalProfile>) {
+  return Object.fromEntries(
+    Object.keys(AnimalProfileShape).flatMap((key) => {
+      const value = profile[key as keyof AnimalProfile];
+      if (value === undefined) return [];
+      return [
+        [
+          key,
+          key === "pedigree"
+            ? JSON.stringify(value)
+            : /PriceCents$/.test(key)
+              ? String(Number(value) / 100)
+              : String(value),
+        ],
+      ];
+    }),
+  );
+}

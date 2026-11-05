@@ -2,6 +2,12 @@ import { managementSections } from "./management.ts";
 import { speciesNames } from "./operations.ts";
 import type { FarmBook } from "./schema.ts";
 import { ledgerForTotals, ledgerPeriod } from "./finance.ts";
+import {
+  animalFieldLabels,
+  animalFieldValue,
+  pedigreeLabel,
+  type AnimalProfile,
+} from "./animal-profile.ts";
 /** Protect CSV consumers from spreadsheet formula injection in user-controlled text. */
 function cell(value: unknown): string {
   let text = value == null ? "" : String(value);
@@ -37,6 +43,20 @@ export function farmCsv(book: FarmBook): string {
     ]);
   for (const a of book.animals) {
     rows.push(["Animal", a.code, a.birthDate ?? "", a.breed ?? "", "", "", a.lot ?? "", a.sex]);
+    for (const key of Object.keys(animalFieldLabels) as Array<keyof AnimalProfile>) {
+      if (["code", "breed", "birthDate", "sex", "lot"].includes(key) || a[key] === undefined)
+        continue;
+      rows.push([
+        "Ficha animal",
+        a.code,
+        a.source.at,
+        `${animalFieldLabels[key]}: ${key === "pedigree" ? a.pedigree!.map((node) => `${pedigreeLabel(node.relation)}: ${node.code}${node.name ? ` · ${node.name}` : ""}`).join("; ") : animalFieldValue(key, a[key])}`,
+        "",
+        "",
+        a.lot ?? "",
+        "informado / importado",
+      ]);
+    }
     for (const w of a.weights)
       rows.push([
         "Pesagem",

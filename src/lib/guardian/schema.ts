@@ -6,6 +6,7 @@ import {
 import { SupplyActionSchemas, SupplyBookSchema, type SupplyBook } from "./supplies.ts";
 import { FuelActionSchemas, FuelBookSchema, FuelVoidSchema, type FuelBook } from "./fuel.ts";
 import { z } from "zod";
+import { AnimalActionSchema, AnimalProfileShape, type AnimalProfile } from "./animal-profile.ts";
 import { OperationsActionSchemas, OperationsSchema, type Operations } from "./operations.ts";
 
 export const TopicSchema = z.enum([
@@ -153,23 +154,7 @@ export const ActionSchema = z.discriminatedUnion("kind", [
       count: z.number().int().positive().max(1e6).optional(),
     })
     .strict(),
-  z
-    .object({
-      kind: z.literal("animal"),
-      code: label,
-      name: label.optional(),
-      rgn: label.optional(),
-      rgd: label.optional(),
-      category: label.optional(),
-      sire: label.optional(),
-      dam: label.optional(),
-      status: z.enum(["active", "sold", "dead", "transferred"]).optional(),
-      sex: z.enum(["male", "female", "unknown"]).optional(),
-      breed: label.optional(),
-      birthDate: date.optional(),
-      lot: label.optional(),
-    })
-    .strict(),
+  AnimalActionSchema,
   z
     .object({
       kind: z.literal("weighing"),
@@ -238,19 +223,8 @@ export interface Weighing extends Provenance {
     previousSource?: Provenance;
   }>;
 }
-export interface GuardianAnimal {
-  code: string;
-  name?: string;
-  rgn?: string;
-  rgd?: string;
-  category?: string;
-  sire?: string;
-  dam?: string;
-  status?: "active" | "sold" | "dead" | "transferred";
+export interface GuardianAnimal extends Omit<AnimalProfile, "sex"> {
   sex: "male" | "female" | "unknown";
-  breed?: string;
-  birthDate?: string;
-  lot?: string;
   weights: Weighing[];
   source: Provenance;
 }
@@ -617,18 +591,8 @@ export const FarmBookSchema = z
       .array(
         z
           .object({
-            code: label,
-            name: label.optional(),
-            rgn: label.optional(),
-            rgd: label.optional(),
-            category: label.optional(),
-            sire: label.optional(),
-            dam: label.optional(),
-            status: z.enum(["active", "sold", "dead", "transferred"]).optional(),
+            ...AnimalProfileShape,
             sex: z.enum(["male", "female", "unknown"]),
-            breed: label.optional(),
-            birthDate: date.optional(),
-            lot: label.optional(),
             weights: z.array(WeighingSchema).max(5000),
             source: ProvenanceSchema,
           })

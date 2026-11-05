@@ -533,6 +533,7 @@ export function FarmPanel() {
                   {form && view && (
                     <GuardianActionForm
                       key={`${view.propertyId}:${tab}`}
+                      book={view.book}
                       initialKind={
                         tab === "finance"
                           ? "expense"
