@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 const text = z.string().trim().min(1).max(160);
-const weight = z.number().finite().positive().max(5000);
+const weight = z.number().finite().positive().max(2000);
 const money = z.number().int().nonnegative().max(1e12);
 export const PedigreeNodeSchema = z
   .object({
