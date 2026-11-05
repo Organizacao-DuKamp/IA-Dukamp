@@ -19,6 +19,31 @@ import { canEdit } from "./schema.ts";
 export const ABCZ_ENDPOINT = "https://www.abczstat.com.br/softwareterceiros/eletro.asmx";
 const namespace = "https://www.abczstat.com.br/softwareterceiros/";
 const MAX_XML = 2 * 1024 * 1024;
+const FarmCredentials = z
+  .object({
+    creatorCode: z.coerce.number().int().min(1).max(2147483647),
+    login: z.string().trim().min(1).max(160),
+    password: z.string().min(1).max(2000),
+  })
+  .strict();
+type RegistryEnv = Record<string, string | undefined>;
+function registryAccess(propertyId: string | undefined, env: RegistryEnv = process.env) {
+  const software = env.ABCZ_SOFTWARE_ID?.trim();
+  if (!propertyId || !software || !/^[1-9]\d{0,9}$/.test(software) || Number(software) > 2147483647)
+    return null;
+  try {
+    const map = JSON.parse(env.ABCZ_FARM_CREDENTIALS_JSON ?? "{}");
+    if (!map || typeof map !== "object" || !Object.prototype.hasOwnProperty.call(map, propertyId))
+      return null;
+    const credentials = FarmCredentials.safeParse(map[propertyId]);
+    return credentials.success ? { software, ...credentials.data } : null;
+  } catch {
+    return null;
+  }
+}
+export function abczConfigured(propertyId: string, env: RegistryEnv = process.env) {
+  return registryAccess(propertyId, env) !== null;
+}
 type Row = Record<string, unknown>;
 const row = (value: unknown): Row =>
   value && typeof value === "object" && !Array.isArray(value) ? (value as Row) : {};
@@ -101,6 +126,25 @@ function matches(query: NormalizedRegistryQuery, animal: Row) {
         canonical(animal.graudesanguesigla) === canonical(query.category) &&
         sex(animal.sexo) === query.sex;
 }
+/** The documented third-party result inherits animalDetalhado's parent fields. */
+function complementaryAnimal(value: Row): Row {
+  const parent = (suffix: "Pai" | "Mae") => ({
+    serie: value["serie" + suffix],
+    rgn: value["rgn" + suffix],
+    rgd: value["rgd" + suffix],
+    nome: value["nome" + suffix],
+    nascimento: value["nasc" + suffix],
+    sexo: value["sexo" + suffix],
+    racasigla: value["racaSigla" + suffix],
+    graudesanguesigla: value["grauSangueSigla" + suffix],
+  });
+  return {
+    ...value,
+    serie: value.serie || value.seriealfa,
+    pai: parent("Pai"),
+    mae: parent("Mae"),
+  };
+}
 function fields(animal: Row): Partial<AnimalProfile> {
   const series = text(animal.serie),
     rgn = text(animal.rgn),
@@ -170,14 +214,24 @@ export function parseAbczGenealogy(
       "A ABCZ não conseguiu atender a consulta agora. Tente novamente mais tarde.",
       502,
     );
-  const response = row(row(body[method + "Response"])[method + "Result"]);
-  if (!Object.keys(response).length)
+  const operation = row(body[method + "Response"]);
+  if (!Object.prototype.hasOwnProperty.call(operation, method + "Result"))
     throw new RegistryError("invalid_response", "Resposta da ABCZ sem os dados esperados.", 502);
-  const returnedAnimals = list(row(response.animaisPesquisados).AnimalParaGenealogia);
-  const message = text(response.mensagem);
+  const response = row(operation[method + "Result"]);
+  const complementary = method === "PesquisarAnimalQualquerChaveComplementar";
+  const returnedAnimals = complementary
+    ? list(response.animalGeralDetalhado).map(complementaryAnimal)
+    : list(row(response.animaisPesquisados).AnimalParaGenealogia);
+  const message = [
+    text(response.mensagem),
+    ...returnedAnimals.map((animal) => text(animal.mensagem)),
+  ].join(" ");
   if (
-    /n[aã]o autoriz|sem permiss|acesso negado|acesso.*restrit/i.test(message) ||
-    (!returnedAnimals.length && /software|licen[cç]|senha|login|credenc/i.test(message))
+    /n[aã]o\s+(?:autoriz|habilitad|credenciad)|sem permiss|acesso negado|acesso.*restrit|exclusiv[oa].*(?:sistema|produz)|software.*(?:inv[aá]lid|inexistent|obrigat|n[aã]o\s+(?:cadastrad|informad))/i.test(
+      message,
+    ) ||
+    (!returnedAnimals.some((animal) => text(animal.nome)) &&
+      /software|licen[cç]|senha|login|credenc|usu[aá]rio|criador/i.test(message))
   )
     throw new RegistryError(
       "access_denied",
@@ -197,8 +251,22 @@ export function parseAbczGenealogy(
       "A ABCZ retornou mais de uma ficha para a identificação. Confira o registro antes de importar.",
       409,
     );
+  if (
+    complementary &&
+    (/n[aã]o\s+(?:encontrad|localizad|exist)|registro.*inexistent/i.test(message) ||
+      (!text(primary[0].nome) &&
+        !sex(primary[0].sexo) &&
+        !/[a-z]/i.test(text(primary[0].racasigla))))
+  )
+    throw new RegistryError(
+      "not_found",
+      "A ABCZ não retornou uma ficha cadastral acessível para esse registro. Confira a identificação e a autorização da consulta.",
+      404,
+    );
   const target = primary[0],
-    all = [target, ...list(row(response.animaisDaGenealogia).AnimalParaGenealogia)];
+    all = complementary
+      ? [target, row(target.pai), row(target.mae)]
+      : [target, ...list(row(response.animaisDaGenealogia).AnimalParaGenealogia)];
   const profile = fields(target),
     pedigree: PedigreeNode[] = [];
   function visit(reference: unknown, relation: string, ancestors: Set<string>) {
@@ -234,33 +302,40 @@ export function parseAbczGenealogy(
   const sire = pedigree.find((node) => node.relation === "sire"),
     dam = pedigree.find((node) => node.relation === "dam");
   if (sire) profile.sire = sire.code;
+  else if (text(row(target.pai).nome)) profile.sire = text(row(target.pai).nome).slice(0, 160);
   if (dam) profile.dam = dam.code;
+  else if (text(row(target.mae).nome)) profile.dam = text(row(target.mae).nome).slice(0, 160);
   if (pedigree.length) profile.pedigree = pedigree;
   AnimalProfileSchema.partial().parse(profile);
   return { profile, provider: "ABCZ", sourceUrl: ABCZ_PUBLIC_URL, consultedAt: now.toISOString() };
 }
 export async function lookupAbcz(
   query: NormalizedRegistryQuery,
-  deps: { env?: Record<string, string | undefined>; fetchImpl?: typeof fetch; now?: Date } = {},
+  deps: { env?: RegistryEnv; fetchImpl?: typeof fetch; now?: Date; propertyId?: string } = {},
 ) {
-  const software = (deps.env ?? process.env).ABCZ_SOFTWARE_ID?.trim();
-  if (!software || !/^[1-9]\d{0,9}$/.test(software) || Number(software) > 2147483647)
+  const access = registryAccess(deps.propertyId, deps.env);
+  if (!access)
     throw new RegistryError(
       "not_configured",
-      "A consulta automática está aguardando a habilitação da ABCZ. Você pode preencher a ficha e consultar o portal público enquanto o acesso é liberado.",
+      "A conexão com a ABCZ está aguardando habilitação e vinculação da conta do criador a esta fazenda. Você pode preencher a ficha enquanto o acesso é liberado.",
       503,
     );
-  const method = query.mode === "rgn" ? "PesquisarAnimalSUI_GEN" : "PesquisarAnimalRGD_GEN";
-  const parameters =
-    query.mode === "rgn"
-      ? { seriealfa: query.series, rgn: query.rgn, software }
-      : {
-          raca_sigla: query.breedCode,
-          graudesangue_sigla: query.category,
-          sexo: query.sex === "male" ? "M" : "F",
-          rgd: query.rgd,
-          software,
-        };
+  // Anonymous _GEN/complementary calls can be exclusive to PRODUZ. Use the
+  // documented authenticated genealogy contract, with credentials scoped to
+  // the authorized property rather than a shared creator login for all users.
+  const method = "PesquisarGenealogia";
+  const parameters = {
+    criador_codigo: String(access.creatorCode),
+    login: access.login,
+    senha: access.password,
+    seriealfa: query.mode === "rgn" ? query.series : "",
+    rgn: query.mode === "rgn" ? query.rgn : "",
+    raca_sigla: query.mode === "rgd" ? query.breedCode : "",
+    graudesangue_sigla: query.mode === "rgd" ? query.category : "",
+    sexo: query.mode === "rgd" ? (query.sex === "male" ? "M" : "F") : "",
+    rgd: query.mode === "rgd" ? query.rgd : "",
+    software: access.software,
+  };
   const body = `<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><${method} xmlns="${namespace}">${Object.entries(
     parameters,
   )
@@ -365,16 +440,11 @@ export async function handleAnimalRegistry(
       identity = await authorizePanelRequest(request, store);
     if (!identity)
       return json({ error: "Entre novamente na sua fazenda para consultar o animal." }, 401);
-    if (!canEdit(identity.role, { kind: "animal", code: "consulta" }))
+    if (!canEdit(identity.role, { kind: "animal", code: "consulta" }) || identity.role === "worker")
       return json({ error: "Seu acesso não permite consultar esta ficha." }, 403);
     if (request.method === "GET")
       return json({
-        configured:
-          deps.configured ??
-          Boolean(
-            process.env.ABCZ_SOFTWARE_ID?.trim().match(/^[1-9]\d{0,9}$/) &&
-            Number(process.env.ABCZ_SOFTWARE_ID) <= 2147483647,
-          ),
+        configured: deps.configured ?? abczConfigured(identity.propertyId),
         publicUrl: ABCZ_PUBLIC_URL,
       });
     if (Number(request.headers.get("content-length")) > 2048)
@@ -401,7 +471,7 @@ export async function handleAnimalRegistry(
       ))
     )
       return json({ error: "Muitas consultas. Aguarde um minuto e tente novamente." }, 429);
-    return json(await (deps.lookup ?? lookupAbcz)(query));
+    return json(await (deps.lookup ?? lookupAbcz)(query, { propertyId: identity.propertyId }));
   } catch (error) {
     if (error instanceof RegistryError)
       return json(
