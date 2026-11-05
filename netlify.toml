@@ -10,10 +10,10 @@
   external_node_modules = ["ffmpeg-static"]
 
 [functions."whatsapp-process-background"]
-  included_files = ["node_modules/ffmpeg-static/ffmpeg"]
+  included_files = ["node_modules/ffmpeg-static/ffmpeg", "node_modules/ffmpeg-static/ffmpeg.exe"]
 
 [functions."whatsapp-retry-background"]
-  included_files = ["node_modules/ffmpeg-static/ffmpeg"]
+  included_files = ["node_modules/ffmpeg-static/ffmpeg", "node_modules/ffmpeg-static/ffmpeg.exe"]
 
 [build.environment]
   # O projeto usa Vite, Nitro e ESLint durante o build, mesmo quando a UI

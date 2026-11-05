@@ -32,3 +32,20 @@ jobs:
       - name: Lint
         if: always()
         run: npm run lint
+
+  windows-media:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.22.1"
+      - name: Install dependencies
+        run: npm ci --include=dev
+      - name: Test FFmpeg packaging and WhatsApp media
+        run: node --test --experimental-strip-types tests/ffmpeg-trace.test.ts tests/whatsapp-video.test.ts tests/whatsapp-media.test.ts
+      - name: Build Netlify preset and verify Windows executable
+        env:
+          NITRO_PRESET: netlify
+        run: npm run build
