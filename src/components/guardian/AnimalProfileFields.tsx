@@ -5,6 +5,7 @@ import {
   animalFieldLabels,
   animalFieldValue,
   animalFormValues,
+  sameAnimalRegistry,
   pedigreeLabel,
   type AnimalProfile,
   type PedigreeNode,
@@ -36,6 +37,7 @@ export function AnimalProfileFields({
     [loading, setLoading] = useState(false),
     [lookup, setLookup] = useState<RegistryLookup | null>(null),
     [selected, setSelected] = useState<string[]>([]),
+    [reviewedTarget, setReviewedTarget] = useState<string | null>(null),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
     [available, setAvailable] = useState<boolean | null>(null);
@@ -147,6 +149,7 @@ export function AnimalProfileFields({
     setError("");
     setNotice("");
     setLookup(null);
+    setReviewedTarget(null);
     let query;
     try {
       query = normalizeRegistryQuery(
@@ -195,9 +198,83 @@ export function AnimalProfileFields({
       if (expected === generation.current) setLoading(false);
     }
   }
+  async function importPdf(file: File) {
+    request.current?.abort();
+    const controller = new AbortController();
+    request.current = controller;
+    const expected = ++generation.current;
+    setError("");
+    setNotice("");
+    setLookup(null);
+    setReviewedTarget(null);
+    if (file.size > 5 * 1024 * 1024) {
+      setError("O PDF deve ter até 5 MB.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const response = await fetch("/api/public/farm-panel/animal-registry", {
+        method: "POST",
+        credentials: "same-origin",
+        cache: "no-store",
+        headers: { ...headers(), "content-type": "application/pdf" },
+        body: file,
+        signal: controller.signal,
+      });
+      const data = await response.json();
+      if (!response.ok) throw Error(data.error ?? "Não foi possível importar o PDF.");
+      const profile = AnimalProfileSchema.partial().parse(data.profile);
+      if (controller.signal.aborted || expected !== generation.current) return;
+      setLookup({ ...data, profile });
+      setSelected(Object.keys(animalFormValues(profile)).filter((key) => !values[key]?.trim()));
+    } catch (error) {
+      if (!controller.signal.aborted && expected === generation.current)
+        setError((error as Error).message);
+    } finally {
+      if (expected === generation.current) setLoading(false);
+    }
+  }
+  const matchingAnimals = lookup
+    ? animals.filter(
+        (animal) =>
+          sameAnimalRegistry(animal, lookup.profile) ||
+          animal.code.trim().toLowerCase() === lookup.profile.code?.trim().toLowerCase(),
+      )
+    : [];
+  const importTarget = matchingAnimals[0];
   function apply() {
     if (!lookup) return;
+    if (matchingAnimals.length > 1) {
+      setError(
+        "Mais de uma ficha corresponde ao registro. Corrija as duplicidades antes de importar.",
+      );
+      return;
+    }
+    if (
+      importTarget &&
+      (values.code !== importTarget.code || reviewedTarget !== importTarget.code)
+    ) {
+      setError("Carregue a ficha correspondente antes de aplicar os dados.");
+      return;
+    }
     const found = animalFormValues(lookup.profile);
+    if (importTarget) found.code = importTarget.code;
+    if (selected.includes("pedigree")) {
+      const roots = lookup.profile.pedigree?.filter((n) => !n.relation.includes(".")) ?? [];
+      if (
+        roots.some(
+          (root) =>
+            (selected.includes(root.relation) ? found[root.relation] : values[root.relation]) !==
+            root.code,
+        )
+      ) {
+        setError(
+          "Para aplicar a genealogia, selecione também o pai e a mãe correspondentes ao documento.",
+        );
+        return;
+      }
+    }
+
     onChange((current) => ({
       ...current,
       ...Object.fromEntries(selected.map((key) => [key, found[key]])),
@@ -294,6 +371,25 @@ export function AnimalProfileFields({
             Abrir consulta pública <ExternalLink size={15} aria-hidden="true" />
           </a>
         </div>
+        <label className="mt-4 block text-sm font-semibold text-emerald-950">
+          Importar ficha ABCZ
+          <input
+            type="file"
+            accept="application/pdf,.pdf"
+            disabled={disabled || loading}
+            aria-label="Importar ficha ABCZ"
+            className="mt-2 block w-full rounded-xl border bg-white p-3"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              event.target.value = "";
+              if (file) void importPdf(file);
+            }}
+          />
+          <span className="mt-2 block text-xs font-normal">
+            PDF digital de nascimento, até 5 MB. A importação funciona sem a conexão oficial. Revise
+            antes de salvar; nenhum ancestral entra no rebanho.
+          </span>
+        </label>
         {available === false && (
           <p role="status" className="mt-3 rounded-xl bg-white p-3 text-sm text-amber-950">
             A consulta automática está aguardando a habilitação da ABCZ. O cadastro manual e as
@@ -307,10 +403,47 @@ export function AnimalProfileFields({
         )}
         {lookup && (
           <div className="mt-4 rounded-xl border border-emerald-200 bg-white p-4">
-            <p className="font-semibold text-emerald-950">Dados encontrados na ABCZ</p>
+            <p className="font-semibold text-emerald-950">
+              {lookup.sourceKind === "pdf"
+                ? "Dados extraídos do PDF ABCZ"
+                : "Dados encontrados na ABCZ"}
+            </p>
             <p className="mt-1 text-xs text-slate-600">
               Campos já preenchidos ficam desmarcados. Selecione somente o que deseja substituir.
             </p>
+            {lookup.sourceKind === "pdf" && (
+              <p className="mt-2 text-sm">
+                Proprietário, fazenda, município e criador são os que constam no documento. RGD e
+                outros campos ausentes não são inferidos.
+              </p>
+            )}
+            {importTarget && (
+              <div className="mt-3 rounded-xl bg-amber-50 p-3 text-sm">
+                Este registro já corresponde à ficha {importTarget.code}. A importação deve
+                atualizar essa ficha.
+                <button
+                  type="button"
+                  className="mt-2 block rounded-lg border p-2 font-semibold"
+                  onClick={() => {
+                    const form = animalFormValues({
+                      ...importTarget,
+                      currentWeightKg:
+                        importTarget.weights.at(-1)?.weightKg ?? importTarget.currentWeightKg,
+                    });
+                    onChange(form);
+                    setReviewedTarget(importTarget.code);
+                    setError("");
+                    setSelected(
+                      Object.keys(animalFormValues(lookup.profile)).filter(
+                        (key) => key !== "code" && !form[key]?.trim(),
+                      ),
+                    );
+                  }}
+                >
+                  Carregar ficha de {importTarget.code} para revisão
+                </button>
+              </div>
+            )}
             <div className="mt-3 max-h-72 space-y-2 overflow-y-auto">
               {Object.entries(lookup.profile).map(([key, value]) => (
                 <label
@@ -320,7 +453,8 @@ export function AnimalProfileFields({
                   <input
                     type="checkbox"
                     className="mt-1"
-                    checked={selected.includes(key)}
+                    disabled={disabled || (key === "code" && !!importTarget)}
+                    checked={selected.includes(key) && !(key === "code" && importTarget)}
                     onChange={(event) =>
                       setSelected((current) =>
                         event.target.checked
@@ -331,7 +465,14 @@ export function AnimalProfileFields({
                   />
                   <span className="min-w-0 break-words">
                     <strong>{animalFieldLabels[key as keyof AnimalProfile]}:</strong>{" "}
-                    {animalFieldValue(key as keyof AnimalProfile, value)}
+                    {key === "pedigree"
+                      ? (value as PedigreeNode[])
+                          .map(
+                            (node) =>
+                              `${pedigreeLabel(node.relation)}: ${node.code}${node.name ? ` · ${node.name}` : ""}`,
+                          )
+                          .join("; ")
+                      : animalFieldValue(key as keyof AnimalProfile, value)}
                     {values[key] && (
                       <span className="mt-1 block text-xs text-slate-500">
                         Atual:{" "}
@@ -350,7 +491,7 @@ export function AnimalProfileFields({
               ))}
             </div>
             <p className="mt-3 text-xs text-slate-500">
-              Consulta em{" "}
+              {lookup.sourceKind === "pdf" ? "Importação em" : "Consulta em"}{" "}
               {new Date(lookup.consultedAt).toLocaleString("pt-BR", {
                 timeZone: "America/Sao_Paulo",
               })}{" "}
@@ -358,7 +499,13 @@ export function AnimalProfileFields({
             </p>
             <button
               type="button"
-              disabled={!selected.length}
+              disabled={
+                disabled ||
+                !selected.length ||
+                matchingAnimals.length > 1 ||
+                (!!importTarget &&
+                  (values.code !== importTarget.code || reviewedTarget !== importTarget.code))
+              }
               onClick={apply}
               className="mt-3 inline-flex items-center gap-2 rounded-xl bg-emerald-900 px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
             >
@@ -425,6 +572,24 @@ export function AnimalProfileFields({
             Carregar ficha existente de {existing.code}
           </button>
         )}
+      </fieldset>
+      <fieldset disabled={disabled} className="border-t pt-5">
+        <legend className="pr-3 font-semibold">Dados do documento ABCZ</legend>
+        <p className="mb-3 text-xs text-muted-foreground">
+          Informações históricas do certificado; não alteram a fazenda atual.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {(
+            [
+              "documentOwner",
+              "documentFarm",
+              "documentMunicipality",
+              "documentState",
+              "documentBreeder",
+              "documentSource",
+            ] as const
+          ).map((key) => input(key, animalFieldLabels[key]))}
+        </div>
       </fieldset>
       <fieldset disabled={disabled} className="border-t pt-5">
         <legend className="pr-3 font-semibold">Manejo e localização</legend>
