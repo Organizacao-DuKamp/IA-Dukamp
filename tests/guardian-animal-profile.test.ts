@@ -201,6 +201,7 @@ test("invalid dates, percentages, unknown fields and negative money fail without
     { ...full, carcassPercent: 101 },
     { ...full, purchasePriceCents: -1 },
     { ...full, currentWeightKg: 0 },
+    { ...full, currentWeightKg: 2001 },
     { ...full, weaningDate: "2025-02-30" },
     { ...full, propertyId: "outside" },
   ])

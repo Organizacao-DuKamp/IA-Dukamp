@@ -21,13 +21,22 @@ O serviço de produção documentado pela ABCZ é SOAP 1.1 em:
 
 `https://www.abczstat.com.br/softwareterceiros/eletro.asmx`
 
-Esta implementação usa as operações documentadas `PesquisarAnimalSUI_GEN` e `PesquisarAnimalRGD_GEN`. Ambas recebem o parâmetro `software`. Configure **ABCZ_SOFTWARE_ID** com o código atribuído/autorizado pela ABCZ para a TPEC-IA. Não há código padrão, código de outro software ou fallback que simule autorização.
+Esta implementação usa a operação autenticada **`PesquisarGenealogia`**, cujo WSDL exige `criador_codigo`, `login`, `senha`, a identificação do animal e `software`. O resultado `AnimaisComGenealogia` distingue os animais pesquisados dos ascendentes. A disponibilidade do método para a TPEC-IA e o alcance dos registros acessíveis precisam ser homologados com a ABCZ.
 
-Na Netlify, cadastrar a variável no projeto **tpec-ia**, escopo **Functions**, contexto **Production**; incluir **Deploy Previews** somente se esse acesso também estiver autorizado para testes. Depois, publicar um novo deploy. Não colocar essa configuração em variável `VITE_` nem no APK. A interface e o serviço são web: esta mudança de ficha não exige recompilar o Android.
+Os métodos `_GEN` e `PesquisarAnimalQualquerChaveComplementar` não são chamados pelo provedor: checagens de acesso sem código autorizado retornaram **MÉTODO EXCLUSIVO DO SISTEMA PRODUZ**. Esse retorno é tratado como bloqueio de acesso, nunca como inexistência do animal. O parser mantém compatibilidade com respostas complementares para validação do protocolo; isso não habilita um método restrito. Não se utiliza o identificador de outro produto para contornar a restrição.
 
-Sem um código válido configurado, a ficha completa e o preenchimento local funcionam, e o aplicativo apresenta **consulta automática aguardando habilitação** com acesso ao portal público. A consulta externa fica desativada; não se afirma que houve uma consulta bem-sucedida. A homologação de produção depende da associação aceitar o código e autorizar os registros consultados. O código precisa ser obtido com a ABCZ; não está incluído no repositório.
+Configure no projeto **tpec-ia** da Netlify, escopo **Functions**, contexto **Production**:
 
-As operações autenticadas por criador, como `PesquisarGenealogia` (login, senha e criador), são outro contrato e não são chamadas com uma credencial global para todas as fazendas. Este recurso não transmite nascimentos/comunicações à ABCZ nem emite certificados.
+- **ABCZ_SOFTWARE_ID**: código de software atribuído/autorizado pela ABCZ à TPEC-IA.
+- **ABCZ_FARM_CREDENTIALS_JSON**: segredo JSON indexado pelo UUID da fazenda do painel. Cada valor contém `creatorCode` (inteiro positivo), `login` e `password` da conta autorizada pelo criador para aquela propriedade. Exemplo de estrutura, com marcadores que devem ser substituídos: `{"UUID_DA_FAZENDA":{"creatorCode":123,"login":"LOGIN_AUTORIZADO","password":"SEGREDO_DA_CONTA"}}`.
+
+Não há código padrão ou credencial compartilhada automaticamente entre fazendas. Só vincule uma conta a uma propriedade com autorização do respectivo criador; o código local do animal não identifica a conta ABCZ. Proprietários, gerentes e técnicos com acesso à fazenda podem consultar; o perfil de trabalhador não usa a conta externa. Não envie senhas no chat nem as registre no repositório, logs, variáveis `VITE_` ou APK. Cadastre-as diretamente como segredo no ambiente do servidor.
+
+Incluir **Deploy Previews** somente se esse acesso também estiver autorizado para testes. Depois de alterar a configuração, publicar um novo deploy. A interface e o serviço são web: esta mudança de ficha não exige recompilar o Android.
+
+Sem código de software válido e conta vinculada à fazenda da sessão, a ficha completa e o preenchimento local funcionam, e o aplicativo apresenta **consulta automática aguardando habilitação** com acesso ao portal público. A consulta externa fica desativada; não se afirma que houve uma consulta bem-sucedida. A homologação de produção depende da associação aceitar o código, as credenciais e o registro consultado. Nenhuma credencial real está incluída no repositório.
+
+Este recurso apenas consulta: não transmite nascimentos/comunicações à ABCZ nem emite certificados.
 
 ## Contrato e segurança
 
@@ -36,7 +45,7 @@ As operações autenticadas por criador, como `PesquisarGenealogia` (login, senh
 - A fazenda e as permissões vêm exclusivamente da sessão. O cliente não escolhe um ID de fazenda, endpoint externo ou código de software. O endpoint e o namespace SOAP são fixos e usam HTTPS de produção.
 - XML de resposta limitado a 2 MiB, profundidade e quantidade de tags limitadas, DTD/entidades externas rejeitadas e entidades personalizadas desativadas. Não há interpretação de instruções nos dados externos.
 - Nome, sexo, nascimento, registro, raça, categoria, pelagem e parentesco são preenchidos somente quando a ABCZ os retorna. A correspondência é conferida no animal principal, nunca apenas em um ancestral ou vizinho. Resultados ambíguos são rejeitados.
-- Genealogia limitada a três gerações (até 14 ascendentes), com resolução de referências, proteção contra ciclos e sem criar animais ou transações adicionais.
+- A ficha comporta até três gerações (14 ascendentes), com proteção contra ciclos. A consulta importa somente os parentes que a fonte devolver, incluindo nomes/datas/identificações disponíveis. Avós não são inventados nem se criam animais ou transações adicionais.
 - Respostas privadas sem cache, erros públicos sem XML/credenciais e timeout de 10 segundos. Indisponibilidade, acesso negado e falta de resultado não significam inexistência do animal.
 - A ficha armazena dados declarados/importados, não uma certificação oficial. Editar os campos não preserva uma falsa marca de certificação.
 
@@ -44,12 +53,11 @@ As operações autenticadas por criador, como `PesquisarGenealogia` (login, senh
 
 `tests/guardian-animal-profile.test.ts` cobre todos os campos, compatibilidade de fichas antigas, revisão, exportação, centavos/decimais/zeros, histórico de pesos, correções, datas/limites e persistência real no PostgreSQL de integração.
 
-`tests/guardian-abcz.test.ts` usa respostas sintéticas baseadas no WSDL oficial para testar normalização de série/RGN e RGD, correspondência exata, genealogia, ciclos, ambiguidade, XML malicioso/oversize, falta de habilitação, acesso negado, sessão revogada, CSRF, limites e isolamento entre navegador/app. Esses testes não usam um código de software real nem fazem consultas em nome de terceiros. A verificação ao vivo deve ocorrer após a ABCZ liberar o acesso.
+`tests/guardian-abcz.test.ts` usa respostas sintéticas baseadas no WSDL oficial para testar a herança dos dados complementares, normalização de série/RGN e RGD, correspondência exata, genealogia, ciclos, ambiguidade, XML malicioso/oversize, falta de habilitação, método exclusivo do PRODUZ, acesso negado, sessão revogada, CSRF, limites e isolamento entre navegador/app. Os testes automatizados não usam um código de software real nem fazem consultas em nome de terceiros. As checagens diagnósticas de acesso sem código autorizado não substituem a homologação: a consulta real com autorização da TPEC-IA precisa ser verificada após a ABCZ liberar o acesso.
 
 ## Referências oficiais consultadas
 
 - [Consulta pública da ABCZ](https://www.abcz.org.br/produtos-e-servicos/consulta-publica-de-animais)
 - [Contrato WSDL de produção](https://www.abczstat.com.br/softwareterceiros/eletro.asmx?WSDL)
-- [PesquisarAnimalSUI_GEN](https://www.abczstat.com.br/softwareterceiros/eletro.asmx?op=PesquisarAnimalSUI_GEN)
-- [PesquisarAnimalRGD_GEN](https://www.abczstat.com.br/softwareterceiros/eletro.asmx?op=PesquisarAnimalRGD_GEN)
+- [PesquisarAnimalQualquerChaveComplementar](https://www.abczstat.com.br/softwareterceiros/eletro.asmx?op=PesquisarAnimalQualquerChaveComplementar)
 - [PesquisarGenealogia](https://www.abczstat.com.br/softwareterceiros/eletro.asmx?op=PesquisarGenealogia)
