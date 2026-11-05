@@ -1,0 +1,502 @@
+[
+  {
+    "text": "MINISTÉRIO DA AGRICULTURA E PECUÁRIA",
+    "x": 28.5,
+    "y": 40
+  },
+  {
+    "text": "ASSOCIAÇÃO BRASILEIRA DOS CRIADORES DE ZEBU",
+    "x": 28.5,
+    "y": 56
+  },
+  {
+    "text": "REGISTRO NO MINISTÉRIO DA AGRICULTURA E PECUÁRIA SOB Nº BR 06",
+    "x": 28.5,
+    "y": 72
+  },
+  {
+    "text": "Serviço de Registro Genealógico das Raças Zebuínas",
+    "x": 73.5,
+    "y": 97.60000000000002
+  },
+  {
+    "text": "REGISTRO GENEALÓGICO DE NASCIMENTO",
+    "x": 563.5,
+    "y": 95.60000000000002
+  },
+  {
+    "text": "Certificado de Registro Genealógico",
+    "x": 73.5,
+    "y": 109.60000000000002
+  },
+  {
+    "text": "Data limite para RGD:",
+    "x": 577.61,
+    "y": 107.60000000000002
+  },
+  {
+    "text": "30/04/2028",
+    "x": 655.85,
+    "y": 107.60000000000002
+  },
+  {
+    "text": "Téc. RGN: TECNICO",
+    "x": 74,
+    "y": 361
+  },
+  {
+    "text": "EXEMPLO",
+    "x": 74,
+    "y": 366
+  },
+  {
+    "text": "Data RGN: 25/04/2024",
+    "x": 74,
+    "y": 371
+  },
+  {
+    "text": "Nome",
+    "x": 73.5,
+    "y": 135.2
+  },
+  {
+    "text": "Paterna",
+    "x": 217.5,
+    "y": 135.2
+  },
+  {
+    "text": "DUKN 340 M",
+    "x": 691.78,
+    "y": 135.2
+  },
+  {
+    "text": "ANIMAL EXEMPLO",
+    "x": 73.5,
+    "y": 144.2
+  },
+  {
+    "text": "3898 FIV KATISPERA",
+    "x": 220,
+    "y": 144.2
+  },
+  {
+    "text": "REM DANUT",
+    "x": 364,
+    "y": 144.2
+  },
+  {
+    "text": "REM RICKET",
+    "x": 508,
+    "y": 144.2
+  },
+  {
+    "text": "QUARK COL",
+    "x": 652,
+    "y": 144.2
+  },
+  {
+    "text": "Registro: DUKN 340",
+    "x": 73.5,
+    "y": 152.2
+  },
+  {
+    "text": "KAT 3898",
+    "x": 220,
+    "y": 152.2
+  },
+  {
+    "text": "REMC 8053",
+    "x": 364,
+    "y": 152.2
+  },
+  {
+    "text": "REM 4237",
+    "x": 508,
+    "y": 152.2
+  },
+  {
+    "text": "L4810",
+    "x": 652,
+    "y": 152.2
+  },
+  {
+    "text": "NONA",
+    "x": 652,
+    "y": 169.2
+  },
+  {
+    "text": "REM T2666",
+    "x": 652,
+    "y": 177.2
+  },
+  {
+    "text": "Raça",
+    "x": 73.5,
+    "y": 186.2
+  },
+  {
+    "text": "NELORE",
+    "x": 73.5,
+    "y": 193.2
+  },
+  {
+    "text": "REM PAPRICA",
+    "x": 508,
+    "y": 193.2
+  },
+  {
+    "text": "MOYNE",
+    "x": 652,
+    "y": 193.2
+  },
+  {
+    "text": "REM 3536",
+    "x": 508,
+    "y": 201.2
+  },
+  {
+    "text": "REMC 222",
+    "x": 652,
+    "y": 201.2
+  },
+  {
+    "text": "Categoria",
+    "x": 73.5,
+    "y": 210.2
+  },
+  {
+    "text": "Pelagem",
+    "x": 165.5,
+    "y": 210.2
+  },
+  {
+    "text": "PO",
+    "x": 73.5,
+    "y": 217.2
+  },
+  {
+    "text": "BR",
+    "x": 165.5,
+    "y": 217.2
+  },
+  {
+    "text": "NAIA TE",
+    "x": 652,
+    "y": 217.2
+  },
+  {
+    "text": "REM T2557",
+    "x": 652,
+    "y": 225.2
+  },
+  {
+    "text": "Data de Nascimento",
+    "x": 73.5,
+    "y": 234.2
+  },
+  {
+    "text": "Sexo",
+    "x": 165.5,
+    "y": 234.2
+  },
+  {
+    "text": "15/07/2023",
+    "x": 73.5,
+    "y": 241.2
+  },
+  {
+    "text": "M",
+    "x": 165.5,
+    "y": 241.2
+  },
+  {
+    "text": "05 FIV LA KATISPERA",
+    "x": 364,
+    "y": 241.2
+  },
+  {
+    "text": "REM USP",
+    "x": 508,
+    "y": 241.2
+  },
+  {
+    "text": "REM QUISCO",
+    "x": 652,
+    "y": 241.2
+  },
+  {
+    "text": "KATL 5",
+    "x": 364,
+    "y": 248.2
+  },
+  {
+    "text": "REM 5531",
+    "x": 508,
+    "y": 249.2
+  },
+  {
+    "text": "REM 3882",
+    "x": 652,
+    "y": 249.2
+  },
+  {
+    "text": "Proprietário",
+    "x": 73.5,
+    "y": 258.2
+  },
+  {
+    "text": "PROPRIETARIO EXEMPLO",
+    "x": 73.5,
+    "y": 265.2
+  },
+  {
+    "text": "REM REGIS",
+    "x": 652,
+    "y": 265.2
+  },
+  {
+    "text": "REMC 2117",
+    "x": 652,
+    "y": 273.2
+  },
+  {
+    "text": "Fazenda",
+    "x": 73.5,
+    "y": 282.2
+  },
+  {
+    "text": "FAZENDA DO DOCUMENTO",
+    "x": 73.5,
+    "y": 289.2
+  },
+  {
+    "text": "8681 KATISPERA",
+    "x": 508,
+    "y": 289.2
+  },
+  {
+    "text": "DP7156",
+    "x": 508,
+    "y": 297.2
+  },
+  {
+    "text": "Município",
+    "x": 73.5,
+    "y": 306.2
+  },
+  {
+    "text": "UF",
+    "x": 165.5,
+    "y": 306.2
+  },
+  {
+    "text": "MONTE APRAZÍVEL",
+    "x": 73.5,
+    "y": 313.2
+  },
+  {
+    "text": "SP",
+    "x": 165.5,
+    "y": 313.2
+  },
+  {
+    "text": "Criador",
+    "x": 73.5,
+    "y": 330.2
+  },
+  {
+    "text": "PROPRIETARIO EXEMPLO",
+    "x": 73.5,
+    "y": 337.2
+  },
+  {
+    "text": "Materna",
+    "x": 217.5,
+    "y": 338.2
+  },
+  {
+    "text": "SULAMITA DA TAMBORI",
+    "x": 220,
+    "y": 346.7
+  },
+  {
+    "text": "KAYULE DA QUIL",
+    "x": 364,
+    "y": 346.7
+  },
+  {
+    "text": "7176/04 PO",
+    "x": 508,
+    "y": 346.7
+  },
+  {
+    "text": "QUARK COL",
+    "x": 652,
+    "y": 346.7
+  },
+  {
+    "text": "Observações",
+    "x": 73.5,
+    "y": 354.7
+  },
+  {
+    "text": "DUKN 28",
+    "x": 220,
+    "y": 354.7
+  },
+  {
+    "text": "QUI 8125",
+    "x": 364,
+    "y": 354.7
+  },
+  {
+    "text": "QUIL 7176",
+    "x": 508,
+    "y": 354.7
+  },
+  {
+    "text": "L4810",
+    "x": 652,
+    "y": 354.7
+  },
+  {
+    "text": "498/01 LA PERDIZES",
+    "x": 652,
+    "y": 370.7
+  },
+  {
+    "text": "QUIP 498",
+    "x": 652,
+    "y": 378.7
+  },
+  {
+    "text": "JULNA DA QUIL",
+    "x": 508,
+    "y": 394.7
+  },
+  {
+    "text": "FACTIVEL TE DA QUIL",
+    "x": 652,
+    "y": 394.7
+  },
+  {
+    "text": "QUIL 15633",
+    "x": 508,
+    "y": 402.7
+  },
+  {
+    "text": "QUI 6601",
+    "x": 652,
+    "y": 402.7
+  },
+  {
+    "text": "ERMOSA TE DA QUIL",
+    "x": 652,
+    "y": 418.7
+  },
+  {
+    "text": "QUI 6506",
+    "x": 652,
+    "y": 426.7
+  },
+  {
+    "text": "MAHATY4 FIV PORT",
+    "x": 364,
+    "y": 442.7
+  },
+  {
+    "text": "FAJARDO DA GB",
+    "x": 508,
+    "y": 442.7
+  },
+  {
+    "text": "IDILIO DA YB",
+    "x": 652,
+    "y": 442.7
+  },
+  {
+    "text": "DABP 5984",
+    "x": 364,
+    "y": 450.7
+  },
+  {
+    "text": "I3165",
+    "x": 508,
+    "y": 450.7
+  },
+  {
+    "text": "E8080",
+    "x": 652,
+    "y": 450.7
+  },
+  {
+    "text": "BAILARINA DA GB",
+    "x": 652,
+    "y": 466.7
+  },
+  {
+    "text": "CS9414",
+    "x": 652,
+    "y": 474.7
+  },
+  {
+    "text": "FANNY TE DA J.GALERA",
+    "x": 508,
+    "y": 490.7
+  },
+  {
+    "text": "NAMBI MATA VELHA",
+    "x": 652,
+    "y": 490.7
+  },
+  {
+    "text": "EE3521",
+    "x": 508,
+    "y": 498.7
+  },
+  {
+    "text": "F8800",
+    "x": 652,
+    "y": 498.7
+  },
+  {
+    "text": "OPERA DA S.CRUZ",
+    "x": 652,
+    "y": 514.7
+  },
+  {
+    "text": "CV3778",
+    "x": 652,
+    "y": 522.7
+  },
+  {
+    "text": "Emissão Digital: 01/05/2024",
+    "x": 93.5,
+    "y": 541.7
+  },
+  {
+    "text": "ASSINATURA EXEMPLO",
+    "x": 196.86,
+    "y": 541.7
+  },
+  {
+    "text": "ASSINATURA EXEMPLO",
+    "x": 321.13,
+    "y": 541.7
+  },
+  {
+    "text": "Impressão: 09/01/2026",
+    "x": 93.5,
+    "y": 553.7
+  },
+  {
+    "text": "Superintendente do SRG Adjunto",
+    "x": 192.4,
+    "y": 551.7
+  },
+  {
+    "text": "Superintendente do SRG",
+    "x": 325.57,
+    "y": 551.7
+  }
+]

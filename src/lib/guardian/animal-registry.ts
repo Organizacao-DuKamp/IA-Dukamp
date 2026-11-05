@@ -29,6 +29,7 @@ export type NormalizedRegistryQuery =
 export type RegistryLookup = {
   profile: Partial<AnimalProfile>;
   provider: "ABCZ";
+  sourceKind?: "pdf";
   sourceUrl: string;
   consultedAt: string;
 };

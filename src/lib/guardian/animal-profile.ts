@@ -5,7 +5,7 @@ const weight = z.number().finite().positive().max(2000);
 const money = z.number().int().nonnegative().max(1e12);
 export const PedigreeNodeSchema = z
   .object({
-    relation: z.string().regex(/^(?:sire|dam)(?:\.(?:sire|dam)){0,2}$/),
+    relation: z.string().regex(/^(?:sire|dam)(?:\.(?:sire|dam)){0,3}$/),
     code: text,
     name: text.optional(),
     registrySeries: text.optional(),
@@ -29,10 +29,17 @@ export const AnimalProfileShape = {
   rgn: text.optional(),
   rgd: text.optional(),
   category: text.optional(),
+  documentOwner: text.optional(),
+  documentFarm: text.optional(),
+  documentMunicipality: text.optional(),
+  documentState: text.optional(),
+  documentBreeder: text.optional(),
+  documentSource: text.optional(),
+
   sire: text.optional(),
   dam: text.optional(),
   kinship: text.optional(),
-  pedigree: z.array(PedigreeNodeSchema).max(14).optional(),
+  pedigree: z.array(PedigreeNodeSchema).max(30).optional(),
   status: z.enum(["active", "sold", "dead", "transferred"]).optional(),
   sex: z.enum(["male", "female", "unknown"]).optional(),
   breed: text.optional(),
@@ -78,6 +85,13 @@ export const animalFieldLabels: Record<keyof AnimalProfile, string> = {
   rgn: "RGN",
   rgd: "RGD",
   category: "Categoria",
+  documentOwner: "Proprietário (documento)",
+  documentFarm: "Fazenda (documento)",
+  documentMunicipality: "Município (documento)",
+  documentState: "UF (documento)",
+  documentBreeder: "Criador (documento)",
+  documentSource: "Fonte (documento)",
+
   sire: "Pai",
   dam: "Mãe",
   kinship: "Parentesco",
@@ -196,4 +210,20 @@ export function animalFormValues(profile: Partial<AnimalProfile>) {
       ];
     }),
   );
+}
+
+/** A series is part of the identity: DKN and DUKN must never be conflated. */
+export function sameAnimalRegistry(a: Partial<AnimalProfile>, b: Partial<AnimalProfile>) {
+  const identity = (p: Partial<AnimalProfile>) => {
+    const combined = (p.registry || p.code || "")
+      .toUpperCase()
+      .match(/^([A-Z]{1,6})[ .-]+(\d+[A-Z]?)$/);
+    const series = (p.registrySeries || combined?.[1] || "").trim().toUpperCase();
+    const rgn = (p.rgn || combined?.[2] || "")
+      .trim()
+      .toUpperCase()
+      .replace(/^0+(?=\d)/, "");
+    return series && rgn ? `${series}:${rgn}` : null;
+  };
+  return !!identity(a) && identity(a) === identity(b);
 }

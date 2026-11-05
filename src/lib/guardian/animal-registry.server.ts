@@ -1,3 +1,4 @@
+import { importAbczPdf, MAX_ABCZ_PDF } from "./abcz-pdf.server.ts";
 import { XMLParser, XMLValidator } from "fast-xml-parser";
 import { z } from "zod";
 import {
@@ -432,7 +433,8 @@ export async function handleAnimalRegistry(
     return json({ error: "Solicitação não autorizada." }, 403);
   if (
     request.method === "POST" &&
-    !request.headers.get("content-type")?.startsWith("application/json")
+    !request.headers.get("content-type")?.startsWith("application/json") &&
+    request.headers.get("content-type") !== "application/pdf"
   )
     return json({ error: "Envie dados JSON." }, 415);
   try {
@@ -447,6 +449,45 @@ export async function handleAnimalRegistry(
         configured: deps.configured ?? abczConfigured(identity.propertyId),
         publicUrl: ABCZ_PUBLIC_URL,
       });
+    if (request.headers.get("content-type") === "application/pdf") {
+      if (
+        !(await store.attempt(
+          hashToken("animal-registry:" + identity.propertyId + ":" + identity.phone),
+        ))
+      )
+        return json({ error: "Muitas importações. Aguarde um minuto." }, 429);
+      if (Number(request.headers.get("content-length")) > MAX_ABCZ_PDF)
+        return json({ error: "O PDF deve ter até 5 MB." }, 413);
+      const reader = request.body?.getReader();
+      if (!reader) return json({ error: "Envie o PDF." }, 400);
+      const chunks: Uint8Array[] = [];
+      let length = 0;
+      try {
+        while (true) {
+          const part = await reader.read();
+          if (part.done) break;
+          length += part.value.byteLength;
+          if (length > MAX_ABCZ_PDF) {
+            await reader.cancel();
+            return json({ error: "O PDF deve ter até 5 MB." }, 413);
+          }
+          chunks.push(part.value);
+        }
+      } finally {
+        reader.releaseLock();
+      }
+      try {
+        return json(await importAbczPdf(new Uint8Array(Buffer.concat(chunks))));
+      } catch {
+        return json(
+          {
+            error:
+              "Não foi possível ler esse certificado. Use o PDF digital ABCZ de nascimento com texto e árvore de quatro gerações; outros layouts e digitalizações precisam de preenchimento manual.",
+          },
+          422,
+        );
+      }
+    }
     if (Number(request.headers.get("content-length")) > 2048)
       return json({ error: "Solicitação muito grande." }, 413);
     const raw = await request.text();

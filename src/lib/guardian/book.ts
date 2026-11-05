@@ -28,6 +28,7 @@ import { localDateForTimeZone } from "../whatsapp/proactive.ts";
 import { ledgerForTotals, ledgerPeriod } from "./finance.ts";
 import {
   animalFieldLabels,
+  sameAnimalRegistry,
   animalFieldValue,
   animalClearableFields,
   pedigreeLabel,
@@ -281,6 +282,11 @@ export function applyFarmAction(
     case "animal": {
       const { kind: _kind, clear = [], ...attrs } = action;
       const prior = book.animals.find((a) => fold(a.code) === fold(action.code));
+      const candidate = { ...prior, ...attrs };
+      if (book.animals.some((a) => a !== prior && sameAnimalRegistry(a, candidate)))
+        throw new Error(
+          "Esse registro ABCZ já pertence a outra ficha da fazenda. Carregue a ficha existente para atualizar sem duplicar.",
+        );
       if (clear.some((key) => !animalClearableFields.includes(key) || attrs[key] !== undefined))
         throw new Error("Confira os campos: não é possível limpar e preencher o mesmo dado.");
       if (action.birthDate && action.birthDate > localDay)

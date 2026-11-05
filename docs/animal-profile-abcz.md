@@ -45,7 +45,7 @@ Este recurso apenas consulta: não transmite nascimentos/comunicações à ABCZ 
 - A fazenda e as permissões vêm exclusivamente da sessão. O cliente não escolhe um ID de fazenda, endpoint externo ou código de software. O endpoint e o namespace SOAP são fixos e usam HTTPS de produção.
 - XML de resposta limitado a 2 MiB, profundidade e quantidade de tags limitadas, DTD/entidades externas rejeitadas e entidades personalizadas desativadas. Não há interpretação de instruções nos dados externos.
 - Nome, sexo, nascimento, registro, raça, categoria, pelagem e parentesco são preenchidos somente quando a ABCZ os retorna. A correspondência é conferida no animal principal, nunca apenas em um ancestral ou vizinho. Resultados ambíguos são rejeitados.
-- A ficha comporta até três gerações (14 ascendentes), com proteção contra ciclos. A consulta importa somente os parentes que a fonte devolver, incluindo nomes/datas/identificações disponíveis. Avós não são inventados nem se criam animais ou transações adicionais.
+- A ficha comporta até quatro gerações (30 ascendentes), com proteção contra ciclos. A consulta importa somente os parentes que a fonte devolver, incluindo nomes/datas/identificações disponíveis. Avós não são inventados nem se criam animais ou transações adicionais.
 - Respostas privadas sem cache, erros públicos sem XML/credenciais e timeout de 10 segundos. Indisponibilidade, acesso negado e falta de resultado não significam inexistência do animal.
 - A ficha armazena dados declarados/importados, não uma certificação oficial. Editar os campos não preserva uma falsa marca de certificação.
 
@@ -61,3 +61,21 @@ Este recurso apenas consulta: não transmite nascimentos/comunicações à ABCZ 
 - [Contrato WSDL de produção](https://www.abczstat.com.br/softwareterceiros/eletro.asmx?WSDL)
 - [PesquisarAnimalQualquerChaveComplementar](https://www.abczstat.com.br/softwareterceiros/eletro.asmx?op=PesquisarAnimalQualquerChaveComplementar)
 - [PesquisarGenealogia](https://www.abczstat.com.br/softwareterceiros/eletro.asmx?op=PesquisarGenealogia)
+
+## Importação de certificado PDF ABCZ
+
+Em **Rebanho e lotes → Gerenciar → Cadastrar animal → Importar ficha ABCZ**, escolha um PDF digital de até 5 MiB. Funciona sem credenciais ABCZ, para proprietários, gerentes e técnicos autenticados. O upload usa o mesmo endpoint, autorização, proteção CSRF e limite persistente da consulta, com `Content-Type: application/pdf`; a fazenda vem da sessão. A leitura não grava nada e o arquivo não é retido nem enviado a serviços de IA.
+
+O formato validado é o certificado digital de **Registro Genealógico de Nascimento**, uma página horizontal de 842 × 595 pontos, com colunas de quatro gerações. Foram conferidos visualmente o PDF fornecido, as posições de todos os parentes e as duas células vazias do ramo paterno. Seu registro é DUKN 340; há 28 ascendentes (30 posições possíveis). Um mesmo ancestral pode aparecer em caminhos diferentes; os caminhos `sire.dam.sire` etc. preservam cada vínculo. O extrator usa posições, nunca a sequência corrida do texto. Modelos diferentes, digitalizações sem texto, certificados RGD, células incompletas e layouts não reconhecidos são rejeitados com orientação para preenchimento manual. Não há OCR nem inferência de conteúdo ausente.
+
+Nome, registro, série, RGN, raça, categoria, nascimento, pelagem, sexo, observações e genealogia disponíveis são apresentados para seleção e revisão. O PDF de exemplo não contém RGD: ele fica ausente. Identificações dos ancestrais são conservadas literalmente, sem tentar decompor códigos antigos em série/RGN/RGD. Proprietário, fazenda, município, UF, criador e fonte ficam em campos opcionais `documentOwner`, `documentFarm`, `documentMunicipality`, `documentState`, `documentBreeder`, `documentSource`, explicitamente rotulados **(documento)**. Não alteram cadastro, localização, responsável ou propriedade atual.
+
+Campos já preenchidos começam desmarcados. Havendo ficha com o mesmo código ou série + RGN, a revisão pede carregar essa ficha antes de aplicar os campos; seu código local é preservado. O servidor rejeita uma segunda ficha com a mesma série + RGN. DKN e DUKN são séries distintas. A aplicação da genealogia exige pais correspondentes; editar um pai depois continua removendo seu ramo importado. Ancestrais nunca são cadastrados como integrantes do rebanho, e não há movimentações de estoque/financeiro.
+
+`tests/guardian-abcz-pdf.test.ts` verifica o layout real com dados pessoais substituídos, leitura de PDF sintético completo, 28 caminhos, repetição de ancestral em ramos diferentes, células vazias, quatro gerações na persistência, preservação de manejo, duplicatas, sessão navegador/app, CSRF, permissão, limite de upload e ausência de gravação na extração. O PDF original foi usado localmente e não foi incluído no repositório.
+
+## Viabilidade da consulta pública (05/11/2026)
+
+A página oficial pública informa série + RGN e renderiza um formulário POST para `/produtos-e-servicos/consulta-publica-de-animais-ajax`, tipo `identificacao-unica`. Há reCAPTCHA em cada formulário e o botão Buscar inicia desabilitado. Isso exige interação legítima com a página; não foi implementada resolução automática ou contorno do desafio.
+
+Foram examinados o HTML público e os formatos DKN 401 / DUKN 401. As tentativas HTTP sem desafio resolvido não produziram resultado válido neste ambiente. Portanto **a raspagem e os dois animais permanecem não validados**; timeout/bloqueio não significa animal inexistente. Não se deve converter DKN em DUKN automaticamente nem habilitar scraping em produção com base nisso. O fluxo suportado é abrir a consulta pública manualmente, obter o certificado e importar o PDF compatível; a integração autenticada continua dependendo da homologação ABCZ.
