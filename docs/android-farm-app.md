@@ -14,6 +14,16 @@ A fila usa deduplicação, leases, revalidação imediatamente antes do envio, r
 
 O Android combina FCM, WorkManager periódico (mínimo de 15 minutos, sujeito ao sistema) e atualização ao abrir o app. Os horários sincronizados são agendados via AlarmManager. O modo alarme usa serviço de reprodução em primeiro plano, som de alarme, vibração e ações para parar/adiar. Uma tela privada pode aparecer sobre o bloqueio quando o Android permitir. Reinício, mudança de hora/fuso e concessão da permissão de alarme provocam uma reconciliação local.
 
+### Confiabilidade da entrega (Android 1.0.1)
+
+- O sinal de tarefa vencendo usa trabalho urgente independente da sincronização normal. Não herda a fila nem o backoff de uma tentativa anterior. Sincronizações normais são agrupadas, e filas legadas são canceladas na atualização.
+- Uma sincronização não cancela as notificações de tarefas já entregues. O cancelamento de um PendingIntent não pode alterar os extras de um alarme em trânsito.
+- A janela de inclusão de novos horários da API continua em 5 minutos. Um horário já salvo e ainda presente em `activeKeys` pode ser mantido por até 1 hora de atraso local. O disparo exige que ainda não tenha sido entregue; manter o item entregue evita interromper um alarme que começou a tocar com atraso. Cancelamentos e revogações têm prioridade, e não há repetição de alarmes entregues. O teste local sobrevive a uma sincronização concorrente.
+- Ao abrir ou atualizar o app, o token do Firebase é consultado novamente. Falhas temporárias de registro e tokens removidos pelo servidor podem se recuperar sem desativar e reativar os lembretes. A API informa a disponibilidade real do token; erros de sincronização ficam visíveis no painel.
+- O app mostra volume de alarme, acesso aos horários exatos e restrições de bateria. Se o toque padrão falhar, tenta um som incluído no APK. O volume e o Não Perturbe do sistema são respeitados.
+
+Um recibo `sent` no servidor significa que o FCM aceitou a mensagem; não confirma recebimento, sincronização ou reprodução no aparelho. Para verificar a entrega completa, usar o teste local e o roteiro físico abaixo. Atualizar somente o backend não corrige o Android já instalado.
+
 ## Dados e implantação
 
 Aplicar a migração `supabase/migrations/20261103165643_guardian_android_reminders.sql` antes de publicar o backend que registra dispositivos. Ela cria `guardian_app_devices`, `guardian_app_push_jobs`, as funções `guardian_app_*` e um trigger de mudanças da agenda. É aditiva, com RLS habilitada e acesso restrito a `service_role`; não há políticas para clientes anônimos ou autenticados do Supabase.
@@ -36,5 +46,7 @@ Publicar a `main` na Netlify pelo fluxo Git já existente. As duas funções de 
 `tests/guardian-app.test.ts` testa o snapshot pessoal, o limite de 128 horários, cadastro/autorização/rotação, SQL real em PGlite, leases, cancelamento, alteração de revisão, revogação, OAuth e conteúdo do FCM com transporte simulado. Os testes não enviam notificações reais nem mensagens de WhatsApp.
 
 `android/app/src/test/.../ReminderPolicyTest.kt` testa deduplicação, janela de disparo, expiração de sessão, conciliação de snapshots, cancelamento, adiamento e troca de fazenda. O workflow `.github/workflows/android-app.yml` compila o APK, executa os testes e o lint Android, e publica os relatórios como artefatos de validação.
+
+`ReminderWorkTest.kt` verifica com WorkManager/Robolectric que um aviso urgente passa mesmo com a sincronização anterior bloqueada, que sinais normais não criam dependências ilimitadas e que atualização/logout removem trabalhos antigos. `AlarmPendingIntentTest.kt` verifica que o cancelamento não altera o horário de um alarme em trânsito. Esses testes usam API 28; a compilação continua usando SDK 36.
 
 Antes de distribuir, executar o roteiro de aparelho real em `android/README.md` com o projeto Firebase definitivo: aplicativo fechado, tela bloqueada, economia de bateria, reinício, notificações negadas, horários exatos negados, FCM com troca/cancelamento, dois alarmes simultâneos e logout. Compilação e testes unitários não substituem a verificação de som e entrega em aparelho físico.

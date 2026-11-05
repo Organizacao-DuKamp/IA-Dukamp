@@ -12,17 +12,21 @@ import java.time.Instant
 
 object ReminderEngine {
     fun exact(context: Context) = Build.VERSION.SDK_INT < 31 || context.getSystemService(AlarmManager::class.java).canScheduleExactAlarms()
-    private fun intent(context: Context, key: String, target: Long) = PendingIntent.getBroadcast(context, 0,
+    private fun intent(context: Context, key: String, target: Long, flags: Int = PendingIntent.FLAG_UPDATE_CURRENT) = PendingIntent.getBroadcast(context, 0,
         Intent(context, AlarmReceiver::class.java).setAction("br.com.tpecia.ALARM").setData(Uri.parse("tpec://alarm/$key"))
-            .putExtra("key", key).putExtra("target", target), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-    fun cancel(context: Context, key: String) {
-        context.getSystemService(AlarmManager::class.java).cancel(intent(context, key, 0))
-        context.getSystemService(android.app.NotificationManager::class.java).cancel(key, 1)
+            .putExtra("key", key).putExtra("target", target), flags or PendingIntent.FLAG_IMMUTABLE)
+    fun cancel(context: Context, key: String, clearNotification: Boolean = true) {
+        // FLAG_UPDATE_CURRENT here used to overwrite the target of an alarm
+        // already being delivered, turning a valid receiver intent into target=0.
+        intent(context, key, 0, PendingIntent.FLAG_NO_CREATE)?.let {
+            context.getSystemService(AlarmManager::class.java).cancel(it)
+        }
+        if (clearNotification) context.getSystemService(android.app.NotificationManager::class.java).cancel(key, 1)
     }
     @SuppressLint("ScheduleExactAlarm", "MissingPermission") // Guarded by exact() and a SecurityException fallback.
     private fun schedule(context: Context, key: String, target: Long, mode: String) {
         val alarms = context.getSystemService(AlarmManager::class.java)
-        val at = maxOf(target, System.currentTimeMillis() + 500); val action = intent(context, key, target)
+        val at = maxOf(target, System.currentTimeMillis() + 500); val action = intent(context, key, target)!!
         try {
             if (exact(context)) {
                 if (mode == "alarm") {
@@ -36,9 +40,8 @@ object ReminderEngine {
         val state = DeviceStore.read(context); val now = System.currentTimeMillis()
         for (reminder in ReminderPolicy.objects(state.optJSONArray("reminders"))) {
             val key = reminder.getString("key"); val target = ReminderPolicy.target(state, reminder)
-            cancel(context, key)
             if (state.optBoolean("enabled") && ReminderPolicy.time(state.optString("sessionExpiresAt")) > now &&
-                target >= now - ReminderPolicy.GRACE_MS && state.optJSONObject("delivered")?.optLong(key, -1) != target)
+                target >= now - ReminderPolicy.LOCAL_GRACE_MS && state.optJSONObject("delivered")?.optLong(key, -1) != target)
                 schedule(context, key, target, state.optString("mode", "notification"))
         }
     }
@@ -46,9 +49,14 @@ object ReminderEngine {
         val old = DeviceStore.read(context)
         if (old.optString("token") != token || old.optString("generation") != generation || !old.optBoolean("enabled")) return@synchronized
         val next = ReminderPolicy.reconcile(old, snapshot) ?: return@synchronized
-        next.put("lastSync", Instant.now().toString()).remove("error")
+        next.put("lastSync", Instant.now().toString()).remove("syncError")
         val keys = ReminderPolicy.objects(next.optJSONArray("reminders")).map { it.getString("key") }.toSet()
-        for (reminder in ReminderPolicy.objects(old.optJSONArray("reminders"))) if (!keys.contains(reminder.getString("key"))) cancel(context, reminder.getString("key"))
+        val active = snapshot.getJSONArray("activeKeys").let { array -> (0 until array.length()).map { array.getString(it) }.toSet() } + keys
+        for (reminder in ReminderPolicy.objects(old.optJSONArray("reminders"))) {
+            val key = reminder.getString("key")
+            if (!keys.contains(key)) cancel(context, key, clearNotification = !active.contains(key))
+        }
+        old.optJSONObject("delivered")?.keys()?.forEach { key -> if (!active.contains(key)) cancel(context, key) }
         DeviceStore.write(context, next)
         context.sendBroadcast(Intent("br.com.tpecia.TASKS_CHANGED").setPackage(context.packageName))
         reschedule(context)
@@ -56,6 +64,7 @@ object ReminderEngine {
     fun clear(context: Context) = synchronized(DeviceStore.lock) {
         val old = DeviceStore.read(context)
         for (item in ReminderPolicy.objects(old.optJSONArray("reminders"))) cancel(context, item.getString("key"))
+        old.optJSONObject("delivered")?.keys()?.forEach { key -> cancel(context, key) }
         DeviceStore.write(context, JSONObject()); context.stopService(Intent(context, AlarmService::class.java)); ReminderWorker.cancel(context)
     }
     fun claim(context: Context, key: String, target: Long): JSONObject? = synchronized(DeviceStore.lock) {
@@ -75,7 +84,7 @@ object ReminderEngine {
     }
     fun test(context: Context) = synchronized(DeviceStore.lock) {
         val state = DeviceStore.read(context); if (!state.optBoolean("enabled")) return@synchronized
-        val at = System.currentTimeMillis() + 5000; val key = "f".repeat(64)
+        val at = System.currentTimeMillis() + 5000; val key = ReminderPolicy.TEST_KEY
         val reminders = JSONArray(ReminderPolicy.objects(state.optJSONArray("reminders")).filter { it.optString("key") != key })
         reminders.put(JSONObject().put("key", key).put("id", "test").put("title", "Teste de lembrete da TPEC-IA").put("dueAt", Instant.ofEpochMilli(at).toString()))
         state.put("reminders", reminders); DeviceStore.write(context, state); schedule(context, key, at, state.optString("mode"))

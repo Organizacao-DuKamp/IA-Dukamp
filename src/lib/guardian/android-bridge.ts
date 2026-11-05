@@ -4,6 +4,9 @@ export type AndroidReminderStatus = {
   notifications: boolean;
   exactAlarms: boolean;
   fullScreen: boolean;
+  alarmVolume?: number;
+  backgroundRestricted?: boolean;
+  batteryOptimized?: boolean;
   pushAvailable: boolean;
   pushConfigured: boolean;
   scheduled: number;
@@ -23,7 +26,10 @@ export function androidCommand(
   command:
     | { type: "status" | "sync" | "disconnect" | "test" }
     | { type: "connect"; mode: "notification" | "alarm" }
-    | { type: "permission"; permission: "notifications" | "exact" | "fullscreen" },
+    | {
+        type: "permission";
+        permission: "notifications" | "exact" | "fullscreen" | "sound" | "battery";
+      },
 ) {
   if (!nativeAndroid()) return false;
   window.TpecAndroid!.postMessage(JSON.stringify(command));

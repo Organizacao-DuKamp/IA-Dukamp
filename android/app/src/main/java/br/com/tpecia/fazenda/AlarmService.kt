@@ -60,16 +60,32 @@ class AlarmService : Service() {
         focus = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT).setAudioAttributes(attributes)
             .setOnAudioFocusChangeListener { change -> if (change == AudioManager.AUDIOFOCUS_LOSS) next() }.build()
         audio.requestAudioFocus(focus!!)
-        try {
-            player = MediaPlayer().apply {
-                setAudioAttributes(attributes)
-                setDataSource(this@AlarmService, RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM) ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
-                isLooping = true; prepare(); start()
-            }
-        } catch (_: Exception) { /* Visible stop/snooze actions remain available. */ }
+        val sounded = startSound(attributes)
+        synchronized(DeviceStore.lock) {
+            val state = DeviceStore.read(this)
+            if (sounded) state.remove("alarmError")
+            else state.put("alarmError", "O som do alarme não pôde ser reproduzido. Confira as configurações de som do celular e teste novamente.")
+            DeviceStore.write(this, state)
+        }
+        if (!sounded) activeKey?.let { key -> pending[key]?.let { FarmNotifications.normal(this, key, it.getString("title")) } }
         @Suppress("DEPRECATION")
         (getSystemService(VIBRATOR_SERVICE) as Vibrator).vibrate(VibrationEffect.createWaveform(longArrayOf(0, 600, 500), 0))
         handler.removeCallbacks(timeout); handler.postDelayed(timeout, 5 * 60_000L)
+    }
+    private fun startSound(attributes: AudioAttributes): Boolean {
+        val tones = listOfNotNull(
+            RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM),
+            android.net.Uri.parse("android.resource://$packageName/${R.raw.task_alarm_fallback}")
+        ).distinct()
+        for (tone in tones) {
+            val candidate = MediaPlayer()
+            try {
+                candidate.setAudioAttributes(attributes); candidate.setDataSource(this, tone)
+                candidate.isLooping = true; candidate.prepare(); candidate.start()
+                player = candidate; return true
+            } catch (_: Exception) { candidate.release() }
+        }
+        return false
     }
     private fun next() {
         val old = activeKey; if (old != null) pending.remove(old)

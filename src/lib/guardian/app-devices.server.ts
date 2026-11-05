@@ -130,6 +130,7 @@ export async function handleAppDevices(
         ...appReminderSnapshot(identity, deps.now),
         mode: parsed.data.mode,
         pushConfigured: deps.pushConfigured ?? appPushConfigured(),
+        pushAvailable: parsed.data.fcmToken !== null,
       });
     }
     const device = deviceHash ? await store.find(deviceHash) : null;
@@ -164,6 +165,7 @@ export async function handleAppDevices(
       ...appReminderSnapshot(identity, deps.now),
       mode: device.mode,
       pushConfigured: deps.pushConfigured ?? appPushConfigured(),
+      pushAvailable: device.fcm_token !== null,
     });
   } catch (error) {
     if (error instanceof SyntaxError) return json({ error: "JSON inválido." }, 400);

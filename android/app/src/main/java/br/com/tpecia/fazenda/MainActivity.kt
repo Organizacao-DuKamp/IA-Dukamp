@@ -1,6 +1,11 @@
 package br.com.tpecia.fazenda
 import android.Manifest
 import android.content.Intent
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.IntentFilter
+import android.app.ActivityManager
+import android.media.AudioManager
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.net.Uri
@@ -29,7 +34,13 @@ class MainActivity : ComponentActivity() {
     private lateinit var progress: ProgressBar
     private lateinit var offline: LinearLayout
     private val network = FarmApi.executor
-    private val notifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) { publish() }
+    private val notifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) requestExactIfNeeded()
+        publish()
+    }
+    private val changes = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) { publish() }
+    }
     private fun trusted(uri: Uri) = uri.scheme == "https" && uri.host == Uri.parse(BuildConfig.PANEL_ORIGIN).host && (uri.port == -1 || uri.port == 443) && uri.userInfo == null
     private val panelUrl get() = BuildConfig.PANEL_ORIGIN + "/painelfazenda"
     private fun panelUrl(url: String) = PanelNavigation.allows(url, BuildConfig.PANEL_ORIGIN)
@@ -41,6 +52,7 @@ class MainActivity : ComponentActivity() {
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState); WindowCompat.setDecorFitsSystemWindows(window, false)
+        ContextCompat.registerReceiver(this, changes, IntentFilter("br.com.tpecia.TASKS_CHANGED"), ContextCompat.RECEIVER_NOT_EXPORTED)
         val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(Color.WHITE) }
         ViewCompat.setOnApplyWindowInsetsListener(root) { view, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
@@ -106,7 +118,12 @@ class MainActivity : ComponentActivity() {
                 val old = DeviceStore.read(this); ReminderEngine.clear(this); publish(); val token = old.optString("token")
                 if (token.isNotEmpty()) network.execute { try { FarmApi.request("DELETE", token) } catch (_: Exception) { /* Revocation is independently rechecked by the server. */ } }
             }
-            "test" -> { ReminderEngine.test(this); publish() }
+            "test" -> {
+                if (!ReminderEngine.exact(this)) {
+                    publish("Permita os horários exatos antes de testar o alarme em 5 segundos.")
+                    permission("exact")
+                } else { ReminderEngine.test(this); publish() }
+            }
             "permission" -> permission(message.optString("permission"))
         }
     }
@@ -119,6 +136,7 @@ class MainActivity : ComponentActivity() {
             }
         }
         permission("notifications", onlyInitial = true)
+        requestExactIfNeeded()
         val cookie = CookieManager.getInstance().getCookie(BuildConfig.PANEL_ORIGIN + "/api/public/farm-panel")
             ?.split(";")?.map { it.trim() }?.find { it.matches(Regex("tpec_farm_app_session=[a-f0-9]{64}")) }
         val register: (String?) -> Unit = { fcm -> network.execute {
@@ -129,7 +147,9 @@ class MainActivity : ComponentActivity() {
                 synchronized(DeviceStore.lock) {
                     val current = DeviceStore.read(this)
                     if (current.optString("generation") == state.optString("generation")) {
-                        current.put("pushAvailable", fcm != null).put("registering", false); DeviceStore.write(this, current)
+                        current.put("pushAvailable", fcm != null).put("registering", false)
+                        if (fcm != null) current.put("fcmToken", fcm)
+                        DeviceStore.write(this, current)
                     }
                 }
                 ReminderEngine.apply(this, snapshot, state.getString("token"), state.getString("generation")); ReminderWorker.periodic(this); publish()
@@ -152,12 +172,35 @@ class MainActivity : ComponentActivity() {
     private fun sync() {
         val state = DeviceStore.read(this)
         if (!state.optBoolean("enabled") || state.optBoolean("registering") || state.optString("token").isEmpty()) { publish(); return }
+        recoverPushToken()
         network.execute {
             try { val snapshot = FarmApi.request(token = state.getString("token"))
-                ReminderEngine.apply(this, snapshot, state.getString("token"), state.getString("generation")); publish()
+                ReminderEngine.apply(this, snapshot, state.getString("token"), state.getString("generation")); recoverPushToken(); publish()
             } catch (_: SessionRevoked) { invalidate(state); publish("Seu acesso mudou. Entre novamente na fazenda.") }
             catch (_: Exception) { publish("Sem conexão para atualizar. Os horários já salvos continuam no celular.") }
         }
+    }
+    private fun recoverPushToken() {
+        if (FirebaseApp.getApps(this).isEmpty()) return
+        val expected = DeviceStore.read(this)
+        FirebaseMessaging.getInstance().token.addOnSuccessListener { token ->
+            synchronized(DeviceStore.lock) {
+                val current = DeviceStore.read(this)
+                if (!current.optBoolean("enabled") || current.optString("generation") != expected.optString("generation")) return@synchronized
+                if (current.optString("fcmToken") != token || !current.optBoolean("pushAvailable")) {
+                    current.put("pendingFcmToken", token); DeviceStore.write(this, current)
+                    ReminderWorker.now(this)
+                }
+            }
+        }
+    }
+    private fun requestExactIfNeeded() {
+        synchronized(DeviceStore.lock) {
+            val state = DeviceStore.read(this)
+            if (!state.optBoolean("enabled") || !FarmNotifications.allowed(this) || ReminderEngine.exact(this) || state.optBoolean("askedExact")) return
+            state.put("askedExact", true); DeviceStore.write(this, state)
+        }
+        permission("exact")
     }
     private fun permission(kind: String, onlyInitial: Boolean = false) {
         try {
@@ -171,6 +214,8 @@ class MainActivity : ComponentActivity() {
                 }
                 "exact" -> if (Build.VERSION.SDK_INT >= 31 && !ReminderEngine.exact(this)) startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:$packageName")))
                 "fullscreen" -> if (Build.VERSION.SDK_INT >= 34 && !FarmNotifications.fullScreen(this)) startActivity(Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, Uri.parse("package:$packageName")))
+                "sound" -> startActivity(Intent(Settings.ACTION_SOUND_SETTINGS))
+                "battery" -> startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
             }
         } catch (_: Exception) { publish("Abra as configurações do celular e permita os avisos da TPEC-IA.") }
     }
@@ -180,14 +225,19 @@ class MainActivity : ComponentActivity() {
         val detail = JSONObject().put("enabled", state.optBoolean("enabled")).put("mode", state.optString("mode", "alarm"))
             .put("notifications", FarmNotifications.allowed(this, if (state.optString("mode") == "alarm") FarmNotifications.ALARM else FarmNotifications.NORMAL))
             .put("exactAlarms", ReminderEngine.exact(this)).put("fullScreen", FarmNotifications.fullScreen(this))
+            .put("alarmVolume", getSystemService(AudioManager::class.java).getStreamVolume(AudioManager.STREAM_ALARM))
+            .put("backgroundRestricted", Build.VERSION.SDK_INT >= 28 && getSystemService(ActivityManager::class.java).isBackgroundRestricted)
+            .put("batteryOptimized", !getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(packageName))
             .put("pushAvailable", state.optBoolean("pushAvailable")).put("hasMore", state.optBoolean("hasMore"))
             .put("pushConfigured", state.optBoolean("pushConfigured")).put("scheduled", ReminderPolicy.objects(state.optJSONArray("reminders")).count {
                 val target = ReminderPolicy.target(state, it)
                 target >= System.currentTimeMillis() && state.optJSONObject("delivered")?.optLong(it.getString("key"), -1) != target
             })
-        if (state.has("lastSync")) detail.put("lastSync", state.getString("lastSync")); if (error != null) detail.put("error", error)
+        if (state.has("lastSync")) detail.put("lastSync", state.getString("lastSync"))
+        val problem = error ?: state.optString("syncError").ifBlank { state.optString("alarmError") }
+        if (problem.isNotBlank()) detail.put("error", problem)
         runOnUiThread { if (!isDestroyed && inPanel()) web.evaluateJavascript("window.dispatchEvent(new CustomEvent('tpec:android',{detail:$detail}));", null) }
     }
     override fun onResume() { super.onResume(); if (::web.isInitialized) { ReminderEngine.reschedule(this); sync() } }
-    override fun onDestroy() { if (::web.isInitialized) web.destroy(); super.onDestroy() }
+    override fun onDestroy() { unregisterReceiver(changes); if (::web.isInitialized) web.destroy(); super.onDestroy() }
 }

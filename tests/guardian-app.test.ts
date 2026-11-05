@@ -133,7 +133,14 @@ test("device API binds registration to the installed cookie and reauthorizes sco
   const snapshot = await handleAppDevices(request("GET", undefined, true), deps);
   assert.equal(snapshot.status, 200);
   assert.match(snapshot.headers.get("cache-control")!, /no-store/);
-  assert.equal((await snapshot.json()).pushConfigured, true);
+  const connected = await snapshot.json();
+  assert.equal(connected.pushConfigured, true);
+  assert.equal(connected.pushAvailable, true);
+  device!.fcm_token = null;
+  assert.equal(
+    (await (await handleAppDevices(request("GET", undefined, true), deps)).json()).pushAvailable,
+    false,
+  );
   assert.equal(
     (await handleAppDevices(request("PUT", { fcmToken: fcmToken + "-rotated" }, true), deps))
       .status,

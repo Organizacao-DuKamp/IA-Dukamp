@@ -17,7 +17,7 @@ class ReminderWorker(context: Context, params: WorkerParameters) : Worker(contex
                 synchronized(DeviceStore.lock) {
                     val current = DeviceStore.read(applicationContext)
                     if (current.optString("token") == state.optString("token") && current.optString("pendingFcmToken") == pendingToken) {
-                        current.remove("pendingFcmToken"); current.put("pushAvailable", true); DeviceStore.write(applicationContext, current)
+                        current.remove("pendingFcmToken"); current.put("pushAvailable", true).put("fcmToken", pendingToken); DeviceStore.write(applicationContext, current)
                     }
                 }
             }
@@ -27,11 +27,23 @@ class ReminderWorker(context: Context, params: WorkerParameters) : Worker(contex
             synchronized(DeviceStore.lock) {
                 if (DeviceStore.read(applicationContext).optString("token") == state.optString("token")) ReminderEngine.clear(applicationContext)
             }; Result.success()
-        } catch (_: Exception) { if (runAttemptCount < 4) Result.retry() else Result.failure() }
+        } catch (_: Exception) {
+            synchronized(DeviceStore.lock) {
+                val current = DeviceStore.read(applicationContext)
+                if (current.optString("token") == state.optString("token") && current.optString("generation") == state.optString("generation")) {
+                    current.put("syncError", "Não foi possível atualizar os horários em segundo plano. Confira a conexão e toque em Atualizar.")
+                    DeviceStore.write(applicationContext, current)
+                }
+            }
+            if (runAttemptCount < 4) Result.retry() else Result.failure()
+        }
     }
     companion object {
         private const val periodicName = "farm-reminders-periodic"
+        internal const val SYNC_NAME = "farm-reminders-sync-v2"
+        internal const val URGENT_NAME = "farm-reminders-urgent"
         fun periodic(context: Context) {
+            WorkManager.getInstance(context).cancelUniqueWork("farm-reminders-sync")
             val request = PeriodicWorkRequestBuilder<ReminderWorker>(15, TimeUnit.MINUTES)
                 .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()).build()
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(periodicName, ExistingPeriodicWorkPolicy.KEEP, request)
@@ -41,10 +53,18 @@ class ReminderWorker(context: Context, params: WorkerParameters) : Worker(contex
                 .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
             if (urgent) request.setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-            WorkManager.getInstance(context).enqueueUniqueWork("farm-reminders-sync", ExistingWorkPolicy.APPEND_OR_REPLACE, request.build())
+            // A due push must not inherit a previous sync's network backoff or constraints.
+            // Normal signals are coalesced; a fresh due signal replaces an older urgent retry.
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                if (urgent) URGENT_NAME else SYNC_NAME,
+                if (urgent) ExistingWorkPolicy.REPLACE else ExistingWorkPolicy.KEEP,
+                request.build())
         }
         fun cancel(context: Context) {
-            WorkManager.getInstance(context).cancelUniqueWork(periodicName); WorkManager.getInstance(context).cancelUniqueWork("farm-reminders-sync")
+            WorkManager.getInstance(context).cancelUniqueWork(periodicName)
+            WorkManager.getInstance(context).cancelUniqueWork(SYNC_NAME)
+            WorkManager.getInstance(context).cancelUniqueWork(URGENT_NAME)
+            WorkManager.getInstance(context).cancelUniqueWork("farm-reminders-sync")
         }
     }
 }
