@@ -75,7 +75,6 @@ class AlarmService : Service() {
     private fun startSound(attributes: AudioAttributes): Boolean {
         val tones = listOfNotNull(
             RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM),
-            RingtoneManager.getActualDefaultRingtoneUri(this, RingtoneManager.TYPE_ALARM),
             android.net.Uri.parse("android.resource://$packageName/${R.raw.task_alarm_fallback}")
         ).distinct()
         for (tone in tones) {

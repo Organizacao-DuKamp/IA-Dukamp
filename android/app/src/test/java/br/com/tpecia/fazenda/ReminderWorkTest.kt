@@ -50,7 +50,9 @@ class ReminderWorkTest {
         val blocked = OneTimeWorkRequestBuilder<ReminderWorker>().setInitialDelay(10, TimeUnit.MINUTES).build()
         work.enqueueUniqueWork(ReminderWorker.URGENT_NAME, ExistingWorkPolicy.KEEP, blocked).result.get()
         ReminderWorker.now(context, urgent = true)
-        assertEquals(WorkInfo.State.CANCELLED, work.getWorkInfoById(blocked.id).get()!!.state)
+        // REPLACE can prune the old WorkSpec instead of retaining a cancelled row.
+        val previous = work.getWorkInfoById(blocked.id).get()
+        assertTrue(previous == null || previous.state == WorkInfo.State.CANCELLED)
         assertTrue(work.getWorkInfosForUniqueWork(ReminderWorker.URGENT_NAME).get().any { it.id != blocked.id && it.state != WorkInfo.State.CANCELLED })
     }
 

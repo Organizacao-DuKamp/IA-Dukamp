@@ -175,7 +175,7 @@ class MainActivity : ComponentActivity() {
         recoverPushToken()
         network.execute {
             try { val snapshot = FarmApi.request(token = state.getString("token"))
-                ReminderEngine.apply(this, snapshot, state.getString("token"), state.getString("generation")); publish()
+                ReminderEngine.apply(this, snapshot, state.getString("token"), state.getString("generation")); recoverPushToken(); publish()
             } catch (_: SessionRevoked) { invalidate(state); publish("Seu acesso mudou. Entre novamente na fazenda.") }
             catch (_: Exception) { publish("Sem conexão para atualizar. Os horários já salvos continuam no celular.") }
         }

@@ -3,6 +3,7 @@ package br.com.tpecia.fazenda
 import android.app.AlarmManager
 import android.app.Application
 import android.app.PendingIntent
+import android.app.NotificationManager
 import android.content.Intent
 import android.net.Uri
 import org.junit.Assert.*
@@ -28,5 +29,16 @@ class AlarmPendingIntentTest {
         ReminderEngine.cancel(context, "one")
         assertTrue(shadowOf(manager).scheduledAlarms.isEmpty())
         assertEquals(target, shadowOf(action).savedIntent.getLongExtra("target", -1))
+    }
+    @Test fun `cache expiry keeps the visible notification but task cancellation removes it`() {
+        val context = RuntimeEnvironment.getApplication()
+        FarmNotifications.channels(context)
+        FarmNotifications.normal(context, "one", "Dar ração")
+        val manager = context.getSystemService(NotificationManager::class.java)
+        assertEquals(1, manager.activeNotifications.size)
+        ReminderEngine.cancel(context, "one", clearNotification = false)
+        assertEquals(1, manager.activeNotifications.size)
+        ReminderEngine.cancel(context, "one")
+        assertEquals(0, manager.activeNotifications.size)
     }
 }
