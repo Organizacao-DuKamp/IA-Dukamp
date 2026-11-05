@@ -63,14 +63,18 @@ Copie o valor completo de `private_key`, incluindo `-----BEGIN PRIVATE KEY-----`
 
 ## Comportamento e limites
 
+- A correção de entrega dos alarmes está na versão **1.0.1 (2)**. Atualizar o site não substitui o código nativo de um APK já instalado: compile e instale essa versão usando a mesma assinatura da instalação anterior.
 - Até 128 próximos lembretes pessoais dos próximos 30 dias são mantidos no aparelho; a sincronização renova a lista. Não são alarmes para tarefas de outros responsáveis.
 - Um horário já sincronizado usa `AlarmManager` e funciona sem internet, em segundo plano ou após fechar normalmente o app. Após reiniciar, os horários são restaurados quando o armazenamento do aparelho fica disponível após o desbloqueio.
 - Mudanças feitas pelo WhatsApp exigem conexão para chegar ao aparelho. FCM e o WorkManager auxiliam a atualização; não garantem entrega instantânea. Sem Firebase configurado, abra o app após alterar a agenda.
 - **Forçar parada** nas configurações do Android impede alarmes e mensagens até o usuário abrir o aplicativo novamente. As restrições de bateria do fabricante também precisam ser verificadas em aparelho real.
 - Sem acesso a horários exatos, o Android pode atrasar o aviso. A interface mostra a permissão pendente.
+- A ativação solicita notificações e, depois, acesso aos horários exatos. A tela também mostra volume de alarme zerado e restrições de bateria, com atalhos para ajustar. O teste de 5 segundos exige horários exatos.
+- Horários já salvos e ainda ativos podem ser recuperados por até 1 hora de atraso do Android; novos horários recebidos do servidor continuam limitados à tolerância de 5 minutos. Conclusão, cancelamento, troca de fazenda e expiração de acesso continuam invalidando o alarme. Um alarme já entregue não toca novamente.
 - O modo alarme reproduz som por até 5 minutos. **Adiar** marca mais 10 minutos. **Parar** silencia e não conclui a tarefa; a conclusão permanece no painel/WhatsApp.
 - Logout limpa os alarmes locais e invalida a autorização no servidor. Sem conexão, uma revogação remota só chega ao aparelho na próxima sincronização ou no vencimento da sessão salva.
 - Tela cheia depende da permissão e das regras do Android/distribuição. Se indisponível, o aviso continua pela notificação permitida. Na Google Play, verifique a declaração e a elegibilidade da permissão de tela cheia antes de publicar.
+- Se o toque padrão do Android não puder ser aberto, o app usa um som incluído no APK. Isso não altera o volume escolhido pelo usuário nem a configuração de Não Perturbe.
 
 ## Referências oficiais
 

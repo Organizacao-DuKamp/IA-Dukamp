@@ -20,7 +20,6 @@ export function AndroidReminders() {
       setStatus(next);
       setWaiting(false);
       if (next.enabled) setMode(next.mode);
-      if (next.error) setFeedback(next.error);
     };
     const refresh = () => {
       if (!document.hidden) androidCommand({ type: "status" });
@@ -65,7 +64,7 @@ export function AndroidReminders() {
         </div>
       </section>
     );
-  const checks: [string, boolean, "notifications" | "exact" | "fullscreen"][] = [
+  const checks: [string, boolean, "notifications" | "exact" | "fullscreen" | "sound"][] = [
     ["Notificações permitidas", status?.notifications ?? false, "notifications"],
     ["Horários exatos permitidos", status?.exactAlarms ?? false, "exact"],
     ...(mode === "alarm"
@@ -75,6 +74,15 @@ export function AndroidReminders() {
             boolean,
             "fullscreen",
           ],
+          ...(status?.alarmVolume !== undefined
+            ? [
+                ["Volume do alarme ligado", status.alarmVolume > 0, "sound"] as [
+                  string,
+                  boolean,
+                  "sound",
+                ],
+              ]
+            : []),
         ]
       : []),
   ];
@@ -143,12 +151,34 @@ export function AndroidReminders() {
                     onClick={() => androidCommand({ type: "permission", permission })}
                     className="rounded-lg border px-3 py-2 font-semibold text-emerald-800"
                   >
-                    Permitir
+                    {permission === "sound" ? "Ajustar" : "Permitir"}
                   </button>
                 )}
               </li>
             ))}
           </ul>
+          {!status.exactAlarms && (
+            <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-950">
+              Permita os horários exatos para o aviso tocar na hora marcada. Sem essa permissão, o
+              Android pode atrasar o lembrete.
+            </p>
+          )}
+          {status.enabled && (status.backgroundRestricted || status.batteryOptimized) && (
+            <div className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-950">
+              <p>
+                {status.backgroundRestricted
+                  ? "O Android está restringindo este app em segundo plano. Isso pode impedir a atualização dos alarmes."
+                  : "A economia de bateria pode atrasar os novos horários enviados pelo WhatsApp com o app fechado."}{" "}
+                Nas configurações da TPEC-IA, permita o uso da bateria em segundo plano.
+              </p>
+              <button
+                onClick={() => androidCommand({ type: "permission", permission: "battery" })}
+                className="mt-2 rounded-lg border border-amber-300 px-3 py-2 font-semibold"
+              >
+                Configurar bateria
+              </button>
+            </div>
+          )}
           {status.enabled && (
             <div className="mt-5 border-t pt-4">
               <p className="font-medium">
@@ -186,7 +216,7 @@ export function AndroidReminders() {
                   Atualizar
                 </button>
                 <button
-                  disabled={waiting || !status.notifications}
+                  disabled={waiting || !status.notifications || !status.exactAlarms}
                   onClick={() => act("test")}
                   className="rounded-xl border px-3 py-3 text-sm font-medium"
                 >
@@ -204,9 +234,9 @@ export function AndroidReminders() {
           )}
         </>
       )}
-      {feedback && (
+      {(status?.error || feedback) && (
         <p role="status" className="mt-4 rounded-xl bg-slate-100 p-3 text-sm">
-          {feedback}
+          {status?.error || feedback}
         </p>
       )}
       <p className="mt-4 text-xs leading-relaxed text-slate-500">
