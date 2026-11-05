@@ -4,6 +4,7 @@ import react from "@vitejs/plugin-react";
 import { nitro } from "nitro/vite";
 import { defineConfig, loadEnv } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
+import { deduplicateFFmpegTrace } from "./build/ffmpeg-trace.ts";
 
 export default defineConfig(({ command, mode }) => {
   // Only VITE_* values are allowed into the browser bundle. Server secrets
@@ -48,7 +49,13 @@ export default defineConfig(({ command, mode }) => {
         server: { entry: "server" },
       }),
       ...(command === "build"
-        ? [nitro({ preset: process.env.NITRO_PRESET || "netlify", traceDeps: ["ffmpeg-static*"] })]
+        ? [
+            nitro({
+              preset: process.env.NITRO_PRESET || "netlify",
+              traceDeps: ["ffmpeg-static*"],
+              traceOpts: { hooks: { tracedPackages: deduplicateFFmpegTrace } },
+            }),
+          ]
         : []),
       react(),
     ],

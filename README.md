@@ -123,6 +123,19 @@ no handler Nitro e nos workers de processamento/recuperação da Netlify. Instal
 dependências com scripts habilitados (não use `--ignore-scripts`): o instalador
 obtém o binário da plataforma durante o build.
 
+O rastreamento completo do FFmpeg passa por uma deduplicação antes da cópia:
+o nf3 0.3.24 pode listar o mesmo executável tanto na descoberta NFT quanto na
+lista completa do pacote, causando cópias concorrentes e `EBUSY` no Windows.
+`npm run build` verifica se o executável empacotado resolve dentro da função,
+preserva o conteúdo e as permissões e executa `ffmpeg -version`. No Linux,
+também valida o formato ELF e a arquitetura. Os testes de mídia e build rodam
+em Linux e Windows no CI.
+
+Builds locais no Windows incluem `ffmpeg.exe` para uso local. O deploy da
+Netlify deve ser compilado no Linux pelo Git/CI, com `npm ci` e scripts
+habilitados, para incluir o executável Linux; não envie o artefato produzido
+no Windows diretamente para a produção Linux.
+
 Quando uma consulta demora, o webhook usa uma única reserva durável para exibir
 o indicador nativo de digitação do WhatsApp. Nenhuma mensagem textual de
 “estou processando” é adicionada à conversa, inclusive em retries do webhook.
