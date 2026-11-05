@@ -153,6 +153,49 @@ test("current weight edits preserve correction history, and repeated profile sav
   ).book;
   assert.equal(book.animals[0].currentWeightKg, 360);
 });
+test("explicitly clearing optional form fields removes their old values after review without deleting weights or protected identity", () => {
+  const book = applyFarmAction(
+    emptyFarm("QA", "Tanabi", "SP"),
+    ActionSchema.parse(full),
+    "owner",
+    source,
+    "create",
+  ).book;
+  const action = animalActionFromForm({
+    code: "QA-01",
+    notes: "",
+    electronicTag: "",
+    purchasePriceCents: "",
+    currentWeightKg: "",
+  });
+  assert.deepEqual(action.clear, ["electronicTag", "purchasePriceCents", "notes"]);
+  assert.match(
+    describeAction(action),
+    /limpar os campos: Brinco eletrônico, Valor de compra, Observações/,
+  );
+  const updated = applyFarmAction(book, action, "owner", source, "clear").book;
+  assert.ok(!("notes" in updated.animals[0]));
+  assert.ok(!("electronicTag" in updated.animals[0]));
+  assert.ok(!("purchasePriceCents" in updated.animals[0]));
+  assert.equal(updated.animals[0].earTag, "001");
+  assert.deepEqual(updated.animals[0].weights, book.animals[0].weights);
+  for (const field of ["code", "weights", "source", "sex", "currentWeightKg"])
+    assert.equal(
+      ActionSchema.safeParse({ kind: "animal", code: "QA-01", clear: [field] }).success,
+      false,
+    );
+  assert.throws(
+    () =>
+      applyFarmAction(
+        book,
+        ActionSchema.parse({ kind: "animal", code: "QA-01", clear: ["name"], name: "Novo" }),
+        "owner",
+        source,
+        "ambiguous-clear",
+      ),
+    /limpar e preencher/,
+  );
+});
 test("invalid dates, percentages, unknown fields and negative money fail without mutating the original book", () => {
   for (const input of [
     { ...full, carcassPercent: 101 },

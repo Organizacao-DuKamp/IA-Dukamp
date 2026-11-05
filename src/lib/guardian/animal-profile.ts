@@ -56,8 +56,15 @@ export const AnimalProfileShape = {
   notes: z.string().trim().max(1500).optional(),
 };
 export const AnimalProfileSchema = z.object(AnimalProfileShape).strict();
+export const animalClearableFields = Object.keys(AnimalProfileShape).filter(
+  (key) => !["code", "sex", "currentWeightKg"].includes(key),
+) as Array<Exclude<keyof AnimalProfile, "code" | "sex" | "currentWeightKg">>;
 export const AnimalActionSchema = z
-  .object({ kind: z.literal("animal"), ...AnimalProfileShape })
+  .object({
+    kind: z.literal("animal"),
+    ...AnimalProfileShape,
+    clear: z.array(z.enum(animalClearableFields)).max(animalClearableFields.length).optional(),
+  })
   .strict();
 export type AnimalProfile = z.infer<typeof AnimalProfileSchema>;
 
@@ -163,7 +170,14 @@ export function animalActionFromForm(values: Record<string, string>) {
       );
     });
   }
-  return AnimalActionSchema.parse({ kind: "animal", ...profile });
+  const clear = animalClearableFields.filter(
+    (key) => Object.prototype.hasOwnProperty.call(values, key) && !values[key]?.trim(),
+  );
+  return AnimalActionSchema.parse({
+    kind: "animal",
+    ...profile,
+    ...(clear.length ? { clear } : {}),
+  });
 }
 export function animalFormValues(profile: Partial<AnimalProfile>) {
   return Object.fromEntries(

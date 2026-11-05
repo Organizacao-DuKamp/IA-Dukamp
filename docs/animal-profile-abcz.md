@@ -13,7 +13,7 @@ O peso atual informado na ficha alimenta também o histórico de pesagens. Reenv
 5. **Aplicar campos selecionados** preenche o formulário. **Revisar antes de salvar** mostra a proposta com todos os campos, antes da confirmação existente no painel.
 6. A ficha expandida e a exportação CSV incluem os campos novos e a genealogia disponível. Os campos financeiros, de manejo, peso e localização não são inventados a partir do registro genealógico.
 
-O botão **Carregar ficha existente** preenche com dados do animal na própria fazenda, respeitando a sessão do produtor. Pai e mãe podem ser informados manualmente ou selecionados pelos códigos já cadastrados. Alterar um pai/mãe remove da proposta os ascendentes importados daquele ramo, evitando genealogia contraditória.
+O botão **Carregar ficha existente** preenche com dados do animal na própria fazenda, respeitando a sessão do produtor. Apagar um campo opcional gera uma limpeza explícita na proposta de revisão, sem apagar a identificação, o sexo ou o histórico de pesagens; deixar o peso atual em branco apenas evita uma nova pesagem. Campos não alterados continuam preservados. Pai e mãe podem ser informados manualmente ou selecionados pelos códigos já cadastrados. Alterar um pai/mãe remove da proposta os ascendentes importados daquele ramo, evitando genealogia contraditória.
 
 ## Serviço oficial e ativação
 
