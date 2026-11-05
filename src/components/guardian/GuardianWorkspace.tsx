@@ -1,4 +1,5 @@
 import { ManagementWorkspace } from "./ManagementWorkspace";
+import { AnimalProfileDetails } from "./AnimalProfileDetails";
 import { taskDisplayDueAt } from "@/lib/guardian/task-recurrence";
 import { SuppliesWorkspace } from "./SuppliesWorkspace";
 import { FuelWorkspace } from "./FuelWorkspace";
@@ -455,16 +456,7 @@ export function GuardianWorkspace({
                 <p className="mt-3 text-xs text-muted-foreground">
                   Nascimento: {a.birthDate ?? "não informado"} · Atualizado em {when(a.source.at)}
                 </p>
-                {(a.name || a.rgn || a.rgd || a.sire || a.dam || a.category) && (
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    {a.name ? `${a.name} · ` : ""}
-                    {a.category ? `Categoria: ${a.category} · ` : ""}
-                    {a.rgn ? `RGN informado: ${a.rgn} · ` : ""}
-                    {a.rgd ? `RGD informado: ${a.rgd} · ` : ""}Pai: {a.sire ?? "não informado"};
-                    mãe: {a.dam ?? "não informada"}. Dados declarados, sem validação automática do
-                    registro oficial.
-                  </p>
-                )}
+                <AnimalProfileDetails animal={a} />
                 <div className="mt-3 space-y-2">
                   {a.weights.map((w) => (
                     <div key={w.date} className="rounded-lg bg-secondary/50 p-3 text-sm">
