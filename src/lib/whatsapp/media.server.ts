@@ -239,7 +239,7 @@ function checksumMatches(bytes: ArrayBuffer, expected: string | undefined): bool
   return actual === wanted;
 }
 
-async function downloadWhatsAppMedia(
+export async function downloadWhatsAppMedia(
   media: WhatsAppMedia,
   dependencies: WhatsAppMediaDependencies,
 ): Promise<DownloadedMedia> {

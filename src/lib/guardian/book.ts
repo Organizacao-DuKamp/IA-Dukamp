@@ -55,6 +55,8 @@ export function describeAction(a: GuardianAction): string {
   const operational = OperationsActionSchema.safeParse(a);
   if (operational.success) return describeOperations(operational.data);
   switch (a.kind) {
+    case "employee_save":
+      return `Cadastro de ${a.name}: ${a.job}, ${a.active ? "ativo" : "inativo"}. Este cadastro não concede acesso.`;
     case "property_create":
       return `Criar a fazenda ${a.name}, em ${a.city}/${a.uf}.`;
     case "profile":
@@ -156,6 +158,15 @@ export function applyFarmAction(
   }
   let result = "Registro confirmado e salvo.";
   switch (action.kind) {
+    case "employee_save": {
+      const { kind: _kind, ...employee } = action;
+      book.employees ??= [];
+      const index = book.employees.findIndex((e) => e.id === employee.id);
+      if (index >= 0) book.employees[index] = employee;
+      else book.employees.push(employee);
+      result = `Cadastro de ${employee.name} salvo. Nenhum acesso foi concedido por este cadastro.`;
+      break;
+    }
     case "profile": {
       const { kind: _kind, ...profile } = action;
       Object.assign(book.profile, profile);

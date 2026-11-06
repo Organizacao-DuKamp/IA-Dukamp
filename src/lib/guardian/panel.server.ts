@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, createHmac, randomInt, randomBytes } from "node:crypto";
 import { z } from "zod";
 import { guardianDb, guardianStore } from "./store.server.ts";
 import {
@@ -29,10 +29,22 @@ export function browserSessionAge(now = new Date()) {
 }
 export const hashToken = (value: string) => createHash("sha256").update(value).digest("hex");
 export const normalizeCode = (value: string) => value.toUpperCase().replace(/[\s-]/g, "");
-const codeAlphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 export function makePanelCode() {
-  const bytes = randomBytes(16);
-  return Array.from(bytes, (n) => codeAlphabet[n % codeAlphabet.length]).join("");
+  return randomInt(0, 1_000_000).toString().padStart(6, "0");
+}
+export function panelCodeHash(
+  code: string,
+  phone: string,
+  secret = process.env.SUPABASE_SERVICE_ROLE_KEY,
+) {
+  if (!secret) throw Error("panel_code_secret_unavailable");
+  return createHmac("sha256", secret)
+    .update("tpec-panel-login:v1:" + phone + ":" + code)
+    .digest("hex");
+}
+export function panelPhone(value: string) {
+  const digits = value.replace(/\D/g, "");
+  return digits.length === 10 || digits.length === 11 ? "55" + digits : digits;
 }
 import type { GuardianDetail } from "../guardian.functions.ts";
 
@@ -49,6 +61,13 @@ export interface PanelIdentity {
 export interface PanelStore {
   attempt(key: string): Promise<boolean>;
   exchange(codeHash: string, sessionHash: string, installed?: boolean): Promise<boolean>;
+  exchangeOtp?(
+    phone: string,
+    codeHash: string,
+    sessionHash: string,
+    originHash: string,
+    installed: boolean,
+  ): Promise<boolean>;
   authorize(hash: string, installed?: boolean): Promise<PanelIdentity | null>;
   revoke(hash: string): Promise<void>;
   revokeAll?(hash: string): Promise<void>;
@@ -64,6 +83,21 @@ export interface PanelStore {
   ): Promise<string>;
 }
 export const panelStore: PanelStore = {
+  async exchangeOtp(phone, codeHash, sessionHash, originHash, installed) {
+    const { data, error } = await (
+      await guardianDb()
+    )
+      .rpc("guardian_panel_exchange_otp", {
+        p_phone: phone,
+        p_code_hash: codeHash,
+        p_session_hash: sessionHash,
+        p_origin: originHash,
+        p_installed: installed,
+      })
+      .abortSignal(AbortSignal.timeout(5000));
+    if (error) throw Error("panel_unavailable");
+    return data === true;
+  },
   async attempt(key) {
     const db = await guardianDb();
     const { data, error } = await db
@@ -201,9 +235,16 @@ export async function handlePanelCodeRequest(
           );
         return data === true;
       });
-    if (!(await issue(input.phone, property.id, input.messageId, hashToken(code))))
+    if (
+      !(await issue(
+        input.phone,
+        property.id,
+        input.messageId,
+        /^\d{6}$/.test(code) ? panelCodeHash(code, input.phone) : hashToken(code),
+      ))
+    )
       return "Um código já foi enviado para esta solicitação. Use a mensagem anterior ou peça um novo código.";
-    return `Seu código para ${property.name}:\n${code.match(/.{4}/g)!.join("-")}\n\nAbra /painelfazenda no site da TPEC-IA e digite o código. Ele vale por 10 minutos e pode ser usado uma única vez. Não compartilhe: ele dá acesso à gestão desta fazenda com suas permissões. Use “sair” no painel ao terminar.`;
+    return `Seu código para ${property.name}:\n${/^\d{6}$/.test(code) ? code : code.match(/.{4}/g)!.join("-")}\n\nAbra /painelfazenda no site da TPEC-IA e informe seu WhatsApp e os 6 números do código. Ele vale por 10 minutos e pode ser usado uma única vez. Não compartilhe: ele dá acesso à gestão desta fazenda com suas permissões. Use “sair” no painel ao terminar.`;
   } catch (error) {
     return error instanceof Error && error.message === "rate"
       ? "Você já pediu vários códigos. Aguarde dez minutos antes de solicitar outro."
@@ -212,7 +253,13 @@ export async function handlePanelCodeRequest(
 }
 
 const Body = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("exchange"), code: z.string().min(1).max(40) }).strict(),
+  z
+    .object({
+      kind: z.literal("exchange"),
+      code: z.string().min(1).max(40),
+      phone: z.string().max(25).optional(),
+    })
+    .strict(),
   z
     .object({
       kind: z.literal("action"),
@@ -255,7 +302,7 @@ function publicIdentity(identity: PanelIdentity) {
   // Phone numbers, member lists, and provenance actor IDs never go to this browser.
   const book = JSON.parse(
     JSON.stringify(identity.book, (key, value) =>
-      ["actor", "responsiblePhone"].includes(key) ? undefined : value,
+      ["actor", "responsiblePhone", "phone"].includes(key) ? undefined : value,
     ),
   ) as FarmBook;
   const end = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(
@@ -318,18 +365,30 @@ export async function handleFarmPanel(
         return response({ error: "Confira o código ou os dados enviados." }, 400);
       }
       if (input.kind === "exchange") {
-        // The platform sets this client-IP header; the code remains 80-bit entropy even if absent.
+        // Only the trusted platform header identifies the origin. Distributed attempts are also limited in SQL.
         const client = request.headers.get("x-nf-client-connection-ip") ?? "local-or-unavailable";
         if (!(await store.attempt(hashToken("farm-panel:" + client))))
           return response({ error: "Muitas tentativas. Aguarde um minuto." }, 429);
         const code = normalizeCode(input.code);
-        if (!/^[A-HJ-NP-Z2-9]{16}$/.test(code))
+        const numeric = /^\d{6}$/.test(code);
+        const phone = panelPhone(input.phone ?? "");
+        if (!(numeric && /^\d{10,15}$/.test(phone)) && !/^[A-HJ-NP-Z2-9]{16}$/.test(code))
           return response(
             { error: "Código inválido, vencido ou já utilizado. Peça outro pelo WhatsApp." },
             401,
           );
         const session = randomBytes(32).toString("hex");
-        if (!(await store.exchange(hashToken(code), hashToken(session), installedRequest(request))))
+        const accepted = numeric
+          ? !!store.exchangeOtp &&
+            (await store.exchangeOtp(
+              phone,
+              panelCodeHash(code, phone),
+              hashToken(session),
+              hashToken(client),
+              installedRequest(request),
+            ))
+          : await store.exchange(hashToken(code), hashToken(session), installedRequest(request));
+        if (!accepted)
           return response(
             { error: "Código inválido, vencido ou já utilizado. Peça outro pelo WhatsApp." },
             401,

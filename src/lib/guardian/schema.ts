@@ -1,3 +1,4 @@
+import { EmployeeSchema, EmployeeActionSchema } from "./employees.ts";
 import {
   ManagementActionSchemas,
   ManagementBookSchema,
@@ -49,6 +50,7 @@ export const PreferencesSchema = z
   .refine((v) => v.startHour < v.endHour, "O horário inicial deve vir antes do final.");
 export type GuardianPreferences = z.infer<typeof PreferencesSchema>;
 export const ActionSchema = z.discriminatedUnion("kind", [
+  EmployeeActionSchema,
   ...ManagementActionSchemas,
   ...OperationsActionSchemas,
   ...FuelActionSchemas,
@@ -192,6 +194,7 @@ export type GuardianAction = z.infer<typeof ActionSchema>;
 /** Keep SQL authorization in the existing operation family. Corrections carry
  * their exact action and prior values in the book/audit, not a new access right. */
 export function farmActionFamily(action: GuardianAction): string {
+  if (action.kind === "employee_save") return "property_update";
   if (action.kind.startsWith("management_")) return "ledger";
   if (action.kind === "herd_inventory") return "herd_count";
   if (action.kind === "herd_relocate") return "lot_transfer";
@@ -281,6 +284,7 @@ export interface RecordRevision {
 }
 export interface FarmBook {
   schema: 1;
+  employees?: Array<import("zod").infer<typeof EmployeeSchema>>;
   name: string | null;
   city: string | null;
   uf: string | null;
@@ -311,6 +315,8 @@ export interface FarmBook {
   records: FieldRecord[];
 }
 export interface SemanticDraft {
+  employeeDraft?: { name: string; job?: string };
+  farmDraft?: import("./farm-dialogue.ts").FarmSlots;
   animalDocument?: import("./animal-document.ts").AnimalDocument;
   kind: "semantic_draft";
   operationId?: string;
@@ -323,6 +329,7 @@ export interface SemanticDraft {
   messages: Array<{ role: string; content: string }>;
 }
 export interface PendingAction {
+  farmDraft?: import("./farm-dialogue.ts").FarmSlots;
   documentImport?: boolean;
   semantic?: boolean;
   actions?: GuardianAction[];
@@ -557,6 +564,7 @@ const RecordRevisionSchema = z
 export const FarmBookSchema = z
   .object({
     schema: z.literal(1),
+    employees: z.array(EmployeeSchema).max(1000).optional(),
     name: label.nullable(),
     city: label.nullable(),
     uf: z

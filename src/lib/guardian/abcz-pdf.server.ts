@@ -125,7 +125,7 @@ export async function importAbczPdf(bytes: Uint8Array): Promise<RegistryLookup> 
   )
     throw unsupported();
   const options = { isEvalSupported: false, useSystemFonts: false, verbosity: 0 };
-  const pdf = await getDocumentProxy(bytes, options);
+  const pdf = await getDocumentProxy(Uint8Array.from(bytes), options);
   try {
     if (pdf.numPages !== 1) throw unsupported();
     const page = await pdf.getPage(1),

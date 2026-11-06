@@ -122,7 +122,8 @@ async function recoverOne(
   try {
     const result = await dispatchClaimedWhatsAppChat(input, { env, fetchImpl });
     const reply = result.reply?.trim();
-    if (!result.shouldSend || !reply) throw new Error("whatsapp_recovery_empty_reply");
+    if (!result.shouldSend) return "recovered"; // Consolidated import files already have a durable suppressed receipt.
+    if (!reply) throw new Error("whatsapp_recovery_empty_reply");
     await deliverRecoveredReply(input, reply, env, fetchImpl);
     return "recovered";
   } catch (error) {

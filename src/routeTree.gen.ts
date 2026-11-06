@@ -29,6 +29,7 @@ import { Route as ApiPublicMarketIngestRouteImport } from './routes/api/public/m
 import { Route as ApiPublicWhatsappRouteImport } from './routes/api/public/whatsapp'
 import { Route as ApiPublicFarmPanelAnimalRegistryRouteImport } from './routes/api/public/farm-panel.animal-registry'
 import { Route as ApiPublicFarmPanelAppRouteImport } from './routes/api/public/farm-panel.app'
+import { Route as ApiPublicFarmPanelImportsRouteImport } from './routes/api/public/farm-panel.imports'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -133,6 +134,12 @@ const ApiPublicFarmPanelAppRoute = ApiPublicFarmPanelAppRouteImport.update({
   path: '/app',
   getParentRoute: () => ApiPublicFarmPanelRoute,
 } as any)
+const ApiPublicFarmPanelImportsRoute =
+  ApiPublicFarmPanelImportsRouteImport.update({
+    id: '/imports',
+    path: '/imports',
+    getParentRoute: () => ApiPublicFarmPanelRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -154,6 +161,7 @@ export interface FileRoutesByFullPath {
   '/api/public/whatsapp': typeof ApiPublicWhatsappRoute
   '/api/public/farm-panel/animal-registry': typeof ApiPublicFarmPanelAnimalRegistryRoute
   '/api/public/farm-panel/app': typeof ApiPublicFarmPanelAppRoute
+  '/api/public/farm-panel/imports': typeof ApiPublicFarmPanelImportsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -175,6 +183,7 @@ export interface FileRoutesByTo {
   '/api/public/whatsapp': typeof ApiPublicWhatsappRoute
   '/api/public/farm-panel/animal-registry': typeof ApiPublicFarmPanelAnimalRegistryRoute
   '/api/public/farm-panel/app': typeof ApiPublicFarmPanelAppRoute
+  '/api/public/farm-panel/imports': typeof ApiPublicFarmPanelImportsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -198,6 +207,7 @@ export interface FileRoutesById {
   '/api/public/whatsapp': typeof ApiPublicWhatsappRoute
   '/api/public/farm-panel/animal-registry': typeof ApiPublicFarmPanelAnimalRegistryRoute
   '/api/public/farm-panel/app': typeof ApiPublicFarmPanelAppRoute
+  '/api/public/farm-panel/imports': typeof ApiPublicFarmPanelImportsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -221,6 +231,7 @@ export interface FileRouteTypes {
     | '/api/public/whatsapp'
     | '/api/public/farm-panel/animal-registry'
     | '/api/public/farm-panel/app'
+    | '/api/public/farm-panel/imports'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -242,6 +253,7 @@ export interface FileRouteTypes {
     | '/api/public/whatsapp'
     | '/api/public/farm-panel/animal-registry'
     | '/api/public/farm-panel/app'
+    | '/api/public/farm-panel/imports'
   id:
     | '__root__'
     | '/'
@@ -264,6 +276,7 @@ export interface FileRouteTypes {
     | '/api/public/whatsapp'
     | '/api/public/farm-panel/animal-registry'
     | '/api/public/farm-panel/app'
+    | '/api/public/farm-panel/imports'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -424,6 +437,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicFarmPanelAppRouteImport
       parentRoute: typeof ApiPublicFarmPanelRoute
     }
+    '/api/public/farm-panel/imports': {
+      id: '/api/public/farm-panel/imports'
+      path: '/imports'
+      fullPath: '/api/public/farm-panel/imports'
+      preLoaderRoute: typeof ApiPublicFarmPanelImportsRouteImport
+      parentRoute: typeof ApiPublicFarmPanelRoute
+    }
   }
 }
 
@@ -450,11 +470,13 @@ const AuthenticatedRouteRouteWithChildren =
 interface ApiPublicFarmPanelRouteChildren {
   ApiPublicFarmPanelAnimalRegistryRoute: typeof ApiPublicFarmPanelAnimalRegistryRoute
   ApiPublicFarmPanelAppRoute: typeof ApiPublicFarmPanelAppRoute
+  ApiPublicFarmPanelImportsRoute: typeof ApiPublicFarmPanelImportsRoute
 }
 
 const ApiPublicFarmPanelRouteChildren: ApiPublicFarmPanelRouteChildren = {
   ApiPublicFarmPanelAnimalRegistryRoute: ApiPublicFarmPanelAnimalRegistryRoute,
   ApiPublicFarmPanelAppRoute: ApiPublicFarmPanelAppRoute,
+  ApiPublicFarmPanelImportsRoute: ApiPublicFarmPanelImportsRoute,
 }
 
 const ApiPublicFarmPanelRouteWithChildren =

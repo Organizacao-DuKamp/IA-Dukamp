@@ -17,6 +17,15 @@ export default async (request: Request): Promise<Response> => {
     return new Response("Unauthorized", { status: 401 });
   }
 
+  if (process.env.TPEC_GUARDIAN_ENABLED === "true") {
+    try {
+      const { runAnimalImports } = await import("../../src/lib/guardian/import-worker.server.ts");
+      const imports = await runAnimalImports();
+      console.info("[animal-import]", imports);
+    } catch {
+      console.error("[animal-import] maintenance unavailable; normal WhatsApp recovery continues");
+    }
+  }
   const summary = await recoverStaleWhatsAppMessages();
   console.info(
     `[whatsapp-recovery] finished claimed=${summary.claimed} recovered=${summary.recovered} deferred=${summary.deferred} invalid=${summary.invalid} failed=${summary.failed}`,

@@ -7,9 +7,14 @@ export interface Extracted {
 
 async function extractPdf(bytes: ArrayBuffer): Promise<string> {
   const { extractText, getDocumentProxy } = await import("unpdf");
-  const pdf = await getDocumentProxy(new Uint8Array(bytes));
-  const { text } = await extractText(pdf, { mergePages: true });
-  return Array.isArray(text) ? text.join("\n") : text;
+  const options = { isEvalSupported: false, verbosity: 0 };
+  const pdf = await getDocumentProxy(new Uint8Array(bytes.slice(0)), options);
+  try {
+    const { text } = await extractText(pdf, { mergePages: true });
+    return Array.isArray(text) ? text.join("\n") : text;
+  } finally {
+    await pdf.loadingTask.destroy();
+  }
 }
 
 async function extractDocx(bytes: ArrayBuffer): Promise<string> {

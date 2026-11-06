@@ -42,6 +42,7 @@ export async function farmIntegration(
       "20261028121145_guardian_installed_sessions.sql",
       "20261029121331_guardian_cross_property_receipts.sql",
       "20261103032737_guardian_requested_reminder_times.sql",
+      "20261106171643_guardian_natural_imports.sql",
     ]) {
       if (name.endsWith("_guardian_farm_panel.sql") && beforeEvolution) await beforeEvolution(db);
       await db.exec(

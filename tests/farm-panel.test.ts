@@ -237,7 +237,7 @@ test("integrated PostgreSQL: expired codes, expired sessions, durable rate limit
     assert.equal(await f.store.exchange(hashToken("other-code"), hashToken("session")), true);
     await f.db.exec("UPDATE guardian_panel_sessions SET expires_at=now()-interval '1 second'");
     assert.equal(await f.store.authorize(hashToken("session")), null);
-    assert.equal(makePanelCode().length, 16);
+    assert.equal(makePanelCode().length, 6);
   } finally {
     await f.db.close();
   }

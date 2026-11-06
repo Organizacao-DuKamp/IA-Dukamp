@@ -1,6 +1,8 @@
+import { AnimalImports } from "@/components/guardian/AnimalImports";
 import { Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  Upload,
   ArrowLeft,
   LayoutDashboard,
   Beef,
@@ -55,6 +57,7 @@ type View = {
 const tabs = [
   ["overview", "Visão geral"],
   ["herd", "Rebanho e lotes"],
+  ["imports", "Importação de animais"],
   ["tasks", "Tarefas"],
   ["records", "Caderno de campo"],
   ["finance", "Financeiro"],
@@ -67,6 +70,7 @@ type Tab = (typeof tabs)[number][0];
 const tabIcons = {
   overview: LayoutDashboard,
   herd: Beef,
+  imports: Upload,
   tasks: ClipboardList,
   records: NotebookPen,
   finance: Wallet,
@@ -102,6 +106,8 @@ async function api(method = "GET", body?: unknown) {
 export function FarmPanel() {
   const [view, setView] = useState<View | null>(null),
     [code, setCode] = useState(""),
+    [phone, setPhone] = useState(""),
+    [legacyCode, setLegacyCode] = useState(false),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
     [loading, setLoading] = useState(true),
@@ -176,7 +182,7 @@ export function FarmPanel() {
     setBusy(true);
     setError("");
     try {
-      await api("POST", { kind: "exchange", code });
+      await api("POST", { kind: "exchange", code, phone });
       setCode("");
       await load();
     } catch (e) {
@@ -371,6 +377,19 @@ export function FarmPanel() {
                   void enter();
                 }}
               >
+                <label className="block text-sm font-semibold" htmlFor="farm-phone">
+                  Seu WhatsApp (com DDD)
+                </label>
+                <input
+                  id="farm-phone"
+                  type="tel"
+                  autoComplete="tel"
+                  required={!legacyCode}
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="(17) 99999-9999"
+                  className="w-full rounded-xl border p-4"
+                />
                 <label className="block text-sm font-semibold" htmlFor="farm-code">
                   Código de acesso
                 </label>
@@ -378,12 +397,18 @@ export function FarmPanel() {
                   id="farm-code"
                   required
                   value={code}
-                  onChange={(e) => setCode(e.target.value.toUpperCase())}
-                  maxLength={40}
-                  autoComplete="off"
+                  onChange={(e) =>
+                    setCode(
+                      legacyCode ? e.target.value.toUpperCase() : e.target.value.replace(/\D/g, ""),
+                    )
+                  }
+                  maxLength={legacyCode ? 40 : 6}
+                  inputMode={legacyCode ? "text" : "numeric"}
+                  pattern={legacyCode ? undefined : "[0-9]{6}"}
+                  autoComplete="one-time-code"
                   autoCapitalize="characters"
                   spellCheck={false}
-                  placeholder="XXXX-XXXX-XXXX-XXXX"
+                  placeholder={legacyCode ? "XXXX-XXXX-XXXX-XXXX" : "000000"}
                   className="w-full rounded-xl border border-slate-300 bg-white px-4 py-4 font-mono text-lg tracking-wider outline-none focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/15"
                 />
                 <button
@@ -392,6 +417,16 @@ export function FarmPanel() {
                 >
                   {busy ? "Conferindo código…" : "Entrar no painel"}
                   <ArrowRight size={18} />
+                </button>
+                <button
+                  type="button"
+                  className="text-sm underline"
+                  onClick={() => {
+                    setLegacyCode(!legacyCode);
+                    setCode("");
+                  }}
+                >
+                  {legacyCode ? "Usar código de 6 números" : "Recebi um código antigo com letras"}
                 </button>
               </form>
               <p className="mt-6 flex gap-2 border-t pt-5 text-xs leading-relaxed text-slate-500">
@@ -496,24 +531,32 @@ export function FarmPanel() {
               )}
               {tab === "tasks" && <AndroidReminders />}
               <div className={tab === "overview" ? "hidden md:block" : undefined}>
-                <GuardianWorkspace
-                  detail={{
-                    id: view.propertyId,
-                    version: view.version,
-                    book: view.book,
-                    events: view.events,
-                    audit: view.audit,
-                    members: [],
-                  }}
-                  tab={tab}
-                  canManageFuel={["owner", "manager"].includes(view.role)}
-                  busy={busy}
-                  onPropose={async (action) => {
-                    setProposal({ action, requestId: crypto.randomUUID(), version: view.version });
-                    setError("");
-                    setNotice("");
-                  }}
-                />
+                {tab === "imports" ? (
+                  <AnimalImports farmName={view.name} onImported={() => {}} />
+                ) : (
+                  <GuardianWorkspace
+                    detail={{
+                      id: view.propertyId,
+                      version: view.version,
+                      book: view.book,
+                      events: view.events,
+                      audit: view.audit,
+                      members: [],
+                    }}
+                    tab={tab}
+                    canManageFuel={["owner", "manager"].includes(view.role)}
+                    busy={busy}
+                    onPropose={async (action) => {
+                      setProposal({
+                        action,
+                        requestId: crypto.randomUUID(),
+                        version: view.version,
+                      });
+                      setError("");
+                      setNotice("");
+                    }}
+                  />
+                )}
               </div>
             </div>
             <Dialog

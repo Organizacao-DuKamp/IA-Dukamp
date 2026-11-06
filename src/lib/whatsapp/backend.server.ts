@@ -51,6 +51,31 @@ export async function dispatchClaimedWhatsAppChat(
       );
     }
   }
+  if (!dependencies.processClaimedLocal && process.env.TPEC_GUARDIAN_ENABLED === "true") {
+    const { handleAnimalImportInbound } = await import("../guardian/import-dialogue.server.ts");
+    const imported = await handleAnimalImportInbound(input);
+    if (imported) {
+      const conversation = await import("./conversation.server.ts");
+      if (imported.shouldSend && imported.reply)
+        await conversation.completeWhatsAppInboundMessage(input.messageId, imported.reply);
+      else {
+        const { guardianDb } = await import("../guardian/store.server.ts");
+        const { error } = await (
+          await guardianDb()
+        )
+          .from("whatsapp_processed_messages")
+          .update({
+            status: "completed",
+            reply: "Arquivo associado ao lote de importação.",
+            delivered_at: new Date().toISOString(),
+          })
+          .eq("message_id", input.messageId)
+          .eq("phone_number", input.phone);
+        if (error) throw Error("import_receipt_unconfirmed");
+      }
+      return imported;
+    }
+  }
   return dispatchLocal(input, dependencies, true);
 }
 

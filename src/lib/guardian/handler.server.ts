@@ -1,3 +1,6 @@
+import { handleEmployeeDialogue } from "./employee-dialogue.server.ts";
+import { handleFarmDialogue } from "./farm-dialogue.server.ts";
+import { creatingFarm, naturalConfirmation } from "./farm-dialogue.ts";
 import type { GuardianTrace } from "./trace.ts";
 import {
   handleSemanticTurn,
@@ -304,6 +307,16 @@ export async function handleGuardianMessage(
   let semanticPropertyId: string | undefined;
   let semanticPlanCache: unknown;
   try {
+    if (input.mediaType === "audio" && !deps.store && !deps.request) {
+      const { handleAnimalImportInbound } = await import("./import-dialogue.server.ts");
+      const imported = await handleAnimalImportInbound({
+        phone: input.phone,
+        messageId: input.messageId,
+        text: input.text.slice(0, 2000),
+        sentAt: input.sentAt,
+      });
+      if (imported?.reply) return { reply: imported.reply, activeProperty: true, persisted: true };
+    }
     if (!deps.request) {
       const portalReply = await handlePanelCodeRequest(input, {
         load: store.load.bind(store),
@@ -322,7 +335,7 @@ export async function handleGuardianMessage(
     ) {
       const selection = await store.load(input.phone);
       initialSnapshot = selection;
-      const named = namedProperty(input.text, selection);
+      const named = creatingFarm(input.text) ? null : namedProperty(input.text, selection);
       const completionFarmChoice =
         selection.pending?.kind === "task_completion" &&
         named &&
@@ -360,6 +373,16 @@ export async function handleGuardianMessage(
     for (let attempt = 0; attempt < 4; attempt++) {
       const snapshot =
         attempt === 0 && initialSnapshot ? initialSnapshot : await store.load(input.phone);
+      if (!deps.request && (!input.mediaType || input.mediaType === "audio")) {
+        const farm = await handleFarmDialogue(input, snapshot, store, now, deps.makeId);
+        if (farm === "conflict") continue;
+        if (farm) return farm;
+        const employee = await handleEmployeeDialogue(input, snapshot, store, now);
+        if (employee === "conflict") continue;
+        if (employee && "accessAction" in employee) {
+          deps = { ...deps, request: { kind: "action", action: employee.accessAction } };
+        } else if (employee) return employee;
+      }
       if (input.mediaType && input.mediaType !== "audio" && !input.animalDocument)
         return {
           reply: null,
@@ -378,6 +401,12 @@ export async function handleGuardianMessage(
         };
       if (
         !deps.request &&
+        !(
+          snapshot.pending &&
+          "action" in snapshot.pending &&
+          snapshot.pending.action.kind === "property_create" &&
+          naturalConfirmation(input.text)
+        ) &&
         (snapshot.active || snapshot.properties.length) &&
         (deps.interpret || !deps.store)
       ) {

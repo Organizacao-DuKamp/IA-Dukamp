@@ -1,3 +1,4 @@
+import { naturalConfirmation } from "./farm-dialogue.ts";
 import { hasDailyRecurrence, firstDailyDueAt } from "./task-recurrence.ts";
 import { normalizeTaskClock } from "./task-time.ts";
 import type { ChatMessage } from "../chat/types.ts";
@@ -199,8 +200,7 @@ export function parseGuardianRequest(
             "Qual o peso correto, em kg? Confira o código do animal na proposta antes de confirmar.",
         };
   }
-  if (/^(sim|confirmo|confirmar|pode salvar)[.! ]*$/.test(t) && snapshot?.pending)
-    return { kind: "confirm" };
+  if (naturalConfirmation(text) && snapshot?.pending) return { kind: "confirm" };
   if (/^(nao|cancelar)[.! ]*$/.test(t) && snapshot?.pending) return { kind: "cancel" };
   if (
     /^(?:ajuda |ativar |abrir )?(?:a )?guardia(?: da fazenda)?[.!? ]*$/.test(t) ||
