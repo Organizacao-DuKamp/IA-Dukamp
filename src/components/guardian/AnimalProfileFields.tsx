@@ -1,3 +1,4 @@
+import { AnimalPedigreeTree } from "./AnimalPedigreeTree";
 import { useEffect, useId, useRef, useState } from "react";
 import { Search, ExternalLink, Check, LoaderCircle } from "lucide-react";
 import {
@@ -628,14 +629,17 @@ export function AnimalProfileFields({
           {input("dam", "Mãe")}
         </div>
         {pedigree.length > 0 && (
-          <div className="mt-4 space-y-2 rounded-xl bg-secondary/40 p-4 text-sm">
-            {pedigree.map((node) => (
-              <p key={node.relation}>
-                <strong>{pedigreeLabel(node.relation)}:</strong> {node.code}
-                {node.name ? ` · ${node.name}` : ""}
-              </p>
-            ))}
-            <p className="pt-2 text-xs text-muted-foreground">
+          <div className="mt-4 space-y-2">
+            <AnimalPedigreeTree
+              animal={{
+                code: values.code,
+                name: values.name,
+                sire: values.sire,
+                dam: values.dam,
+                pedigree,
+              }}
+            />
+            <p className="text-xs text-muted-foreground">
               Ao alterar pai ou mãe, os ascendentes importados daquele ramo são removidos na
               revisão.
             </p>

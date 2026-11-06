@@ -1,7 +1,7 @@
+import { AnimalPedigreeTree } from "./AnimalPedigreeTree";
 import {
   animalFieldLabels,
   animalFieldValue,
-  pedigreeLabel,
   type AnimalProfile,
 } from "@/lib/guardian/animal-profile";
 import type { GuardianAnimal } from "@/lib/guardian/schema";
@@ -21,6 +21,7 @@ const groups: Array<[string, Array<keyof AnimalProfile>]> = [
       "breed",
       "coat",
       "birthDate",
+      "sex",
       "status",
     ],
   ],
@@ -40,7 +41,18 @@ const groups: Array<[string, Array<keyof AnimalProfile>]> = [
       "seller",
     ],
   ],
-  ["Parentesco", ["kinship", "sire", "dam"]],
+  ["Parentesco", ["kinship"]],
+  [
+    "Dados do documento ABCZ",
+    [
+      "documentOwner",
+      "documentFarm",
+      "documentMunicipality",
+      "documentState",
+      "documentBreeder",
+      "documentSource",
+    ],
+  ],
 ];
 export function AnimalProfileDetails({ animal }: { animal: GuardianAnimal }) {
   const profile = {
@@ -67,21 +79,8 @@ export function AnimalProfileDetails({ animal }: { animal: GuardianAnimal }) {
           </section>
         ) : null;
       })}
-      {animal.pedigree?.length ? (
-        <section className="rounded-xl border border-border p-4">
-          <h3 className="text-sm font-semibold">Genealogia registrada</h3>
-          <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
-            {animal.pedigree.map((node) => (
-              <div key={node.relation}>
-                <dt className="text-xs text-muted-foreground">{pedigreeLabel(node.relation)}</dt>
-                <dd className="mt-1 break-words font-medium">
-                  {node.code}
-                  {node.name ? ` · ${node.name}` : ""}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </section>
+      {animal.sire || animal.dam || animal.pedigree?.length ? (
+        <AnimalPedigreeTree animal={animal} />
       ) : null}
       {animal.notes && (
         <section className="rounded-xl bg-secondary/30 p-4">

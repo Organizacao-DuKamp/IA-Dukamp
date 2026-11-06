@@ -311,6 +311,7 @@ export interface FarmBook {
   records: FieldRecord[];
 }
 export interface SemanticDraft {
+  animalDocument?: import("./animal-document.ts").AnimalDocument;
   kind: "semantic_draft";
   operationId?: string;
   propertyId: string | null;
@@ -322,6 +323,7 @@ export interface SemanticDraft {
   messages: Array<{ role: string; content: string }>;
 }
 export interface PendingAction {
+  documentImport?: boolean;
   semantic?: boolean;
   actions?: GuardianAction[];
   sourceAt?: string;

@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { AnimalDocumentSchema, type AnimalDocument } from "../guardian/animal-document.ts";
 
 import {
   diagnosticResponseHeaders,
@@ -630,13 +631,45 @@ function mediaLabel(type: WhatsAppMedia["type"]): string {
   return "documento";
 }
 
+export interface ResolvedWhatsAppContent {
+  text: string;
+  animalDocument?: AnimalDocument;
+}
+
 export async function resolveWhatsAppUserText(
   input: WhatsAppChatInput,
   dependencies: WhatsAppMediaDependencies = {},
 ): Promise<string> {
-  if (!input.media) return input.text;
+  return (await resolveWhatsAppContent(input, dependencies)).text;
+}
+
+export async function resolveWhatsAppContent(
+  input: WhatsAppChatInput,
+  dependencies: WhatsAppMediaDependencies = {},
+): Promise<ResolvedWhatsAppContent> {
+  if (!input.media) return { text: input.text };
 
   const downloaded = await downloadWhatsAppMedia(input.media, dependencies);
+  if (
+    input.media.type === "document" &&
+    (downloaded.mimeType === "application/pdf" || extensionOf(downloaded.filename) === "pdf")
+  ) {
+    try {
+      const { importAbczPdf } = await import("../guardian/abcz-pdf.server.ts");
+      const result = await importAbczPdf(new Uint8Array(downloaded.bytes));
+      const animalDocument = AnimalDocumentSchema.parse({
+        profile: result.profile,
+        sourceMessageId: input.messageId,
+        sourceAt: input.sentAt ?? new Date().toISOString(),
+      });
+      return {
+        text: `[Certificado PDF ABCZ enviado pelo produtor] Registro: ${animalDocument.profile.code}. Nome: ${animalDocument.profile.name ?? "não informado"}. ${animalDocument.profile.pedigree?.length ?? 0} ascendentes extraídos.\nPedido do usuário: ${input.media.caption || input.text}`,
+        animalDocument,
+      };
+    } catch {
+      // Other layouts/documents may be analyzed, but no AI-produced prose is an import payload.
+    }
+  }
   let video: PreparedWhatsAppVideo | undefined;
   let videoContext: string | undefined;
   if (input.media.type === "video") {
@@ -715,18 +748,20 @@ ${audioText}`;
         stage: "media_analysis",
         prohibitWeb: true,
         sourcePolicy:
-          "Analise o conteúdo efetivamente fornecido para auxiliar a resposta da TPEC-IA. Preserve fatos observáveis, números, unidades e limitações. Não invente o que não é legível. Não faça diagnóstico definitivo por imagem. Em tabelas e listas, transcreva todas as linhas legíveis preservando separadamente código, peso, sexo, data e observações; não resuma nem recalcule totais. Marque dados ilegíveis e limites da leitura explicitamente. Não preencha lacunas.",
+          "Analise o conteúdo efetivamente fornecido para auxiliar a resposta da TPEC-IA. Sua análise não executa cadastros: nunca diga que salvou, cadastrou ou que está processando uma operação de gestão. Preserve fatos observáveis, números, unidades e limitações. Não invente o que não é legível. Não faça diagnóstico definitivo por imagem. Em tabelas e listas, transcreva todas as linhas legíveis preservando separadamente código, peso, sexo, data e observações; não resuma nem recalcule totais. Marque dados ilegíveis e limites da leitura explicitamente. Não preencha lacunas.",
         maxOutputTokens: 8000,
       },
       { env: envOf(dependencies), fetchImpl: dependencies.fetchImpl },
     );
-    return sanitizeRetrievedContent(
-      compactText(
-        `[Mensagem recebida por ${mediaLabel(input.media.type)} no WhatsApp]\nPedido: ${input.media.caption || input.text}\nAnálise técnica da mídia: ${analysis.text}`,
+    return {
+      text: sanitizeRetrievedContent(
+        compactText(
+          `[Mensagem recebida por ${mediaLabel(input.media.type)} no WhatsApp]\nPedido: ${input.media.caption || input.text}\nAnálise técnica da mídia: ${analysis.text}`,
+          MAX_RESOLVED_TEXT_CHARS,
+        ),
         MAX_RESOLVED_TEXT_CHARS,
       ),
-      MAX_RESOLVED_TEXT_CHARS,
-    );
+    };
   }
   const extracted =
     input.media.type === "audio"
@@ -754,8 +789,10 @@ ${audioText}`;
     caption ? `Legenda ou pedido do usuário: ${caption}` : `Pedido do usuário: ${input.text}`,
     `${extractionLabel}: ${extracted || noSpeech}`,
   ].join("\n");
-  return sanitizeRetrievedContent(
-    compactText(combined, MAX_RESOLVED_TEXT_CHARS),
-    MAX_RESOLVED_TEXT_CHARS,
-  );
+  return {
+    text: sanitizeRetrievedContent(
+      compactText(combined, MAX_RESOLVED_TEXT_CHARS),
+      MAX_RESOLVED_TEXT_CHARS,
+    ),
+  };
 }

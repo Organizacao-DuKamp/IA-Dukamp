@@ -79,3 +79,50 @@ Campos já preenchidos começam desmarcados. Havendo ficha com o mesmo código o
 A página oficial pública informa série + RGN e renderiza um formulário POST para `/produtos-e-servicos/consulta-publica-de-animais-ajax`, tipo `identificacao-unica`. Há reCAPTCHA em cada formulário e o botão Buscar inicia desabilitado. Isso exige interação legítima com a página; não foi implementada resolução automática ou contorno do desafio.
 
 Foram examinados o HTML público e os formatos DKN 401 / DUKN 401. As tentativas HTTP sem desafio resolvido não produziram resultado válido neste ambiente. Portanto **a raspagem e os dois animais permanecem não validados**; timeout/bloqueio não significa animal inexistente. Não se deve converter DKN em DUKN automaticamente nem habilitar scraping em produção com base nisso. O fluxo suportado é abrir a consulta pública manualmente, obter o certificado e importar o PDF compatível; a integração autenticada continua dependendo da homologação ABCZ.
+
+## Importação pelo WhatsApp e árvore no painel
+
+O recebimento de um PDF digital compatível no WhatsApp usa o mesmo leitor por
+coordenadas de `abcz-pdf.server.ts`, antes da análise genérica de mídia. O arquivo
+não é enviado a um modelo para reescrever os dados. O servidor carrega o perfil
+completo e sua origem em um envelope interno; esse objeto não é aceito no corpo
+público do webhook. A IA interpreta somente a intenção e o destino autorizado.
+O plano `import_animal` referencia esse objeto, sem reconstruir seus campos nem
+os 30 caminhos possíveis em uma resposta do modelo.
+
+Uma ordem anterior por texto/áudio, seguida do arquivo, pode ser concluída no
+mesmo turno. Envio sem ordem produz proposta conferível; uma confirmação natural
+executa a proposta persistida, inclusive sem o arquivo ou histórico recente.
+Esclarecimentos de fazenda preservam o documento no rascunho por até 24 horas;
+propostas prontas continuam válidas por 30 minutos. O nome de fazenda impresso no
+certificado é documental e não seleciona o destino da importação.
+
+O cadastro usa `prepareFarmBatch` e `guardian_commit_turn`, com reautorização,
+versões, recibo, auditoria e idempotência do mesmo livro lido pelo painel. O
+recibo de sucesso só é retornado após commit confirmado. Registro já cadastrado
+é reconhecido pela série + RGN e mantém o código local. Campos existentes
+conflitantes exigem revisão; lote, responsável e pesos ausentes do documento
+permanecem intactos. Reenvios não criam outro animal, ancestrais como fichas,
+nascimento, compra, movimentação de estoque nem financeiro. Proprietário,
+gerente e técnico podem importar; funcionário não, inclusive após mudança de
+permissão antes da confirmação. Não se consulta a web para completar o PDF.
+
+Documentos não compatíveis continuam disponíveis para análise geral, mas o texto
+da análise não é um payload de cadastro e não autoriza gravação. Sem certificado
+compatível, a resposta informa que nenhum cadastro foi executado e orienta a
+importação/revisão no painel. Falhas do modelo ou do banco não produzem “salvo”.
+
+A ficha e o formulário exibem `AnimalPedigreeTree`: animal à esquerda, pais,
+avós, bisavós e trisavós em colunas conectadas por setas. Botões selecionam de
+uma a quatro gerações disponíveis; **Ampliar árvore** abre a visão completa.
+Ramo paterno azul e materno roxo, posições desconhecidas tracejadas, navegação por
+rolagem e rótulos acessíveis. Um ancestral repetido permanece em cada caminho,
+e alterar um pai no formulário oculta os ascendentes antigos daquele ramo.
+
+`tests/guardian-whatsapp-abcz.test.ts` cobre download autenticado e leitura real
+do PDF sintético, pedido por áudio + arquivo, confirmação contextual persistida,
+consulta pela sessão do painel, destino, duplicatas, concorrência, preservação
+de manejo, mudanças de permissão e falhas sem recibo fictício.
+`tests/guardian-pedigree-tree.test.ts` verifica posições, conexões, ramos vazios,
+repetições e edição de pais. A prévia sintética fica em
+`tests/ui/pedigree.html`, usando a configuração Vite local de testes.
