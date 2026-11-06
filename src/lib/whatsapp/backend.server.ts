@@ -30,6 +30,16 @@ export async function dispatchWhatsAppChat(
   input: WhatsAppChatInput,
   dependencies: WhatsAppBackendDependencies = {},
 ): Promise<WhatsAppChatResult> {
+  // The legacy webhook must share the same import interception as the enhanced
+  // webhook and recovery worker. Claim once before delegating to that pipeline.
+  if (!dependencies.processLocal && process.env.TPEC_GUARDIAN_ENABLED === "true") {
+    const conversation = await import("./conversation.server.ts");
+    const claim = await conversation.claimWhatsAppInboundMessage(input.messageId, input.phone);
+    if (claim.kind === "completed")
+      return { reply: claim.reply, duplicate: true, shouldSend: true };
+    if (claim.kind !== "claimed") return { duplicate: true, shouldSend: false };
+    return dispatchClaimedWhatsAppChat(input, dependencies);
+  }
   return dispatchLocal(input, dependencies, false);
 }
 

@@ -1,3 +1,9 @@
+import {
+  abczReportMetadata,
+  parseAbczReport,
+  isAbczReport,
+  type ReportMetadata,
+} from "./abcz-report.ts";
 import { getDocumentProxy } from "unpdf";
 import { PDFDocument } from "pdf-lib";
 import { z } from "zod";
@@ -31,6 +37,7 @@ const fieldFor = (raw: string) =>
       sexo: "sex",
       nascimento: "birthDate",
       "data de nascimento": "birthDate",
+      "dt. nasc.": "birthDate",
       raca: "breed",
       categoria: "category",
       pelagem: "coat",
@@ -166,20 +173,54 @@ export async function* extractImportPages(
         throw Error(
           `O PDF tem ${doc.numPages} páginas; o limite por arquivo é ${MAX_IMPORT_PAGES}. Divida-o sem excluir páginas.`,
         );
+      let reportMetadata: ReportMetadata = {};
+      if (startPage > 1) {
+        const first = await doc.getPage(1);
+        const viewport = first.getViewport({ scale: 1 });
+        const content = await first.getTextContent();
+        reportMetadata = abczReportMetadata(
+          content.items
+            .filter((i) => "str" in i && i.str.trim())
+            .map((i) => {
+              if (!("str" in i)) throw Error("invalid_pdf_item");
+              const [x, y] = viewport.convertToViewportPoint(i.transform[4], i.transform[5]);
+              return { text: i.str, x, y };
+            }),
+        );
+      }
       for (let n = startPage; n <= doc.numPages; n++) {
         try {
           const page = await doc.getPage(n);
           const content = await page.getTextContent();
+          const viewport = page.getViewport({ scale: 1 });
+          const positioned = content.items
+            .filter((i) => "str" in i && i.str.trim())
+            .map((i) => {
+              if (!("str" in i)) throw Error("invalid_pdf_item");
+              const [x, y] = viewport.convertToViewportPoint(i.transform[4], i.transform[5]);
+              return { text: i.str, x, y };
+            });
+          if (n === 1) reportMetadata = abczReportMetadata(positioned);
+          const report = parseAbczReport(
+            positioned,
+            viewport.width,
+            viewport.height,
+            reportMetadata,
+            n,
+          );
+          if (report) {
+            yield { page: n, ...report };
+            continue;
+          }
           const lines = new Map<number, Array<{ x: number; text: string }>>();
-          for (const item of content.items) {
-            if (!("str" in item) || !item.str.trim()) continue;
-            const y = Math.round(item.transform[5] / 3) * 3;
+          for (const item of positioned) {
+            const y = Math.round(item.y / 3) * 3;
             const line = lines.get(y) ?? [];
-            line.push({ x: item.transform[4], text: item.str });
+            line.push({ x: item.x, text: item.text });
             lines.set(y, line);
           }
           const ordered = [...lines.entries()]
-            .sort((a, b) => b[0] - a[0])
+            .sort((a, b) => a[0] - b[0])
             .map(([, items]) => items.sort((a, b) => a.x - b.x));
           const text = ordered.map((line) => line.map((i) => i.text).join(" | ")).join("\n");
           // Only use deterministic rows if column boundaries are unambiguous. Otherwise the model sees the page itself.
@@ -262,4 +303,28 @@ export async function* extractImportPages(
       }),
     ),
   };
+}
+
+export async function isAnimalImportPdf(bytes: Uint8Array): Promise<boolean> {
+  if (
+    bytes.length > MAX_IMPORT_BYTES ||
+    !new TextDecoder().decode(bytes.slice(0, 5)).startsWith("%PDF-")
+  )
+    return false;
+  const options = { isEvalSupported: false, useSystemFonts: false, verbosity: 0 };
+  let doc;
+  try {
+    doc = await getDocumentProxy(Uint8Array.from(bytes), options);
+    const page = await doc.getPage(1),
+      content = await page.getTextContent();
+    const texts = content.items
+      .filter((i) => "str" in i)
+      .map((i) => ({ text: "str" in i ? i.str : "", x: 0, y: 0 }));
+    const all = fold(texts.map((i) => i.text).join(" "));
+    return isAbczReport(texts) || (/registro genealogico/.test(all) && /nome|rgn/.test(all));
+  } catch {
+    return false;
+  } finally {
+    await doc?.loadingTask.destroy();
+  }
 }

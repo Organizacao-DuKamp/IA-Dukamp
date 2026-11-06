@@ -1,5 +1,6 @@
 import { namedProperty } from "./property-scope.ts";
-import { guardianStore } from "./store.server.ts";
+import { guardianStore, type GuardianStore } from "./store.server.ts";
+import { isAnimalImportPdf } from "./import-extract.server.ts";
 import {
   currentImport,
   authorizeImport,
@@ -22,10 +23,27 @@ import { naturalConfirmation } from "./farm-dialogue.ts";
 import { downloadWhatsAppMedia } from "../whatsapp/media.server.ts";
 import type { WhatsAppChatInput, WhatsAppChatResult } from "../whatsapp/types.ts";
 export function animalImportIntent(text: string) {
-  return /\b(?:cadastr\w*|import\w*|adicion\w*|conf[ei]r\w*|atualiz\w*|junt\w*|mont\w*|transform\w*)\b.*\b(?:animais|gados?|rebanho|abcz|individuos|lista|relacao|imagens|fotos|pdf)\b/.test(
-    fold(text),
+  const t = fold(text);
+  // Producers commonly name the herd/document before saying “registre um por um”.
+  // Both parts are required so a financial registration never starts an animal import.
+  return (
+    /\b(?:cadastr\w*|registr\w*|import\w*|adicion\w*|conf[ei]r\w*|atualiz\w*|junt\w*|mont\w*|transform\w*)\b/.test(
+      t,
+    ) &&
+    /\b(?:animais|gados?|rebanho|abcz|individuos|lista|relacao|imagens|fotos|pdf|relatorio)\b/.test(
+      t,
+    )
   );
 }
+export interface ImportInboundDependencies {
+  enabled?: boolean;
+  current?: typeof currentImport;
+  store?: Pick<GuardianStore, "load" | "loadProperty">;
+  download?: typeof downloadWhatsAppMedia;
+  enqueue?: typeof enqueueImport;
+  classifyPdf?: typeof isAnimalImportPdf;
+}
+
 const answer = (reply: string): WhatsAppChatResult => ({
   reply,
   shouldSend: true,
@@ -34,12 +52,19 @@ const answer = (reply: string): WhatsAppChatResult => ({
 const quiet = (): WhatsAppChatResult => ({ shouldSend: false, duplicate: false });
 export async function handleAnimalImportInbound(
   input: WhatsAppChatInput,
+  dependencies: ImportInboundDependencies = {},
 ): Promise<WhatsAppChatResult | null> {
-  if (process.env.TPEC_GUARDIAN_ENABLED !== "true") return null;
+  if (!(dependencies.enabled ?? process.env.TPEC_GUARDIAN_ENABLED === "true")) return null;
+  const loadCurrent = dependencies.current ?? currentImport,
+    store = dependencies.store ?? guardianStore,
+    download = dependencies.download ?? downloadWhatsAppMedia,
+    enqueue = dependencies.enqueue ?? enqueueImport;
+  let downloaded: Awaited<ReturnType<typeof downloadWhatsAppMedia>> | undefined;
+  const fileContent = async () => (downloaded ??= await download(input.media!, {}));
   const text = input.media?.caption || input.text,
     t = fold(text);
   if (input.media && !["image", "document"].includes(input.media.type)) return null;
-  let batch = await currentImport(input.phone);
+  let batch = await loadCurrent(input.phone);
   const intent =
     /(?:pega|extrai|transcrev).*(?:dados|lista).*(?:foto|imagem)/.test(t) ||
     animalImportIntent(text) ||
@@ -53,17 +78,27 @@ export async function handleAnimalImportInbound(
     !input.media.caption?.trim()
   ) {
     const arriving = await awaitImportBurst(async () => {
-      const found = await currentImport(input.phone);
+      const found = await loadCurrent(input.phone);
       return found && found.status !== "completed" ? found : null;
     });
     if (arriving) batch = arriving;
   }
   const continuation = !!batch;
-  const candidate =
+  let candidate =
     !!input.media &&
     (intent ||
       (continuation && batch?.status !== "completed") ||
       /abcz|rebanho|gado|genealog|certificad/i.test(input.media.filename ?? ""));
+  // Filenames and captions are optional hints, never the source of truth. Inspect
+  // digital ABCZ reports before generic summarization can redirect them to web search.
+  if (
+    !candidate &&
+    input.media?.type === "document" &&
+    (input.media.mimeType === "application/pdf" || /\.pdf$/i.test(input.media.filename ?? ""))
+  ) {
+    const file = await fileContent();
+    candidate = await (dependencies.classifyPdf ?? isAnimalImportPdf)(new Uint8Array(file.bytes));
+  }
   if (input.media && !candidate) return null;
   if (
     !candidate &&
@@ -71,17 +106,17 @@ export async function handleAnimalImportInbound(
     !(continuation && naturalConfirmation(text)) &&
     !(
       continuation &&
-      /lista|animais|gados?|lote|registro|rgn|femeas?|machos?|nascid|termin|pronto|analis|pode|salv|confirm|isso|sim|corrig|corrij|exclu|remov|repetid|identific|planilha|export|orden|tenta|arquivo|pdf|imagem|fotos/.test(
+      /lista|animais|gados?|lote|registr|rgn|femeas?|machos?|nascid|termin|pronto|analis|pode|salv|confirm|isso|sim|corrig|corrij|exclu|remov|repetid|identific|planilha|export|orden|tenta|arquivo|pdf|imagem|fotos/.test(
         t,
       )
     )
   )
     return null;
-  const snapshot = await guardianStore.load(input.phone);
+  const snapshot = await store.load(input.phone);
   if (intent) {
     const requested = namedProperty(text, snapshot);
     if (requested && requested.id !== snapshot.active?.id)
-      snapshot.active = await guardianStore.loadProperty!(input.phone, requested.id);
+      snapshot.active = await store.loadProperty!(input.phone, requested.id);
   }
   if (!snapshot.active)
     return answer(
@@ -95,8 +130,8 @@ export async function handleAnimalImportInbound(
     if (!intent) {
       if (candidate && input.media) {
         await authorizeImport(input.phone, batch.id);
-        const file = await downloadWhatsAppMedia(input.media, {});
-        await enqueueImport({
+        const file = await fileContent();
+        await enqueue({
           phone: input.phone,
           propertyId: batch.property_id,
           messageId: input.messageId,
@@ -116,7 +151,7 @@ export async function handleAnimalImportInbound(
   }
   if (candidate && input.media) {
     if (!batch || batch.status === "completed")
-      await enqueueImport({
+      await enqueue({
         phone: input.phone,
         propertyId: snapshot.active.id,
         messageId: "prepare:" + input.messageId.slice(0, 118),
@@ -125,8 +160,8 @@ export async function handleAnimalImportInbound(
         instruction: text,
         sentAt: input.sentAt,
       });
-    const file = await downloadWhatsAppMedia(input.media, {});
-    await enqueueImport({
+    const file = await fileContent();
+    await enqueue({
       phone: input.phone,
       propertyId: snapshot.active.id,
       messageId: input.messageId,
@@ -140,7 +175,7 @@ export async function handleAnimalImportInbound(
   }
   if (!batch || (batch.status === "completed" && intent && /\bnov[oa]\b/.test(t))) {
     if (!intent) return null;
-    await enqueueImport({
+    await enqueue({
       phone: input.phone,
       propertyId: snapshot.active.id,
       messageId: input.messageId,
@@ -173,7 +208,7 @@ export async function handleAnimalImportInbound(
   }
   if (["collecting", "reading", "importing"].includes(batch.status)) {
     if (batch.status !== "importing" && (intent || /femea|macho|nascid/.test(t))) {
-      await enqueueImport({
+      await enqueue({
         phone: input.phone,
         propertyId: batch.property_id,
         messageId: input.messageId,
