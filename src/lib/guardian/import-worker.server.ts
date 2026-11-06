@@ -154,6 +154,23 @@ async function readBatch(b: ImportBatch, deadline: number) {
     seen = new Map<string, ImportRow>();
   for (const r of rows) {
     if (r.status !== "review") continue;
+    if (!r.issues.length && !r.update_fields.length) {
+      const existing = prepareImportRow(r, farm.book);
+      if (existing.status === "duplicate")
+        await checked(
+          (await guardianDb())
+            .from("guardian_import_rows")
+            .update({ result: existing.result })
+            .eq("id", r.id),
+        );
+      if (existing.status === "error")
+        await checked(
+          (await guardianDb())
+            .from("guardian_import_rows")
+            .update({ issues: [existing.result] })
+            .eq("id", r.id),
+        );
+    }
     const k = identityKey(r.profile);
     if (!k) continue;
     const previous = seen.get(k);
@@ -293,13 +310,5 @@ export async function runAnimalImports() {
       );
     }
   }
-  // Raw uploads are temporary. Review records, page references and audit remain available.
-  await checked(
-    (await guardianDb())
-      .from("guardian_import_sources")
-      .update({ data_base64: "" })
-      .lt("created_at", new Date(Date.now() - 7 * 86400000).toISOString())
-      .neq("data_base64", ""),
-  );
   return summary;
 }

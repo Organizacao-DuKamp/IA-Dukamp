@@ -30,7 +30,7 @@ O worker usa leases, revisões e um orçamento de quatro minutos por execução,
 - CSV/TSV/Excel com cabeçalhos reconhecidos usam leitura determinística. Não se presume que um RG genérico seja um RGN/RGD. DKN e DUKN continuam distintos.
 - As linhas incluem arquivo, página e posição; ancestrais ficam como genealogia da ficha, sem se tornarem animais do rebanho.
 - Limites: 25 MiB pelo WhatsApp, 4 MiB por upload no painel devido ao limite da requisição síncrona da hospedagem, 100 páginas por PDF, 100 arquivos/100 MiB por lote, 2.000 linhas por planilha e capacidade atual de 2.000 fichas por fazenda. Não se omitem silenciosamente excessos.
-- Os binários são temporários e liberados após sete dias; linhas, referências de origem e auditoria permanecem. Uma releitura posterior exige reenviar o arquivo.
+- Arquivos, linhas, referências de origem e auditoria permanecem privados e persistidos. Esta alteração não agenda exclusão automática dos arquivos recebidos.
 
 ## Revisão e gravação
 
@@ -62,7 +62,7 @@ A manutenção reutiliza `whatsapp-retry-scheduler` → `whatsapp-retry-backgrou
 
 ## Verificação
 
-A suíte completa passou com **1.101 testes**, além de lint (zero erros; 11 avisos anteriores), typecheck, build Nitro/Netlify, verificação de módulos administrativos, scan de segredos no cliente e empacotamento FFmpeg Linux. A concorrência de arquivos de teste foi limitada a quatro para evitar esgotamento intermitente de memória com múltiplos PostgreSQL de integração.
+A suíte completa passou com **1.102 testes**, além de lint (zero erros; 11 avisos anteriores), typecheck, build Nitro/Netlify, verificação de módulos administrativos, scan de segredos no cliente e empacotamento FFmpeg Linux. A concorrência de arquivos de teste foi limitada a quatro para evitar esgotamento intermitente de memória com múltiplos PostgreSQL de integração.
 
 Testes novos cobrem criação em etapas, `salvar`, correção e duplicação, funcionário sem telefone e negação de privilégios, bytes PDF preservados, leitura repetida, PDF de várias páginas e digitalizado, falha no meio sem perda de outras páginas, arquivos inválidos/grandes, linhas incompletas e injeção em documentos; extração de 1/20/100/500 animais; códigos com telefone, expiração, uso único, concorrência, tentativas distribuídas, códigos antigos e revogação; agrupamento concorrente de 1/5/13 arquivos, reentrega, uma resposta consolidada, isolamento e bloqueio de acesso anônimo; revisão, aprovação parcial, 500 gravações e retomada após reiniciar o PostgreSQL de teste.
 
@@ -110,3 +110,5 @@ Os modelos foram simulados nos testes determinísticos. Não se validou a qualid
 - `tests/ui/imports.html`
 
 A revisão complementar preserva filtros informados durante a coleta/leitura (por exemplo, somente fêmeas nascidas em 2024) e usa opções de sexo/situação em português no editor. O build completo, lint e 20 testes focados passaram após esse complemento.
+
+A revisão de isolamento vincula a continuação de funcionário à mesma fazenda e resolve “ele é gerente” como a pessoa em foco, sem criar alguém chamado “Ele”. Anexos de uma preparação aberta mantêm a fazenda de origem mesmo se a seleção global mudar; um destino explicitamente nomeado precisa pertencer ao remetente. A prévia também sinaliza fichas já existentes antes da aprovação.

@@ -1,3 +1,4 @@
+import { namedProperty } from "./property-scope.ts";
 import { guardianStore } from "./store.server.ts";
 import {
   currentImport,
@@ -63,6 +64,11 @@ export async function handleAnimalImportInbound(
   )
     return null;
   const snapshot = await guardianStore.load(input.phone);
+  if (intent) {
+    const requested = namedProperty(text, snapshot);
+    if (requested && requested.id !== snapshot.active?.id)
+      snapshot.active = await guardianStore.loadProperty!(input.phone, requested.id);
+  }
   if (!snapshot.active)
     return answer(
       "Para preparar esta importação, primeiro selecione ou cadastre a fazenda de destino. O documento não escolhe a fazenda por você.",
@@ -72,10 +78,26 @@ export async function handleAnimalImportInbound(
       "Seu acesso não permite importar animais. Peça ao proprietário, gerente ou técnico autorizado.",
     );
   if (batch && batch.property_id !== snapshot.active.id) {
-    if (!intent && !candidate)
+    if (!intent) {
+      if (candidate && input.media) {
+        await authorizeImport(input.phone, batch.id);
+        const file = await downloadWhatsAppMedia(input.media, {});
+        await enqueueImport({
+          phone: input.phone,
+          propertyId: batch.property_id,
+          messageId: input.messageId,
+          filename: file.filename,
+          mime: file.mimeType,
+          bytes: new Uint8Array(file.bytes),
+          instruction: "",
+          sentAt: input.sentAt,
+        });
+        return quiet();
+      }
       return answer(
         "A lista em preparação pertence a outra fazenda. Selecione aquela fazenda para retomar, sem misturar os dados.",
       );
+    }
     batch = null;
   }
   if (candidate && input.media) {

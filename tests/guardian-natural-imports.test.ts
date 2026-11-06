@@ -134,6 +134,21 @@ test("employees without phone are records, never members or implicit access; man
     assert.ok(result && result !== "conflict" && "reply" in result);
     assert.equal((await f.guardian.load(phone)).active!.book.employees?.[0].name, "Pedro Beruce");
     assert.equal((await f.db.query("select * from guardian_members")).rows.length, 1);
+    await handleEmployeeDialogue(
+      {
+        phone,
+        messageId: "employee-role",
+        text: "Ele é gerente. Eu não tenho o número dele no momento.",
+      },
+      await f.guardian.load(phone),
+      f.guardian,
+      now,
+    );
+    const team = (await f.guardian.load(phone)).active!.book.employees!;
+    assert.equal(team.length, 1);
+    assert.equal(team[0].name, "Pedro Beruce");
+    assert.equal(team[0].job, "Gerente");
+
     const s = await f.guardian.load(phone);
     s.active!.role = "worker";
     const denied = await handleEmployeeDialogue(

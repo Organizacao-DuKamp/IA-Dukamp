@@ -12,7 +12,11 @@ export async function handleEmployeeDialogue(
   if (/^(?:convidar|revogar acesso)\s+\d/.test(fold(input.text))) return null;
   const text = fold(input.text),
     prior =
-      snapshot.pending?.kind === "semantic_draft" ? snapshot.pending.employeeDraft : undefined;
+      snapshot.pending?.kind === "semantic_draft" &&
+      snapshot.pending.propertyId === snapshot.active?.id &&
+      Date.parse(snapshot.pending.expiresAt) > now.getTime()
+        ? snapshot.pending.employeeDraft
+        : undefined;
   if (
     prior?.name &&
     !/funcionario|capataz|gerente|administrador|financeiro|telefone|numero|acesso|convid|revog|desativ|ativar|remov|exclu|\bele\b|\bela\b/.test(
@@ -69,7 +73,9 @@ export async function handleEmployeeDialogue(
   const name =
     existing[0]?.name ??
     named?.[1]?.trim() ??
-    isName?.[1]?.trim() ??
+    (isName && !/^(?:ele|ela|meu capataz|minha funcionaria)$/i.test(fold(isName[1]))
+      ? isName[1].trim().replace(/^(?:o|a)\s+/i, "")
+      : undefined) ??
     (prior && !prior.name ? input.text.trim() : prior?.name);
   if (!name) {
     const reply = "Qual é o nome da pessoa? Posso cadastrar mesmo sem telefone.";

@@ -148,7 +148,7 @@ export function filterImportRows(rows: ImportRow[], view: ImportView) {
       (!view.query || fold(JSON.stringify(r.profile)).includes(fold(view.query))) &&
       (!view.sex || r.profile.sex === view.sex) &&
       (!view.year || r.profile.birthDate?.startsWith(view.year)) &&
-      (!view.duplicates || r.status === "duplicate") &&
+      (!view.duplicates || r.status === "duplicate" || r.result?.startsWith("Já cadastrado")) &&
       (!view.unidentified || !r.profile.code),
   );
   return filtered.sort((a, b) =>
@@ -165,7 +165,9 @@ export function importTotals(rows: ImportRow[]) {
     validated: rows.filter((r) => !r.issues.length).length,
     created: rows.filter((r) => r.status === "created").length,
     updated: rows.filter((r) => r.status === "updated").length,
-    duplicates: rows.filter((r) => r.status === "duplicate").length,
+    duplicates: rows.filter(
+      (r) => r.status === "duplicate" || r.result?.startsWith("Já cadastrado"),
+    ).length,
     pending: rows.filter((r) => ["review", "error"].includes(r.status)).length,
     excluded: rows.filter((r) => r.status === "excluded").length,
   };
