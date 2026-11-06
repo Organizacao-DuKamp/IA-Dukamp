@@ -102,6 +102,7 @@ Para abrir o painel sem senha, peça “gerar código do painel” aqui no Whats
 const unavailable =
   "Não consegui acessar ou salvar o caderno da fazenda agora. Nenhuma nova operação está confirmada. Tente novamente em instantes; vou conferir o registro antes de repetir.";
 export interface GuardianInput {
+  animalDocument?: import("./animal-document.ts").AnimalDocument;
   phone: string;
   messageId: string;
   text: string;
@@ -265,6 +266,13 @@ export async function handleGuardianMessage(
         .trim(),
     };
   if (!deps.store && process.env.TPEC_GUARDIAN_ENABLED?.trim() !== "true") {
+    if (input.animalDocument)
+      return {
+        reply:
+          "Li o PDF ABCZ, mas a gestão da fazenda está desativada. Nenhum animal foi cadastrado no painel.",
+        activeProperty: false,
+        conversational: true,
+      };
     if (/codigo.*(?:painel|fazenda)|painel.*fazenda/.test(fold(input.text)))
       return {
         reply:
@@ -352,6 +360,22 @@ export async function handleGuardianMessage(
     for (let attempt = 0; attempt < 4; attempt++) {
       const snapshot =
         attempt === 0 && initialSnapshot ? initialSnapshot : await store.load(input.phone);
+      if (input.mediaType && input.mediaType !== "audio" && !input.animalDocument)
+        return {
+          reply: null,
+          context: `${structuredContext(snapshot, now) ?? ""}\nO arquivo foi apenas analisado. Nenhuma operação de gestão foi executada. Não diga que salvou, está processando um cadastro ou que basta confirmar. Para importar uma ficha ABCZ, é necessário o certificado PDF digital compatível (RGN, quatro gerações, até 5 MiB); fotos, digitalizações e outros layouts exigem revisão/preenchimento no painel.`,
+          activeProperty: !!snapshot.active,
+          conversational: !!snapshot.active || snapshot.properties.length > 0,
+          persisted: false,
+        };
+      if (input.animalDocument && !snapshot.active && !snapshot.properties.length)
+        return {
+          reply:
+            "Li o PDF ABCZ. Para importar o animal para o painel, primeiro cadastre ou selecione uma fazenda à qual você tenha acesso. Nenhum animal foi salvo.",
+          activeProperty: false,
+          conversational: true,
+          persisted: false,
+        };
       if (
         !deps.request &&
         (snapshot.active || snapshot.properties.length) &&

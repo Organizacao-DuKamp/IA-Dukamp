@@ -1,3 +1,4 @@
+import type { ResolvedWhatsAppContent } from "./media.server.ts";
 import { guardianConversationState } from "../guardian/conversation-state.ts";
 import { recordAIChatTurn } from "../chat/analytics.server.ts";
 import { withAIUsageContext } from "../chat/usage.server.ts";
@@ -80,6 +81,10 @@ export interface WhatsAppConversationDependencies {
   loadConversation?: (phone: string) => Promise<WhatsAppConversationSnapshot | null>;
   saveConversation?: (phone: string, snapshot: WhatsAppConversationSnapshot) => Promise<void>;
   executeChat?: (input: ChatInput) => Promise<{ status: number; body: unknown }>;
+  resolveContent?: (
+    input: WhatsAppChatInput,
+    history?: ChatMessage[],
+  ) => Promise<ResolvedWhatsAppContent>;
   resolveUserText?: (input: WhatsAppChatInput, history?: ChatMessage[]) => Promise<string>;
   emergencyAnswer?: typeof answerWhatsAppEmergency;
   recallContext?: typeof recallWhatsAppContext;
@@ -310,13 +315,13 @@ async function defaultSaveConversation(
   return store.saveWhatsAppConversation(phone, snapshot);
 }
 
-async function defaultResolveUserText(
+async function defaultResolveContent(
   input: WhatsAppChatInput,
   history?: ChatMessage[],
-): Promise<string> {
-  if (!input.media) return input.text;
+): Promise<ResolvedWhatsAppContent> {
+  if (!input.media) return { text: input.text };
   const media = await import("./media.server.ts");
-  return media.resolveWhatsAppUserText(input, { history });
+  return media.resolveWhatsAppContent(input, { history });
 }
 
 function depsWithDefaults(deps: WhatsAppConversationDependencies) {
@@ -331,7 +336,16 @@ function depsWithDefaults(deps: WhatsAppConversationDependencies) {
     loadConversation: deps.loadConversation ?? defaultLoadConversation,
     saveConversation: deps.saveConversation ?? defaultSaveConversation,
     executeChat: deps.executeChat ?? ((input: ChatInput) => executeLocalChat(input)),
-    resolveUserText: deps.resolveUserText ?? defaultResolveUserText,
+    resolveContent:
+      deps.resolveContent ??
+      (deps.resolveUserText
+        ? async (
+            input: WhatsAppChatInput,
+            history?: ChatMessage[],
+          ): Promise<ResolvedWhatsAppContent> => ({
+            text: await deps.resolveUserText!(input, history),
+          })
+        : defaultResolveContent),
   };
 }
 
@@ -449,10 +463,10 @@ export async function processClaimedWhatsAppChat(
       const [previous, resolvedUserText] = needsHistory
         ? await (async () => {
             const snapshot = await deps.loadConversation(input.phone);
-            return [snapshot, await deps.resolveUserText(input, snapshot?.history)] as const;
+            return [snapshot, await deps.resolveContent(input, snapshot?.history)] as const;
           })()
-        : await Promise.all([deps.loadConversation(input.phone), deps.resolveUserText(input)]);
-      userText = resolvedUserText;
+        : await Promise.all([deps.loadConversation(input.phone), deps.resolveContent(input)]);
+      userText = resolvedUserText.text;
       snapshot = previous;
       conversationId = previous?.conversationId ?? `wa:${input.phone}`;
       // Every inbound updates the service window and stop preference, including structured operations.
@@ -494,6 +508,7 @@ export async function processClaimedWhatsAppChat(
             messageId: input.messageId,
             text: userText,
             mediaType: input.media?.type,
+            animalDocument: resolvedUserText.animalDocument,
             history: previous?.history,
             ...(input.sentAt ? { sentAt: input.sentAt } : {}),
             ...(input.replyToMessageId ? { replyToMessageId: input.replyToMessageId } : {}),
