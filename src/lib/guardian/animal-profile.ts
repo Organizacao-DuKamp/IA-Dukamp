@@ -143,14 +143,20 @@ export function animalFieldValue(key: keyof AnimalProfile, value: unknown): stri
     ? value.toLocaleString("pt-BR", { maximumFractionDigits: 3 })
     : String(value);
 }
+/** Familiar kinship labels; the tree's paths retain the precise ancestry links. */
 export function pedigreeLabel(path: string) {
-  return path
-    .split(".")
-    .map((part, index) =>
-      index === 0 ? (part === "sire" ? "Pai" : "Mãe") : part === "sire" ? "pai" : "mãe",
-    )
-    .reverse()
-    .join(" de ");
+  if (!path) return "Animal";
+  const parts = path.split(".");
+  if (parts.length === 1) return path === "sire" ? "Pai" : "Mãe";
+  const male = parts.at(-1) === "sire";
+  const degree =
+    {
+      2: male ? "Avô" : "Avó",
+      3: male ? "Bisavô" : "Bisavó",
+      4: male ? "Trisavô" : "Trisavó",
+    }[parts.length] ?? "Ascendente";
+  const side = parts[0] === "sire" ? (male ? "paterno" : "paterna") : male ? "materno" : "materna";
+  return `${degree} ${side}`;
 }
 
 const numberFields = new Set([

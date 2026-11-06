@@ -1,4 +1,4 @@
-import type { AnimalProfile, PedigreeNode } from "./animal-profile.ts";
+import { pedigreeLabel, type AnimalProfile, type PedigreeNode } from "./animal-profile.ts";
 
 export interface PedigreeTreeNode {
   path: string;
@@ -10,21 +10,7 @@ export interface PedigreeTreeNode {
   name?: string;
 }
 
-export function pedigreeTreeLabel(path: string) {
-  const direct: Record<string, string> = {
-    "": "Animal",
-    sire: "Pai",
-    dam: "Mãe",
-    "sire.sire": "Avô paterno",
-    "sire.dam": "Avó paterna",
-    "dam.sire": "Avô materno",
-    "dam.dam": "Avó materna",
-  };
-  if (direct[path]) return direct[path];
-  const parts = path.split(".");
-  const male = parts.at(-1) === "sire";
-  return `${parts.length === 3 ? (male ? "Bisavô" : "Bisavó") : male ? "Trisavô" : "Trisavó"} · ${parts[0] === "sire" ? "paterno" : "materno"}`;
-}
+export const pedigreeTreeLabel = pedigreeLabel;
 
 /** A path identifies a position, not a unique animal: the same ancestor may
  * occur in different branches. Missing slots stay explicitly unknown. */
