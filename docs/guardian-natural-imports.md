@@ -66,7 +66,7 @@ A suíte completa passou com **1.101 testes**, além de lint (zero erros; 11 avi
 
 Testes novos cobrem criação em etapas, `salvar`, correção e duplicação, funcionário sem telefone e negação de privilégios, bytes PDF preservados, leitura repetida, PDF de várias páginas e digitalizado, falha no meio sem perda de outras páginas, arquivos inválidos/grandes, linhas incompletas e injeção em documentos; extração de 1/20/100/500 animais; códigos com telefone, expiração, uso único, concorrência, tentativas distribuídas, códigos antigos e revogação; agrupamento concorrente de 1/5/13 arquivos, reentrega, uma resposta consolidada, isolamento e bloqueio de acesso anônimo; revisão, aprovação parcial, 500 gravações e retomada após reiniciar o PostgreSQL de teste.
 
-A fixture visual sintética está em `tests/ui/imports.html`. A verificação visual local ficou bloqueada: o Chromium deste executor não conseguiu criar o socket e o navegador remoto não alcançou o servidor local. A compilação dessa interface e seus contratos foram verificados, mas isso não equivale a uma inspeção visual em um celular real.
+A fixture visual sintética está em `tests/ui/imports.html`. A verificação visual local ficou bloqueada: o Chromium deste executor não conseguiu criar o socket e o navegador remoto não alcançou o servidor local. A compilação dessa interface e seus contratos foram verificados. Uma inspeção posterior em produção, usando a sessão preexistente e somente leitura, confirmou que a nova área de importação abre, informa a fazenda de destino e apresenta o envio de arquivos. Isso não equivale a uma inspeção completa em um celular real.
 
 Os modelos foram simulados nos testes determinísticos. Não se validou a qualidade de OCR dos treze arquivos reais nem se enviaram mensagens ao produtor. Arquivos históricos não foram importados automaticamente: é necessário um novo envio/revisão do proprietário para validar o material real e autorizar eventual cadastro.
 
@@ -108,3 +108,5 @@ Os modelos foram simulados nos testes determinísticos. Não se validou a qualid
 - `tests/helpers/farm-integration.ts`
 - `tests/ui/imports.fixture.tsx`
 - `tests/ui/imports.html`
+
+A revisão complementar preserva filtros informados durante a coleta/leitura (por exemplo, somente fêmeas nascidas em 2024) e usa opções de sexo/situação em português no editor. O build completo, lint e 20 testes focados passaram após esse complemento.

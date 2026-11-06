@@ -333,3 +333,12 @@ test("import endpoints require an authenticated panel and exact Origin before re
     403,
   );
 });
+
+test("instructions arriving during page collection retain a persisted selection until confirmation", async () => {
+  const { preparationImportView } = await import("../src/lib/guardian/imports.ts");
+  const saved = JSON.parse(
+    JSON.stringify(preparationImportView("Cadastre somente as fêmeas nascidas em 2024", {})),
+  );
+  assert.deepEqual(saved, { sex: "female", year: "2024" });
+  assert.deepEqual(preparationImportView("Agora pode cadastrar", saved), saved);
+});

@@ -86,6 +86,7 @@ export function AnimalImports({
     [sort, setSort] = useState("code"),
     [selected, setSelected] = useState<string[]>([]),
     [editing, setEditing] = useState<ImportRow | null>(null),
+    [priceInputs, setPriceInputs] = useState<Record<string, string>>({}),
     [fields, setFields] = useState<string[]>([]),
     [confirm, setConfirm] = useState(false);
   const params = new URLSearchParams({ page: String(page), q: query, sex, year, sort });
@@ -356,6 +357,7 @@ export function AnimalImports({
                           disabled={busy}
                           onClick={() => {
                             setEditing(structuredClone(r));
+                            setPriceInputs({});
                             setFields(r.update_fields);
                           }}
                           className="rounded-lg border px-3 py-2"
@@ -463,22 +465,62 @@ export function AnimalImports({
                     return (
                       <label key={key} className="text-sm">
                         {label}
-                        <input
-                          className="mt-1 w-full rounded-lg border p-2"
-                          value={String(editing.profile[k] ?? "")}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            const profile = { ...editing.profile };
-                            if (value)
-                              Object.assign(profile, {
-                                [k]: /Kg$|Cents$|Percent$/.test(key)
-                                  ? Number(value.replace(",", "."))
-                                  : value,
-                              });
-                            else delete profile[k];
-                            setEditing({ ...editing, profile });
-                          }}
-                        />
+                        {key === "sex" || key === "status" ? (
+                          <select
+                            className="mt-1 w-full rounded-lg border p-2"
+                            value={String(editing.profile[k] ?? "")}
+                            onChange={(e) => {
+                              const profile = { ...editing.profile };
+                              if (e.target.value) Object.assign(profile, { [k]: e.target.value });
+                              else delete profile[k];
+                              setEditing({ ...editing, profile });
+                            }}
+                          >
+                            <option value="">Não informado</option>
+                            {Object.entries(
+                              key === "sex"
+                                ? { male: "Macho", female: "Fêmea", unknown: "Não informado" }
+                                : {
+                                    active: "Ativo",
+                                    sold: "Vendido",
+                                    dead: "Morto",
+                                    transferred: "Transferido",
+                                  },
+                            ).map(([value, name]) => (
+                              <option key={value} value={value}>
+                                {name}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            className="mt-1 w-full rounded-lg border p-2"
+                            type={/Date$/.test(key) ? "date" : "text"}
+                            inputMode={/Kg$|Cents$|Percent$/.test(key) ? "decimal" : undefined}
+                            value={
+                              /Cents$/.test(key) && editing.profile[k] !== undefined
+                                ? (priceInputs[key] ??
+                                  (Number(editing.profile[k]) / 100).toFixed(2).replace(".", ","))
+                                : String(editing.profile[k] ?? "")
+                            }
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              if (/Cents$/.test(key))
+                                setPriceInputs({ ...priceInputs, [key]: value });
+                              const profile = { ...editing.profile };
+                              if (value)
+                                Object.assign(profile, {
+                                  [k]: /Cents$/.test(key)
+                                    ? Math.round(Number(value.replace(",", ".")) * 100)
+                                    : /Kg$|Percent$/.test(key)
+                                      ? Number(value.replace(",", "."))
+                                      : value,
+                                });
+                              else delete profile[k];
+                              setEditing({ ...editing, profile });
+                            }}
+                          />
+                        )}
                         {key !== "code" && (
                           <span className="mt-1 flex items-center gap-2">
                             <input

@@ -202,3 +202,13 @@ export function importCsv(rows: ImportRow[]) {
       .replace('"notes"\r\n', '"notes";"Origem";"Situação"\r\n')
   );
 }
+
+export function preparationImportView(text: string, prior: ImportView = {}): ImportView {
+  const t = fold(text),
+    view = { ...prior };
+  if (/femeas?/.test(t)) view.sex = "female";
+  else if (/machos?/.test(t)) view.sex = "male";
+  const year = t.match(/nascid\w* (?:em|no ano de) (20\d{2})/);
+  if (year) view.year = year[1];
+  return view;
+}

@@ -8,7 +8,13 @@ import {
   reviewImport,
   editImportRow,
 } from "./import-store.server.ts";
-import { filterImportRows, importTotals, ImportProfileSchema, type ImportView } from "./imports.ts";
+import {
+  preparationImportView,
+  filterImportRows,
+  importTotals,
+  ImportProfileSchema,
+  type ImportView,
+} from "./imports.ts";
 import { fold } from "./book.ts";
 import { naturalConfirmation } from "./farm-dialogue.ts";
 import { downloadWhatsAppMedia } from "../whatsapp/media.server.ts";
@@ -119,12 +125,30 @@ export async function handleAnimalImportInbound(
       "Vou retomar a leitura dos arquivos com erro. Os dados já conferidos continuam guardados.",
     );
   }
-  if (["collecting", "reading", "importing"].includes(batch.status))
+  if (["collecting", "reading", "importing"].includes(batch.status)) {
+    if (batch.status !== "importing" && (intent || /femea|macho|nascid/.test(t))) {
+      await enqueueImport({
+        phone: input.phone,
+        propertyId: batch.property_id,
+        messageId: input.messageId,
+        filename: "",
+        mime: "",
+        instruction: text,
+      });
+      const current = await authorizeImport(input.phone, batch.id);
+      await reviewImport(
+        input.phone,
+        current.batch,
+        "view",
+        preparationImportView(text, batch.view_state) as Record<string, unknown>,
+      );
+    }
     return answer(
       batch.status === "importing"
         ? "O cadastro autorizado está em andamento. As etapas concluídas ficam registradas para não repetir animais."
         : `Recebi ${files.length} arquivo(s) para a lista. A leitura do conjunto ainda está em andamento; os arquivos recebidos estão guardados.`,
     );
+  }
   if (/atualiz.*genealog|genealog.*atualiz/.test(t) && batch.status === "review") {
     await reviewImport(input.phone, batch, "fields", { fields: ["pedigree", "sire", "dam"] });
     return answer(
