@@ -1,8 +1,8 @@
 import { useId, useState } from "react";
-import { Expand, GitFork, MoveHorizontal } from "lucide-react";
+import { Expand, GitFork, X } from "lucide-react";
 import type { AnimalProfile } from "@/lib/guardian/animal-profile";
 import { pedigreeLabel } from "@/lib/guardian/animal-profile";
-import { pedigreeTreeNodes } from "@/lib/guardian/pedigree-tree";
+import { pedigreeTreeNodes, type PedigreeTreeNode } from "@/lib/guardian/pedigree-tree";
 import {
   Dialog,
   DialogContent,
@@ -12,6 +12,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
+// The complete viewBox is fitted on BOTH axes by SVG; no oversized HTML canvas
+// is clipped or hidden. Short labels are backed by full titles and a detail card.
 function PedigreeCanvas({
   animal,
   generations,
@@ -20,51 +22,45 @@ function PedigreeCanvas({
   generations: number;
 }) {
   const marker = useId().replace(/:/g, "");
+  const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const nodes = pedigreeTreeNodes(animal, generations);
-  const cardWidth = 208,
-    cardHeight = Math.max(
-      108,
-      42 +
-        16 *
-          Math.max(
-            ...nodes.map(
-              (n) => Math.ceil((n.name?.length ?? 0) / 26) + Math.ceil((n.code?.length ?? 0) / 26),
-            ),
-          ),
-    ),
-    gap = 48,
-    row = cardHeight + 16,
-    top = 42;
-  const height = 2 ** generations * row + top;
-  const width = (generations + 1) * (cardWidth + gap) - gap + 24;
-  const x = (generation: number) => 12 + generation * (cardWidth + gap);
+  const selected = nodes.find((node) => node.path === selectedPath);
+  const cardWidth = 164,
+    cardHeight = 28,
+    gap = 22,
+    row = 32,
+    top = 24;
+  const height = 2 ** generations * row + top + 4;
+  const width = (generations + 1) * (cardWidth + gap) - gap + 16;
+  const x = (generation: number) => 8 + generation * (cardWidth + gap);
   const y = (generation: number, index: number) =>
-    top + ((index + 0.5) * (height - top)) / 2 ** generation;
+    top + ((index + 0.5) * (height - top - 4)) / 2 ** generation;
   const columns = ["Animal", "Pais", "Avós", "Bisavós", "Trisavós"];
+  const shorten = (value: string, limit: number) =>
+    value.length > limit ? value.slice(0, limit - 1) + "…" : value;
+  const fullLabel = (node: PedigreeTreeNode) =>
+    `${node.generation ? pedigreeLabel(node.path) : "Animal"}: ${node.name ? node.name + " · " : ""}${node.code || "Não informado"}`;
   return (
-    <div
-      role="region"
-      aria-label={`Árvore genealógica de ${animal.name || animal.code || "animal"}, ${generations} gerações de ascendentes`}
-      tabIndex={0}
-      className="max-h-[65vh] overflow-auto rounded-xl border border-border bg-secondary/15 outline-none focus-visible:ring-2 focus-visible:ring-ring"
-    >
-      <div className="relative" style={{ width, height }}>
-        {columns.slice(0, generations + 1).map((label, generation) => (
-          <div
-            key={label}
-            className="absolute top-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-            style={{ left: x(generation), width: cardWidth }}
-          >
-            {label}
-          </div>
-        ))}
+    <div className="min-w-0 space-y-2">
+      <div
+        role="region"
+        aria-label={`Árvore genealógica de ${animal.name || animal.code || "animal"}, ${generations} gerações de ascendentes`}
+        className="flex min-w-0 justify-center rounded-xl border border-border bg-secondary/15 p-1.5"
+      >
         <svg
+          viewBox={`0 0 ${width} ${height}`}
           width={width}
           height={height}
-          className="pointer-events-none absolute inset-0"
-          aria-hidden="true"
+          preserveAspectRatio="xMidYMid meet"
+          role="group"
+          aria-label="Animais e vínculos entre gerações"
+          className="block h-auto min-w-0 w-full text-muted-foreground"
+          style={{ maxWidth: width, maxHeight: "min(62dvh, 560px)" }}
         >
           <defs>
+            <clipPath id={`${marker}-label`}>
+              <rect x="5" y="1" width={cardWidth - 10} height={cardHeight - 2} />
+            </clipPath>
             {["sire", "dam", "missing"].map((side) => (
               <marker
                 key={side}
@@ -72,8 +68,8 @@ function PedigreeCanvas({
                 viewBox="0 0 8 8"
                 refX="7"
                 refY="4"
-                markerWidth="5"
-                markerHeight="5"
+                markerWidth="4"
+                markerHeight="4"
                 orient="auto"
               >
                 <path
@@ -83,56 +79,157 @@ function PedigreeCanvas({
               </marker>
             ))}
           </defs>
-          {nodes
-            .filter((n) => n.parentPath !== null)
-            .map((node) => {
-              const parent = nodes.find((p) => p.path === node.parentPath)!;
-              const start = x(parent.generation) + cardWidth;
-              const end = x(node.generation) - 4;
-              const from = y(parent.generation, parent.index),
-                to = y(node.generation, node.index);
-              const side = node.code ? (node.path.startsWith("sire") ? "sire" : "dam") : "missing";
-              return (
-                <path
-                  key={node.path}
-                  d={`M ${start} ${from} H ${start + gap / 2} V ${to} H ${end}`}
-                  fill="none"
-                  stroke={side === "sire" ? "#3b82f6" : side === "dam" ? "#a855f7" : "#94a3b8"}
-                  strokeWidth="1.5"
-                  strokeDasharray={node.code ? undefined : "4 4"}
-                  markerEnd={`url(#${marker}-${side})`}
-                />
-              );
-            })}
-        </svg>
-        <ol className="m-0 list-none p-0">
-          {nodes.map((node) => (
-            <li
-              key={node.path}
-              aria-label={
-                node.generation
-                  ? `${pedigreeLabel(node.path)}: ${node.name ? `${node.name}, ` : ""}${node.code || "Não informado"}`
-                  : `Animal: ${node.name || ""} ${node.code || ""}`
-              }
-              className={`absolute flex flex-col justify-center rounded-xl border p-3 shadow-sm ${!node.generation ? "border-emerald-300 bg-emerald-50 text-emerald-950 dark:border-emerald-700 dark:bg-emerald-950 dark:text-emerald-50" : !node.code ? "border-dashed border-border bg-background text-muted-foreground" : node.path.startsWith("sire") ? "border-blue-200 bg-blue-50 text-blue-950 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-50" : "border-purple-200 bg-purple-50 text-purple-950 dark:border-purple-800 dark:bg-purple-950 dark:text-purple-50"}`}
-              style={{
-                left: x(node.generation),
-                top: y(node.generation, node.index) - cardHeight / 2,
-                width: cardWidth,
-                height: cardHeight,
-              }}
+          {columns.slice(0, generations + 1).map((label, generation) => (
+            <text
+              key={label}
+              x={x(generation) + cardWidth / 2}
+              y={13}
+              textAnchor="middle"
+              fontSize="11"
+              fontWeight="600"
+              fill="currentColor"
             >
-              <span className="text-[11px] font-semibold opacity-70">{node.label}</span>
-              <span className="mt-1 break-words text-xs font-semibold leading-snug">
-                {node.name || node.code || "Não informado"}
-              </span>
-              {node.name && node.code && (
-                <span className="mt-1 break-words text-[11px] opacity-75">{node.code}</span>
-              )}
-            </li>
+              {label}
+            </text>
           ))}
-        </ol>
+          <g aria-hidden="true">
+            {nodes
+              .filter((n) => n.parentPath !== null)
+              .map((node) => {
+                const parent = nodes.find((p) => p.path === node.parentPath)!;
+                const start = x(parent.generation) + cardWidth;
+                const end = x(node.generation) - 2;
+                const from = y(parent.generation, parent.index),
+                  to = y(node.generation, node.index);
+                const side = node.code
+                  ? node.path.startsWith("sire")
+                    ? "sire"
+                    : "dam"
+                  : "missing";
+                return (
+                  <path
+                    key={node.path}
+                    d={`M ${start} ${from} H ${start + gap / 2} V ${to} H ${end}`}
+                    fill="none"
+                    stroke={side === "sire" ? "#3b82f6" : side === "dam" ? "#a855f7" : "#94a3b8"}
+                    strokeWidth="1"
+                    strokeDasharray={node.code ? undefined : "3 3"}
+                    markerEnd={`url(#${marker}-${side})`}
+                  />
+                );
+              })}
+          </g>
+          {nodes.map((node) => {
+            const colors = !node.generation
+              ? ["#ecfdf5", "#6ee7b7", "#064e3b"]
+              : !node.code
+                ? ["#f8fafc", "#cbd5e1", "#64748b"]
+                : node.path.startsWith("sire")
+                  ? ["#eff6ff", "#bfdbfe", "#1e3a8a"]
+                  : ["#faf5ff", "#e9d5ff", "#581c87"];
+            const active = selectedPath === node.path;
+            return (
+              <g
+                key={node.path}
+                role="button"
+                tabIndex={0}
+                aria-label={fullLabel(node)}
+                aria-pressed={active}
+                onClick={() => setSelectedPath(node.path)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    setSelectedPath(node.path);
+                  }
+                }}
+                className="cursor-pointer outline-none focus-visible:stroke-primary"
+                transform={`translate(${x(node.generation)}, ${y(node.generation, node.index) - cardHeight / 2})`}
+              >
+                <title>{fullLabel(node)}</title>
+                <rect
+                  width={cardWidth}
+                  height={cardHeight}
+                  rx="5"
+                  fill={colors[0]}
+                  stroke={active ? colors[2] : colors[1]}
+                  strokeWidth={active ? 2 : 1}
+                  strokeDasharray={node.code ? undefined : "3 3"}
+                  className="[g:focus-visible>&]:stroke-primary [g:focus-visible>&]:stroke-2"
+                />
+                <text
+                  x="6"
+                  y={node.name && node.code ? 11 : 18}
+                  fontSize="10.5"
+                  fontWeight="600"
+                  fill={colors[2]}
+                  clipPath={`url(#${marker}-label)`}
+                >
+                  {shorten(node.name || node.code || "Não informado", 24)}
+                </text>
+                {node.name && node.code && (
+                  <text
+                    x="6"
+                    y="23"
+                    fontSize="9"
+                    fill={colors[2]}
+                    opacity="0.8"
+                    clipPath={`url(#${marker}-label)`}
+                  >
+                    {shorten(node.code, 28)}
+                  </text>
+                )}
+              </g>
+            );
+          })}
+        </svg>
       </div>
+      <label className="block text-xs text-muted-foreground sm:hidden">
+        Ler dados de um animal
+        <select
+          aria-label="Consultar animal da genealogia"
+          value={selectedPath === null ? "" : selectedPath || "animal"}
+          onChange={(event) =>
+            setSelectedPath(event.target.value === "animal" ? "" : event.target.value || null)
+          }
+          className="mt-1 block w-full min-w-0 rounded-lg border border-input bg-background p-2.5 text-sm text-foreground"
+        >
+          <option value="">Escolha um animal da árvore</option>
+          {nodes.map((node) => (
+            <option key={node.path} value={node.path || "animal"}>
+              {node.name || node.code || node.label}
+              {node.name && node.code ? ` · ${node.code}` : ""}
+            </option>
+          ))}
+        </select>
+      </label>
+      {selected ? (
+        <div
+          className="relative rounded-lg border border-border bg-secondary/30 p-3 pr-10 text-sm"
+          aria-live="polite"
+        >
+          <p className="text-xs text-muted-foreground">
+            {selected.generation ? pedigreeLabel(selected.path) : "Animal"}
+          </p>
+          <p className="mt-1 break-words font-semibold">
+            {selected.name || selected.code || "Não informado"}
+          </p>
+          {selected.name && selected.code && (
+            <p className="mt-0.5 break-words text-xs text-muted-foreground">{selected.code}</p>
+          )}
+          <button
+            type="button"
+            aria-label="Fechar detalhes do ancestral"
+            onClick={() => setSelectedPath(null)}
+            className="absolute right-2 top-2 rounded-md p-1.5 hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <X size={14} aria-hidden="true" />
+          </button>
+        </div>
+      ) : (
+        <p className="text-xs text-muted-foreground">
+          Árvore ajustada à tela. Toque em um animal para ler o nome e o registro completos.
+        </p>
+      )}
     </div>
   );
 }
@@ -193,10 +290,6 @@ export function AnimalPedigreeTree({ animal }: { animal: Partial<AnimalProfile> 
             {depth}
           </button>
         ))}
-        <span className="ml-auto inline-flex items-center gap-1.5 text-muted-foreground">
-          <MoveHorizontal size={14} aria-hidden="true" />
-          Deslize para explorar
-        </span>
       </div>
       <PedigreeCanvas animal={animal} generations={generations} />
       <p className="text-xs text-muted-foreground">

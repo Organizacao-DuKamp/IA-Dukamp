@@ -115,8 +115,12 @@ importação/revisão no painel. Falhas do modelo ou do banco não produzem “s
 A ficha e o formulário exibem `AnimalPedigreeTree`: animal à esquerda, pais,
 avós, bisavós e trisavós em colunas conectadas por setas. Botões selecionam de
 uma a quatro gerações disponíveis; **Ampliar árvore** abre a visão completa.
-Ramo paterno azul e materno roxo, posições desconhecidas tracejadas, navegação por
-rolagem e rótulos acessíveis. Um ancestral repetido permanece em cada caminho,
+Ramo paterno azul e materno roxo, posições desconhecidas tracejadas e rótulos
+acessíveis. Os cartões compactos e o SVG com `viewBox` ajustam a árvore inteira
+à largura e à altura disponíveis, sem barras de rolagem internas. Nomes longos
+são abreviados na visão geral; clicar ou usar Enter/Espaço em um animal abre
+os dados completos. No celular, um seletor também permite consultar os animais
+sem depender de alvos pequenos no desenho. Um ancestral repetido permanece em cada caminho,
 e alterar um pai no formulário oculta os ascendentes antigos daquele ramo.
 
 `tests/guardian-whatsapp-abcz.test.ts` cobre download autenticado e leitura real
