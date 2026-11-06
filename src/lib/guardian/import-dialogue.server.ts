@@ -10,6 +10,7 @@ import {
   editImportRow,
 } from "./import-store.server.ts";
 import {
+  awaitImportBurst,
   preparationImportView,
   filterImportRows,
   importTotals,
@@ -45,12 +46,25 @@ export async function handleAnimalImportInbound(
     /\b(?:vou (?:te )?(?:mandar|enviar).*(?:fotos|imagens|pdf|lista)|(?:esses|sao os) animais)\b/.test(
       t,
     );
+  if (
+    input.media?.type === "image" &&
+    !intent &&
+    (!batch || batch.status === "completed") &&
+    !input.media.caption?.trim()
+  ) {
+    const arriving = await awaitImportBurst(async () => {
+      const found = await currentImport(input.phone);
+      return found && found.status !== "completed" ? found : null;
+    });
+    if (arriving) batch = arriving;
+  }
   const continuation = !!batch;
   const candidate =
     !!input.media &&
     (intent ||
-      continuation ||
+      (continuation && batch?.status !== "completed") ||
       /abcz|rebanho|gado|genealog|certificad/i.test(input.media.filename ?? ""));
+  if (input.media && !candidate) return null;
   if (
     !candidate &&
     !intent &&
@@ -101,6 +115,16 @@ export async function handleAnimalImportInbound(
     batch = null;
   }
   if (candidate && input.media) {
+    if (!batch || batch.status === "completed")
+      await enqueueImport({
+        phone: input.phone,
+        propertyId: snapshot.active.id,
+        messageId: "prepare:" + input.messageId.slice(0, 118),
+        filename: "",
+        mime: "",
+        instruction: text,
+        sentAt: input.sentAt,
+      });
     const file = await downloadWhatsAppMedia(input.media, {});
     await enqueueImport({
       phone: input.phone,
@@ -133,7 +157,7 @@ export async function handleAnimalImportInbound(
   if (/termin|^pronto|pode analisar|analisa/.test(t) && !/cadastr|salvar/.test(t)) {
     if (!files.length)
       return answer(
-        "A preparação está guardada, mas nenhum arquivo chegou a este lote. Anexe as fotos ou o PDF para continuar.",
+        "A preparação está guardada, mas ainda não há arquivo pronto para leitura neste lote. Se você já enviou, o recebimento ou a leitura pode ter falhado. Tente anexar as fotos ou o PDF novamente para continuar.",
       );
     if (["collecting", "review"].includes(batch.status))
       await reviewImport(input.phone, batch, "finish");

@@ -357,3 +357,32 @@ test("instructions arriving during page collection retain a persisted selection 
   assert.deepEqual(saved, { sex: "female", year: "2024" });
   assert.deepEqual(preparationImportView("Agora pode cadastrar", saved), saved);
 });
+
+test("13 bare images that overtake their instruction wait for the same durable batch without general analysis", async () => {
+  const { awaitImportBurst } = await import("../src/lib/guardian/imports.ts");
+  let ready = false,
+    waits = 0;
+  const results = await Promise.all(
+    Array.from({ length: 13 }, () =>
+      awaitImportBurst(
+        async () => (ready ? { id: "same-batch" } : null),
+        async () => {
+          if (++waits >= 3) ready = true;
+        },
+      ),
+    ),
+  );
+  assert.equal(results.length, 13);
+  assert.ok(results.every((r) => r?.id === "same-batch"));
+  let delays = 0;
+  assert.equal(
+    await awaitImportBurst(
+      async () => null,
+      async () => {
+        delays++;
+      },
+    ),
+    null,
+  );
+  assert.equal(delays, 12);
+});

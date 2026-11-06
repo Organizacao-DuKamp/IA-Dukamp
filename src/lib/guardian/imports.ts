@@ -214,3 +214,17 @@ export function preparationImportView(text: string, prior: ImportView = {}): Imp
   if (year) view.year = year[1];
   return view;
 }
+
+// Bare images can overtake the caption or preceding instruction across workers.
+// Keep this bounded to the same short collection window; ordinary text never waits.
+export async function awaitImportBurst<T>(
+  load: () => Promise<T | null>,
+  delay: (ms: number) => Promise<void> = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+): Promise<T | null> {
+  for (let i = 0; i < 12; i++) {
+    const value = await load();
+    if (value) return value;
+    await delay(1000);
+  }
+  return load();
+}

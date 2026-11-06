@@ -112,3 +112,5 @@ Os modelos foram simulados nos testes determinísticos. Não se validou a qualid
 A revisão complementar preserva filtros informados durante a coleta/leitura (por exemplo, somente fêmeas nascidas em 2024) e usa opções de sexo/situação em português no editor. O build completo, lint e 20 testes focados passaram após esse complemento.
 
 A revisão de isolamento vincula a continuação de funcionário à mesma fazenda e resolve “ele é gerente” como a pessoa em foco, sem criar alguém chamado “Ele”. Anexos de uma preparação aberta mantêm a fazenda de origem mesmo se a seleção global mudar; um destino explicitamente nomeado precisa pertencer ao remetente. A prévia também sinaliza fichas já existentes antes da aprovação.
+
+A janela de coleta também cobre imagens sem legenda que chegam a workers antes da instrução: elas aguardam por até 12 segundos o mesmo contexto persistido, e o lote é aberto antes do download pesado do primeiro arquivo. Vinte e um testes focados e o build completo passaram após essa proteção de concorrência.
