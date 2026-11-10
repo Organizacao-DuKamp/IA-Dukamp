@@ -41,6 +41,23 @@ export function canExecuteWithoutSemanticAI(
   );
 }
 
+/**
+ * A failed "why did it fail?" explanation must not keep a subsequent independent
+ * birth/expense trapped in that clarification. Only narrow diagnostic drafts
+ * are released; genuine proposals, herd follow-ups and confirmations are kept.
+ */
+export function isFreshActionAfterErrorQuestion(
+  input: { text: string; at: Date; mediaType?: string; history?: ChatMessage[] },
+  snapshot: GuardianSnapshot,
+): boolean {
+  const pending = snapshot.pending;
+  if (pending?.kind !== "semantic_draft" || !snapshot.active) return false;
+  const question = foldHerd(pending.question ?? "");
+  if (!/^qual problema voce quer verificar\b/.test(question)) return false;
+  const withoutDiagnosticDraft = { ...snapshot, pending: null };
+  return canExecuteWithoutSemanticAI(input, withoutDiagnosticDraft);
+}
+
 export function explainPreviousFarmFailure(
   text: string,
   history: ChatMessage[] = [],
