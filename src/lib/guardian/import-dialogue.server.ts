@@ -24,6 +24,12 @@ import { downloadWhatsAppMedia } from "../whatsapp/media.server.ts";
 import type { WhatsAppChatInput, WhatsAppChatResult } from "../whatsapp/types.ts";
 export function animalImportIntent(text: string) {
   const t = fold(text);
+  // A generic "lista" may be financial or a task list. Never route these
+  // business-domain instructions through the animal document importer.
+  if (
+    /\b(?:despesas?|receitas?|financeiro|combustivel|abastecimento|tarefas?|pagamentos?|contas a pagar)\b/.test(t)
+  )
+    return false;
   // Ordinary herd events ("registre dois nascimentos no rebanho") belong to
   // Guardian, NOT to the bulk animal-document importer.
   const verb =
