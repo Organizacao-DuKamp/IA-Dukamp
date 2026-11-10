@@ -23,7 +23,6 @@ import {
   ShieldCheck,
   Menu,
   X,
-  MessageCircle,
 } from "lucide-react";
 import { FarmMobileHome } from "@/components/guardian/FarmMobileHome";
 import { FarmStatusOverview } from "@/components/guardian/FarmStatusOverview";
@@ -709,15 +708,6 @@ export function FarmPanel() {
                   );
                 })}
               </div>
-              <a
-                href="https://wa.me/5516992256069"
-                target="_blank"
-                rel="noreferrer"
-                className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-emerald-900 px-4 py-4 font-semibold text-white"
-              >
-                <MessageCircle size={21} aria-hidden="true" />
-                Falar com a TPEC-IA
-              </a>
               <button
                 disabled={busy}
                 onClick={() => exit()}
