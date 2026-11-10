@@ -60,6 +60,8 @@ test("direct execution accepts only literal, complete financial and herd events"
   for (const text of [
     "Se nascerem 2 bezerros, quanto terei?",
     "Previsao de despesa de 20 mil todo mes com combustivel",
+    "Hoje nasceram 2 bezerros e me lembra de alimentar eles às 18h",
+    "Selecione a fazenda Eduardo e registrei 2 nascimentos",
     "Qual foi o custo de ração?",
     "Por que deu problema?",
   ]) {
