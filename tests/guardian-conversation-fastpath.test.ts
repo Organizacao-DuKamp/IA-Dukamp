@@ -4,6 +4,7 @@ import {
   canExecuteWithoutSemanticAI,
   explainPreviousFarmFailure,
   farmSelectionRequest,
+  isFreshActionAfterErrorQuestion,
 } from "../src/lib/guardian/conversation-fastpath.ts";
 import { emptyFarm, PreferencesSchema, type GuardianSnapshot } from "../src/lib/guardian/schema.ts";
 import { handleGuardianMessage } from "../src/lib/guardian/handler.server.ts";
@@ -67,6 +68,19 @@ test("direct execution accepts only literal, complete financial and herd events"
   };
   assert.equal(
     canExecuteWithoutSemanticAI({ text: "Hoje nasceram 2 bezerros", at: date }, s),
+    false,
+  );
+  assert.equal(
+    isFreshActionAfterErrorQuestion({ text: "Hoje nasceram 2 bezerros", at: date }, s),
+    false,
+  );
+  s.pending.question = "Qual problema você quer verificar? Diga em qual cadastro, tarefa ou informação ocorreu.";
+  assert.equal(
+    isFreshActionAfterErrorQuestion({ text: "Hoje nasceram 2 bezerros", at: date }, s),
+    true,
+  );
+  assert.equal(
+    isFreshActionAfterErrorQuestion({ text: "Confirmar", at: date }, s),
     false,
   );
 });
