@@ -4,16 +4,17 @@ import { foldHerd } from "./herd-language.ts";
 import type { GuardianSnapshot } from "./schema.ts";
 import type { ChatMessage } from "../chat/types.ts";
 
-export type FarmSelectionRequest =
-  | { kind: "choose" }
-  | { kind: "named"; name: string };
+export type FarmSelectionRequest = { kind: "choose" } | { kind: "named"; name: string };
 
 /**
  * Selection is a server-side membership operation. The model must never
  * invent an ID, pick a printed farm name, or select by a vague approximation.
  */
 export function farmSelectionRequest(text: string): FarmSelectionRequest | null {
-  const phrase = foldHerd(text).trim().replace(/[.!]+$/, "").trim();
+  const phrase = foldHerd(text)
+    .trim()
+    .replace(/[.!]+$/, "")
+    .trim();
   const selected = phrase.match(
     /^(?:selecionar|selecione|usar|use|abrir|abra|trocar para|mudar para)\s+(?:a\s+)?fazenda(?:\s+(.+))?$/,
   );
@@ -57,8 +58,7 @@ export function canExecuteWithoutSemanticAI(
   }
   const observation = automaticFarmEvent(input, snapshot);
   if (observation.status !== "action" && observation.status !== "batch") return false;
-  const actions =
-    observation.status === "action" ? [observation.action] : observation.actions;
+  const actions = observation.status === "action" ? [observation.action] : observation.actions;
   return (
     actions.length > 0 &&
     actions.every((action) => action.kind === "ledger" || action.kind === "herd_event")
@@ -86,7 +86,9 @@ export function explainPreviousFarmFailure(
   text: string,
   history: ChatMessage[] = [],
 ): string | null {
-  const question = foldHerd(text).replace(/[.!?]+$/, "").trim();
+  const question = foldHerd(text)
+    .replace(/[.!?]+$/, "")
+    .trim();
   if (
     !/^(?:por ?que (?:deu|aconteceu|esta dando|ocorreu) (?:esse |o )?(?:erro|problema)|por ?que (?:nao|n) (?:funcionou|salvou|registrou)|o que (?:houve|deu errado|aconteceu)|qual foi (?:o erro|o problema))$/.test(
       question,
@@ -100,7 +102,11 @@ export function explainPreviousFarmFailure(
   if (/nenhuma linha desta selecao esta pronta|na lista em preparacao/.test(answer)) {
     if (
       /\b(?:confirmar|confirme|nascimentos?|bezerros?)\b/.test(priorUser) &&
-      history.slice(-6).some((m) => m.role === "user" && /\b(?:nasceu|nasceram|bezerros?)\b/.test(foldHerd(m.content)))
+      history
+        .slice(-6)
+        .some(
+          (m) => m.role === "user" && /\b(?:nasceu|nasceram|bezerros?)\b/.test(foldHerd(m.content)),
+        )
     )
       return "A confirmação anterior foi direcionada para a lista de importação de animais, não para o registro dos bezerros. Não tenho recibo de novos nascimentos dessa confirmação; é preciso conferir o rebanho antes de tentar de novo.";
     return "O módulo de importação não encontrou registros preparados para aprovação. Nenhuma alteração nova está confirmada. Se o pedido era de outra área da fazenda, ele não deveria ter sido tratado como importação.";
