@@ -51,12 +51,16 @@ export function FarmStatusOverview({
   ];
 
   return (
-    <section aria-labelledby="farm-operational-summary" className="mb-5 rounded-2xl border border-slate-200 bg-white p-5">
+    <section
+      aria-labelledby="farm-operational-summary"
+      className="mb-5 rounded-2xl border border-slate-200 bg-white p-5"
+    >
       <h2 id="farm-operational-summary" className="text-lg font-semibold">
         Situação da fazenda
       </h2>
       <p className="mt-1 text-xs text-slate-600">
-        Dados desta propriedade até {day.split("-").reverse().join("/")}. Somente registros existentes.
+        Dados desta propriedade até {day.split("-").reverse().join("/")}. Somente registros
+        existentes.
       </p>
       <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-3">
         {items.map(({ section, label, value, icon: Icon }) => (
@@ -76,11 +80,16 @@ export function FarmStatusOverview({
         ))}
       </div>
       {(finance.estimates > 0 || headcount === null || overdue > 0) && (
-        <p role="status" className="mt-3 flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-950">
+        <p
+          role="status"
+          className="mt-3 flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-950"
+        >
           <AlertTriangle aria-hidden="true" size={18} className="mt-0.5 shrink-0" />
           <span>
-            {finance.estimates > 0 && `Estimativas separadas: ${money(finance.estimates)}. `}
-            {headcount === null && "A quantidade de bovinos ainda depende de uma contagem inicial. "}
+            {finance.estimates > 0 &&
+              `Estimativas separadas: ${money(finance.estimates)}. `}
+            {headcount === null &&
+              "A quantidade de bovinos ainda depende de uma contagem inicial. "}
             {overdue > 0 && `${overdue} tarefa(s) estão vencidas. `}
             O saldo apresentado não é lucro líquido.
           </span>
