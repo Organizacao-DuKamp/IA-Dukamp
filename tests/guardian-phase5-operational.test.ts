@@ -1,7 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { emptyFarm, PreferencesSchema, type FarmBook, type GuardianSnapshot } from "../src/lib/guardian/schema.ts";
-import { operationalMoney, operationalReport } from "../src/lib/guardian/operational-intelligence.ts";
+import {
+  emptyFarm,
+  PreferencesSchema,
+  type FarmBook,
+  type GuardianSnapshot,
+} from "../src/lib/guardian/schema.ts";
+import {
+  operationalMoney,
+  operationalReport,
+} from "../src/lib/guardian/operational-intelligence.ts";
 import { directFarmReport } from "../src/lib/guardian/direct-report.ts";
 import { handleGuardianMessage } from "../src/lib/guardian/handler.server.ts";
 import type { GuardianStore } from "../src/lib/guardian/store.server.ts";
@@ -142,14 +150,35 @@ test("phase5: alerts do not fabricate external weather or task status", () => {
 
 test("phase5: direct WhatsApp intents require the authorized farm, no pending action, and no mixed writes", () => {
   const s = snapshot(book());
-  assert.match(directFarmReport({ text: "Indicadores da fazenda" }, s, now) ?? "", /Indicadores operacionais/);
-  assert.match(directFarmReport({ text: "Comparar financeiro com mês passado" }, s, now) ?? "", /Financeiro de/);
-  assert.match(directFarmReport({ text: "O que precisa de atenção na fazenda?" }, s, now) ?? "", /Pendências registradas/);
-  assert.equal(directFarmReport({ text: "Indicadores da fazenda e registre 2 nascimentos" }, s, now), null);
-  assert.equal(directFarmReport({ text: "Indicadores da fazenda", mediaType: "document" }, s, now), null);
-  assert.equal(directFarmReport({ text: "Indicadores da fazenda", animalDocument: {} as never }, s, now), null);
+  assert.match(
+    directFarmReport({ text: "Indicadores da fazenda" }, s, now) ?? "",
+    /Indicadores operacionais/,
+  );
+  assert.match(
+    directFarmReport({ text: "Comparar financeiro com mês passado" }, s, now) ?? "",
+    /Financeiro de/,
+  );
+  assert.match(
+    directFarmReport({ text: "O que precisa de atenção na fazenda?" }, s, now) ?? "",
+    /Pendências registradas/,
+  );
+  assert.equal(
+    directFarmReport({ text: "Indicadores da fazenda e registre 2 nascimentos" }, s, now),
+    null,
+  );
+  assert.equal(
+    directFarmReport({ text: "Indicadores da fazenda", mediaType: "document" }, s, now),
+    null,
+  );
+  assert.equal(
+    directFarmReport({ text: "Indicadores da fazenda", animalDocument: {} as never }, s, now),
+    null,
+  );
   assert.equal(directFarmReport({ text: "Preço do boi gordo hoje" }, s, now), null);
-  assert.equal(directFarmReport({ text: "Indicadores da fazenda" }, { ...s, active: null }, now), null);
+  assert.equal(
+    directFarmReport({ text: "Indicadores da fazenda" }, { ...s, active: null }, now),
+    null,
+  );
   s.pending = {
     kind: "semantic_draft",
     propertyId: "farm-1",
@@ -176,7 +205,13 @@ test("phase5: live handler read-only dashboard never commits or requests LLM", a
   } as unknown as GuardianStore;
   const answer = await handleGuardianMessage(
     { phone: "5517999999998", messageId: "phase5-overview", text: "Indicadores da fazenda" },
-    { store, now, extract: async () => { throw Error("NO_LLM_FOR_VERIFIED_REPORT"); } },
+    {
+      store,
+      now,
+      extract: async () => {
+        throw Error("NO_LLM_FOR_VERIFIED_REPORT");
+      },
+    },
   );
   assert.equal(answer?.persisted, false);
   assert.match(answer?.reply ?? "", /Indicadores operacionais/);
