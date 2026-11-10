@@ -38,14 +38,8 @@ test("producer can select a farm naturally without model interpretation", () => 
   });
   assert.equal(farmSelectionRequest("Como selecionar uma fazenda?"), null);
   assert.equal(farmSelectionRequest("Mover dois animais para a fazenda Tambori"), null);
-  assert.equal(
-    farmSelectionRequest("Selecione a fazenda Eduardo. Hoje comprei 4 bois."),
-    null,
-  );
-  assert.equal(
-    farmSelectionRequest("Selecione a fazenda Eduardo e adicione gados."),
-    null,
-  );
+  assert.equal(farmSelectionRequest("Selecione a fazenda Eduardo. Hoje comprei 4 bois."), null);
+  assert.equal(farmSelectionRequest("Selecione a fazenda Eduardo e adicione gados."), null);
 });
 
 test("direct execution accepts only literal, complete financial and herd events", () => {
@@ -91,10 +85,7 @@ test("direct execution accepts only literal, complete financial and herd events"
     isFreshActionAfterErrorQuestion({ text: "Hoje nasceram 2 bezerros", at: date }, s),
     true,
   );
-  assert.equal(
-    isFreshActionAfterErrorQuestion({ text: "Confirmar", at: date }, s),
-    false,
-  );
+  assert.equal(isFreshActionAfterErrorQuestion({ text: "Confirmar", at: date }, s), false);
 });
 
 test("previous failure can be explained without an extra semantic model call", () => {
