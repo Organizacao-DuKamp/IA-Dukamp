@@ -14,7 +14,13 @@ export function directFarmReport(
   snapshot: GuardianSnapshot,
   at: Date,
 ): string | null {
-  if (!snapshot.active || snapshot.pending || input.mediaType || input.animalDocument) return null;
+  if (
+    !snapshot.active ||
+    snapshot.pending ||
+    (input.mediaType && input.mediaType !== "audio") ||
+    input.animalDocument
+  )
+    return null;
   const phrase = fold(input.text).trim().replace(/[.!?]+$/, "");
   if (
     /^(?:onde estao os animais|em quais lotes estao os animais|mostre a localizacao dos animais|mostre a distribuicao do rebanho|localizacao do rebanho)$/.test(
