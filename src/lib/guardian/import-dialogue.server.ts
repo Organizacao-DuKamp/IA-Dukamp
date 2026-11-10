@@ -27,7 +27,9 @@ export function animalImportIntent(text: string) {
   // A generic "lista" may be financial or a task list. Never route these
   // business-domain instructions through the animal document importer.
   if (
-    /\b(?:despesas?|receitas?|financeiro|combustivel|abastecimento|tarefas?|pagamentos?|contas a pagar)\b/.test(t)
+    /\b(?:despesas?|receitas?|financeiro|combustivel|abastecimento|tarefas?|pagamentos?|contas a pagar)\b/.test(
+      t,
+    )
   )
     return false;
   // Ordinary herd events ("registre dois nascimentos no rebanho") belong to
@@ -46,16 +48,15 @@ export function animalImportIntent(text: string) {
 }
 
 /** A finished batch is history, never a pending WhatsApp operation. */
-export function importFollowupIntent(
-  text: string,
-  status: string | undefined,
-): boolean {
+export function importFollowupIntent(text: string, status: string | undefined): boolean {
   if (!status || status === "completed" || status === "cancelled") return false;
   const t = fold(text).trim();
   // Questions about tasks, expenses or herd events stay with their owners.
   // Only an explicit animal-document reference can override that boundary.
   if (
-    /\b(?:tarefas?|despesas?|receitas?|financeiro|combustivel|abastecimento|nascimentos?|nasceram|nasceu)\b/.test(t) &&
+    /\b(?:tarefas?|despesas?|receitas?|financeiro|combustivel|abastecimento|nascimentos?|nasceram|nasceu)\b/.test(
+      t,
+    ) &&
     !/\b(?:importac\w*|lista (?:de|dos) animais|lista de gados?|pdf|arquivo|abcz)\b/.test(t)
   )
     return false;
@@ -70,7 +71,8 @@ export function importFollowupIntent(
     /^(?:(?:somente|so|apenas|filtrar?|mostrar?|separar?|listar?)\s+)?(?:as?\s+)?(?:femeas?|machos?|nascid\w*|sem identificacao|proxima pagina)\b/.test(
       t,
     );
-  const uploadEnd = /^(?:terminei(?: de enviar)?|pronto|pode analisar|analisa(?: os arquivos)?)\b/.test(t);
+  const uploadEnd =
+    /^(?:terminei(?: de enviar)?|pronto|pode analisar|analisa(?: os arquivos)?)\b/.test(t);
   const explicitApproval =
     /^(?:(?:pode|agora)\s+)?(?:confirmar?|aprovar?|autorizar?|cadastrar?|salvar?)\b.*\b(?:lista|importac\w*|animais da lista|arquivos?|fichas?)\b/.test(
       t,
@@ -109,7 +111,7 @@ export async function handleAnimalImportInbound(
   const intent =
     /(?:pega|extrai|transcrev).*(?:dados|lista).*(?:foto|imagem)/.test(t) ||
     animalImportIntent(text) ||
-    /\b(?:vou (?:te )?(?:mandar|enviar).*(?:fotos|imagens|pdf|lista)|(?:esses|sao os) animais)\b/.test(
+    /\b(?:vou (?:te )?(?:mandar|enviar).*(?:fotos|imagens|pdf|lista|dados dos? (?:gados?|animais))|(?:esses|sao os) animais)\b/.test(
       t,
     );
   // Most conversations aren't imports. Do not even query the import tables
@@ -148,8 +150,8 @@ export async function handleAnimalImportInbound(
   // Confirmation without an explicit import reference belongs to the latest
   // conversational proposal; the importer must not steal it from Guardian.
   // This also excludes every completed import from unrelated future messages.
-  if (!candidate && !intent && !importFollowupIntent(text, batch?.status))
-    return null;
+  if (!candidate && !intent && !importFollowupIntent(text, batch?.status)) return null;
+  if (!candidate && !intent && batch?.status === "completed") return null;
   const snapshot = await store.load(input.phone);
   if (intent) {
     const requested = namedProperty(text, snapshot);
@@ -227,7 +229,10 @@ export async function handleAnimalImportInbound(
   }
   await authorizeImport(input.phone, batch.id);
   const files = await importSources(batch.id);
-  if (/^(?:terminei|pronto|pode analisar|analisa(?: os arquivos)?)/.test(t) && !/cadastr|salvar/.test(t)) {
+  if (
+    /^(?:terminei|pronto|pode analisar|analisa(?: os arquivos)?)/.test(t) &&
+    !/cadastr|salvar/.test(t)
+  ) {
     if (!files.length)
       return answer(
         "A preparação está guardada, mas ainda não há arquivo pronto para leitura neste lote. Se você já enviou, o recebimento ou a leitura pode ter falhado. Tente anexar as fotos ou o PDF novamente para continuar.",
