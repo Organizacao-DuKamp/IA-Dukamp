@@ -5,6 +5,7 @@ import {
   importFollowupIntent,
   handleAnimalImportInbound,
 } from "../src/lib/guardian/import-dialogue.server.ts";
+import type { ImportBatch } from "../src/lib/guardian/imports.ts";
 
 const phone = "5517999900001";
 
@@ -102,9 +103,7 @@ test("a completed import stays closed even when the user mentions the old list",
       enabled: true,
       current: async () => {
         loaded++;
-        return { status: "completed" } as Awaited<ReturnType<
-          NonNullable<Parameters<typeof handleAnimalImportInbound>[1]["current"]>
-        >>;
+        return { status: "completed" } as ImportBatch;
       },
       store: {
         load: async (): Promise<never> => {
