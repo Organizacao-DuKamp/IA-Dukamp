@@ -16,6 +16,8 @@ test("bulk import intent never hijacks ordinary farm operations", () => {
     "Registre 2 novos nascimentos no rebanho hoje",
     "Registra 88000 reais de despesa da fazenda",
     "Registra uma tarefa para amanha",
+    "Registre a lista de despesas do mes",
+    "Cadastre uma lista de tarefas recorrentes",
     "Registrar mais 10 cabeças de gado na contagem do rebanho",
   ]) {
     assert.equal(animalImportIntent(text), false, text);
