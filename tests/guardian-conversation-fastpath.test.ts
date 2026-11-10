@@ -45,12 +45,13 @@ test("direct execution accepts only literal, complete financial and herd events"
   for (const text of [
     "Hoje nasceram 2 bezerros",
     "A minha fazenda teve receita de 100 mil e despesa de 80 mil neste mes",
+    "Gasto 20000 R$ com combustivel todo mes",
   ]) {
     assert.equal(canExecuteWithoutSemanticAI({ text, at: date }, s), true, text);
   }
   for (const text of [
     "Se nascerem 2 bezerros, quanto terei?",
-    "Registra uma despesa de 20 mil todo mes com combustivel",
+    "Previsao de despesa de 20 mil todo mes com combustivel",
     "Qual foi o custo de ração?",
     "Por que deu problema?",
   ]) {
