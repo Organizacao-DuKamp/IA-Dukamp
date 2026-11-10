@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import type { FarmBook } from "@/lib/guardian/schema";
 import { farmIndicators } from "@/lib/guardian/operations";
-import { ledgerForTotals } from "@/lib/guardian/finance";
+import { operationalMoney } from "@/lib/guardian/operational-intelligence";
 
 type Area = "herd" | "tasks" | "finance" | "fuel" | "supplies" | "records";
 const areas = [
@@ -44,17 +44,15 @@ export function FarmMobileHome({
   );
   const month = today.slice(0, 7);
   const cattle = farmIndicators(book, month + "-01", today).stock.count;
-  const ledger = ledgerForTotals(book.ledger, month + "-01", today).filter(
-    (entry) => (entry.periodMonth ?? entry.date.slice(0, 7)) === month,
-  );
-  const balance = ledger.reduce(
-    (sum, entry) => sum + (entry.direction === "income" ? entry.amountCents : -entry.amountCents),
-    0,
-  );
+  const finances = operationalMoney(book, month);
+  const balance = finances.income - finances.expenses;
   const tasks = book.tasks
     .map((task) => ({ ...task, dueAt: taskDisplayDueAt(task) }))
     .filter((task) => task.status === "open")
     .sort((a, b) => a.dueAt.localeCompare(b.dueAt));
+  const overdue = tasks.filter((task) => Date.parse(task.dueAt) < Date.now());
+  const money = (cents: number) =>
+    (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   return (
     <div className="space-y-6 md:hidden">
       <div className="grid grid-cols-2 gap-3">
@@ -67,7 +65,7 @@ export function FarmMobileHome({
           <span className="mt-3 block text-2xl font-semibold">
             {cattle === null ? "—" : cattle.toLocaleString("pt-BR")}
           </span>
-          <span className="mt-1 block text-sm text-slate-600">Bovinos registrados</span>
+          <span className="mt-1 block text-sm text-slate-600">Bovinos calculados</span>
         </button>
         <button
           disabled={busy}
@@ -76,18 +74,42 @@ export function FarmMobileHome({
         >
           <Wallet size={23} className="text-sky-800" aria-hidden="true" />
           <span className="mt-3 block break-words text-xl font-semibold">
-            {(balance / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+            {finances.count ? money(balance) : "Sem lançamentos"}
           </span>
-          <span className="mt-1 block text-sm text-slate-600">Saldo registrado no mês</span>
+          <span className="mt-1 block text-sm text-slate-600">
+            Saldo dos lançamentos, não lucro líquido
+          </span>
         </button>
       </div>
+      {(cattle === null || finances.estimates > 0 || overdue.length > 0) && (
+        <section
+          aria-label="Informações que precisam de atenção"
+          className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950"
+        >
+          <h2 className="font-semibold">Atenção aos registros</h2>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            {cattle === null && (
+              <li>Sem contagem inicial completa: o total de bovinos ainda é desconhecido.</li>
+            )}
+            {finances.estimates > 0 && (
+              <li>
+                Estimativas: {money(finances.estimates)} à parte, sem entrar no saldo dos
+                lançamentos.
+              </li>
+            )}
+            {overdue.length > 0 && (
+              <li>{overdue.length} tarefa(s) vencida(s) conforme os prazos registrados.</li>
+            )}
+          </ul>
+        </section>
+      )}
       <section
         aria-labelledby="farm-next-tasks"
         className="rounded-2xl border border-emerald-950/10 bg-white p-4"
       >
         <div className="flex items-center justify-between gap-2">
           <h2 id="farm-next-tasks" className="text-lg font-semibold">
-            Próximas tarefas
+            Tarefas pendentes
           </h2>
           <button
             disabled={busy}
