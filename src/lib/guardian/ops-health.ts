@@ -89,7 +89,7 @@ function summarize(rows: GuardianOpsTurn[]): OpsWindow {
     p95DurationMs: p95(validDurations),
     p95InputTokens: p95(validTokens),
     highTokenTurns: rows.filter((row) => nonnegative(row.input_tokens) >= 30_000).length,
-    pricingIncomplete: rows.filter((row) => row.pricing_configured === false).length,
+    pricingIncomplete: rows.filter((row) => row.pricing_configured !== true).length,
     traces: traceRows.filter((row) => row.version === 1).length,
     confirmedWrites: traceRows.filter(
       (row) => row.version === 1 && row.stage === "receipt" && row.status === "completed",
@@ -155,6 +155,12 @@ export function guardianOpsReport(
       id: "no-data",
       severity: "unknown",
       message: "Nenhuma interação WhatsApp observada nas últimas 24 horas; isso não comprova disponibilidade.",
+    });
+  if (current.turns > 0 && current.turns < 10)
+    signals.push({
+      id: "small-sample",
+      severity: "unknown",
+      message: "Menos de dez interações nas últimas 24 horas. Não há volume suficiente para avaliar tendências.",
     });
   if (stalledPending)
     signals.push({
