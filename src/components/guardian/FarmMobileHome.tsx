@@ -65,7 +65,7 @@ export function FarmMobileHome({
           <span className="mt-3 block text-2xl font-semibold">
             {cattle === null ? "—" : cattle.toLocaleString("pt-BR")}
           </span>
-          <span className="mt-1 block text-sm text-slate-600">Bovinos registrados</span>
+          <span className="mt-1 block text-sm text-slate-600">Bovinos calculados</span>
         </button>
         <button
           disabled={busy}
@@ -93,13 +93,12 @@ export function FarmMobileHome({
             )}
             {finances.estimates > 0 && (
               <li>
-                Estimativas: {money(finances.estimates)} à parte, sem entrar no saldo dos lançamentos.
+                Estimativas: {money(finances.estimates)} à parte, sem entrar no saldo dos
+                lançamentos.
               </li>
             )}
             {overdue.length > 0 && (
-              <li>
-                {overdue.length} tarefa(s) vencida(s) conforme os prazos registrados.
-              </li>
+              <li>{overdue.length} tarefa(s) vencida(s) conforme os prazos registrados.</li>
             )}
           </ul>
         </section>
@@ -110,7 +109,7 @@ export function FarmMobileHome({
       >
         <div className="flex items-center justify-between gap-2">
           <h2 id="farm-next-tasks" className="text-lg font-semibold">
-            Próximas tarefas
+            Tarefas pendentes
           </h2>
           <button
             disabled={busy}
