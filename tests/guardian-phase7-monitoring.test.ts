@@ -3,10 +3,7 @@ import test from "node:test";
 import { guardianOpsReport, type GuardianOpsTurn } from "../src/lib/guardian/ops-health.ts";
 
 const at = new Date("2026-11-10T20:00:00.000Z");
-const turn = (
-  minsAgo: number,
-  values: Partial<GuardianOpsTurn> = {},
-): GuardianOpsTurn => ({
+const turn = (minsAgo: number, values: Partial<GuardianOpsTurn> = {}): GuardianOpsTurn => ({
   created_at: new Date(at.getTime() - minsAgo * 60_000).toISOString(),
   channel: "whatsapp",
   status: "completed",
@@ -48,7 +45,9 @@ test("phase7: monitoring detects long pending operations without retrying them",
   assert.equal(report.current.errorPercent, 40);
   assert.equal(report.errorsByCode[0].code, "import_busy");
   assert.equal(report.errorsByCode[0].count, 2);
-  assert.ok(report.signals.some((entry) => entry.id === "pending" && entry.severity === "critical"));
+  assert.ok(
+    report.signals.some((entry) => entry.id === "pending" && entry.severity === "critical"),
+  );
 });
 
 test("phase7: 95th-percentile tokens and duration are calculated from real samples", () => {
@@ -83,7 +82,7 @@ test("phase7: stage cost is counted once per usage event, never from private use
     }),
     turn(2, {
       status: "error",
-      error_code: "5517999991111: another private sentence",
+      error_code: "phone_5517999991111",
       pricing_configured: false,
     }),
   ];
