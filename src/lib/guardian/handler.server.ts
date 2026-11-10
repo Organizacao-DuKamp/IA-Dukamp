@@ -24,6 +24,7 @@ import {
   canExecuteWithoutSemanticAI,
   explainPreviousFarmFailure,
   farmSelectionRequest,
+  isFreshActionAfterErrorQuestion,
 } from "./conversation-fastpath.ts";
 import { namedProperty, resolveProperty } from "./property-scope.ts";
 import { possibleRepeatedEntry, repeatAnswer, repeatQuestion } from "./herd-repeat.ts";
@@ -376,7 +377,7 @@ export async function handleGuardianMessage(
         };
     }
     for (let attempt = 0; attempt < 4; attempt++) {
-      const snapshot =
+      let snapshot =
         attempt === 0 && initialSnapshot ? initialSnapshot : await store.load(input.phone);
       if (!deps.request && (!input.mediaType || input.mediaType === "audio")) {
         const explanation = explainPreviousFarmFailure(input.text, input.history);
@@ -461,6 +462,23 @@ export async function handleGuardianMessage(
           conversational: true,
           persisted: false,
         };
+      // A failed diagnostic clarification is not the subject of a new
+      // explicit farm operation. The eventual transactional commit clears it,
+      // without touching unrelated pending proposals or the stored book here.
+      if (
+        !deps.request &&
+        !deps.interpret &&
+        isFreshActionAfterErrorQuestion(
+          {
+            text: input.text,
+            at: referenceAt,
+            mediaType: input.mediaType,
+            history: input.history,
+          },
+          snapshot,
+        )
+      )
+        snapshot = { ...snapshot, pending: null };
       if (
         !deps.request &&
         !(
