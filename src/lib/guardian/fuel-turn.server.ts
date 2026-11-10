@@ -35,10 +35,10 @@ export async function handleFuelTurn(
   if (!draft && fuelTopic(input.text)) {
     const normalized = fuelFold(input.text);
     if (
-      /\\b(?:todo mes|todos os meses|por mes|mensalmente|mensal|mensais)\\b/.test(
+      /\b(?:todo mes|todos os meses|por mes|mensalmente|mensal|mensais)\b/.test(
         normalized,
       ) &&
-      !/\\b(?:litros?|tanques?|abastec\\w*|entradas?|saidas?|saldo)\\b/.test(normalized)
+      !/\b(?:litros?|tanques?|abastec\w*|entradas?|saidas?|saldo)\b/.test(normalized)
     ) {
       const recurring = recordDialogue(input.text, reference, input.mediaType);
       if (
