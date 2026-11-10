@@ -243,6 +243,16 @@ export function semanticDirectiveSelection(context: SemanticContext) {
   };
 }
 
+/** Simple questions cannot authorize mutation even if a model misclassifies them. */
+export function guardSemanticReadOnly(
+  plan: SemanticPlan,
+  mode: "read" | "operation",
+): SemanticPlan {
+  if (mode === "read" && !["none", "inspect", "clarify"].includes(plan.intent))
+    return { intent: "none", propertyId: plan.propertyId, question: "", entries: [] };
+  return plan;
+}
+
 export async function interpretFarmConversation(context: SemanticContext): Promise<SemanticPlan> {
   const { askOpenAI } = await import("../chat/openai.server.ts");
   const selection = semanticDirectiveSelection(context);
@@ -256,7 +266,7 @@ export async function interpretFarmConversation(context: SemanticContext): Promi
       },
     ],
     {
-      model: "terra",
+      model: selection.mode === "read" ? "luna" : "terra",
       structuredTask: true,
       jsonOutput: true,
       channel: "whatsapp",
@@ -284,9 +294,10 @@ export async function interpretFarmConversation(context: SemanticContext): Promi
         JSON.stringify(z.toJSONSchema(ProviderPlanSchema, { unrepresentable: "any" })),
     },
   );
-  return SemanticPlanSchema.parse(
+  const plan = SemanticPlanSchema.parse(
     ProviderPlanSchema.parse(JSON.parse(response.replace(/^```(?:json)?\s*|\s*```$/g, ""))),
   );
+  return guardSemanticReadOnly(plan, selection.mode);
 }
 
 const blocked = new Set([
