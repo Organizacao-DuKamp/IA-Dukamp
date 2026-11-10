@@ -86,8 +86,7 @@ export function FarmStatusOverview({
         >
           <AlertTriangle aria-hidden="true" size={18} className="mt-0.5 shrink-0" />
           <span>
-            {finance.estimates > 0 &&
-              `Estimativas separadas: ${money(finance.estimates)}. `}
+            {finance.estimates > 0 && `Estimativas separadas: ${money(finance.estimates)}. `}
             {headcount === null &&
               "A quantidade de bovinos ainda depende de uma contagem inicial. "}
             {overdue > 0 && `${overdue} tarefa(s) estão vencidas. `}O saldo apresentado não é lucro
