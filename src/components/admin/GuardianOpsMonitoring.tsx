@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Activity, RefreshCw, ShieldCheck } from "lucide-react";
-import {
-  guardianOperationalHealth,
-} from "@/lib/guardian-ops.functions";
+import { guardianOperationalHealth } from "@/lib/guardian-ops.functions";
 import type { GuardianOpsReport } from "@/lib/guardian/ops-health";
 
 const number = (value: number) => new Intl.NumberFormat("pt-BR").format(value);
@@ -16,9 +14,12 @@ const usd = (value: number) =>
     maximumFractionDigits: 4,
   }).format(value);
 const milliseconds = (value: number | null) =>
-  value === null ? "Sem dados" : (value / 1000).toLocaleString("pt-BR", {
-    maximumFractionDigits: 1,
-  }) + " s";
+  value === null
+    ? "Sem dados"
+    : (value / 1000).toLocaleString("pt-BR", {
+        maximumFractionDigits: 1,
+      }) + " s";
+const pair = (first: string, second: string) => first + " / " + second;
 
 const tone = {
   ok: "border-emerald-300 bg-emerald-50 text-emerald-900",
@@ -63,9 +64,9 @@ export function GuardianOpsMonitoring() {
             <Activity size={18} aria-hidden="true" /> Operação do WhatsApp
           </h2>
           <p className="mt-1 max-w-2xl text-xs text-muted-foreground">
-            Últimas 24 horas versus 24 horas anteriores. Dados agregados: sem mensagens,
-            telefones ou informações das fazendas. Inclui todo atendimento pelo WhatsApp,
-            não apenas as operações da Guardiã.
+            Compara as últimas 24 horas com o período anterior. Mostra apenas métricas
+            agregadas do WhatsApp, sem mensagens nem dados de fazendas. Inclui atendimentos
+            fora da Guardiã.
           </p>
         </div>
         <button
@@ -102,8 +103,10 @@ export function GuardianOpsMonitoring() {
               },
               {
                 label: "Falhas / anterior",
-                value: percent(report.current.errorPercent) + " / " +
+                value: pair(
+                  percent(report.current.errorPercent),
                   percent(report.previous.errorPercent),
+                ),
               },
               {
                 label: "Pendências há mais de 10 min",
@@ -111,8 +114,10 @@ export function GuardianOpsMonitoring() {
               },
               {
                 label: "Custo estimado / anterior",
-                value: usd(report.current.estimatedCostUsd) + " / " +
+                value: pair(
+                  usd(report.current.estimatedCostUsd),
                   usd(report.previous.estimatedCostUsd),
+                ),
               },
               {
                 label: "P95 de duração",
@@ -120,9 +125,10 @@ export function GuardianOpsMonitoring() {
               },
               {
                 label: "P95 de tokens de entrada",
-                value: report.current.p95InputTokens === null
-                  ? "Sem dados"
-                  : number(report.current.p95InputTokens),
+                value:
+                  report.current.p95InputTokens === null
+                    ? "Sem dados"
+                    : number(report.current.p95InputTokens),
               },
               {
                 label: "Interações com entrada ≥30 mil tokens",
@@ -130,8 +136,10 @@ export function GuardianOpsMonitoring() {
               },
               {
                 label: "Rastros da Guardiã / recibos",
-                value: number(report.current.traces) + " / " +
+                value: pair(
+                  number(report.current.traces),
                   number(report.current.confirmedWrites),
+                ),
               },
             ].map((metric) => (
               <div key={metric.label} className="rounded-lg border border-border bg-background p-3">
@@ -160,7 +168,9 @@ export function GuardianOpsMonitoring() {
                 <ul className="space-y-2 text-sm">
                   {report.stages.map((stage) => (
                     <li key={stage.name} className="flex justify-between gap-3 border-b py-1">
-                      <span className="break-all">{stage.name} ({stage.count})</span>
+                      <span className="break-all">
+                          {stage.name} ({stage.count})
+                        </span>
                       <span className="shrink-0 font-medium">{usd(stage.costUsd)}</span>
                     </li>
                   ))}
@@ -186,9 +196,8 @@ export function GuardianOpsMonitoring() {
           </div>
           <p className="mt-4 flex items-start gap-2 text-xs text-muted-foreground">
             <ShieldCheck size={15} className="shrink-0" aria-hidden="true" />
-            Indicadores de diagnóstico, não comprovantes de gravação. Sem reenvio
-            automático de mensagens, sem acesso a dados da fazenda e sem ações destrutivas.
-            Custos são estimativas, sujeitas à configuração das tarifas.
+            Este painel não grava dados, reenvia mensagens nem substitui os recibos do banco.
+            Custos são estimativas sujeitas às tarifas configuradas.
           </p>
         </>
       )}
