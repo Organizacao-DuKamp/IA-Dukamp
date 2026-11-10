@@ -83,7 +83,8 @@ test("direct execution accepts only literal, complete financial and herd events"
     isFreshActionAfterErrorQuestion({ text: "Hoje nasceram 2 bezerros", at: date }, s),
     false,
   );
-  s.pending.question = "Qual problema você quer verificar? Diga em qual cadastro, tarefa ou informação ocorreu.";
+  s.pending.question =
+    "Qual problema você quer verificar? Diga em qual cadastro, tarefa ou informação ocorreu.";
   assert.equal(
     isFreshActionAfterErrorQuestion({ text: "Hoje nasceram 2 bezerros", at: date }, s),
     true,
@@ -97,7 +98,10 @@ test("direct execution accepts only literal, complete financial and herd events"
 test("previous failure can be explained without an extra semantic model call", () => {
   const history = [
     { role: "user" as const, content: "Registra 20000 de combustível na fazenda" },
-    { role: "assistant" as const, content: "Opa, deu um problema aqui e não consegui concluir a resposta." },
+    {
+      role: "assistant" as const,
+      content: "Opa, deu um problema aqui e não consegui concluir a resposta.",
+    },
   ];
   const reply = explainPreviousFarmFailure("Por que deu problema?", history);
   assert.match(reply ?? "", /falha técnica/);
@@ -115,7 +119,8 @@ test("previous failure can be explained without an extra semantic model call", (
     { role: "user", content: "Confirmar" },
     {
       role: "assistant",
-      content: "Nenhuma linha desta seleção está pronta para cadastrar. Confira as pendências no painel.",
+      content:
+        "Nenhuma linha desta seleção está pronta para cadastrar. Confira as pendências no painel.",
     },
   ]);
   assert.match(diverted ?? "", /importação/);
