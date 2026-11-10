@@ -82,7 +82,10 @@ test("P4-05 to P4-09: isolated SQL registers expense and births once, selects co
     }
 
     const select = await send("select-p4", "Usar fazenda Eduardo");
-    assert.match(select?.reply ?? "", /(?:fazenda selecionada|fazenda Eduardo já está selecionada)/i);
+    assert.match(
+      select?.reply ?? "",
+      /(?:fazenda selecionada|fazenda Eduardo já está selecionada)/i,
+    );
     assert.equal((await f.guardian.load(phone)).active?.id, ids.Eduardo);
 
     const wrong = await send("unknown-p4", "Usar fazenda Inexistente");
