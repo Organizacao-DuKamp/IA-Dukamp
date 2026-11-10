@@ -21,8 +21,7 @@ export const guardianOperationalHealth = createServerFn({ method: "GET" })
       _user_id: ctx.userId,
       _role: "admin",
     });
-    if (role.error || role.data !== true)
-      throw new Error("Acesso restrito a administradores.");
+    if (role.error || role.data !== true) throw new Error("Acesso restrito a administradores.");
 
     const { getPrivilegedClient } = await import("@/lib/privileged.server");
     const db = (await getPrivilegedClient(ctx.supabase)) as any;
@@ -42,8 +41,7 @@ export const guardianOperationalHealth = createServerFn({ method: "GET" })
         .order("created_at", { ascending: false })
         .order("id", { ascending: false })
         .range(offset, offset + PAGE_SIZE - 1);
-      if (result.error)
-        throw new Error("Não foi possível consultar os indicadores operacionais.");
+      if (result.error) throw new Error("Não foi possível consultar os indicadores operacionais.");
       rows.push(...((result.data ?? []) as GuardianOpsTurn[]));
       if ((result.data ?? []).length < PAGE_SIZE) break;
     }
