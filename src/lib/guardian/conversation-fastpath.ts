@@ -1,4 +1,5 @@
 import { automaticFarmEvent } from "./automatic.ts";
+import { recordActions, recordDialogue } from "./record-dialogue.ts";
 import { foldHerd } from "./herd-language.ts";
 import type { GuardianSnapshot } from "./schema.ts";
 import type { ChatMessage } from "../chat/types.ts";
@@ -31,6 +32,19 @@ export function canExecuteWithoutSemanticAI(
 ): boolean {
   if (!snapshot.active || snapshot.pending || (input.mediaType && input.mediaType !== "audio"))
     return false;
+  const statement = foldHerd(input.text);
+  // A future budget or hypothetical is not a verified monthly expense.
+  if (
+    /\b(?:previsao|previst\w*|planej\w*|orcamento|pretendo|projet\w*|quero gastar|se eu)\b/.test(
+      statement,
+    )
+  )
+    return false;
+  const record = recordDialogue(input.text, input.at, input.mediaType);
+  if (record.kind === "slots" && record.slots.section === "finance") {
+    const actions = recordActions(record.slots);
+    if (actions?.length && actions.every((action) => action.kind === "ledger")) return true;
+  }
   const observation = automaticFarmEvent(input, snapshot);
   if (observation.status !== "action" && observation.status !== "batch") return false;
   const actions =
