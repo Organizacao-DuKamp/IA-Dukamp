@@ -51,9 +51,7 @@ export function canExecuteWithoutSemanticAI(
   if (
     hasTaskIntent(input.text) ||
     /\b(?:selecionar|selecione|trocar|mudar)\s+(?:a\s+)?fazenda\b/.test(statement) ||
-    /\b(?:corrija|corrigir|altere|alterar|mova|mover|transfira|transferir)\b/.test(
-      statement,
-    )
+    /\b(?:corrija|corrigir|altere|alterar|mova|mover|transfira|transferir)\b/.test(statement)
   )
     return false;
   // A future budget or hypothetical is not a verified monthly expense.
