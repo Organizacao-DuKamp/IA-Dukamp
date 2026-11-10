@@ -124,9 +124,7 @@ export function guardianOpsReport(
     if (row.status === "error") {
       // Avoid echoing raw diagnostic messages or producer-provided text.
       const code = String(row.error_code ?? "sem_codigo");
-      const safe = /^[a-zA-Z][\w-]{0,63}$/.test(code) && !/\d{6,}/.test(code)
-        ? code
-        : "outros";
+      const safe = /^[a-zA-Z][\w-]{0,63}$/.test(code) && !/\d{6,}/.test(code) ? code : "outros";
       errors.set(safe, (errors.get(safe) ?? 0) + 1);
     }
     const usage = object(row.metadata).usage_events;
@@ -160,7 +158,8 @@ export function guardianOpsReport(
     signals.push({
       id: "small-sample",
       severity: "unknown",
-      message: "Menos de dez interações nas últimas 24 horas. Não há volume suficiente para avaliar tendências.",
+      message:
+        "Menos de dez interações nas últimas 24 horas. Não há volume suficiente para avaliar tendências.",
     });
   if (stalledPending)
     signals.push({
@@ -189,8 +188,7 @@ export function guardianOpsReport(
     signals.push({
       id: "cost",
       severity: "warning",
-      message:
-        "Custo estimado médio por interação dobrou em relação às 24 horas anteriores.",
+      message: "Custo estimado médio por interação dobrou em relação às 24 horas anteriores.",
     });
   if (current.pricingIncomplete)
     signals.push({
@@ -203,7 +201,8 @@ export function guardianOpsReport(
     signals.push({
       id: "no-alert",
       severity: "ok",
-      message: "Nenhum limite desta amostra foi ultrapassado. Não substitui testes reais de gravação.",
+      message:
+        "Nenhum limite desta amostra foi ultrapassado. Não substitui testes reais de gravação.",
     });
 
   return {
