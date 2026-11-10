@@ -26,6 +26,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { FarmMobileHome } from "@/components/guardian/FarmMobileHome";
+import { FarmStatusOverview } from "@/components/guardian/FarmStatusOverview";
 import {
   Dialog,
   DialogContent,
@@ -513,6 +514,11 @@ export function FarmPanel() {
               </div>
             )}
             <div className="space-y-6">
+              {tab === "overview" && (
+                <div className="hidden md:block">
+                  <FarmStatusOverview book={view.book} busy={busy} navigate={navigate} />
+                </div>
+              )}
               {tab === "overview" && (
                 <FarmMobileHome
                   book={view.book}
