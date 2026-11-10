@@ -64,9 +64,8 @@ export function GuardianOpsMonitoring() {
             <Activity size={18} aria-hidden="true" /> Operação do WhatsApp
           </h2>
           <p className="mt-1 max-w-2xl text-xs text-muted-foreground">
-            Compara as últimas 24 horas com o período anterior. Mostra apenas métricas
-            agregadas do WhatsApp, sem mensagens nem dados de fazendas. Inclui atendimentos
-            fora da Guardiã.
+            Compara as últimas 24 horas com o período anterior. Mostra apenas métricas agregadas do
+            WhatsApp, sem mensagens nem dados de fazendas. Inclui atendimentos fora da Guardiã.
           </p>
         </div>
         <button
@@ -136,10 +135,7 @@ export function GuardianOpsMonitoring() {
               },
               {
                 label: "Rastros da Guardiã / recibos",
-                value: pair(
-                  number(report.current.traces),
-                  number(report.current.confirmedWrites),
-                ),
+                value: pair(number(report.current.traces), number(report.current.confirmedWrites)),
               },
             ].map((metric) => (
               <div key={metric.label} className="rounded-lg border border-border bg-background p-3">
@@ -169,8 +165,8 @@ export function GuardianOpsMonitoring() {
                   {report.stages.map((stage) => (
                     <li key={stage.name} className="flex justify-between gap-3 border-b py-1">
                       <span className="break-all">
-                          {stage.name} ({stage.count})
-                        </span>
+                        {stage.name} ({stage.count})
+                      </span>
                       <span className="shrink-0 font-medium">{usd(stage.costUsd)}</span>
                     </li>
                   ))}
@@ -196,8 +192,8 @@ export function GuardianOpsMonitoring() {
           </div>
           <p className="mt-4 flex items-start gap-2 text-xs text-muted-foreground">
             <ShieldCheck size={15} className="shrink-0" aria-hidden="true" />
-            Este painel não grava dados, reenvia mensagens nem substitui os recibos do banco.
-            Custos são estimativas sujeitas às tarifas configuradas.
+            Este painel não grava dados, reenvia mensagens nem substitui os recibos do banco. Custos
+            são estimativas sujeitas às tarifas configuradas.
           </p>
         </>
       )}
