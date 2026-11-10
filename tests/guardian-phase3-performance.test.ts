@@ -4,6 +4,7 @@ import { directFarmReport } from "../src/lib/guardian/direct-report.ts";
 import {
   semanticContext,
   semanticDirectiveSelection,
+  guardSemanticReadOnly,
 } from "../src/lib/guardian/semantic.server.ts";
 import { applyFarmAction } from "../src/lib/guardian/book.ts";
 import { handleGuardianMessage } from "../src/lib/guardian/handler.server.ts";
@@ -114,6 +115,17 @@ test("phase3: semantic prompt optimization never drops specialist rules from act
     ).mode,
     "operation",
   );
+});
+
+test("phase3: lightweight read models cannot turn questions into writes", () => {
+  const plan = {
+    intent: "apply" as const,
+    propertyId: "farm",
+    question: "",
+    entries: [],
+  };
+  assert.equal(guardSemanticReadOnly(plan, "read").intent, "none");
+  assert.equal(guardSemanticReadOnly(plan, "operation").intent, "apply");
 });
 
 test("phase3: direct reports do not create commits or invoke a semantic interpreter", async () => {
