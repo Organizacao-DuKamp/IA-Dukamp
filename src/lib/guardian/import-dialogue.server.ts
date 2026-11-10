@@ -205,7 +205,7 @@ export async function handleAnimalImportInbound(
     });
     return quiet();
   }
-  if (!continuation) {
+  if (!batch || batch.status === "completed" || batch.status === "cancelled") {
     if (!intent) return null;
     await enqueue({
       phone: input.phone,
