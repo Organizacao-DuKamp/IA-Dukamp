@@ -64,9 +64,7 @@ const p95 = (items: number[]): number | null => {
   return sorted[Math.max(0, Math.ceil(sorted.length * 0.95) - 1)];
 };
 const object = (raw: unknown): Record<string, unknown> =>
-  raw && typeof raw === "object" && !Array.isArray(raw)
-    ? (raw as Record<string, unknown>)
-    : {};
+  raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
 
 function summarize(rows: GuardianOpsTurn[]): OpsWindow {
   const errors = rows.filter((row) => row.status === "error").length;
@@ -126,7 +124,9 @@ export function guardianOpsReport(
     if (row.status === "error") {
       // Avoid echoing raw diagnostic messages or producer-provided text.
       const code = String(row.error_code ?? "sem_codigo");
-      const safe = /^[a-zA-Z][\w-]{0,63}$/.test(code) ? code : "outros";
+      const safe = /^[a-zA-Z][\w-]{0,63}$/.test(code) && !/\d{6,}/.test(code)
+        ? code
+        : "outros";
       errors.set(safe, (errors.get(safe) ?? 0) + 1);
     }
     const usage = object(row.metadata).usage_events;
@@ -134,8 +134,7 @@ export function guardianOpsReport(
     for (const entry of usage.slice(0, 32)) {
       const value = object(entry);
       const name = value.stage;
-      if (typeof name !== "string" || !/^[a-z][a-z_0-9-]{0,63}$/i.test(name))
-        continue;
+      if (typeof name !== "string" || !/^[a-z][a-z_0-9-]{0,63}$/i.test(name)) continue;
       const currentStage = stages.get(name) ?? { name, count: 0, costUsd: 0 };
       currentStage.count += 1;
       currentStage.costUsd += nonnegative(value.estimated_cost_usd);
@@ -154,7 +153,8 @@ export function guardianOpsReport(
     signals.push({
       id: "no-data",
       severity: "unknown",
-      message: "Nenhuma interação WhatsApp observada nas últimas 24 horas; isso não comprova disponibilidade.",
+      message:
+        "Nenhuma interação WhatsApp observada nas últimas 24 horas; isso não comprova disponibilidade.",
     });
   if (current.turns > 0 && current.turns < 10)
     signals.push({
@@ -189,13 +189,15 @@ export function guardianOpsReport(
     signals.push({
       id: "cost",
       severity: "warning",
-      message: "Custo estimado médio por interação dobrou em relação às 24 horas anteriores.",
+      message:
+        "Custo estimado médio por interação dobrou em relação às 24 horas anteriores.",
     });
   if (current.pricingIncomplete)
     signals.push({
       id: "pricing",
       severity: "unknown",
-      message: "Algumas interações não têm preço completo configurado; custos podem estar subestimados.",
+      message:
+        "Algumas interações não têm preço completo configurado; custos podem estar subestimados.",
     });
   if (!signals.length)
     signals.push({
