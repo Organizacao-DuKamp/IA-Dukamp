@@ -147,6 +147,14 @@ export async function handleAnimalImportInbound(
     candidate = await (dependencies.classifyPdf ?? isAnimalImportPdf)(new Uint8Array(file.bytes));
   }
   if (input.media && !candidate) return null;
+  // A finished batch is immutable. Only a new upload/import request starts
+  // another one; "confirm this list" cannot approve an already finished job.
+  if (
+    batch?.status === "completed" &&
+    !input.media &&
+    !/\b(?:nov[oa]|outra|enviar|mandar|import\w*|cadastr\w*|registr\w*)\b/.test(t)
+  )
+    return null;
   // Confirmation without an explicit import reference belongs to the latest
   // conversational proposal; the importer must not steal it from Guardian.
   // This also excludes every completed import from unrelated future messages.
