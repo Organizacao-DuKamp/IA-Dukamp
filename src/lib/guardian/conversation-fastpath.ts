@@ -19,6 +19,16 @@ export function farmSelectionRequest(text: string): FarmSelectionRequest | null 
   );
   if (!selected) return null;
   const name = selected[1]?.trim();
+  // A combined order ("selecione Eduardo e registre 2 nascimentos") must
+  // remain atomic in the conversational multi-action executor.
+  if (
+    name &&
+    (/[.,;!?]/.test(name) ||
+      /\b(?:e|depois|tambem)\s+(?:adicion\w*|registr\w*|anot\w*|compr\w*|cri\w*|avis\w*|lembr\w*|mov\w*|transfer\w*|cadastr\w*)\b/.test(
+        name,
+      ))
+  )
+    return null;
   return name ? { kind: "named", name } : { kind: "choose" };
 }
 
