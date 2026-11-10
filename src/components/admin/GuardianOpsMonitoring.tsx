@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Activity, RefreshCw, ShieldCheck } from "lucide-react";
 import {
@@ -32,6 +32,7 @@ export function GuardianOpsMonitoring() {
   const [report, setReport] = useState<GuardianOpsReport | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const initiallyLoaded = useRef(false);
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -44,6 +45,10 @@ export function GuardianOpsMonitoring() {
     }
   }, [request]);
   useEffect(() => {
+    // Some server-function wrappers change identity between renders. Run the
+    // initial request only once to avoid a network polling loop.
+    if (initiallyLoaded.current) return;
+    initiallyLoaded.current = true;
     void load();
   }, [load]);
 
