@@ -110,6 +110,13 @@ test("phase7: prevents false green when telemetry is missing or incomplete", () 
   assert.equal(truncated.truncated, true);
   assert.ok(truncated.signals.some((entry) => entry.id === "sample"));
   assert.ok(!truncated.signals.some((entry) => entry.id === "no-alert"));
+  assert.ok(truncated.signals.some((entry) => entry.id === "small-sample"));
+  const missingTariff = guardianOpsReport(
+    [turn(2, { pricing_configured: null })],
+    at,
+  );
+  assert.equal(missingTariff.current.pricingIncomplete, 1);
+  assert.ok(missingTariff.signals.some((entry) => entry.id === "pricing"));
 });
 
 test("phase7: flags cost increases only with a reliable comparable baseline", () => {
