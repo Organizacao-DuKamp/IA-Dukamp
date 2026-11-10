@@ -1,5 +1,6 @@
 import { farmReport, fold } from "./book.ts";
 import { parseGuardianRequest } from "./parse.ts";
+import { describeHerdLocations } from "./herd-location-report.ts";
 import type { GuardianInput } from "./handler.server.ts";
 import type { GuardianSnapshot } from "./schema.ts";
 
@@ -15,6 +16,16 @@ export function directFarmReport(
 ): string | null {
   if (!snapshot.active || snapshot.pending || input.mediaType || input.animalDocument) return null;
   const phrase = fold(input.text).trim().replace(/[.!?]+$/, "");
+  if (
+    /^(?:onde estao os animais|em quais lotes estao os animais|mostre a localizacao dos animais|mostre a distribuicao do rebanho|localizacao do rebanho)$/.test(
+      phrase,
+    )
+  ) {
+    const date = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Sao_Paulo",
+    }).format(at);
+    return describeHerdLocations(snapshot.active.book, date);
+  }
   const report =
     /^(?:resumo financeiro|relatorio financeiro|minhas tarefas|tarefas pendentes|resumo da fazenda|relatorio da fazenda)(?: (?:deste mes|desse mes|neste mes|nesse mes|do mes passado|de hoje|de ontem|desta semana|do ano))?$/.test(
       phrase,
