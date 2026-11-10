@@ -30,6 +30,7 @@ import {
   type SpendSummary,
 } from "@/lib/ai/provider-summary";
 import { AIHealthCheck } from "@/components/admin/AIHealthCheck";
+import { GuardianOpsMonitoring } from "@/components/admin/GuardianOpsMonitoring";
 import { WhatsAppFollowupPanel } from "@/components/admin/WhatsAppFollowupPanel";
 import { ResetWhatsAppConversationButton } from "@/components/admin/ResetWhatsAppConversationButton";
 
@@ -459,6 +460,8 @@ function AdminAIAnalytics() {
             </button>
           </div>
         </section>
+
+        <GuardianOpsMonitoring />
 
         {!overview && loading && (
           <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
