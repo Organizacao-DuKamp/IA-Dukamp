@@ -499,7 +499,7 @@ export function farmReport(
   const management = (book.management?.entries ?? []).filter(
     (e) => !e.removed && (!e.values.date || inPeriod(e.values.date)) && inLot(e.values.lot),
   );
-  if (management.length)
+  if (management.length && all)
     sections.push(
       "Gestão da fazenda:\n" + managementReport({ ...book, management: { entries: management } }),
     );
