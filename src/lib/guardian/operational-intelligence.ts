@@ -34,13 +34,19 @@ type MoneySummary = {
  */
 export function operationalMoney(book: FarmBook, month: string): MoneySummary {
   const { start, end } = monthRange(month);
-  const actual = ledgerForTotals(book.ledger.filter((e) => !e.estimated), start, end);
-  const estimated = ledgerForTotals(book.ledger.filter((e) => !!e.estimated), start, end);
+  const actual = ledgerForTotals(
+    book.ledger.filter((e) => !e.estimated),
+    start,
+    end,
+  );
+  const estimated = ledgerForTotals(
+    book.ledger.filter((e) => !!e.estimated),
+    start,
+    end,
+  );
   return {
     entries: actual,
-    income: actual
-      .filter((e) => e.direction === "income")
-      .reduce((s, e) => s + e.amountCents, 0),
+    income: actual.filter((e) => e.direction === "income").reduce((s, e) => s + e.amountCents, 0),
     expenses: actual
       .filter((e) => e.direction === "expense")
       .reduce((s, e) => s + e.amountCents, 0),
@@ -79,10 +85,16 @@ function financeView(book: FarmBook, month: string) {
     "O saldo é receitas menos despesas registradas; não é lucro líquido nem fluxo de caixa auditado.",
     comparison,
     ...(costCategories.length
-      ? ["Despesas por categoria informada: " + costCategories.map(([k, v]) => `${k}: ${cash(v)}`).join("; ") + "."]
+      ? [
+          "Despesas por categoria informada: " +
+            costCategories.map(([k, v]) => `${k}: ${cash(v)}`).join("; ") +
+            ".",
+        ]
       : []),
     ...(current.estimates
-      ? [`Estimativas registradas separadamente: ${cash(current.estimates)} (não somadas aos valores realizados).`]
+      ? [
+          `Estimativas registradas separadamente: ${cash(current.estimates)} (não somadas aos valores realizados).`,
+        ]
       : []),
     "Um lançamento declarado como mensal não é replicado automaticamente nos meses seguintes.",
   ].join("\n");
@@ -111,7 +123,9 @@ function alertView(book: FarmBook, at: Date) {
       : "Nenhuma tarefa prevista nas próximas 24 horas nos registros disponíveis.",
   ];
   if (!book.operations?.counts?.some((c) => !c.lot && (c.species ?? "cattle") === "cattle"))
-    alerts.push("Rebanho: falta contagem inicial geral para calcular o total bovino com segurança.");
+    alerts.push(
+      "Rebanho: falta contagem inicial geral para calcular o total bovino com segurança.",
+    );
   alerts.push(
     "Este resumo não consultou boletins meteorológicos nem cotações. Avisos climáticos só devem ser enviados com fonte, local, prazo e consentimento válidos.",
   );
@@ -135,5 +149,7 @@ export function operationalReport(book: FarmBook, view: OperationalView, at: Dat
     financeView(book, month),
     alertView(book, at),
     "Cotações de mercado exigem produto, praça, unidade, data e fonte verificável; nenhum preço foi presumido.",
-  ].join("\n\n").slice(0, 4500);
+  ]
+    .join("\n\n")
+    .slice(0, 4500);
 }
