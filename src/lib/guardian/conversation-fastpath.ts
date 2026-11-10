@@ -1,5 +1,6 @@
 import { automaticFarmEvent } from "./automatic.ts";
 import { recordActions, recordDialogue } from "./record-dialogue.ts";
+import { hasTaskIntent } from "./task-language.ts";
 import { foldHerd } from "./herd-language.ts";
 import type { GuardianSnapshot } from "./schema.ts";
 import type { ChatMessage } from "../chat/types.ts";
@@ -44,6 +45,17 @@ export function canExecuteWithoutSemanticAI(
   if (!snapshot.active || snapshot.pending || (input.mediaType && input.mediaType !== "audio"))
     return false;
   const statement = foldHerd(input.text);
+  // Multi-goal instructions must remain atomic. A single recognized expense or
+  // birth must not cause a second requested task, correction or farm selection
+  // to disappear when the semantic planner is skipped.
+  if (
+    hasTaskIntent(input.text) ||
+    /\b(?:selecionar|selecione|trocar|mudar)\s+(?:a\s+)?fazenda\b/.test(statement) ||
+    /\b(?:corrija|corrigir|altere|alterar|mova|mover|transfira|transferir)\b/.test(
+      statement,
+    )
+  )
+    return false;
   // A future budget or hypothetical is not a verified monthly expense.
   if (
     /\b(?:previsao|previst\w*|planej\w*|orcamento|pretendo|projet\w*|quero gastar|se eu)\b/.test(
