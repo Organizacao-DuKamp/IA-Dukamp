@@ -90,8 +90,8 @@ export function FarmStatusOverview({
               `Estimativas separadas: ${money(finance.estimates)}. `}
             {headcount === null &&
               "A quantidade de bovinos ainda depende de uma contagem inicial. "}
-            {overdue > 0 && `${overdue} tarefa(s) estão vencidas. `}
-            O saldo apresentado não é lucro líquido.
+            {overdue > 0 && `${overdue} tarefa(s) estão vencidas. `}O saldo apresentado não é lucro
+            líquido.
           </span>
         </p>
       )}
