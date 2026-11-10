@@ -1,5 +1,6 @@
 import { handleEmployeeDialogue } from "./employee-dialogue.server.ts";
 import { handleFarmDialogue } from "./farm-dialogue.server.ts";
+import { directFarmReport } from "./direct-report.ts";
 import { creatingFarm, naturalConfirmation } from "./farm-dialogue.ts";
 import type { GuardianTrace } from "./trace.ts";
 import {
@@ -462,6 +463,17 @@ export async function handleGuardianMessage(
           conversational: true,
           persisted: false,
         };
+      // Simple read-only reports already have a trusted, authorized snapshot.
+      // Skip the expensive semantic planner without changing farm state.
+      if (!deps.request && !deps.interpret) {
+        const report = directFarmReport(input, snapshot, referenceAt);
+        if (report)
+          return {
+            reply: report,
+            activeProperty: true,
+            persisted: false,
+          };
+      }
       // A failed diagnostic clarification is not the subject of a new
       // explicit farm operation. The eventual transactional commit clears it,
       // without touching unrelated pending proposals or the stored book here.
