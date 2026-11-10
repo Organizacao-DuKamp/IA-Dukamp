@@ -128,6 +128,6 @@ test("integration: selecting the only authorized farm succeeds without LLM or ne
     assert.equal(after.active?.id, id);
     assert.equal(after.properties.length, before.properties.length);
   } finally {
-    await f.close();
+    await f.db.close();
   }
 });
