@@ -21,7 +21,9 @@ export function directFarmReport(
     input.animalDocument
   )
     return null;
-  const phrase = fold(input.text).trim().replace(/[.!?]+$/, "");
+  const phrase = fold(input.text)
+    .trim()
+    .replace(/[.!?]+$/, "");
   if (
     /^(?:onde estao os animais|em quais lotes estao os animais|mostre a localizacao dos animais|mostre a distribuicao do rebanho|localizacao do rebanho)$/.test(
       phrase,
