@@ -46,6 +46,13 @@ export function importFollowupIntent(
 ): boolean {
   if (!status || status === "completed" || status === "cancelled") return false;
   const t = fold(text).trim();
+  // Questions about tasks, expenses or herd events stay with their owners.
+  // Only an explicit animal-document reference can override that boundary.
+  if (
+    /\b(?:tarefas?|despesas?|receitas?|financeiro|combustivel|abastecimento|nascimentos?|nasceram|nasceu)\b/.test(t) &&
+    !/\b(?:importac\w*|lista (?:de|dos) animais|lista de gados?|pdf|arquivo|abcz)\b/.test(t)
+  )
+    return false;
   // An active import may be filtered, corrected or approved, but it must not
   // capture a new finance, task, or herd operation merely because it says
   // "registre", "confirmar", "nasceram" or "salvar".
@@ -93,13 +100,16 @@ export async function handleAnimalImportInbound(
   const text = input.media?.caption || input.text,
     t = fold(text);
   if (input.media && !["image", "document"].includes(input.media.type)) return null;
-  let batch = await loadCurrent(input.phone);
   const intent =
     /(?:pega|extrai|transcrev).*(?:dados|lista).*(?:foto|imagem)/.test(t) ||
     animalImportIntent(text) ||
     /\b(?:vou (?:te )?(?:mandar|enviar).*(?:fotos|imagens|pdf|lista)|(?:esses|sao os) animais)\b/.test(
       t,
     );
+  // Most conversations aren't imports. Do not even query the import tables
+  // for normal financial, herd, task or confirmation messages.
+  if (!input.media && !intent && !importFollowupIntent(text, "review")) return null;
+  let batch = await loadCurrent(input.phone);
   if (
     input.media?.type === "image" &&
     !intent &&
