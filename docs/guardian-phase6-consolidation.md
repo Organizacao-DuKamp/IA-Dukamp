@@ -51,3 +51,5 @@ Comparar períodos equivalentes com a mesma mistura de intenções, usando:
 - Porcentagem de relatórios resolvidos sem IA e percepções de produtores leigos (não medir apenas respostas do modelo).
 
 A redução de 80% do custo de operações simples permanece **meta**, não um resultado comprovado nesta fase. A Etapa 5 de alertas proativos novos e integração adicional de cotações WhatsApp só poderá ser considerada completa após desenvolvimento, testes e publicação específicos.
+
+Homologação: o check automatizado deve validar a SHA final deste PR; verificações de commits anteriores não liberam a publicação.
