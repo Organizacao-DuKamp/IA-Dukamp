@@ -206,17 +206,67 @@ Confirmação: se existe proposta pendente válida, entenda pelo sentido respost
 
 const GROUPED_LOT_DIRECTIVE = `Lotes de grupos coletivos: summary.herdGroups vem dos movimentos reais e das transferências já executadas, calculado sobre TODO o livro. Cada grupo tem movementId, species e locations com lot opcional e available (limite seguro). Para "esses 50 da última compra no lote 4", use lot_transfer com movementId desse grupo real, count 50, species do grupo, to "4", date da mudança. Se locations não tem lot, omita from: o grupo está SEM LOTE, não em um lote chamado "fazenda". A palavra "Fazenda" na tabela antiga significa rebanho sem lote definido; só use from "fazenda" se existir um lote real com esse nome. Se o grupo está no lote 4 e vai para o 5, from é "4". Não crie herd_count nem invente um censo de ontem, não substitua a compra para mudar sua localização atual, não refaça a compra/nascimento e não crie fichas individuais. Quando o destino ainda não existe e o produtor pede colocar/criar o grupo lá, use createDestination true: criar lote na fazenda selecionada é autorizado pelo pedido; não exige contagem histórica fictícia. Em lote já conhecido sem contagem, o executor registra a alocação mas mantém desconhecido o total desse lote. Use movementId somente se o grupo referido corresponder a um único movimento real e available cobrir a quantidade. Se faltam origem, grupo ou saldo seguros, pergunte só isso, sem estimar a quantidade. Uma ficha individual real usa move com seu code, não um grupo coletivo. Se não é um grupo identificável, lot_transfer sem movementId continua exigindo contagens reais dos lotes. Corrigir o destino de uma operação pendente usa a última fala explícita ("melhor, no lote 4" substitui o 2); não execute a antiga. Uma operação já salva no livro/lastOperation é contexto, não uma nova ordem para registrá-la outra vez.`;
 
+/** Read-only questions can omit irrelevant specialist rules; all mutations,
+ * pending proposals, multi-goal messages and retry validations retain them. */
+export function semanticDirectiveSelection(context: SemanticContext) {
+  const normalized = (context.messages.at(-1)?.content ?? "")
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .trim();
+  const standaloneRead =
+    !context.animalDocument &&
+    !context.validation &&
+    !context.snapshot.pending &&
+    !/[;\n]/.test(normalized) &&
+    !/\b(?:e (?:registre|cadastre|crie|altere|mova|adicione|exclua|pague)|mas|na verdade|corrija|salve|confirmar)\b/.test(
+      normalized,
+    ) &&
+    /^(?:qual|quais|quanto|quantos|quantas|onde|mostre|liste|consultar|consulte|como|me diga)\b/.test(
+      normalized,
+    );
+  const needsManagement =
+    !standaloneRead ||
+    /\b(?:gestao|sanidade|vacina|insemin|reproduc|pastagem|alimento|racao|contas?|quitar|pagar|receber|receita|despesa|financeir|tarefas?|veiculo|combustivel|estoque|insumos?|manutenc|ronda|ocorrencia|fichas?)\b/.test(
+      normalized,
+    );
+  const needsGroups =
+    !standaloneRead ||
+    /\b(?:rebanho|gado|bovino|animais|lote|lotes|piquete|pasto|grupo|grupos|moviment|transfer|mover|localiz)\b/.test(
+      normalized,
+    );
+  return {
+    mode: standaloneRead ? ("read" as const) : ("operation" as const),
+    animalDocument: !!context.animalDocument,
+    management: needsManagement,
+    herdGroups: needsGroups,
+  };
+}
+
+/** Simple questions cannot authorize mutation even if a model misclassifies them. */
+export function guardSemanticReadOnly(
+  plan: SemanticPlan,
+  mode: "read" | "operation",
+): SemanticPlan {
+  if (mode === "read" && !["none", "inspect", "clarify"].includes(plan.intent))
+    return { intent: "none", propertyId: plan.propertyId, question: "", entries: [] };
+  return plan;
+}
+
 export async function interpretFarmConversation(context: SemanticContext): Promise<SemanticPlan> {
   const { askOpenAI } = await import("../chat/openai.server.ts");
+  const selection = semanticDirectiveSelection(context);
+  const contextText = JSON.stringify(context);
+  const messageText = JSON.stringify(context.messages);
   const response = await askOpenAI(
     [
       {
         role: "user",
-        content: "Retorne JSON para os dados desta conversa:\n" + JSON.stringify(context),
+        content: "Retorne JSON para os dados desta conversa:\n" + contextText,
       },
     ],
     {
-      model: "terra",
+      model: selection.mode === "read" ? "luna" : "terra",
       structuredTask: true,
       jsonOutput: true,
       channel: "whatsapp",
@@ -224,24 +274,30 @@ export async function interpretFarmConversation(context: SemanticContext): Promi
       maxToolCalls: 0,
       timeoutMs: 20000,
       reasoningEffort: "low",
-      stage: "guardian_semantic_plan",
+      stage: selection.mode === "read" ? "guardian_semantic_plan_read" : "guardian_semantic_plan",
+      telemetry: {
+        historyMessages: context.messages.length,
+        historyTokensEstimated: Math.ceil(messageText.length / 4),
+        contextChars: contextText.length,
+      },
       directive:
         SEMANTIC_DIRECTIVE +
         "\n" +
-        ANIMAL_DOCUMENT_DIRECTIVE +
+        (selection.animalDocument ? ANIMAL_DOCUMENT_DIRECTIVE : "") +
         "\n" +
-        MANAGEMENT_DIRECTIVE +
+        (selection.management ? MANAGEMENT_DIRECTIVE : "") +
         "\n" +
-        GROUPED_LOT_DIRECTIVE +
+        (selection.herdGroups ? GROUPED_LOT_DIRECTIVE : "") +
         "\nEstado atual: summary.herdLocations é a localização atual calculada pelo servidor sobre o livro completo. O lote de uma compra/nascimento em operations.movements é o lote HISTÓRICO da chegada, não a localização atual. lotPlacements e lotTransfers já podem ter movido esse grupo. Uma ordem de mover inclui grupos sem identificação e sem lote; ausência de brinco/RGN não bloqueia lot_transfer com movimento real nem herd_relocate. Quantidade total desconhecida de uma espécie não impede registrar sua localização. Se um pedido já foi cumprido (ex.: o produtor vê as linhas antigas sem lote e pede colocar esses animais no destino onde já estão), use intent inspect, inspection {kind:'herd_locations',lot:destino}, entries vazio: o servidor confere e responde com os registros reais. Use inspect também para consultar onde estão os grupos/animais ou conferir o resultado; nunca responda none a um pedido operacional só porque acha que já foi feito. Se ainda há grupos sem lote, execute a movimentação dos grupos/fichas reais, sem duplicar a chegada nem repetir movimentos de quem já está no destino. Se não consegue identificar um subconjunto, esclareça apenas a dúvida concreta; não prometa sem executar. Pedido de código do painel é intent panel com a propertyId resolvida e entries vazio, inclusive com vocativo mal transcrito; não transforme esse pedido em select nem apenas confirme o nome da fazenda. Só emita panel quando há pedido de acesso, não em explicação, hipótese ou relato de terceiro.\n" +
         "\nGestão de lotes e áreas: lot_update cria um lote vazio de metadados ou edita sua areaHa e pasture; área de um lote/piquete usa lot_update, área TOTAL da propriedade usa property_update. Não exija contagem de animais para criar/editar pastagem ou hectares. Um lote criado sem informação de animais não tem contagem presumida. Para uma ordem explícita de mover TODOS os animais da fazenda (ou todos os bovinos/suínos de uma espécie) ao mesmo lote, use herd_relocate com to e a data atual; omita species para todos os animais, informe species somente quando o produtor restringir a espécie. Não envie count: o servidor lê o livro inteiro, atualiza as fichas ativas e a localização dos grupos sem alterar compras, nascimentos ou totais. Quantidades desconhecidas permanecem desconhecidas. Não substitua mover TODOS por mover só o último grupo de 50 ou por uma nova contagem; a ordem atual explícita prevalece sobre um rascunho anterior de subconjunto. herd_relocate não serve para 'esses 50', 'um dos animais', 'alguns', uma pergunta hipotética ou somente animais de um lote; esses casos usam as referências individuais/coletivas reais ou esclarecimento. Nem a solicitação de código do painel nem uma pergunta sobre como criar lotes autoriza herd_relocate.\n" +
         "\nEsquema: " +
         JSON.stringify(z.toJSONSchema(ProviderPlanSchema, { unrepresentable: "any" })),
     },
   );
-  return SemanticPlanSchema.parse(
+  const plan = SemanticPlanSchema.parse(
     ProviderPlanSchema.parse(JSON.parse(response.replace(/^```(?:json)?\s*|\s*```$/g, ""))),
   );
+  return guardSemanticReadOnly(plan, selection.mode);
 }
 
 const blocked = new Set([

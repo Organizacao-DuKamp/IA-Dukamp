@@ -1,5 +1,6 @@
 import { handleEmployeeDialogue } from "./employee-dialogue.server.ts";
 import { handleFarmDialogue } from "./farm-dialogue.server.ts";
+import { directFarmReport } from "./direct-report.ts";
 import { creatingFarm, naturalConfirmation } from "./farm-dialogue.ts";
 import type { GuardianTrace } from "./trace.ts";
 import {
@@ -20,7 +21,13 @@ import {
   type FarmTransferStore,
 } from "./transfer.server.ts";
 import { automaticFarmEvent } from "./automatic.ts";
-import { namedProperty } from "./property-scope.ts";
+import {
+  canExecuteWithoutSemanticAI,
+  explainPreviousFarmFailure,
+  farmSelectionRequest,
+  isFreshActionAfterErrorQuestion,
+} from "./conversation-fastpath.ts";
+import { namedProperty, resolveProperty } from "./property-scope.ts";
 import { possibleRepeatedEntry, repeatAnswer, repeatQuestion } from "./herd-repeat.ts";
 import {
   recordDialogue,
@@ -371,8 +378,65 @@ export async function handleGuardianMessage(
         };
     }
     for (let attempt = 0; attempt < 4; attempt++) {
-      const snapshot =
+      let snapshot =
         attempt === 0 && initialSnapshot ? initialSnapshot : await store.load(input.phone);
+      if (!deps.request && (!input.mediaType || input.mediaType === "audio")) {
+        const explanation = explainPreviousFarmFailure(input.text, input.history);
+        if (explanation)
+          return {
+            reply: explanation,
+            activeProperty: !!snapshot.active,
+            persisted: false,
+          };
+        if (!deps.interpret) {
+          const command = farmSelectionRequest(input.text);
+          if (command) {
+            const properties = snapshot.properties;
+            const resolved =
+              command.kind === "named"
+                ? resolveProperty(command.name, snapshot)
+                : properties.length === 1
+                  ? { status: "resolved" as const, property: properties[0] }
+                  : { status: "missing" as const };
+            if (resolved.status !== "resolved")
+              return {
+                reply: properties.length
+                  ? `Qual fazenda quer usar? ${properties.map((p) => p.name).join(", ")}. Responda “selecionar fazenda” com o nome.`
+                  : "Você ainda não tem uma fazenda vinculada. Diga “quero cadastrar minha fazenda” para começar.",
+                activeProperty: !!snapshot.active,
+                persisted: false,
+              };
+            const chosen = resolved.property;
+            if (chosen.id === snapshot.active?.id)
+              return {
+                reply: `A fazenda ${chosen.name} já está selecionada. Pode continuar o pedido.`,
+                activeProperty: true,
+                persisted: false,
+              };
+            const result = await store.commit({
+              phone: input.phone,
+              messageId: input.messageId,
+              accountVersion: snapshot.accountVersion,
+              propertyId: chosen.id,
+              propertyVersion: null,
+              operation: "select",
+              pending: null,
+              reply: `Fazenda selecionada: ${chosen.name}.`,
+              details: { kind: "explicit_property_scope", sourceMessageId: input.messageId },
+            });
+            if (result === "conflict") continue;
+            if (result !== "committed" && !result.startsWith("replay:"))
+              throw Error("guardian_property_selection_conflict");
+            return {
+              reply: result.startsWith("replay:")
+                ? result.slice(7)
+                : `Fazenda selecionada: ${chosen.name}.`,
+              activeProperty: true,
+              persisted: true,
+            };
+          }
+        }
+      }
       if (!deps.request && (!input.mediaType || input.mediaType === "audio")) {
         const farm = await handleFarmDialogue(input, snapshot, store, now, deps.makeId);
         if (farm === "conflict") continue;
@@ -399,6 +463,34 @@ export async function handleGuardianMessage(
           conversational: true,
           persisted: false,
         };
+      // Simple read-only reports already have a trusted, authorized snapshot.
+      // Skip the expensive semantic planner without changing farm state.
+      if (!deps.request && !deps.interpret) {
+        const report = directFarmReport(input, snapshot, referenceAt);
+        if (report)
+          return {
+            reply: report,
+            activeProperty: true,
+            persisted: false,
+          };
+      }
+      // A failed diagnostic clarification is not the subject of a new
+      // explicit farm operation. The eventual transactional commit clears it,
+      // without touching unrelated pending proposals or the stored book here.
+      if (
+        !deps.request &&
+        !deps.interpret &&
+        isFreshActionAfterErrorQuestion(
+          {
+            text: input.text,
+            at: referenceAt,
+            mediaType: input.mediaType,
+            history: input.history,
+          },
+          snapshot,
+        )
+      )
+        snapshot = { ...snapshot, pending: null };
       if (
         !deps.request &&
         !(
@@ -408,7 +500,17 @@ export async function handleGuardianMessage(
           naturalConfirmation(input.text)
         ) &&
         (snapshot.active || snapshot.properties.length) &&
-        (deps.interpret || !deps.store)
+        (deps.interpret || !deps.store) &&
+        (deps.interpret ||
+          !canExecuteWithoutSemanticAI(
+            {
+              text: input.text,
+              mediaType: input.mediaType,
+              at: referenceAt,
+              history: input.history,
+            },
+            snapshot,
+          ))
       ) {
         if (semanticPropertyId && semanticPropertyId !== snapshot.active?.id)
           return {

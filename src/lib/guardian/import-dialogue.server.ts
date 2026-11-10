@@ -24,16 +24,60 @@ import { downloadWhatsAppMedia } from "../whatsapp/media.server.ts";
 import type { WhatsAppChatInput, WhatsAppChatResult } from "../whatsapp/types.ts";
 export function animalImportIntent(text: string) {
   const t = fold(text);
-  // Producers commonly name the herd/document before saying “registre um por um”.
-  // Both parts are required so a financial registration never starts an animal import.
-  return (
-    /\b(?:cadastr\w*|registr\w*|import\w*|adicion\w*|conf[ei]r\w*|atualiz\w*|junt\w*|mont\w*|transform\w*)\b/.test(
-      t,
-    ) &&
-    /\b(?:animais|gados?|rebanho|abcz|individuos|lista|relacao|imagens|fotos|pdf|relatorio)\b/.test(
+  // A generic "lista" may be financial or a task list. Never route these
+  // business-domain instructions through the animal document importer.
+  if (
+    /\b(?:despesas?|receitas?|financeiro|combustivel|abastecimento|tarefas?|pagamentos?|contas a pagar)\b/.test(
       t,
     )
-  );
+  )
+    return false;
+  // Ordinary herd events ("registre dois nascimentos no rebanho") belong to
+  // Guardian, NOT to the bulk animal-document importer.
+  const verb =
+    /\b(?:cadastr\w*|registr\w*|import\w*|adicion\w*|conf[ei]r\w*|atualiz\w*|junt\w*|mont\w*|transform\w*)\b/.test(
+      t,
+    );
+  const source =
+    /\b(?:lista|relacao|planilha|arquivos?|anexos?|documentos?|imagens?|fotos?|pdf|relatorios?|abcz|certificados?|importacao)\b/.test(
+      t,
+    );
+  const herd = /\b(?:animais|gados?|rebanho|individuos)\b/.test(t);
+  const explicitBulk = /\b(?:todos|todas|varios|varias)\b|em lote/.test(t);
+  return verb && (source || (herd && (/\bimport\w*\b/.test(t) || explicitBulk)));
+}
+
+/** A finished batch is history, never a pending WhatsApp operation. */
+export function importFollowupIntent(text: string, status: string | undefined): boolean {
+  if (!status || status === "completed" || status === "cancelled") return false;
+  const t = fold(text).trim();
+  // Questions about tasks, expenses or herd events stay with their owners.
+  // Only an explicit animal-document reference can override that boundary.
+  if (
+    /\b(?:tarefas?|despesas?|receitas?|financeiro|combustivel|abastecimento|nascimentos?|nasceram|nasceu)\b/.test(
+      t,
+    ) &&
+    !/\b(?:importac\w*|lista (?:de|dos) animais|lista de gados?|pdf|arquivo|abcz)\b/.test(t)
+  )
+    return false;
+  // An active import may be filtered, corrected or approved, but it must not
+  // capture a new finance, task, or herd operation merely because it says
+  // "registre", "confirmar", "nasceram" or "salvar".
+  const importSubject =
+    /\b(?:lista|relacao|importac\w*|planilha|arquivos?|anexos?|pdf|abcz|certificad\w*|imagens?|fotos?|pagin\w*|duplicad\w*|repetid\w*|genealog\w*|rgn)\b/.test(
+      t,
+    );
+  const restrictedFilter =
+    /^(?:(?:somente|so|apenas|filtrar?|mostrar?|separar?|listar?)\s+)?(?:as?\s+)?(?:femeas?|machos?|nascid\w*|sem identificacao|proxima pagina)\b/.test(
+      t,
+    );
+  const uploadEnd =
+    /^(?:terminei(?: de enviar)?|pronto|pode analisar|analisa(?: os arquivos)?)\b/.test(t);
+  const explicitApproval =
+    /^(?:(?:pode|agora)\s+)?(?:confirmar?|aprovar?|autorizar?|cadastrar?|salvar?)\b.*\b(?:lista|importac\w*|animais da lista|arquivos?|fichas?)\b/.test(
+      t,
+    );
+  return importSubject || restrictedFilter || uploadEnd || explicitApproval;
 }
 export interface ImportInboundDependencies {
   enabled?: boolean;
@@ -64,13 +108,16 @@ export async function handleAnimalImportInbound(
   const text = input.media?.caption || input.text,
     t = fold(text);
   if (input.media && !["image", "document"].includes(input.media.type)) return null;
-  let batch = await loadCurrent(input.phone);
   const intent =
     /(?:pega|extrai|transcrev).*(?:dados|lista).*(?:foto|imagem)/.test(t) ||
     animalImportIntent(text) ||
-    /\b(?:vou (?:te )?(?:mandar|enviar).*(?:fotos|imagens|pdf|lista)|(?:esses|sao os) animais)\b/.test(
+    /\b(?:vou (?:te )?(?:mandar|enviar).*(?:fotos|imagens|pdf|lista|dados dos? (?:gados?|animais))|(?:esses|sao os) animais)\b/.test(
       t,
     );
+  // Most conversations aren't imports. Do not even query the import tables
+  // for normal financial, herd, task or confirmation messages.
+  if (!input.media && !intent && !importFollowupIntent(text, "review")) return null;
+  let batch = await loadCurrent(input.phone);
   if (
     input.media?.type === "image" &&
     !intent &&
@@ -83,7 +130,7 @@ export async function handleAnimalImportInbound(
     });
     if (arriving) batch = arriving;
   }
-  const continuation = !!batch;
+  const continuation = !!batch && !["completed", "cancelled"].includes(batch.status);
   let candidate =
     !!input.media &&
     (intent ||
@@ -100,18 +147,19 @@ export async function handleAnimalImportInbound(
     candidate = await (dependencies.classifyPdf ?? isAnimalImportPdf)(new Uint8Array(file.bytes));
   }
   if (input.media && !candidate) return null;
+  // A finished batch is immutable. Only a new upload/import request starts
+  // another one; "confirm this list" cannot approve an already finished job.
   if (
-    !candidate &&
-    !intent &&
-    !(continuation && naturalConfirmation(text)) &&
-    !(
-      continuation &&
-      /lista|animais|gados?|lote|registr|rgn|femeas?|machos?|nascid|termin|pronto|analis|pode|salv|confirm|isso|sim|corrig|corrij|exclu|remov|repetid|identific|planilha|export|orden|tenta|arquivo|pdf|imagem|fotos/.test(
-        t,
-      )
-    )
+    batch?.status === "completed" &&
+    !input.media &&
+    !/\b(?:nov[oa]|outra|enviar|mandar|import\w*|cadastr\w*|registr\w*)\b/.test(t)
   )
     return null;
+  // Confirmation without an explicit import reference belongs to the latest
+  // conversational proposal; the importer must not steal it from Guardian.
+  // This also excludes every completed import from unrelated future messages.
+  if (!candidate && !intent && !importFollowupIntent(text, batch?.status)) return null;
+  if (!candidate && !intent && batch?.status === "completed") return null;
   const snapshot = await store.load(input.phone);
   if (intent) {
     const requested = namedProperty(text, snapshot);
@@ -173,7 +221,7 @@ export async function handleAnimalImportInbound(
     });
     return quiet();
   }
-  if (!batch || (batch.status === "completed" && intent && /\bnov[oa]\b/.test(t))) {
+  if (!batch || batch.status === "completed" || batch.status === "cancelled") {
     if (!intent) return null;
     await enqueue({
       phone: input.phone,
@@ -189,7 +237,10 @@ export async function handleAnimalImportInbound(
   }
   await authorizeImport(input.phone, batch.id);
   const files = await importSources(batch.id);
-  if (/termin|^pronto|pode analisar|analisa/.test(t) && !/cadastr|salvar/.test(t)) {
+  if (
+    /^(?:terminei|pronto|pode analisar|analisa(?: os arquivos)?)/.test(t) &&
+    !/cadastr|salvar/.test(t)
+  ) {
     if (!files.length)
       return answer(
         "A preparação está guardada, mas ainda não há arquivo pronto para leitura neste lote. Se você já enviou, o recebimento ou a leitura pode ter falhado. Tente anexar as fotos ou o PDF novamente para continuar.",

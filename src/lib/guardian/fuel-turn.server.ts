@@ -1,5 +1,5 @@
 import { handleTaskBatch } from "./task-batch.server.ts";
-import { amountIn, moneyValue } from "./record-dialogue.ts";
+import { amountIn, moneyValue, recordDialogue, recordActions } from "./record-dialogue.ts";
 import { userStatement } from "../whatsapp/learned-notes.ts";
 import { createHash } from "node:crypto";
 import { fuelObservation, fuelFold, fuelTopic, fuelPeriod, fuelClauses } from "./fuel-language.ts";
@@ -29,6 +29,26 @@ export async function handleFuelTurn(
 ): Promise<GuardianHandled | "conflict" | null> {
   if (input.mediaType && input.mediaType !== "audio") return null;
   const draft = s.pending?.kind === "fuel_draft" ? s.pending : null;
+  // Monthly expense statements belong to the recurring financial ledger.
+  // The dedicated fuel flow handles liters, tanks, deliveries and dated fuel
+  // movements. It must not ask a calendar date for "gasto X todo mês".
+  if (!draft && fuelTopic(input.text)) {
+    const normalized = fuelFold(input.text);
+    if (
+      /\b(?:todo mes|todos os meses|por mes|mensalmente|mensal|mensais)\b/.test(normalized) &&
+      !/\b(?:litros?|tanques?|abastec\w*|entradas?|saidas?|saldo)\b/.test(normalized)
+    ) {
+      const recurring = recordDialogue(input.text, reference, input.mediaType);
+      if (
+        recurring.kind === "slots" &&
+        recurring.slots.section === "finance" &&
+        recordActions(recurring.slots)?.some(
+          (action) => action.kind === "ledger" && action.recurrence === "monthly",
+        )
+      )
+        return null;
+    }
+  }
   let continuationText: string | undefined;
   if (!fuelTopic(input.text) && !draft) {
     if (!s.active) return null;
