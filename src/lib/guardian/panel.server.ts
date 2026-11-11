@@ -284,7 +284,7 @@ function sessionCookie(request: Request, token: string, age: number) {
   return `${installedRequest(request) ? APP_COOKIE : PANEL_COOKIE}=${token}; Path=/api/public/farm-panel; HttpOnly; SameSite=Strict; Max-Age=${age}${new URL(request.url).protocol === "https:" ? "; Secure" : ""}`;
 }
 function publicIdentity(identity: PanelIdentity) {
-  // Phone numbers, member lists, and provenance actor IDs never go to this browser.
+  // Strip phone/provenance fields from the farm book. The owner's team list is separate.
   const book = JSON.parse(
     JSON.stringify(identity.book, (key, value) =>
       ["actor", "responsiblePhone", "phone"].includes(key) ? undefined : value,
