@@ -9,18 +9,32 @@ name: TPEC-IA App Links HTTP smoke
 jobs:
   verify-assetlinks:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - name: Verify public JSON endpoint
+      - name: Verify production Android certificate association
+        shell: bash
+        env:
+          EXPECTED_CERT_FINGERPRINT: "6E:EE:3E:06:5A:C4:51:8C:A8:84:D8:09:9A:6E:AB:06:A9:65:2B:6E:87:FD:BB:9D:D7:00:EE:DF:A6:75:52:D4"
         run: |
           set -euo pipefail
+          endpoint='https://www.tpecia.com.br/.well-known/assetlinks.json'
           for i in $(seq 1 36); do
-            code="$(curl --max-time 15 --silent --show-error --location --output /tmp/assetlinks.json --write-out '%{http_code}' https://www.tpecia.com.br/.well-known/assetlinks.json || true)"
-            if [ "$code" = "200" ] && jq -e 'type == "array"' /tmp/assetlinks.json >/dev/null 2>&1; then
-              echo "assetlinks.json returned HTTP 200 with a JSON array"
+            code="$(curl --max-time 15 --silent --show-error --location --header 'Cache-Control: no-cache' --output /tmp/assetlinks.json --write-out '%{http_code}' "$endpoint" || true)"
+            if [ "$code" = "200" ] && jq -e --arg fp "$EXPECTED_CERT_FINGERPRINT" '
+              type == "array" and
+              any(.[];
+                .target.namespace == "android_app" and
+                .target.package_name == "br.com.tpecia.fazenda" and
+                (.relation | index("delegate_permission/common.handle_all_urls") != null) and
+                (.target.sha256_cert_fingerprints | index($fp) != null)
+              )
+            ' /tmp/assetlinks.json >/dev/null 2>&1; then
+              echo "Android certificate association verified: HTTP 200 and expected SHA-256"
               cat /tmp/assetlinks.json
               exit 0
             fi
-            echo "HTTP $code; retry $i/36"
+            echo "Association not yet live (HTTP $code): retry $i/36"
             sleep 10
           done
+          echo "::error::Production assetlinks.json did not contain the expected certificate and package"
           exit 1
