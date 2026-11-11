@@ -1,0 +1,34 @@
+name: TPEC-IA Android App Links production smoke
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/tpec-app-links-production-smoke.yml'
+      - 'src/routes/[.]well-known/assetlinks[.]json.ts'
+      - 'src/lib/guardian/android-app-links.ts'
+      - 'netlify.toml'
+  workflow_dispatch:
+
+jobs:
+  check-association-endpoint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - name: Confirm public assetlinks endpoint serves valid JSON
+        shell: bash
+        run: |
+          set -euo pipefail
+          endpoint='https://www.tpecia.com.br/.well-known/assetlinks.json'
+          for attempt in $(seq 1 42); do
+            status=$(curl -L -sS --connect-timeout 8 --max-time 15 -H 'Cache-Control: no-cache' -o /tmp/tpec-assetlinks.json -w '%{http_code}' "$endpoint" || true)
+            if [ "$status" = "200" ] && jq -e 'type == "array" and all(.[]; .target.namespace == "android_app" and .target.package_name == "br.com.tpecia.fazenda" and (.relation | index("delegate_permission/common.handle_all_urls") != null))' /tmp/tpec-assetlinks.json >/dev/null 2>&1; then
+              echo "HTTP 200; assetlinks.json is a valid app links array"
+              cat /tmp/tpec-assetlinks.json
+              echo
+              exit 0
+            fi
+            echo "Attempt $attempt/42: HTTP $status or invalid association JSON; retrying"
+            sleep 10
+          done
+          echo "::error::Official assetlinks endpoint failed the public HTTP/JSON smoke test"
+          exit 1
