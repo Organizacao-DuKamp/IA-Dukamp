@@ -71,3 +71,40 @@ test("entry and logout wait for persistence; ordinary restores do not navigate o
   assert.equal(written, 2);
   assert.deepEqual(calls, ["POST", "GET", "DELETE"]);
 });
+
+test("only an unauthorized session read clears the native backup; transient failures and invalid links preserve it", async () => {
+  const previous = Object.getOwnPropertyDescriptor(globalThis, "window");
+  const messages: unknown[] = [];
+  Object.defineProperty(globalThis, "window", {
+    configurable: true,
+    value: { TpecAndroid: { postMessage: (raw: string) => messages.push(JSON.parse(raw)) } },
+  });
+  try {
+    const api = createPanelClient(
+      async (_url, init) => {
+        if (init?.method === "POST")
+          return Response.json({ error: "Invalid link" }, { status: 401 });
+        return Response.json({ error: "Unauthorized" }, { status: 401 });
+      },
+      () => true,
+      async () => {},
+    );
+    await assert.rejects(api("POST", { kind: "link_exchange", token: "invalid" }));
+    assert.deepEqual(messages, []);
+    await assert.rejects(api());
+    assert.deepEqual(messages, [{ type: "forget_session" }]);
+    messages.length = 0;
+    const unavailable = createPanelClient(async () =>
+      Response.json({ error: "Unavailable" }, { status: 503 }),
+    );
+    await assert.rejects(unavailable());
+    const offline = createPanelClient(async () => {
+      throw new TypeError("Offline");
+    });
+    await assert.rejects(offline());
+    assert.deepEqual(messages, []);
+  } finally {
+    if (previous) Object.defineProperty(globalThis, "window", previous);
+    else Reflect.deleteProperty(globalThis, "window");
+  }
+});
