@@ -107,7 +107,8 @@ class MainActivity : ComponentActivity() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() { if (web.canGoBack()) web.goBack() else finish() }
         })
-        web.loadUrl(intent?.data?.toString()?.takeIf { panelUrl(it) } ?: panelUrl)
+        val restoring = savedInstanceState != null || ((intent?.flags ?: 0) and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != 0
+        web.loadUrl(PanelNavigation.launchUrl(intent?.data?.toString(), restoring, BuildConfig.PANEL_ORIGIN))
     }
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
@@ -117,6 +118,11 @@ class MainActivity : ComponentActivity() {
     }
     private fun command(message: JSONObject) {
         when (message.optString("type")) {
+            "persist_session" -> runOnUiThread {
+                if (inPanel()) PanelSession.persist(message.optString("requestId"), { CookieManager.getInstance().flush() }) { requestId ->
+                    web.evaluateJavascript("window.dispatchEvent(new CustomEvent('tpec:session-persisted',{detail:{requestId:" + JSONObject.quote(requestId) + "}}));", null)
+                }
+            }
             "status" -> publish()
             "connect" -> if (message.optString("mode") in setOf("alarm", "notification")) connect(message.getString("mode"))
             "sync" -> sync()
@@ -243,6 +249,10 @@ class MainActivity : ComponentActivity() {
         val problem = error ?: state.optString("syncError").ifBlank { state.optString("alarmError") }
         if (problem.isNotBlank()) detail.put("error", problem)
         runOnUiThread { if (!isDestroyed && inPanel()) web.evaluateJavascript("window.dispatchEvent(new CustomEvent('tpec:android',{detail:$detail}));", null) }
+    }
+    override fun onPause() {
+        if (::web.isInitialized) CookieManager.getInstance().flush()
+        super.onPause()
     }
     override fun onResume() { super.onResume(); if (::web.isInitialized) { ReminderEngine.reschedule(this); sync() } }
     override fun onDestroy() { unregisterReceiver(changes); if (::web.isInitialized) web.destroy(); super.onDestroy() }
