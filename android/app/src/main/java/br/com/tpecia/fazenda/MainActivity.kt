@@ -139,7 +139,9 @@ class MainActivity : ComponentActivity() {
                     else if (session.capture(authenticated = true)) acknowledge()
                 }
             }
-            "forget_session" -> runOnUiThread { if (inPanel()) session.forget {} }
+            // The HTTP 401 already expires the cookie in the ordered request queue.
+            // Do not enqueue another native cookie deletion that could race a new login.
+            "forget_session" -> runOnUiThread { if (inPanel()) session.forgetBackup() }
             "status" -> publish()
             "connect" -> if (message.optString("mode") in setOf("alarm", "notification")) connect(message.getString("mode"))
             "sync" -> sync()

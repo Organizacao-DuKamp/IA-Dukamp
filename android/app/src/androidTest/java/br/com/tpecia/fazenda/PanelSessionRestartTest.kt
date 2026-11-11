@@ -1,10 +1,16 @@
 package br.com.tpecia.fazenda
 
 import android.content.Context
+import android.content.Intent
 import android.os.Process
+import android.view.View
+import android.view.ViewGroup
 import android.webkit.CookieManager
+import android.webkit.WebView
+import android.widget.TextView
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.webkit.WebViewFeature
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -48,6 +54,7 @@ class PanelSessionRestartTest {
     }
 
     @Test fun prepare() {
+        ui { assertTrue("Update Android System WebView before testing authentication", WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) }
         clearCookies()
         PanelSessionVault(context).clear()
         setCookie(token)
@@ -59,6 +66,21 @@ class PanelSessionRestartTest {
         ReminderEngine.clear(context)
         assertEquals(token, PanelSessionVault(context).read())
         checkpointProcess()
+    }
+
+    /** API 28's stock image has an obsolete WebView that cannot run the bridge.
+     * Verify the app blocks it, rather than weakening secure-cookie settings. */
+    @Test fun unsupportedWebViewIsBlocked() {
+        ui { assertFalse(WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) }
+        val activity = instrumentation.startActivitySync(Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        ui {
+            fun descendants(view: View): List<View> = listOf(view) +
+                if (view is ViewGroup) (0 until view.childCount).flatMap { descendants(view.getChildAt(it)) } else emptyList()
+            val views = descendants(activity.window.decorView)
+            assertTrue(views.filterIsInstance<TextView>().any { it.text.toString().startsWith("Atualize o Android System WebView") })
+            assertTrue(views.filterIsInstance<WebView>().all { it.url == null })
+            activity.finish()
+        }
     }
 
     @Test fun recoverAfterProcessDeath() {

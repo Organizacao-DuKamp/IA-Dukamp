@@ -33,10 +33,14 @@ class PanelSessionCookies(context: Context) {
         }
     }
 
-    fun forget(ready: () -> Unit) {
-        // Commit the removal first: process death must not restore a logged-out session.
+    fun forgetBackup() {
         forgetting = true
         vault.clear()
+    }
+
+    fun forget(ready: () -> Unit) {
+        // Commit the removal first: process death must not restore a logged-out session.
+        forgetBackup()
         cookies.setCookie(url, PanelSession.cookie("", 0)) {
             cookies.flush()
             ready()

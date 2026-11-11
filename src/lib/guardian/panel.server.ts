@@ -503,7 +503,11 @@ export async function handleFarmPanel(
     }
     const identity = hash ? await store.authorize(hash, installedRequest(request)) : null;
     if (!identity)
-      return response({ error: "Acesso expirado. Peça um novo link pelo WhatsApp." }, 401);
+      return response(
+        { error: "Acesso expirado. Peça um novo link pelo WhatsApp." },
+        401,
+        sessionCookie(request, "", 0),
+      );
     return response(
       {
         ...publicIdentity(identity),
