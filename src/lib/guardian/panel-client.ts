@@ -1,3 +1,4 @@
+import { persistAndroidSession } from "./android-session.ts";
 import { installedPanel } from "./app-mode.ts";
 
 /** Every panel response can change the HttpOnly cookie. Preserve request order so
@@ -5,6 +6,7 @@ import { installedPanel } from "./app-mode.ts";
 export function createPanelClient(
   fetchImpl: typeof fetch = fetch,
   installed: () => boolean = installedPanel,
+  persistSession: (loggedOut?: boolean) => Promise<void> = persistAndroidSession,
 ) {
   let tail: Promise<unknown> = Promise.resolve();
   let mode: "installed" | "browser" | undefined;
@@ -49,6 +51,8 @@ export function createPanelClient(
           throw Object.assign(new Error(data.error ?? "Não foi possível acessar o painel."), {
             status: result.status,
           });
+        clearTimeout(timer);
+        if (token || method === "DELETE") await persistSession(method === "DELETE");
         return data;
       } catch (error) {
         if (controller.signal.aborted)

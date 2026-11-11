@@ -47,3 +47,13 @@ node --test --experimental-strip-types tests/farm-panel-client.test.ts tests/gua
 ```
 
 O job `panel-access` do CI executa esse teste em cada PR/main com Playwright fixado como dependência de desenvolvimento. O script verifica entrada inicial, saída e reentrada na mesma página, resposta de renovação atrasada durante logout/reentrada, recusa de link já usado, próximo link válido, convite seguido de link pessoal, persistência após reload e o primeiro link recebido por uma tela já aberta. Usa Chromium, o handler HTTP real e SQL real em PGlite; a ponte Android é simulada e não substitui teste em aparelho físico. Não envia WhatsApp nem acessa banco de produção.
+
+## Persistência no fechamento do Android (1.1.1)
+
+O cookie de login é persistente e HttpOnly. No APK 1.1.0, o único `CookieManager.flush()` era em `onPageFinished`, antes da troca assíncrona do link. Fechar o processo logo após a entrada podia perder a gravação recente. A versão 1.1.1 confirma `persist_session` somente depois de gravar os cookies em disco e também chama `flush()` em `onPause`. Entrada e logout aguardam essa confirmação; restaurar a fazenda usa apenas o cookie, sem trocar ou salvar novamente o link.
+
+O frontend é compatível com o APK anterior: se ele não confirmar a gravação nativa, uma navegação automática para o painel, sem token no endereço, aciona seu `onPageFinished` existente. Isso acontece somente na entrada por link ou no logout, não em cada reabertura. Não há credencial em localStorage, IndexedDB ou no armazenamento dos lembretes. Instalar o APK 1.1.1 com a mesma assinatura elimina essa navegação de compatibilidade. Não desinstalar o aplicativo para atualizar: a atualização assinada mantém os dados locais.
+
+Ao restaurar uma Activity ou abrir o app pelos recentes, o Android carrega `/painelfazenda` em vez de repetir o link original de uso único. Um novo App Link recebido continua sendo processado normalmente. Nenhuma migração ou alteração de permissões é necessária; a revogação do funcionário e Sair continuam invalidando o acesso no servidor.
+
+Validação: testes da fila HTTP e da confirmação nativa; contrato Android de gravar antes de confirmar, falha de disco e restauração sem reutilizar link; navegador com HTTP/PostgreSQL isolados, entrada no modo de compatibilidade, encerramento do contexto e nova abertura somente com o cookie persistente e logout sem cookie remanescente. A ponte nativa e o armazenamento de cookies no navegador são simulados nesses testes; o roteiro físico deve incluir entrar, fechar imediatamente, remover dos recentes/forçar parada, abrir pelo ícone e depois repetir após Sair. Para testar a atualização do APK, preservar applicationId e certificado originais.

@@ -82,3 +82,9 @@ Copie o valor completo de `private_key`, incluindo `-----BEGIN PRIVATE KEY-----`
 - [Configurar o cliente FCM](https://firebase.google.com/docs/cloud-messaging/android/client)
 - [Enviar pelo FCM HTTP v1](https://firebase.google.com/docs/cloud-messaging/send/v1-api)
 - [Agendar alarmes no Android](https://developer.android.com/develop/background-work/services/alarms/schedule)
+
+## Persistência de acesso (1.1.1)
+
+A versão 1.1.1 grava a sessão após a autenticação e ao ir para segundo plano. Reabrir pelo ícone ou pelos recentes restaura a fazenda pelo cookie, sem reutilizar o link recebido. O artefato `tpec-android-1.1.1-release-unsigned` precisa ser assinado com o certificado original antes de distribuir; não gere outra chave. Atualize o app instalado, sem desinstalar, para preservar a sessão. A associação App Links usa o mesmo certificado e não precisa mudar.
+
+Confira o roteiro em [acesso por links](../docs/farm-access-links.md), incluindo fechamento imediato, parada forçada e logout. Não há promessa de acesso após remoção de permissão pelo proprietário ou limpeza dos dados do Android.

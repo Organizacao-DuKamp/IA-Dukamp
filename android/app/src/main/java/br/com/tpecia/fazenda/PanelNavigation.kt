@@ -4,6 +4,10 @@ import java.net.URI
 
 /** Restrict the app document to the farm panel, retaining query strings and fragments. */
 object PanelNavigation {
+    /** Recents/process restoration opens the saved farm session, not the old one-use link. */
+    fun launchUrl(url: String?, restoring: Boolean, origin: String): String =
+        if (!restoring && url != null && allows(url, origin)) url else "$origin/painelfazenda"
+
     fun allows(url: String, origin: String): Boolean = try {
         val target = URI(url)
         val site = URI(origin)

@@ -44,7 +44,7 @@ jobs:
       # No signing key is generated or substituted here. Use the original app signer.
       - uses: actions/upload-artifact@v4
         with:
-          name: tpec-android-1.1.0-release-unsigned
+          name: tpec-android-1.1.1-release-unsigned
           path: android/app/build/outputs/apk/release/*-unsigned.apk
           if-no-files-found: error
           retention-days: 14

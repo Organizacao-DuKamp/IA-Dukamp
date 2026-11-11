@@ -25,6 +25,7 @@ export function nativeAndroid() {
 export function androidCommand(
   command:
     | { type: "status" | "sync" | "disconnect" | "test" }
+    | { type: "persist_session"; requestId: string }
     | { type: "connect"; mode: "notification" | "alarm" }
     | {
         type: "permission";

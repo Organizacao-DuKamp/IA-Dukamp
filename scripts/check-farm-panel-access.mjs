@@ -83,7 +83,19 @@ try {
     serviceWorkers: "block",
   });
   await context.addInitScript(() => {
-    window.TpecAndroid = { postMessage() {} };
+    window.TpecAndroid = {
+      postMessage(raw) {
+        const command = JSON.parse(raw);
+        if (command.type === "persist_session")
+          queueMicrotask(() =>
+            window.dispatchEvent(
+              new CustomEvent("tpec:session-persisted", {
+                detail: { requestId: command.requestId },
+              }),
+            ),
+          );
+      },
+    };
     window.__panelDocument = Math.random();
   });
   const page = await context.newPage();
@@ -183,7 +195,19 @@ try {
     });
     if (native)
       await freshContext.addInitScript(() => {
-        window.TpecAndroid = { postMessage() {} };
+        window.TpecAndroid = {
+          postMessage(raw) {
+            const command = JSON.parse(raw);
+            if (command.type === "persist_session")
+              queueMicrotask(() =>
+                window.dispatchEvent(
+                  new CustomEvent("tpec:session-persisted", {
+                    detail: { requestId: command.requestId },
+                  }),
+                ),
+              );
+          },
+        };
       });
     const freshPage = await freshContext.newPage();
     freshPage.on("pageerror", (error) => errors.push(error.message));
@@ -223,6 +247,60 @@ try {
       `PASS first incoming link with an already-open ${native ? "app" : "browser"}: no reload or second click.`,
     );
   }
+  const legacyContext = await browser.newContext({
+    viewport: { width: 1280, height: 900 },
+    serviceWorkers: "block",
+  });
+  await legacyContext.addInitScript(() => {
+    window.TpecAndroid = { postMessage() {} };
+  });
+  const legacyPage = await legacyContext.newPage();
+  legacyPage.on("pageerror", (error) => errors.push(error.message));
+  await legacyPage.route("**/api/public/farm-panel", async (route) => {
+    const response = await route.fetch({ url: backend + "/api/public/farm-panel" });
+    await route.fulfill({ response });
+  });
+  const legacyToken = await issue();
+  await legacyPage.goto(origin + "/painelfazenda#login=" + legacyToken);
+  await legacyPage
+    .getByRole("heading", { name: "Fazenda QA entrada", exact: true })
+    .waitFor({ timeout: 15000 });
+  assert.equal(new URL(legacyPage.url()).hash, "");
+  const stored = await legacyContext.storageState();
+  assert.ok(
+    stored.cookies.some(
+      (c) => c.name === "tpec_farm_app_session" && c.expires > Date.now() / 1000 + 300 * 86400,
+    ),
+  );
+  await legacyContext.close();
+  // A new browser context has no component state or original link, only the
+  // persistent HttpOnly cookie. Native disk flushing is separately tested in Android.
+  const restored = await browser.newContext({ storageState: stored, serviceWorkers: "block" });
+  await restored.addInitScript(() => {
+    window.TpecAndroid = { postMessage() {} };
+  });
+  const restoredPage = await restored.newPage();
+  await restoredPage.route("**/api/public/farm-panel", async (route) => {
+    assert.notEqual(
+      route.request().postDataJSON()?.kind,
+      "link_exchange",
+      "restoration must not exchange another link",
+    );
+    const response = await route.fetch({ url: backend + "/api/public/farm-panel" });
+    await route.fulfill({ response });
+  });
+  await restoredPage.goto(origin + "/painelfazenda");
+  await restoredPage.getByRole("heading", { name: "Fazenda QA entrada", exact: true }).waitFor();
+  await restoredPage.getByRole("button", { name: "Sair", exact: true }).click();
+  await restoredPage
+    .getByRole("heading", { name: "Acesse sua fazenda por link", exact: true })
+    .waitFor();
+  const loggedOut = await restored.storageState();
+  assert.ok(!loggedOut.cookies.some((c) => c.name === "tpec_farm_app_session"));
+  await restored.close();
+  console.log(
+    "PASS legacy APK persistence navigation, restart with cookie only, and durable logout without storing a login link.",
+  );
   assert.deepEqual(errors, []);
 } finally {
   releaseRefresh();
