@@ -110,7 +110,24 @@ test("installed sessions renew across days, remain separate from browser session
       401,
     );
     await f.db.query("update guardian_members set active=true where property_id=$1", [id]);
-    const allRequest = req("DELETE", true, again.headers.get("set-cookie")!.split(";")[0]);
+    // Readmission never resurrects a revoked cookie; a fresh login is required.
+    assert.equal(
+      (
+        await handleFarmPanel(
+          req("GET", true, again.headers.get("set-cookie")!.split(";")[0]),
+          deps,
+        )
+      ).status,
+      401,
+    );
+    await f.db.query("delete from guardian_panel_codes where phone_number=$1", [phone]);
+    await f.issue(phone, id, "after-readmission", hashToken(code));
+    const fresh = await handleFarmPanel(
+      req("POST", true, undefined, { kind: "exchange", code }),
+      deps,
+    );
+    assert.equal(fresh.status, 200);
+    const allRequest = req("DELETE", true, fresh.headers.get("set-cookie")!.split(";")[0]);
     allRequest.headers.set("x-tpec-panel-all", "1");
     assert.equal((await handleFarmPanel(allRequest, deps)).status, 200);
     assert.equal((await handleFarmPanel(req("GET", false, webCookie), deps)).status, 401);
