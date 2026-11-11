@@ -16,6 +16,7 @@ import { Route as ExclusaoDeDadosRouteImport } from './routes/exclusao-de-dados'
 import { Route as PainelfazendaRouteImport } from './routes/painelfazenda'
 import { Route as PoliticaDePrivacidadeRouteImport } from './routes/politica-de-privacidade'
 import { Route as TermosDeUsoRouteImport } from './routes/termos-de-uso'
+import { Route as DotwellKnownAssetlinksDotjsonRouteImport } from './routes/[.]well-known/assetlinks[.]json'
 import { Route as AuthenticatedGuardiaRouteImport } from './routes/_authenticated/guardia'
 import { Route as AuthenticatedAdminBaseConhecimentoRouteImport } from './routes/_authenticated/admin.base-conhecimento'
 import { Route as AuthenticatedAdminCotacoesRouteImport } from './routes/_authenticated/admin.cotacoes'
@@ -65,6 +66,12 @@ const TermosDeUsoRoute = TermosDeUsoRouteImport.update({
   path: '/termos-de-uso',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DotwellKnownAssetlinksDotjsonRoute =
+  DotwellKnownAssetlinksDotjsonRouteImport.update({
+    id: '/.well-known/assetlinks.json',
+    path: '/.well-known/assetlinks.json',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedGuardiaRoute = AuthenticatedGuardiaRouteImport.update({
   id: '/guardia',
   path: '/guardia',
@@ -148,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/painelfazenda': typeof PainelfazendaRoute
   '/politica-de-privacidade': typeof PoliticaDePrivacidadeRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
+  '/.well-known/assetlinks.json': typeof DotwellKnownAssetlinksDotjsonRoute
   '/guardia': typeof AuthenticatedGuardiaRoute
   '/admin/base-conhecimento': typeof AuthenticatedAdminBaseConhecimentoRoute
   '/admin/cotacoes': typeof AuthenticatedAdminCotacoesRoute
@@ -170,6 +178,7 @@ export interface FileRoutesByTo {
   '/painelfazenda': typeof PainelfazendaRoute
   '/politica-de-privacidade': typeof PoliticaDePrivacidadeRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
+  '/.well-known/assetlinks.json': typeof DotwellKnownAssetlinksDotjsonRoute
   '/guardia': typeof AuthenticatedGuardiaRoute
   '/admin/base-conhecimento': typeof AuthenticatedAdminBaseConhecimentoRoute
   '/admin/cotacoes': typeof AuthenticatedAdminCotacoesRoute
@@ -194,6 +203,7 @@ export interface FileRoutesById {
   '/painelfazenda': typeof PainelfazendaRoute
   '/politica-de-privacidade': typeof PoliticaDePrivacidadeRoute
   '/termos-de-uso': typeof TermosDeUsoRoute
+  '/.well-known/assetlinks.json': typeof DotwellKnownAssetlinksDotjsonRoute
   '/_authenticated/guardia': typeof AuthenticatedGuardiaRoute
   '/_authenticated/admin/base-conhecimento': typeof AuthenticatedAdminBaseConhecimentoRoute
   '/_authenticated/admin/cotacoes': typeof AuthenticatedAdminCotacoesRoute
@@ -218,6 +228,7 @@ export interface FileRouteTypes {
     | '/painelfazenda'
     | '/politica-de-privacidade'
     | '/termos-de-uso'
+    | '/.well-known/assetlinks.json'
     | '/guardia'
     | '/admin/base-conhecimento'
     | '/admin/cotacoes'
@@ -240,6 +251,7 @@ export interface FileRouteTypes {
     | '/painelfazenda'
     | '/politica-de-privacidade'
     | '/termos-de-uso'
+    | '/.well-known/assetlinks.json'
     | '/guardia'
     | '/admin/base-conhecimento'
     | '/admin/cotacoes'
@@ -263,6 +275,7 @@ export interface FileRouteTypes {
     | '/painelfazenda'
     | '/politica-de-privacidade'
     | '/termos-de-uso'
+    | '/.well-known/assetlinks.json'
     | '/_authenticated/guardia'
     | '/_authenticated/admin/base-conhecimento'
     | '/_authenticated/admin/cotacoes'
@@ -287,6 +300,7 @@ export interface RootRouteChildren {
   PainelfazendaRoute: typeof PainelfazendaRoute
   PoliticaDePrivacidadeRoute: typeof PoliticaDePrivacidadeRoute
   TermosDeUsoRoute: typeof TermosDeUsoRoute
+  DotwellKnownAssetlinksDotjsonRoute: typeof DotwellKnownAssetlinksDotjsonRoute
   ApiPublicChatRoute: typeof ApiPublicChatRoute
   ApiPublicChatTestRoute: typeof ApiPublicChatTestRoute
   ApiPublicDiagRoute: typeof ApiPublicDiagRoute
@@ -344,6 +358,13 @@ declare module '@tanstack/react-router' {
       path: '/termos-de-uso'
       fullPath: '/termos-de-uso'
       preLoaderRoute: typeof TermosDeUsoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.well-known/assetlinks.json': {
+      id: '/.well-known/assetlinks.json'
+      path: '/.well-known/assetlinks.json'
+      fullPath: '/.well-known/assetlinks.json'
+      preLoaderRoute: typeof DotwellKnownAssetlinksDotjsonRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/guardia': {
@@ -490,6 +511,7 @@ const rootRouteChildren: RootRouteChildren = {
   PainelfazendaRoute: PainelfazendaRoute,
   PoliticaDePrivacidadeRoute: PoliticaDePrivacidadeRoute,
   TermosDeUsoRoute: TermosDeUsoRoute,
+  DotwellKnownAssetlinksDotjsonRoute: DotwellKnownAssetlinksDotjsonRoute,
   ApiPublicChatRoute: ApiPublicChatRoute,
   ApiPublicChatTestRoute: ApiPublicChatTestRoute,
   ApiPublicDiagRoute: ApiPublicDiagRoute,

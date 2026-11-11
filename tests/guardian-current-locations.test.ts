@@ -288,7 +288,7 @@ test("SQL: a colloquial panel request issues a code for an authorized farm witho
   try {
     const a = randomUUID(),
       b = randomUUID(),
-      code = "ABCD2345EFGH6789";
+      code = "a".repeat(64);
     await f.guardian.commit({
       phone,
       messageId: "a",
@@ -322,17 +322,17 @@ test("SQL: a colloquial panel request issues a code for an authorized farm witho
       {
         store: f.guardian,
         now: new Date(at),
-        issuePanelCode: f.issue,
-        panelCode: () => code,
+        accessLinks: f.store.links,
+        panelToken: () => code,
         interpret: async () => ({ intent: "panel", propertyId: a, question: "", entries: [] }),
       },
     );
-    assert.match(reply!.reply!, /Seu código para Fazenda QA Cedro/);
+    assert.match(reply!.reply!, /Seu link para Fazenda QA Cedro/);
     assert.equal((await f.guardian.load(phone)).active!.id, b);
     assert.equal(
       (
         await f.db.query<{ property_id: string }>(
-          "select property_id from guardian_panel_codes where token_hash=$1",
+          "select property_id from guardian_access_links where token_hash=$1",
           [hashToken(code)],
         )
       ).rows[0].property_id,

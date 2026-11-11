@@ -194,8 +194,7 @@ O deploy preview da Netlify executa essa sequência automaticamente.
 
 ## Painel do produtor e Guardiã 2.0
 
-O produtor pode abrir `/painelfazenda` e usar o código temporário pedido à TPEC-IA
-no WhatsApp: **gerar código do painel**. Havendo várias propriedades, a TPEC-IA
+O produtor pede à TPEC-IA no WhatsApp **gerar link do painel** e abre o link recebido, sem código. A sessão fica salva no dispositivo. Convites de funcionários também usam links, com confirmação do número pelo WhatsApp. Veja [acesso e equipe por links](docs/farm-access-links.md). Havendo várias propriedades, a TPEC-IA
 solicita a escolha. O painel permite consultar e revisar alterações no mesmo
 caderno operacional usado pela conversa, sem criar senha ou conta de e-mail.
 

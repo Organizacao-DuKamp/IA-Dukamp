@@ -7,7 +7,7 @@ import { randomUUID } from "node:crypto";
 import { farmIntegration } from "./helpers/farm-integration.ts";
 import {
   handleFarmPanel,
-  handlePanelCodeRequest,
+  handlePanelLinkRequest,
   hashToken,
   makePanelCode,
 } from "../src/lib/guardian/panel.server.ts";
@@ -18,7 +18,7 @@ import { automaticFarmEvent } from "../src/lib/guardian/automatic.ts";
 
 const phone = "5517999991111",
   other = "5517999992222",
-  code = "ABCD2345EFGH6789",
+  code = "a".repeat(64),
   url = "https://tpecia.example/api/public/farm-panel";
 const request = (
   method = "GET",
@@ -97,14 +97,14 @@ test("integrated PostgreSQL: WhatsApp code exchange, scoped browser edits, stale
     await f.observe(phone, "first", "Minha fazenda fica em Tanabi e tenho 40 cabeças.");
     await f.observe(other, "other", "Minha fazenda fica em Votuporanga e tenho 70 cabeças.");
     const property = (await f.guardian.load(phone)).active!;
-    const reply = await handlePanelCodeRequest(
+    const reply = await handlePanelLinkRequest(
       { phone, messageId: "code", text: "gerar código do painel" },
-      { load: f.guardian.load, issue: f.issue, code: () => code },
+      { load: f.guardian.load, links: f.store.links, token: () => code },
     );
-    assert.match(reply!, /ABCD-2345-EFGH-6789/);
+    assert.match(reply!, /https:\/\/www\.tpecia\.com\.br\/painelfazenda#login=/);
     assert.equal(
       (
-        await f.db.query("select * from guardian_panel_codes where token_hash=$1", [
+        await f.db.query("select * from guardian_access_links where token_hash=$1", [
           hashToken(code),
         ])
       ).rows.length,
@@ -115,13 +115,21 @@ test("integrated PostgreSQL: WhatsApp code exchange, scoped browser edits, stale
     assert.equal(
       (
         await handleFarmPanel(
-          request("POST", { kind: "exchange", code }, undefined, "https://attacker.example"),
+          request(
+            "POST",
+            { kind: "link_exchange", token: code },
+            undefined,
+            "https://attacker.example",
+          ),
           config,
         )
       ).status,
       403,
     );
-    const login = await handleFarmPanel(request("POST", { kind: "exchange", code }), config);
+    const login = await handleFarmPanel(
+      request("POST", { kind: "link_exchange", token: code }),
+      config,
+    );
     assert.equal(login.status, 200);
     assert.match(
       login.headers.get("set-cookie")!,
@@ -130,14 +138,16 @@ test("integrated PostgreSQL: WhatsApp code exchange, scoped browser edits, stale
     assert.match(login.headers.get("cache-control")!, /no-store/);
     const token = login.headers.get("set-cookie")!.match(/tpec_farm_session=([a-f0-9]+)/)![1];
     assert.equal(
-      (await handleFarmPanel(request("POST", { kind: "exchange", code }), config)).status,
+      (await handleFarmPanel(request("POST", { kind: "link_exchange", token: code }), config))
+        .status,
       401,
     );
     const read = await handleFarmPanel(request("GET", undefined, token), config);
     const body = await read.json();
     assert.equal(body.propertyId, property.id);
     assert.equal(body.book.city, "Tanabi");
-    assert.ok(!JSON.stringify(body).includes(phone));
+    assert.ok(!JSON.stringify(body.book).includes(phone));
+    assert.equal(body.team.members[0].phone, phone);
     assert.ok(!JSON.stringify(body).includes(other));
     const action = {
       kind: "action",
@@ -218,19 +228,24 @@ test("integrated PostgreSQL: expired codes, expired sessions, durable rate limit
     await f.observe(phone, "two", "Tenho outra fazenda chamada Santa Rita em Votuporanga/SP.");
     const snapshot = await f.guardian.load(phone);
     assert.equal(snapshot.properties.length, 2);
-    const deps = { load: f.guardian.load, issue: f.issue, code: () => code };
-    const choice = await handlePanelCodeRequest(
+    const deps = { load: f.guardian.load, links: f.store.links, token: () => code };
+    const choice = await handlePanelLinkRequest(
       { phone, messageId: "multi", text: "gerar código do painel" },
       deps,
     );
     assert.match(choice!, /Escolha a fazenda/);
     assert.equal((await f.db.query("select * from guardian_panel_codes")).rows.length, 0);
-    await handlePanelCodeRequest(
+    await handlePanelLinkRequest(
       { phone, messageId: "chosen", text: "gerar código do painel para 2" },
       deps,
     );
-    await f.db.exec("UPDATE guardian_panel_codes SET expires_at=now()-interval '1 minute'");
-    assert.equal(await f.store.exchange(hashToken(code), hashToken("expired")), false);
+    await f.db.exec(
+      "UPDATE guardian_access_links SET expires_at=now()-interval '1 minute',created_at=now()-interval '1 day'",
+    );
+    assert.equal(
+      await f.store.links!.exchange(hashToken(code), hashToken("expired"), false),
+      false,
+    );
     for (let i = 0; i < 20; i++) assert.equal(await f.store.attempt(hashToken("ip")), true);
     assert.equal(await f.store.attempt(hashToken("ip")), false);
     await f.issue(phone, snapshot.properties[0].id, "fresh", hashToken("other-code"));

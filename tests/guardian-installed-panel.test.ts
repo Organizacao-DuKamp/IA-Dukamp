@@ -20,7 +20,7 @@ function req(method: string, installed: boolean, cookie?: string, body?: unknown
     ...(body ? { body: JSON.stringify(body) } : {}),
   });
 }
-test("daily browser duration is the next midnight in Brazil", () => {
+test("legacy browser duration helper is the next midnight in Brazil", () => {
   assert.equal(browserSessionAge(new Date("2026-10-28T12:00:00Z")), 15 * 3600);
   assert.equal(browserSessionAge(new Date("2026-10-29T02:59:30Z")), 30);
 });
@@ -90,7 +90,7 @@ test("installed sessions renew across days, remain separate from browser session
     const webCookie = browser.headers.get("set-cookie")!.split(";")[0];
     assert.equal((await handleFarmPanel(req("GET", true, webCookie), deps)).status, 401);
     const expiry = await f.rpc<boolean>(
-      "select bool_and((expires_at at time zone 'America/Sao_Paulo')::time='00:00:00') data from guardian_panel_sessions where not installed",
+      "select bool_and(expires_at>now()+interval '364 days') data from guardian_panel_sessions where not installed",
     );
     assert.equal(expiry, true);
     await f.db.query("delete from guardian_panel_codes where phone_number=$1", [phone]);

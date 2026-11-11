@@ -9,7 +9,12 @@ export async function handleEmployeeDialogue(
   store: GuardianStore,
   now: Date,
 ) {
-  if (/^(?:convidar|revogar acesso)\s+\d/.test(fold(input.text))) return null;
+  if (
+    /^(?:convidar|revogar acesso|remover(?: acesso)?|retirar(?: acesso)?|tirar acesso)\s+(?:d[oe] |funcionario )?\+?\d/.test(
+      fold(input.text),
+    )
+  )
+    return null;
   const text = fold(input.text),
     prior =
       snapshot.pending?.kind === "semantic_draft" &&
@@ -19,7 +24,7 @@ export async function handleEmployeeDialogue(
         : undefined;
   if (
     prior?.name &&
-    !/funcionario|capataz|gerente|administrador|financeiro|telefone|numero|acesso|convid|revog|desativ|ativar|remov|exclu|\bele\b|\bela\b/.test(
+    !/funcionario|capataz|gerente|administrador|financeiro|telefone|numero|acesso|convid|revog|retir|desativ|ativar|remov|exclu|\bele\b|\bela\b/.test(
       text,
     ) &&
     !/\d[\d ()-]{9,}/.test(input.text)
@@ -112,7 +117,7 @@ export async function handleEmployeeDialogue(
   let phone = input.text.match(/\+?\d[\d ()-]{9,20}\d/)?.[0].replace(/\D/g, "");
   if (phone && [10, 11].includes(phone.length)) phone = "55" + phone;
   if (
-    (/\b(?:convid|acesso|tira|revog)/.test(text) ||
+    (/\b(?:convid|acesso|tira|retir|remov|exclu|revog)/.test(text) ||
       (!!existing[0]?.phone && /agora.*(?:administrador|gerente|funcionario)/.test(text))) &&
     !/nao (?:tenho|possuo).*numero|sem (?:telefone|numero)/.test(text)
   ) {
@@ -125,7 +130,7 @@ export async function handleEmployeeDialogue(
       };
     // Only the existing invitation/revocation flow can change authentication rights.
     return {
-      accessAction: /tira|revog/.test(text)
+      accessAction: /tira|retir|remov|exclu|revog/.test(text)
         ? { kind: "revoke", phone: number }
         : { kind: "invite", phone: number, role: job === "Gerente" ? "manager" : "worker" },
     } as { accessAction: GuardianAction };

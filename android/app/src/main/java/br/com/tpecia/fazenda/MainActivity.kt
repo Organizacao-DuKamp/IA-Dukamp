@@ -107,7 +107,13 @@ class MainActivity : ComponentActivity() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() { if (web.canGoBack()) web.goBack() else finish() }
         })
-        web.loadUrl(panelUrl)
+        web.loadUrl(intent?.data?.toString()?.takeIf { panelUrl(it) } ?: panelUrl)
+    }
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        val target = intent.data?.toString()?.takeIf { panelUrl(it) } ?: return
+        if (::web.isInitialized) web.loadUrl(target)
     }
     private fun command(message: JSONObject) {
         when (message.optString("type")) {

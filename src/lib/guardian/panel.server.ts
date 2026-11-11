@@ -11,6 +11,7 @@ import {
   type GuardianRole,
 } from "./schema.ts";
 import { applyFarmAction } from "./book.ts";
+import { accessLink, accessToken, accessLinks } from "./access-links.server.ts";
 import { panelAccessRequest, panelFarmKey } from "./panel-access.ts";
 import { farmIndicators } from "./operations.ts";
 
@@ -59,6 +60,7 @@ export interface PanelIdentity {
   expiresAt: string;
 }
 export interface PanelStore {
+  links?: typeof accessLinks;
   attempt(key: string): Promise<boolean>;
   exchange(codeHash: string, sessionHash: string, installed?: boolean): Promise<boolean>;
   exchangeOtp?(
@@ -83,6 +85,7 @@ export interface PanelStore {
   ): Promise<string>;
 }
 export const panelStore: PanelStore = {
+  links: accessLinks,
   async exchangeOtp(phone, codeHash, sessionHash, originHash, installed) {
     const { data, error } = await (
       await guardianDb()
@@ -168,7 +171,7 @@ export const panelStore: PanelStore = {
 };
 
 /** Called only after the WhatsApp webhook authenticated the sender. */
-export async function handlePanelCodeRequest(
+export async function handlePanelLinkRequest(
   input: {
     phone: string;
     messageId: string;
@@ -178,8 +181,8 @@ export async function handlePanelCodeRequest(
   },
   deps: {
     load?: typeof guardianStore.load;
-    issue?: (phone: string, property: string, message: string, hash: string) => Promise<boolean>;
-    code?: () => string;
+    token?: () => string;
+    links?: typeof accessLinks;
   } = {},
 ): Promise<string | null> {
   if (input.mediaType && input.mediaType !== "audio") return null;
@@ -196,7 +199,7 @@ export async function handlePanelCodeRequest(
     const snapshot = await (deps.load ?? guardianStore.load)(input.phone);
     const properties = snapshot.properties;
     if (!properties.length)
-      return "Ainda não encontrei uma fazenda sua. Conte o nome, onde ela fica e o rebanho, ou diga “cadastrar fazenda Boa Vista em Tanabi/SP”. Depois, peça “gerar código do painel”.";
+      return "Ainda não encontrei uma fazenda sua. Conte o nome, onde ela fica e o rebanho, ou diga “cadastrar fazenda Boa Vista em Tanabi/SP”. Depois, peça “gerar link do painel”.";
     const choice = access.reference;
     const exact = choice ? properties.filter((p) => p.id === choice) : [];
     const candidates = choice
@@ -215,44 +218,26 @@ export async function handlePanelCodeRequest(
       );
     const property = candidates[0];
     if (access.expectedName && panelFarmKey(property.name) !== panelFarmKey(access.expectedName))
-      return "O número e o nome não correspondem à mesma fazenda. Escolha novamente pelo nome completo; nenhum código foi emitido.";
-    const code = normalizeCode((deps.code ?? makePanelCode)());
-    const issue =
-      deps.issue ??
-      (async (phone, propertyId, message, hash) => {
-        const db = await guardianDb();
-        const { data, error } = await db
-          .rpc("guardian_panel_issue", {
-            p_phone: phone,
-            p_property: propertyId,
-            p_message: message,
-            p_hash: hash,
-          })
-          .abortSignal(AbortSignal.timeout(5000));
-        if (error)
-          throw new Error(
-            error.message.includes("guardian_code_rate_limited") ? "rate" : "unavailable",
-          );
-        return data === true;
-      });
-    if (
-      !(await issue(
-        input.phone,
-        property.id,
-        input.messageId,
-        /^\d{6}$/.test(code) ? panelCodeHash(code, input.phone) : hashToken(code),
-      ))
-    )
-      return "Um código já foi enviado para esta solicitação. Use a mensagem anterior ou peça um novo código.";
-    return `Seu código para ${property.name}:\n${/^\d{6}$/.test(code) ? code : code.match(/.{4}/g)!.join("-")}\n\nAbra /painelfazenda no site da TPEC-IA e informe seu WhatsApp e os 6 números do código. Ele vale por 10 minutos e pode ser usado uma única vez. Não compartilhe: ele dá acesso à gestão desta fazenda com suas permissões. Use “sair” no painel ao terminar.`;
+      return "O número e o nome não correspondem à mesma fazenda. Escolha novamente pelo nome completo; nenhum link foi emitido.";
+    const token = deps.token ? deps.token() : accessToken(input.phone, input.messageId, "login");
+    const links = deps.links ?? accessLinks;
+    if (!(await links.issue(input.phone, property.id, input.messageId, hashToken(token), "login")))
+      return "Esta solicitação já foi usada. Peça um novo link do painel.";
+    return `Seu link para ${property.name}:\n${accessLink(token, "login")}\n\nToque para abrir no aplicativo ou na web, sem código. O link vale por 10 minutos e é de uso único. Depois de entrar, seu acesso fica salvo neste dispositivo até sair ou ter o acesso removido. Não compartilhe este link pessoal.`;
   } catch (error) {
     return error instanceof Error && error.message === "rate"
-      ? "Você já pediu vários códigos. Aguarde dez minutos antes de solicitar outro."
-      : "Não consegui gerar o código agora. Tente novamente em instantes; nenhum acesso foi liberado.";
+      ? "Você já pediu vários links. Aguarde dez minutos antes de solicitar outro."
+      : "Não consegui gerar o link agora. Tente novamente em instantes; nenhum acesso foi liberado.";
   }
 }
 
 const Body = z.discriminatedUnion("kind", [
+  z
+    .object({ kind: z.literal("link_exchange"), token: z.string().regex(/^[a-f0-9]{64}$/) })
+    .strict(),
+  z.object({ kind: z.literal("team_invite"), requestId: z.uuid() }).strict(),
+  z.object({ kind: z.literal("team_revoke"), phone: z.string().regex(/^\d{10,15}$/) }).strict(),
+  z.object({ kind: z.literal("invite_cancel"), id: z.uuid() }).strict(),
   z
     .object({
       kind: z.literal("exchange"),
@@ -327,6 +312,7 @@ export async function handleFarmPanel(
   if (!(deps.enabled ?? process.env.TPEC_GUARDIAN_ENABLED === "true"))
     return response({ error: "O painel da fazenda está aguardando ativação." }, 503);
   const store = deps.store ?? panelStore;
+  const links = store.links ?? accessLinks;
   const token = cookieToken(request),
     hash = token ? hashToken(token) : null;
   const method = request.method;
@@ -364,6 +350,31 @@ export async function handleFarmPanel(
       } catch {
         return response({ error: "Confira o código ou os dados enviados." }, 400);
       }
+      if (input.kind === "link_exchange") {
+        const client = request.headers.get("x-nf-client-connection-ip") ?? "local-or-unavailable";
+        if (!(await store.attempt(hashToken("farm-panel:" + client))))
+          return response({ error: "Muitas tentativas. Aguarde um minuto." }, 429);
+        const session = randomBytes(32).toString("hex");
+        if (
+          !(await links.exchange(
+            hashToken(input.token),
+            hashToken(session),
+            installedRequest(request),
+          ))
+        ) {
+          if (
+            hash &&
+            (await store.authorize(hash, installedRequest(request))) &&
+            (await links.matches(hashToken(input.token), hash))
+          )
+            return response({ ok: true }, 200, sessionCookie(request, token!, APP_AGE));
+          return response(
+            { error: "Link inválido, vencido ou já utilizado. Peça outro pelo WhatsApp." },
+            401,
+          );
+        }
+        return response({ ok: true }, 200, sessionCookie(request, session, APP_AGE));
+      }
       if (input.kind === "exchange") {
         // Only the trusted platform header identifies the origin. Distributed attempts are also limited in SQL.
         const client = request.headers.get("x-nf-client-connection-ip") ?? "local-or-unavailable";
@@ -393,19 +404,38 @@ export async function handleFarmPanel(
             { error: "Código inválido, vencido ou já utilizado. Peça outro pelo WhatsApp." },
             401,
           );
-        return response(
-          { ok: true },
-          200,
-          sessionCookie(
-            request,
-            session,
-            installedRequest(request) ? APP_AGE : browserSessionAge(),
-          ),
-        );
+        return response({ ok: true }, 200, sessionCookie(request, session, APP_AGE));
       }
       const identity = hash ? await store.authorize(hash, installedRequest(request)) : null;
       if (!identity)
-        return response({ error: "Acesso expirado. Peça um novo código pelo WhatsApp." }, 401);
+        return response({ error: "Acesso expirado. Peça um novo link pelo WhatsApp." }, 401);
+      if (input.kind === "team_invite") {
+        if (identity.role !== "owner")
+          return response({ error: "Só o proprietário pode convidar funcionários." }, 403);
+        const invitation = accessToken(identity.phone, "panel:" + input.requestId, "invite");
+        if (
+          !(await links.issue(
+            identity.phone,
+            identity.propertyId,
+            "panel:" + input.requestId,
+            hashToken(invitation),
+            "invite",
+          ))
+        )
+          return response({ error: "Não foi possível criar o convite." }, 409);
+        return response({ link: accessLink(invitation, "invite") });
+      }
+      if (input.kind === "team_revoke" || input.kind === "invite_cancel") {
+        if (identity.role !== "owner")
+          return response({ error: "Só o proprietário pode remover acessos." }, 403);
+        const ok =
+          input.kind === "team_revoke"
+            ? await links.revoke(hash!, input.phone)
+            : await links.cancel(hash!, input.id);
+        return ok
+          ? response({ ok: true })
+          : response({ error: "Não foi possível remover este acesso." }, 409);
+      }
       if (
         ["property_create", "property_delete", "property_transfer", "invite", "revoke"].includes(
           input.action.kind,
@@ -473,11 +503,14 @@ export async function handleFarmPanel(
     }
     const identity = hash ? await store.authorize(hash, installedRequest(request)) : null;
     if (!identity)
-      return response({ error: "Acesso expirado. Peça um novo código pelo WhatsApp." }, 401);
+      return response({ error: "Acesso expirado. Peça um novo link pelo WhatsApp." }, 401);
     return response(
-      publicIdentity(identity),
+      {
+        ...publicIdentity(identity),
+        ...(identity.role === "owner" && store.links ? { team: await links.team(hash!) } : {}),
+      },
       200,
-      installedRequest(request) ? sessionCookie(request, token!, APP_AGE) : undefined,
+      sessionCookie(request, token!, APP_AGE),
     );
   } catch {
     return response(

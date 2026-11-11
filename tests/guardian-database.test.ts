@@ -226,7 +226,7 @@ test("real SQL: one-time web pairing binds the verified sender and expires, with
     await db.close();
   }
 });
-test("real SQL: tenant isolation, anonymous denial, phone-bound invite, revocation and web RLS", async () => {
+test("real SQL: tenant isolation, anonymous denial, legacy phone-bound invite, revocation and web RLS", async () => {
   const { db, store, send } = await setup();
   try {
     await send("cadastrar fazenda Boa Vista em Monte Aprazível/SP");
@@ -240,9 +240,19 @@ test("real SQL: tenant isolation, anonymous denial, phone-bound invite, revocati
       /permission denied/,
     );
     await db.exec("RESET ROLE");
-    await send(`convidar ${other} como funcionário`);
-    const invitation = (await send("confirmar"))!.reply!;
-    const token = invitation.match(/aceitar convite ([a-f0-9]{32})/)![1];
+    // Compatibility for phone-bound invitations issued before link access.
+    const token = "a".repeat(32);
+    await store.commit({
+      phone,
+      messageId: "legacy-invite",
+      accountVersion: (await store.load(phone)).accountVersion,
+      propertyId: prop.id,
+      propertyVersion: prop.version,
+      operation: "invite",
+      pending: null,
+      details: { token, phone: other, role: "worker" },
+      reply: "Convite legado",
+    });
     await assert.rejects(
       store.commit({
         phone,

@@ -43,6 +43,7 @@ export async function farmIntegration(
       "20261029121331_guardian_cross_property_receipts.sql",
       "20261103032737_guardian_requested_reminder_times.sql",
       "20261106171643_guardian_natural_imports.sql",
+      "20261111170000_guardian_access_links.sql",
     ]) {
       if (name.endsWith("_guardian_farm_panel.sql") && beforeEvolution) await beforeEvolution(db);
       await db.exec(
@@ -77,7 +78,26 @@ export async function farmIntegration(
         Object.values(guardianRpcArgs(turn)),
       ),
   };
+  const links: NonNullable<PanelStore["links"]> = {
+    issue: (phone, property, message, hash, kind) =>
+      rpc("select guardian_access_issue($1,$2,$3,$4,$5) data", [
+        phone,
+        property,
+        message,
+        hash,
+        kind,
+      ]),
+    exchange: (hash, session, installed) =>
+      rpc("select guardian_access_exchange($1,$2,$3) data", [hash, session, installed]),
+    accept: (hash, phone, message, login) =>
+      rpc("select guardian_access_accept($1,$2,$3,$4) data", [hash, phone, message, login]),
+    matches: (link, session) => rpc("select guardian_access_matches($1,$2) data", [link, session]),
+    team: (session) => rpc("select guardian_access_team($1) data", [session]),
+    revoke: (session, phone) => rpc("select guardian_access_revoke($1,$2) data", [session, phone]),
+    cancel: (session, id) => rpc("select guardian_access_cancel($1,$2) data", [session, id]),
+  };
   const store: PanelStore = {
+    links,
     attempt: (key) => rpc<boolean>("select guardian_panel_attempt($1) data", [key]),
     exchange: (code, session, installed = false) =>
       rpc<boolean>("select guardian_panel_exchange_mode($1,$2,$3) data", [

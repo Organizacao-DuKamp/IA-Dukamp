@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { panelAccessRequest } from "../src/lib/guardian/panel-access.ts";
 import {
-  handlePanelCodeRequest,
+  handlePanelLinkRequest,
   hashToken,
   handleFarmPanel,
 } from "../src/lib/guardian/panel.server.ts";
@@ -47,22 +47,25 @@ test("panel access understands a farm noun, conversational requests, punctuation
     "Gerar código do painel para 1",
   ]) {
     let issued = "";
-    const reply = await handlePanelCodeRequest(
+    const reply = await handlePanelLinkRequest(
       { phone, messageId: text.slice(0, 100), text },
       {
         load: async () => snapshot(),
-        code: () => "ABCD2345EFGH6789",
-        issue: async (_p, property) => {
-          issued = property;
-          return true;
+        token: () => "a".repeat(64),
+        links: {
+          ...({} as NonNullable<import("../src/lib/guardian/panel.server.ts").PanelStore["links"]>),
+          issue: async (_p, property) => {
+            issued = property;
+            return true;
+          },
         },
       },
     );
     assert.equal(issued, "eduardo", text + ": " + reply);
-    assert.match(reply!, /Seu código para Eduardo/);
+    assert.match(reply!, /Seu link para Eduardo/);
   }
   for (const text of ["Eduardo", "A fazenda Eduardo", "Pode ser a fazenda Eduardo", "1. Eduardo"]) {
-    const reply = await handlePanelCodeRequest(
+    const reply = await handlePanelLinkRequest(
       {
         phone,
         messageId: "follow",
@@ -74,9 +77,16 @@ test("panel access understands a farm noun, conversational requests, punctuation
           },
         ],
       },
-      { load: async () => snapshot(), issue: async () => true, code: () => "ABCD2345EFGH6789" },
+      {
+        load: async () => snapshot(),
+        links: {
+          ...({} as NonNullable<import("../src/lib/guardian/panel.server.ts").PanelStore["links"]>),
+          issue: async () => true,
+        },
+        token: () => "a".repeat(64),
+      },
     );
-    assert.match(reply!, /Seu código para Eduardo/, text);
+    assert.match(reply!, /Seu link para Eduardo/, text);
   }
 });
 
@@ -95,13 +105,13 @@ test("panel access never issues codes for an unknown/ambiguous farm, mismatched 
     "Gerar código do painel para fazenda Edu",
   ]) {
     assert.match(
-      (await handlePanelCodeRequest({ phone, messageId: "missing", text }, deps))!,
+      (await handlePanelLinkRequest({ phone, messageId: "missing", text }, deps))!,
       /Escolha a fazenda/,
     );
   }
   const history = [{ role: "assistant", content: "Escolha a fazenda para abrir no painel:" }];
   assert.match(
-    (await handlePanelCodeRequest(
+    (await handlePanelLinkRequest(
       { phone, messageId: "mismatch", text: "1. Tambori", history },
       deps,
     ))!,
@@ -114,10 +124,10 @@ test("panel access never issues codes for an unknown/ambiguous farm, mismatched 
     "Crie o lote 4 com 12 hectares",
     "Eduardo",
   ]) {
-    assert.equal(await handlePanelCodeRequest({ phone, messageId: "none", text }, deps), null);
+    assert.equal(await handlePanelLinkRequest({ phone, messageId: "none", text }, deps), null);
   }
   assert.equal(
-    await handlePanelCodeRequest(
+    await handlePanelLinkRequest(
       { phone, messageId: "topic", text: "Crie o lote 4 com 12 hectares", history },
       deps,
     ),
@@ -126,7 +136,7 @@ test("panel access never issues codes for an unknown/ambiguous farm, mismatched 
   const s = snapshot();
   s.properties.push({ id: "duplicate", name: "Fazenda Eduardo", role: "owner" });
   assert.match(
-    (await handlePanelCodeRequest(
+    (await handlePanelLinkRequest(
       { phone, messageId: "ambiguous", text: "gerar código do painel para a fazenda Eduardo" },
       { ...deps, load: async () => s },
     ))!,
@@ -438,15 +448,15 @@ test("SQL and HTTP: natural panel access selects the authorized farm; move-all c
       pending: null,
       reply: "Criada",
     });
-    const code = "ABCD2345EFGH6789";
-    const reply = await handlePanelCodeRequest(
+    const code = "a".repeat(64);
+    const reply = await handlePanelLinkRequest(
       { phone, messageId: "code", text: "Gerar código do painel para a fazenda Eduardo" },
-      { load: f.guardian.load, issue: f.issue, code: () => code },
+      { load: f.guardian.load, links: f.store.links, token: () => code },
     );
-    assert.match(reply!, /Seu código para Eduardo/);
+    assert.match(reply!, /Seu link para Eduardo/);
     const stored = (
       await f.db.query<{ property_id: string }>(
-        "select property_id from guardian_panel_codes where token_hash=$1",
+        "select property_id from guardian_access_links where token_hash=$1",
         [hashToken(code)],
       )
     ).rows;
@@ -484,7 +494,7 @@ test("SQL and HTTP: natural panel access selects the authorized farm; move-all c
       1,
     );
     const token = hashToken("synthetic-session");
-    assert.equal(await f.store.exchange(hashToken(code), hashToken(token)), true);
+    assert.equal(await f.store.links!.exchange(hashToken(code), hashToken(token), false), true);
     const req = () =>
       new Request("https://tpecia.example/api/public/farm-panel", {
         headers: { cookie: "tpec_farm_session=" + token, "x-tpec-panel": "1" },
