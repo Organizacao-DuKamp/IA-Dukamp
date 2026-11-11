@@ -5,7 +5,7 @@ import { createServer } from "node:http";
 import { mkdir } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 import { farmIntegration } from "../tests/helpers/farm-integration.ts";
-import { handleFarmPanel, handlePanelCodeRequest } from "../src/lib/guardian/panel.server.ts";
+import { handleFarmPanel, handlePanelLinkRequest } from "../src/lib/guardian/panel.server.ts";
 import { handleGuardianMessage } from "../src/lib/guardian/handler.server.ts";
 
 const modulePath = process.env.PLAYWRIGHT_MODULE_PATH;
@@ -13,7 +13,7 @@ const { chromium } = await import(modulePath ? pathToFileURL(modulePath).href : 
 const origin = process.env.FARM_PANEL_TEST_ORIGIN ?? "http://127.0.0.1:8080";
 const f = await farmIntegration();
 const phone = "5517999991111",
-  code = "ABCD2345EFGH6789";
+  code = "a".repeat(64);
 let browser, testPage;
 const browserErrors = [];
 const server = createServer(async (req, res) => {
@@ -42,11 +42,11 @@ try {
     "Minha fazenda fica em Tanabi e tenho 40 cabeças.",
     "2026-10-24T15:00:00Z",
   );
-  const issued = await handlePanelCodeRequest(
+  const issued = await handlePanelLinkRequest(
     { phone, messageId: "browser-code", text: "gerar código do painel" },
-    { load: f.guardian.load, issue: f.issue, code: () => code },
+    { load: f.guardian.load, links: f.store.links, token: () => code },
   );
-  assert.match(issued, /ABCD-2345-EFGH-6789/);
+  assert.match(issued, /#login=/);
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   const backend = `http://127.0.0.1:${server.address().port}`;
   browser = await chromium.launch({
@@ -69,12 +69,10 @@ try {
     await route.fulfill({ response });
   });
   await page.goto(origin + "/painelfazenda", { waitUntil: "networkidle" });
-  await page.getByRole("heading", { name: "Acesse sua fazenda" }).waitFor();
-  await page.getByLabel("Código de acesso", { exact: true }).fill("AAAA-AAAA-AAAA-AAAA");
-  await page.getByRole("button", { name: "Entrar no painel", exact: true }).click();
-  await page.getByRole("alert").filter({ hasText: "Código inválido" }).waitFor();
-  await page.getByLabel("Código de acesso", { exact: true }).fill(code);
-  await page.getByRole("button", { name: "Entrar no painel", exact: true }).click();
+  await page.getByRole("heading", { name: "Acesse sua fazenda por link" }).waitFor();
+  await page.goto(origin + "/painelfazenda#login=" + "f".repeat(64));
+  await page.getByRole("alert").filter({ hasText: "Link inválido" }).waitFor();
+  await page.goto(origin + "/painelfazenda#login=" + code);
   await page.getByRole("heading", { name: "Propriedade sem nome — Tanabi", exact: true }).waitFor();
   assert.equal(
     await page
@@ -757,7 +755,7 @@ try {
     .getByRole("dialog", { name: "Sua fazenda" })
     .getByRole("button", { name: "Sair desta fazenda", exact: true })
     .click();
-  await page.getByRole("heading", { name: "Acesse sua fazenda" }).waitFor();
+  await page.getByRole("heading", { name: "Acesse sua fazenda por link" }).waitFor();
   if (screenshots) {
     await page.screenshot({ path: screenshots + "/farm-panel-access-mobile.png", fullPage: true });
   }
@@ -780,13 +778,14 @@ try {
   for (const icon of manifest.icons)
     assert.equal((await context.request.get(origin + icon.src)).status(), 200);
   // Simulate installed display mode and a full browser-context restart with persistent cookies.
-  const appCode = "JKLM2345NPQR6789",
+  const appCode = "b".repeat(64),
     appProperty = (await f.guardian.load(phone)).active.id;
-  await f.issue(
+  await f.store.links.issue(
     phone,
     appProperty,
-    "installed-browser-code",
+    "installed-browser-link",
     (await import("../src/lib/guardian/panel.server.ts")).hashToken(appCode),
+    "login",
   );
   const prepareApp = async (ctx) => {
     await ctx.addInitScript(() => {
@@ -809,8 +808,7 @@ try {
   const appContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const appPage = await prepareApp(appContext);
   await appPage.goto(origin + "/painelfazenda?app=1", { waitUntil: "networkidle" });
-  await appPage.getByLabel("Código de acesso", { exact: true }).fill(appCode);
-  await appPage.getByRole("button", { name: "Entrar no painel", exact: true }).click();
+  await appPage.goto(origin + "/painelfazenda?app=1#login=" + appCode);
   await appPage.getByRole("navigation", { name: "Navegação principal" }).waitFor();
   const appState = await appContext.storageState();
   assert.ok(
@@ -838,7 +836,9 @@ try {
   await reopened
     .getByRole("button", { name: "Sair de todos os meus acessos desta fazenda", exact: true })
     .click();
-  await reopened.getByRole("heading", { name: "Acesse sua fazenda", exact: true }).waitFor();
+  await reopened
+    .getByRole("heading", { name: "Acesse sua fazenda por link", exact: true })
+    .waitFor();
   await restoredContext.close();
   assert.deepEqual(errors, []);
   console.log(

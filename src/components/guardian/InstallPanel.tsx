@@ -56,7 +56,7 @@ export function InstallPanel({ authenticated = false }: { authenticated?: boolea
               {installed
                 ? authenticated
                   ? "Acesso mantido neste aplicativo."
-                  : "Entre com um código para começar."
+                  : "Abra seu link do WhatsApp para começar."
                 : added
                   ? "Abra o aplicativo pelo novo ícone."
                   : "Abra pelo ícone e mantenha seu acesso."}
@@ -101,8 +101,8 @@ export function InstallPanel({ authenticated = false }: { authenticated?: boolea
               : "No menu do navegador, escolha Instalar aplicativo ou Adicionar à tela inicial. No computador, procure também o ícone de instalação na barra de endereço."}
           </p>
           <p className="mt-2 text-xs text-emerald-800">
-            Depois de instalar, abra pelo ícone e informe um código uma vez. O navegador pode pedir
-            sua confirmação para instalar.
+            Depois de instalar, abra seu link do WhatsApp uma vez. O navegador pode pedir sua
+            confirmação para instalar.
           </p>
         </div>
       )}

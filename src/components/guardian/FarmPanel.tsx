@@ -39,6 +39,7 @@ import { androidCommand, nativeAndroid } from "@/lib/guardian/android-bridge";
 import "./mobile-panel.css";
 import { InstallPanel } from "@/components/guardian/InstallPanel";
 import { installedPanel } from "@/lib/guardian/app-mode";
+import { createPanelClient } from "@/lib/guardian/panel-client";
 import { GuardianWorkspace } from "@/components/guardian/GuardianWorkspace";
 import { GuardianActionForm } from "@/components/guardian/GuardianActionForm";
 import { describeAction } from "@/lib/guardian/book";
@@ -81,31 +82,11 @@ const tabIcons = {
   events: Bell,
   calculator: Calculator,
 };
-const endpoint = "/api/public/farm-panel";
 const whatsapp = "https://wa.me/5516992256069?text=" + encodeURIComponent("Gerar link do painel");
-async function api(method = "GET", body?: unknown) {
-  const result = await fetch(endpoint, {
-    method,
-    credentials: "same-origin",
-    cache: "no-store",
-    headers: {
-      "content-type": "application/json",
-      "x-tpec-panel": "1",
-      "x-tpec-panel-mode": installedPanel() ? "installed" : "browser",
-      ...(body && typeof body === "object" && "kind" in body && body.kind === "logout_all"
-        ? { "x-tpec-panel-all": "1" }
-        : {}),
-    },
-    ...(body ? { body: JSON.stringify(body) } : {}),
-  });
-  const data = await result.json();
-  if (!result.ok)
-    throw Object.assign(new Error(data.error ?? "Não foi possível acessar o painel."), {
-      status: result.status,
-    });
-  return data;
-}
 export function FarmPanel() {
+  const client = useRef<ReturnType<typeof createPanelClient> | null>(null);
+  client.current ??= createPanelClient();
+  const api = useCallback((method = "GET", body?: unknown) => client.current!(method, body), []);
   const [view, setView] = useState<View | null>(null),
     [invitation, setInvitation] = useState<string | null>(null),
     [error, setError] = useState(""),
@@ -122,12 +103,14 @@ export function FarmPanel() {
   const [nativeApp, setNativeApp] = useState(false);
   useEffect(() => setNativeApp(nativeAndroid()), []);
   const generation = useRef(0),
+    entering = useRef(false),
     inFlight = useRef(false),
     moreDialog = useRef<HTMLDialogElement>(null);
   const hasView = !!view,
     propertyId = view?.propertyId,
     propertyVersion = view?.version;
   const load = useCallback(async () => {
+    if (entering.current) return;
     const run = ++generation.current;
     try {
       const data = await api();
@@ -143,30 +126,95 @@ export function FarmPanel() {
     } finally {
       if (run === generation.current) setLoading(false);
     }
-  }, []);
+  }, [api]);
   const invalidate = useCallback(() => {
     generation.current++;
   }, []);
-  const bootstrap = useRef<Promise<unknown> | null>(null);
+  type Entry = { kind: "invite"; token: string } | { kind: "view"; view: View } | { kind: "guest" };
+  // Reuse only the current operation across React's effect replay. Each incoming
+  // URL starts a new operation; logout discards the completed startup result.
+  const accessOperation = useRef<Promise<Entry> | null>(null);
   useEffect(() => {
-    if (!bootstrap.current) {
+    let disposed = false;
+    const observe = (operation: Promise<Entry>) => {
+      const run = ++generation.current;
+      const current = () => !disposed && run === generation.current;
+      entering.current = true;
+      inFlight.current = true;
+      setLoading(true);
+      setBusy(true);
+      setError("");
+      setNotice("");
+      setView(null);
+      setInvitation(null);
+      setProposal(null);
+      setForm(false);
+      setTab("overview");
+      moreDialog.current?.close();
+      void operation
+        .then((result) => {
+          if (!current()) return;
+          if (result.kind === "invite") setInvitation(result.token);
+          else if (result.kind === "view") setView(result.view);
+          else androidCommand({ type: "disconnect" });
+        })
+        .catch((error) => {
+          if (!current()) return;
+          if (error instanceof Error && "status" in error && error.status === 401) {
+            androidCommand({ type: "disconnect" });
+          }
+          setError(
+            error instanceof Error
+              ? error.message
+              : "Não foi possível abrir o painel. Tente novamente.",
+          );
+        })
+        .finally(() => {
+          if (!current()) return;
+          entering.current = false;
+          inFlight.current = false;
+          setLoading(false);
+          setBusy(false);
+        });
+    };
+    const open = (initial = false) => {
       const access = readAccessFragment(window.location.hash);
-      if (window.location.hash)
-        window.history.replaceState(null, "", window.location.pathname + window.location.search);
-      if (access?.kind === "invite") setInvitation(access.token);
-      bootstrap.current =
-        access?.kind === "login"
-          ? api("POST", { kind: "link_exchange", token: access.token })
-          : Promise.resolve(access?.kind === "invite" ? "invite" : undefined);
-    }
-    void bootstrap.current
-      .then((result) => (result === "invite" ? setLoading(false) : load()))
-      .catch((e) => {
-        setError(e.message);
-        setLoading(false);
-      });
-    return invalidate;
-  }, [load, invalidate]);
+      if (!access && !initial) return;
+      if (access)
+        window.history.replaceState(
+          window.history.state,
+          "",
+          window.location.pathname + window.location.search,
+        );
+      const operation: Promise<Entry> =
+        access?.kind === "invite"
+          ? Promise.resolve({ kind: "invite", token: access.token })
+          : (async () => {
+              if (access?.kind === "login")
+                await api("POST", { kind: "link_exchange", token: access.token });
+              try {
+                return { kind: "view", view: (await api()) as View };
+              } catch (error) {
+                if (!access && error instanceof Error && "status" in error && error.status === 401)
+                  return { kind: "guest" };
+                throw error;
+              }
+            })();
+      accessOperation.current = operation;
+      observe(operation);
+    };
+    const incoming = () => open();
+    window.addEventListener("hashchange", incoming);
+    window.addEventListener("popstate", incoming);
+    if (accessOperation.current) observe(accessOperation.current);
+    else open(true);
+    return () => {
+      disposed = true;
+      invalidate();
+      window.removeEventListener("hashchange", incoming);
+      window.removeEventListener("popstate", incoming);
+    };
+  }, [api, invalidate]);
   useEffect(() => {
     if (!hasView) return;
     const refresh = () => {
@@ -195,41 +243,54 @@ export function FarmPanel() {
   async function save() {
     if (!proposal || inFlight.current) return;
     inFlight.current = true;
+    const scope = accessOperation.current;
     setBusy(true);
     setError("");
     try {
       const result = await api("POST", { kind: "action", ...proposal });
+      if (scope !== accessOperation.current) return;
       setNotice(result.message);
       setProposal(null);
       setForm(false);
       await load();
     } catch (e) {
+      if (scope !== accessOperation.current) return;
       setError(e instanceof Error ? e.message : "Não foi possível salvar.");
       if (e instanceof Error && "status" in e && (e.status === 409 || e.status === 401)) {
         setProposal(null);
         await load();
       }
     } finally {
-      inFlight.current = false;
-      setBusy(false);
+      if (scope === accessOperation.current) {
+        inFlight.current = false;
+        setBusy(false);
+      }
     }
   }
   function exit(all = false) {
     if (inFlight.current) return;
     inFlight.current = true;
+    const run = ++generation.current;
+    accessOperation.current = null;
     setBusy(true);
     void api("DELETE", all ? { kind: "logout_all" } : undefined)
       .then(() => {
-        generation.current++;
+        if (run !== generation.current) return;
         androidCommand({ type: "disconnect" });
         moreDialog.current?.close();
         setView(null);
+        setInvitation(null);
         setProposal(null);
         setNotice("");
+        setError("");
         setForm(false);
+        setTab("overview");
       })
-      .catch((e) => setError(e.message))
+      .catch((e) => {
+        if (run === generation.current) setError(e.message);
+      })
       .finally(() => {
+        if (run !== generation.current) return;
         inFlight.current = false;
         setBusy(false);
       });
@@ -628,7 +689,8 @@ export function FarmPanel() {
                 {new Date(view.expiresAt).toLocaleString("pt-BR", {
                   timeZone: "America/Sao_Paulo",
                 })}{" "}
-                (Brasília). Para acessar outra fazenda, saia e peça o código correspondente.
+                (Brasília). Para acessar outra fazenda, abra o link correspondente enviado pelo
+                WhatsApp.
               </p>
               <button
                 disabled={busy}

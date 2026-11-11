@@ -27,3 +27,23 @@ Para homologar em preview, abrir o endereço do preview com o fragmento gerado n
 `tests/guardian-access-links.test.ts` exercita SQL real em PGlite, emissão por WhatsApp, aceite idempotente, sessões persistentes separadas web/app, uso único/expiração, CSRF, RLS, escopo, privilégios, cancelamento, edição financeira pelo funcionário, remoção via painel/WhatsApp e bloqueio de sessões/convites antigos após readmissão. Os testes anteriores de seleção de fazenda foram adaptados para links. O teste Android de navegação inclui fragmentos de acesso/convite.
 
 A migração foi preparada sem conexão com produção. Nesta execução, a CLI Supabase não inicializou por tentar escrever em `~/.supabase` no filesystem somente leitura; o arquivo foi criado localmente e verificado executando a migração e consultas reais em PGlite. Não há entrada de migração aplicada à produção.
+
+## Entrada imediata com o aplicativo já aberto
+
+O painel acompanha novos links pelo `hashchange`/`popstate`, além da URL de abertura inicial. No Android, `loadUrl` de `/painelfazenda#login=...` pode navegar apenas no fragmento e preservar a página em memória. Portanto, cada link recebido inicia a autenticação e a leitura da fazenda, mesmo depois de Sair; a entrada não depende de remontar o componente, de um segundo toque ou de reiniciar o aplicativo.
+
+As requisições do painel são ordenadas porque respostas de leitura também renovam o cookie HttpOnly. Uma leitura antiga termina antes de um logout e de uma nova troca de link, impedindo que seu cookie sobrescreva a sessão nova. A interface ignora resultados de entradas anteriores e mantém o mesmo modo de sessão durante o documento. Só trocas de link ainda em andamento são deduplicadas: depois de Sair, uma resposta de sucesso antiga nunca substitui uma autenticação nova.
+
+A correção usa o frontend servido pelo site: não adiciona migração, não reabre links consumidos sem uma sessão válida e não exige atualizar o APK 1.1.0 que já abre App Links. As regras de uso único, expiração e remoção de funcionários permanecem aplicadas no servidor.
+
+Para reproduzir/validar com Vite local e PostgreSQL isolado:
+
+```sh
+npm run dev
+# Em outro terminal:
+npx playwright install chromium
+npm run test:panel-access
+node --test --experimental-strip-types tests/farm-panel-client.test.ts tests/guardian-access-links.test.ts tests/guardian-installed-panel.test.ts
+```
+
+O job `panel-access` do CI executa esse teste em cada PR/main com Playwright fixado como dependência de desenvolvimento. O script verifica entrada inicial, saída e reentrada na mesma página, resposta de renovação atrasada durante logout/reentrada, recusa de link já usado, próximo link válido, convite seguido de link pessoal, persistência após reload e o primeiro link recebido por uma tela já aberta. Usa Chromium, o handler HTTP real e SQL real em PGlite; a ponte Android é simulada e não substitui teste em aparelho físico. Não envia WhatsApp nem acessa banco de produção.

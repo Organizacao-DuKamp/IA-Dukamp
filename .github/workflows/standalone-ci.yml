@@ -49,3 +49,31 @@ jobs:
         env:
           NITRO_PRESET: netlify
         run: npm run build
+
+  panel-access:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.22.1"
+      - name: Install dependencies
+        run: npm ci --include=dev
+      - name: Install test browser
+        run: npx playwright install --with-deps chromium
+      - name: Verify first-click access, logout and re-entry with PostgreSQL
+        run: |
+          npm run dev -- --host 127.0.0.1 > /tmp/tpec-panel-access-vite.log 2>&1 &
+          panel_pid=$!
+          trap 'kill "$panel_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:8080/painelfazenda > /dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          npm run test:panel-access
+      - name: Show frontend log on failure
+        if: failure()
+        run: cat /tmp/tpec-panel-access-vite.log || true
