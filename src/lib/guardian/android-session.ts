@@ -1,8 +1,8 @@
 import { androidCommand, nativeAndroid } from "./android-bridge.ts";
 
-/** Persist only the WebView's HttpOnly cookies. Never copy a credential to JS or
- * storage. Older APKs flush cookies in onPageFinished: one automatic navigation
- * after entry/logout reaches that existing native hook, without another link. */
+/** The APK copies its HttpOnly cookie into encrypted native storage, then ACKs.
+ * No credential crosses JS. Older APKs only flush the WebView cookie store;
+ * their navigation fallback cannot guarantee persistence after process death. */
 export async function persistAndroidSession(loggedOut = false): Promise<void> {
   if (!nativeAndroid()) return;
   if (loggedOut) androidCommand({ type: "disconnect" });
@@ -17,10 +17,10 @@ export async function persistAndroidSession(loggedOut = false): Promise<void> {
       if ((event as CustomEvent<{ requestId?: string }>).detail?.requestId === requestId)
         finish(true);
     };
-    const timer = setTimeout(() => finish(false), 500);
+    const timer = setTimeout(() => finish(false), 5000);
     window.addEventListener("tpec:session-persisted", acknowledged);
     try {
-      androidCommand({ type: "persist_session", requestId });
+      androidCommand({ type: "persist_session", requestId, loggedOut });
     } catch {
       finish(false);
     }

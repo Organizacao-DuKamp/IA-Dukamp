@@ -1,4 +1,5 @@
 import { persistAndroidSession } from "./android-session.ts";
+import { androidCommand } from "./android-bridge.ts";
 import { installedPanel } from "./app-mode.ts";
 
 /** Every panel response can change the HttpOnly cookie. Preserve request order so
@@ -47,6 +48,7 @@ export function createPanelClient(
           ...(body ? { body: JSON.stringify(body) } : {}),
         });
         const data = await result.json();
+        if (method === "GET" && result.status === 401) androidCommand({ type: "forget_session" });
         if (!result.ok)
           throw Object.assign(new Error(data.error ?? "Não foi possível acessar o painel."), {
             status: result.status,

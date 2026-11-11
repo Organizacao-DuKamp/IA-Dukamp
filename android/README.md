@@ -54,7 +54,7 @@ Copie o valor completo de `private_key`, incluindo `-----BEGIN PRIVATE KEY-----`
 ### 3. Ativar e conferir no celular
 
 1. Instale a compilação que contém o `google-services.json`.
-2. Entre no painel com um código novo do WhatsApp.
+2. Entre no painel com um link pessoal do WhatsApp.
 3. Abra **Tarefas → Não perca a hora**. Escolha **Notificação** ou **Notificação e alarme** e toque em **Ativar lembretes neste celular**.
 4. Permita as notificações e os horários exatos. Para a tela de alarme sobre o bloqueio, permita também **Alarme na tela bloqueada**, quando o Android oferecer essa opção.
 5. Toque em **Testar em 5 segundos** e confira o volume de **alarme** do aparelho.
@@ -83,8 +83,14 @@ Copie o valor completo de `private_key`, incluindo `-----BEGIN PRIVATE KEY-----`
 - [Enviar pelo FCM HTTP v1](https://firebase.google.com/docs/cloud-messaging/send/v1-api)
 - [Agendar alarmes no Android](https://developer.android.com/develop/background-work/services/alarms/schedule)
 
-## Persistência de acesso (1.1.1)
+## Persistência de acesso (1.1.2)
 
-A versão 1.1.1 grava a sessão após a autenticação e ao ir para segundo plano. Reabrir pelo ícone ou pelos recentes restaura a fazenda pelo cookie, sem reutilizar o link recebido. O artefato `tpec-android-1.1.1-release-unsigned` precisa ser assinado com o certificado original antes de distribuir; não gere outra chave. Atualize o app instalado, sem desinstalar, para preservar a sessão. A associação App Links usa o mesmo certificado e não precisa mudar.
+A versão **1.1.2 (5)** mantém uma cópia cifrada da sessão instalada, protegida pelo Android Keystore e excluída de backup. Antes de carregar o painel, restaura o cookie HttpOnly mesmo se o WebView perdeu seu armazenamento. A identidade continua sendo revalidada no servidor. Fechar/remover dos recentes não encerra o acesso; Sair apaga o cookie e a cópia nativa. Desativar lembretes não apaga o login. Nenhum token é entregue ao JavaScript nem salvo no armazenamento web.
+
+**É necessário atualizar o APK**: o flush e a navegação de compatibilidade da versão anterior não resolveram a perda de acesso reportada no aparelho. Publicar o site não instala esta correção nativa. O artefato `tpec-android-1.1.2-release-unsigned` precisa ser assinado com o certificado original antes de distribuir; não gere outra chave. Atualize o app instalado, sem desinstalar, para preservar os dados. Se a sessão anterior já se perdeu, abra um link pessoal uma vez após a atualização. A associação App Links usa o mesmo certificado e não precisa mudar.
+
+O CI executa `PanelSessionRestartTest` em emuladores Android API 31 e 35. O script `scripts/check-session-restart.sh` força a parada do processo entre gravação, recuperação, logout e reabertura. O teste usa CookieManager e Keystore reais, remove o cookie para verificar a recuperação pela cópia cifrada, verifica troca de sessão, migração do cookie anterior e expiração. Usa credenciais sintéticas e não faz requisições ao backend.
 
 Confira o roteiro em [acesso por links](../docs/farm-access-links.md), incluindo fechamento imediato, parada forçada e logout. Não há promessa de acesso após remoção de permissão pelo proprietário ou limpeza dos dados do Android.
+
+O emulador API 28 inclui um WebView obsoleto: o CI verifica que o aplicativo mostra a orientação para atualizar o Android System WebView antes de carregar o painel. A persistência é exercitada nas APIs 31 e 35, que possuem a ponte exigida pelo app. Não se removem HttpOnly, Secure ou SameSite para contornar um WebView sem suporte.

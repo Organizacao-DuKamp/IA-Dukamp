@@ -25,4 +25,13 @@ class PanelSessionTest {
         assertEquals("$origin/painelfazenda", PanelNavigation.launchUrl(null, false, origin))
         assertEquals("$origin/painelfazenda", PanelNavigation.launchUrl("https://evil.example/painelfazenda", false, origin))
     }
+    @Test fun onlyTheInstalledCookieCanBeSaved() {
+        val token = "a".repeat(64)
+        assertEquals(token, PanelSession.token("other=one; tpec_farm_app_session=$token; extra=two"))
+        assertNull(PanelSession.token("tpec_farm_session=$token"))
+        assertNull(PanelSession.token("tpec_farm_app_session=invalid"))
+        assertNull(PanelSession.token(null))
+        assertTrue(PanelSession.cookie(token).contains("HttpOnly; Secure; SameSite=Strict; Max-Age=31536000"))
+        assertTrue(PanelSession.cookie("", 0).endsWith("Max-Age=0"))
+    }
 }

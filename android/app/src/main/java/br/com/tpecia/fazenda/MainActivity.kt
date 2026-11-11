@@ -34,6 +34,9 @@ class MainActivity : ComponentActivity() {
     private lateinit var progress: ProgressBar
     private lateinit var offline: LinearLayout
     private val network = FarmApi.executor
+    private val session by lazy { PanelSessionCookies(this) }
+    private var sessionReady = false
+    private var launchTarget: String? = null
     private val notifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) requestExactIfNeeded()
         publish()
@@ -108,21 +111,37 @@ class MainActivity : ComponentActivity() {
             override fun handleOnBackPressed() { if (web.canGoBack()) web.goBack() else finish() }
         })
         val restoring = savedInstanceState != null || ((intent?.flags ?: 0) and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != 0
-        web.loadUrl(PanelNavigation.launchUrl(intent?.data?.toString(), restoring, BuildConfig.PANEL_ORIGIN))
+        launchTarget = PanelNavigation.launchUrl(intent?.data?.toString(), restoring, BuildConfig.PANEL_ORIGIN)
+        session.restore {
+            if (!isDestroyed) {
+                sessionReady = true
+                web.loadUrl(requireNotNull(launchTarget))
+            }
+        }
     }
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
         val target = intent.data?.toString()?.takeIf { panelUrl(it) } ?: return
-        if (::web.isInitialized) web.loadUrl(target)
+        launchTarget = target
+        if (::web.isInitialized && sessionReady) web.loadUrl(target)
     }
     private fun command(message: JSONObject) {
         when (message.optString("type")) {
             "persist_session" -> runOnUiThread {
-                if (inPanel()) PanelSession.persist(message.optString("requestId"), { CookieManager.getInstance().flush() }) { requestId ->
-                    web.evaluateJavascript("window.dispatchEvent(new CustomEvent('tpec:session-persisted',{detail:{requestId:" + JSONObject.quote(requestId) + "}}));", null)
+                if (inPanel()) {
+                    val acknowledge = {
+                        PanelSession.persist(message.optString("requestId"), { CookieManager.getInstance().flush() }) { requestId ->
+                            web.evaluateJavascript("window.dispatchEvent(new CustomEvent('tpec:session-persisted',{detail:{requestId:" + JSONObject.quote(requestId) + "}}));", null)
+                        }
+                    }
+                    if (message.optBoolean("loggedOut")) session.forget(acknowledge)
+                    else if (session.capture(authenticated = true)) acknowledge()
                 }
             }
+            // The HTTP 401 already expires the cookie in the ordered request queue.
+            // Do not enqueue another native cookie deletion that could race a new login.
+            "forget_session" -> runOnUiThread { if (inPanel()) session.forgetBackup() }
             "status" -> publish()
             "connect" -> if (message.optString("mode") in setOf("alarm", "notification")) connect(message.getString("mode"))
             "sync" -> sync()
@@ -251,7 +270,10 @@ class MainActivity : ComponentActivity() {
         runOnUiThread { if (!isDestroyed && inPanel()) web.evaluateJavascript("window.dispatchEvent(new CustomEvent('tpec:android',{detail:$detail}));", null) }
     }
     override fun onPause() {
-        if (::web.isInitialized) CookieManager.getInstance().flush()
+        if (::web.isInitialized && sessionReady) {
+            // Closing the app is never a logout. Capture is a fallback for older web bundles.
+            try { session.capture() } catch (_: Exception) { CookieManager.getInstance().flush() }
+        }
         super.onPause()
     }
     override fun onResume() { super.onResume(); if (::web.isInitialized) { ReminderEngine.reschedule(this); sync() } }

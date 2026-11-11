@@ -80,7 +80,9 @@ test("installed sessions renew across days, remain separate from browser session
     );
     assert.equal(stored.token, hashToken(token));
     assert.equal((await handleFarmPanel(req("DELETE", true, cookie), deps)).status, 200);
-    assert.equal((await handleFarmPanel(req("GET", true, cookie), deps)).status, 401);
+    const revoked = await handleFarmPanel(req("GET", true, cookie), deps);
+    assert.equal(revoked.status, 401);
+    assert.match(revoked.headers.get("set-cookie")!, /^tpec_farm_app_session=;.*Max-Age=0/);
     await f.db.query("delete from guardian_panel_codes where phone_number=$1", [phone]);
     await f.issue(phone, id, "browser-code", hashToken(code));
     const browser = await handleFarmPanel(
