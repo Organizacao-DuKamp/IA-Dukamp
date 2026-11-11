@@ -46,6 +46,7 @@ function text(value: unknown, limit: number): string | null {
   if (typeof value !== "string") return null;
   return (
     value
+      .replace(/(#(?:login|invite)=|aceitar convite )[a-f0-9]{64}/gi, "$1[ACESSO PRIVADO]")
       // eslint-disable-next-line no-control-regex
       .replace(/[\u0000-\u0008\u000B-\u001F\u007F]/g, " ")
       .trim()

@@ -4,7 +4,7 @@ O projeto Android está em `android/`. O [guia de compilação e Firebase](../an
 
 ## Fluxo
 
-O usuário entra com um código de acesso ao painel instalado e ativa os lembretes no celular. O Android troca sua sessão instalada por uma credencial aleatória de dispositivo; o servidor guarda apenas o hash da credencial. Fazenda e telefone são derivados da sessão autorizada, não de identificadores enviados pelo cliente.
+O usuário entra com um link pessoal de acesso ao painel instalado e ativa os lembretes no celular. O Android troca sua sessão instalada por uma credencial aleatória de dispositivo; o servidor guarda apenas o hash da credencial. Fazenda e telefone são derivados da sessão autorizada, não de identificadores enviados pelo cliente.
 
 `/api/public/farm-panel/app` registra o dispositivo e fornece um snapshot de tarefas abertas atribuídas ao usuário. Cada horário possui chave ligada à fazenda, tarefa e revisão. O dispositivo concilia os snapshots por versão e data do servidor, cancela horários antigos e preserva apenas adiamentos ainda válidos. Recibos locais evitam repetir o mesmo disparo. A sessão salva limita os alarmes offline.
 

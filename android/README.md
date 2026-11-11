@@ -1,6 +1,6 @@
 # TPEC-IA · Minha Fazenda para Android
 
-Abra **esta pasta `android/`** no Android Studio. O painel usa `https://www.tpecia.com.br/painelfazenda`; agenda, notificações, armazenamento e alarme são nativos. O acesso continua pelo código enviado pela TPEC-IA no WhatsApp.
+Abra **esta pasta `android/`** no Android Studio. O painel usa `https://www.tpecia.com.br/painelfazenda`; agenda, notificações, armazenamento e alarme são nativos. O acesso usa links pessoais enviados pela TPEC-IA no WhatsApp. Veja [acesso por links e associação Android](../docs/farm-access-links.md).
 
 O aplicativo fica restrito a `/painelfazenda`, incluindo a tela de acesso. O logotipo permanece no painel e o link “Voltar ao site” fica oculto no Android. Links para outras páginas abrem no navegador; links do WhatsApp abrem no aplicativo correspondente. A landing page continua disponível no site.
 

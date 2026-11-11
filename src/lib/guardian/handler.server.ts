@@ -1,3 +1,4 @@
+import { handleAccessInvite } from "./access-links.server.ts";
 import { handleEmployeeDialogue } from "./employee-dialogue.server.ts";
 import { handleFarmDialogue } from "./farm-dialogue.server.ts";
 import { directFarmReport } from "./direct-report.ts";
@@ -54,7 +55,7 @@ import {
 } from "./herd-registration.ts";
 import { certainHerdStatement, hasEventVerb, farmScopeMatches } from "./herd-event-language.ts";
 import { herdStatement } from "./herd-language.ts";
-import { handlePanelCodeRequest } from "./panel.server.ts";
+import { handlePanelLinkRequest } from "./panel.server.ts";
 import { farmIndicators, stockAt } from "./operations.ts";
 import { ledgerForTotals } from "./finance.ts";
 import {
@@ -107,8 +108,8 @@ A Guardiã da Fazenda é gratuita. Para compartilhar registros com sua equipe ou
 • “Minhas fazendas” e “usar fazenda Boa Vista”
 • “Usar anotações anteriores” retoma o caderno individual já existente no WhatsApp; os dados antigos não são compartilhados automaticamente com uma fazenda.
 Avisos só começam com “ativar avisos da guardiã”. Ajuste com “horário dos avisos das 8 às 18”, “2 avisos por dia” e “temas dos avisos tarefas, clima”. Para parar: “parar mensagens”. Você pode pedir “relatório semanal” da fazenda selecionada; para interromper os relatórios, “parar relatórios”.
-Para compartilhar: “convidar 5517999999999 como funcionário”. O convite precisa ser aceito pelo número convidado. Nenhuma mensagem será enviada em seu nome.
-Para abrir o painel sem senha, peça “gerar código do painel” aqui no WhatsApp e digite o código temporário em /painelfazenda no site. Se houver várias fazendas, escolha qual deseja abrir.`;
+Para compartilhar: “gerar link de convite para funcionário”. O convite precisa ser aceito pelo número convidado. Nenhuma mensagem será enviada em seu nome.
+Para abrir o painel sem senha, peça “gerar link do painel” aqui no WhatsApp e abra o link pessoal em /painelfazenda no site. Se houver várias fazendas, escolha qual deseja abrir.`;
 const unavailable =
   "Não consegui acessar ou salvar o caderno da fazenda agora. Nenhuma nova operação está confirmada. Tente novamente em instantes; vou conferir o registro antes de repetir.";
 export interface GuardianInput {
@@ -139,13 +140,9 @@ export interface GuardianDependencies {
   token?: () => string;
   request?: GuardianRequest;
   transferStore?: FarmTransferStore;
-  panelCode?: () => string;
-  issuePanelCode?: (
-    phone: string,
-    property: string,
-    message: string,
-    hash: string,
-  ) => Promise<boolean>;
+  panelToken?: () => string;
+  accessLinks?: typeof import("./access-links.server.ts").accessLinks;
+  accessToken?: typeof import("./access-links.server.ts").accessToken;
   queueReview?: (
     reason: "ambiguous_property" | "ambiguous_date" | "conflict" | "persistence_failure",
   ) => Promise<void>;
@@ -283,10 +280,12 @@ export async function handleGuardianMessage(
         activeProperty: false,
         conversational: true,
       };
-    if (/codigo.*(?:painel|fazenda)|painel.*fazenda/.test(fold(input.text)))
+    if (
+      /(?:codigo|link).*(?:painel|fazenda)|painel.*fazenda|aceitar convite/.test(fold(input.text))
+    )
       return {
         reply:
-          "O painel da fazenda está aguardando ativação. Ainda não há código de acesso disponível; continue conversando com a TPEC-IA normalmente.",
+          "O painel da fazenda está aguardando ativação. Ainda não há link de acesso disponível; continue conversando com a TPEC-IA normalmente.",
         activeProperty: false,
       };
     return null;
@@ -325,10 +324,16 @@ export async function handleGuardianMessage(
       if (imported?.reply) return { reply: imported.reply, activeProperty: true, persisted: true };
     }
     if (!deps.request) {
-      const portalReply = await handlePanelCodeRequest(input, {
+      const invitation = await handleAccessInvite(input, {
         load: store.load.bind(store),
-        issue: deps.issuePanelCode,
-        code: deps.panelCode,
+        links: deps.accessLinks,
+        token: deps.accessToken,
+      });
+      if (invitation) return { reply: invitation, activeProperty: false };
+      const portalReply = await handlePanelLinkRequest(input, {
+        load: store.load.bind(store),
+        token: deps.panelToken,
+        links: deps.accessLinks,
       });
       if (portalReply) return { reply: portalReply, activeProperty: false };
     }
@@ -444,6 +449,13 @@ export async function handleGuardianMessage(
         const employee = await handleEmployeeDialogue(input, snapshot, store, now);
         if (employee === "conflict") continue;
         if (employee && "accessAction" in employee) {
+          if (employee.accessAction.kind === "invite") {
+            const reply = await handleAccessInvite(
+              { ...input, text: "gerar link de convite para funcionário" },
+              { load: store.load.bind(store), links: deps.accessLinks, token: deps.accessToken },
+            );
+            return { reply, activeProperty: true };
+          }
           deps = { ...deps, request: { kind: "action", action: employee.accessAction } };
         } else if (employee) return employee;
       }
@@ -541,12 +553,12 @@ export async function handleGuardianMessage(
           continue;
         }
         if (semantic && "panelRequest" in semantic) {
-          const reply = await handlePanelCodeRequest(
-            { ...input, text: `gerar código do painel para ${semantic.panelRequest}` },
+          const reply = await handlePanelLinkRequest(
+            { ...input, text: `gerar link do painel para ${semantic.panelRequest}` },
             {
               load: store.load.bind(store),
-              issue: deps.issuePanelCode,
-              code: deps.panelCode,
+              token: deps.panelToken,
+              links: deps.accessLinks,
             },
           );
           return { reply, activeProperty: !!snapshot.active, persisted: false };

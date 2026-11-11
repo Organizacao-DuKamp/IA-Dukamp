@@ -8,7 +8,7 @@ class PanelNavigationTest {
     private val origin = "https://www.tpecia.com.br"
 
     @Test fun keepsPanelAndItsQueryAndFragmentInsideApp() {
-        listOf("/painelfazenda", "/painelfazenda/", "/painelfazenda?tab=tasks#reminders").forEach {
+        listOf("/painelfazenda", "/painelfazenda/", "/painelfazenda?tab=tasks#reminders", "/painelfazenda#login=" + "a".repeat(64), "/painelfazenda#invite=" + "b".repeat(64)).forEach {
             assertTrue(it, PanelNavigation.allows(origin + it, origin))
         }
     }

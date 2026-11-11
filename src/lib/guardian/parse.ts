@@ -330,9 +330,19 @@ export function parseGuardianRequest(
               : "technician",
       },
     };
-  const revoke = t.match(/^revogar acesso\s+(\+?[\d ()-]{10,24})[.! ]*$/);
+  const revoke = t.match(
+    /^(?:revogar acesso|remover(?: acesso)?|retirar(?: acesso)?|tirar acesso)\s+(?:d[oe] |funcionario )?(\+?[\d ()-]{10,24})[.! ]*$/,
+  );
   if (revoke)
-    return { kind: "action", action: { kind: "revoke", phone: revoke[1].replace(/\D/g, "") } };
+    return {
+      kind: "action",
+      action: {
+        kind: "revoke",
+        phone:
+          ([10, 11].includes(revoke[1].replace(/\D/g, "").length) ? "55" : "") +
+          revoke[1].replace(/\D/g, ""),
+      },
+    };
   const taskUpdate = text.match(
     /^(concluir|cancelar|reagendar) tarefa\s+(.+?)(?:\s+para\s+(.+))?$/i,
   );

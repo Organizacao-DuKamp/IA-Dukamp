@@ -7,6 +7,7 @@
   "start_url": "/painelfazenda?app=1",
   "scope": "/painelfazenda",
   "display": "standalone",
+  "launch_handler": { "client_mode": "navigate-existing" },
   "background_color": "#f4f6f2",
   "theme_color": "#064e3b",
   "icons": [

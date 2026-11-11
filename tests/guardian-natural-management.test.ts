@@ -7,7 +7,7 @@ import { emptyFarm, type LedgerEntry, type FarmBook } from "../src/lib/guardian/
 import { stockAt, farmIndicators } from "../src/lib/guardian/operations.ts";
 import { ledgerForTotals } from "../src/lib/guardian/finance.ts";
 import { recordDialogue } from "../src/lib/guardian/record-dialogue.ts";
-import { handlePanelCodeRequest } from "../src/lib/guardian/panel.server.ts";
+import { handlePanelLinkRequest } from "../src/lib/guardian/panel.server.ts";
 
 const phone = "5517999991111",
   at = new Date("2026-10-27T20:30:13Z");
@@ -52,20 +52,23 @@ test("the panel property picker accepts the producer's numbered name reply only 
     let issued = "";
     const deps = {
       load: f.guardian.load,
-      issue: async (_p: string, id: string) => {
-        issued = id;
-        return true;
+      links: {
+        ...f.store.links!,
+        issue: async (_p: string, id: string) => {
+          issued = id;
+          return true;
+        },
       },
-      code: () => "ABCD2345EFGH6789",
+      token: () => "a".repeat(64),
     };
-    const choices = await handlePanelCodeRequest(
+    const choices = await handlePanelLinkRequest(
       { phone, messageId: "picker", text: "gerar código da fazenda" },
       deps,
     );
     assert.match(choices!, /Escolha a fazenda/);
     const snapshot = await f.guardian.load(phone);
     const target = snapshot.properties[1];
-    const answer = await handlePanelCodeRequest(
+    const answer = await handlePanelLinkRequest(
       {
         phone,
         messageId: "choice",
@@ -74,10 +77,10 @@ test("the panel property picker accepts the producer's numbered name reply only 
       },
       deps,
     );
-    assert.match(answer!, /Seu código/);
+    assert.match(answer!, /Seu link/);
     assert.equal(issued, target.id);
     assert.equal(
-      await handlePanelCodeRequest({ phone, messageId: "unrelated", text: "2. Tambori" }, deps),
+      await handlePanelLinkRequest({ phone, messageId: "unrelated", text: "2. Tambori" }, deps),
       null,
     );
   } finally {

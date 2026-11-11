@@ -1,3 +1,6 @@
+import { FarmTeam } from "./FarmTeam";
+import { readAccessFragment, invitationWhatsApp } from "@/lib/guardian/access-link";
+import type { FarmTeam as Team } from "@/lib/guardian/access-links.server";
 import { AnimalImports } from "@/components/guardian/AnimalImports";
 import { Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -16,11 +19,9 @@ import {
   Plus,
   ArrowRight,
   Check,
-  KeyRound,
   Leaf,
   LogOut,
   RefreshCw,
-  ShieldCheck,
   Menu,
   X,
 } from "lucide-react";
@@ -45,6 +46,7 @@ import type { FarmBook, GuardianAction, GuardianRole } from "@/lib/guardian/sche
 import type { GuardianDetail } from "@/lib/guardian.functions";
 
 type View = {
+  team?: Team;
   propertyId: string;
   version: number;
   role: GuardianRole;
@@ -80,7 +82,7 @@ const tabIcons = {
   calculator: Calculator,
 };
 const endpoint = "/api/public/farm-panel";
-const whatsapp = "https://wa.me/5516992256069?text=" + encodeURIComponent("Gerar código do painel");
+const whatsapp = "https://wa.me/5516992256069?text=" + encodeURIComponent("Gerar link do painel");
 async function api(method = "GET", body?: unknown) {
   const result = await fetch(endpoint, {
     method,
@@ -105,9 +107,7 @@ async function api(method = "GET", body?: unknown) {
 }
 export function FarmPanel() {
   const [view, setView] = useState<View | null>(null),
-    [code, setCode] = useState(""),
-    [phone, setPhone] = useState(""),
-    [legacyCode, setLegacyCode] = useState(false),
+    [invitation, setInvitation] = useState<string | null>(null),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
     [loading, setLoading] = useState(true),
@@ -147,8 +147,24 @@ export function FarmPanel() {
   const invalidate = useCallback(() => {
     generation.current++;
   }, []);
+  const bootstrap = useRef<Promise<unknown> | null>(null);
   useEffect(() => {
-    void load();
+    if (!bootstrap.current) {
+      const access = readAccessFragment(window.location.hash);
+      if (window.location.hash)
+        window.history.replaceState(null, "", window.location.pathname + window.location.search);
+      if (access?.kind === "invite") setInvitation(access.token);
+      bootstrap.current =
+        access?.kind === "login"
+          ? api("POST", { kind: "link_exchange", token: access.token })
+          : Promise.resolve(access?.kind === "invite" ? "invite" : undefined);
+    }
+    void bootstrap.current
+      .then((result) => (result === "invite" ? setLoading(false) : load()))
+      .catch((e) => {
+        setError(e.message);
+        setLoading(false);
+      });
     return invalidate;
   }, [load, invalidate]);
   useEffect(() => {
@@ -175,22 +191,6 @@ export function FarmPanel() {
     setProposal(null);
     moreDialog.current?.close();
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-  async function enter() {
-    if (inFlight.current) return;
-    inFlight.current = true;
-    setBusy(true);
-    setError("");
-    try {
-      await api("POST", { kind: "exchange", code, phone });
-      setCode("");
-      await load();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Confira o código.");
-    } finally {
-      inFlight.current = false;
-      setBusy(false);
-    }
   }
   async function save() {
     if (!proposal || inFlight.current) return;
@@ -324,6 +324,24 @@ export function FarmPanel() {
           <p role="status" className="py-20 text-center">
             Conferindo seu acesso…
           </p>
+        ) : invitation ? (
+          <section className="mx-auto max-w-lg rounded-3xl border bg-white p-7">
+            <h1 className="text-2xl font-semibold">Convite para a equipe da fazenda</h1>
+            <p className="my-5">
+              Confirme pelo seu WhatsApp para registrar seu número como funcionário. A TPEC-IA
+              enviará seu link pessoal de acesso, sem código.
+            </p>
+            <a
+              href={invitationWhatsApp(invitation)}
+              className="inline-flex rounded-xl bg-emerald-900 px-5 py-4 font-semibold text-white"
+            >
+              Confirmar pelo WhatsApp
+            </a>
+            <p className="mt-5 text-sm text-slate-600">
+              Você terá acesso à gestão da fazenda. O proprietário poderá remover seu acesso a
+              qualquer momento.
+            </p>
+          </section>
         ) : !view ? (
           <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-2 lg:items-center">
             <section className="order-2 py-5 lg:order-1">
@@ -341,9 +359,9 @@ export function FarmPanel() {
               </p>
               <ol className="mt-7 space-y-4 text-sm">
                 {[
-                  "Peça “gerar código do painel” à TPEC-IA no WhatsApp.",
+                  "Peça “gerar link do painel” à TPEC-IA no WhatsApp.",
                   "Se tiver mais de uma fazenda, escolha qual deseja administrar.",
-                  "Digite o código recebido para abrir seu painel.",
+                  "Toque no link recebido. Seu acesso fica salvo neste dispositivo.",
                 ].map((t, i) => (
                   <li key={t} className="flex gap-3">
                     <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 font-semibold text-emerald-900">
@@ -359,79 +377,24 @@ export function FarmPanel() {
                 rel="noreferrer"
                 className="mt-7 inline-flex items-center gap-2 font-semibold text-emerald-800"
               >
-                Pedir meu código no WhatsApp <ArrowRight size={17} />
+                Pedir meu link no WhatsApp <ArrowRight size={17} />
               </a>
             </section>
             <section className="order-1 rounded-3xl border border-emerald-950/10 bg-white p-6 shadow-sm sm:p-9 lg:order-2">
-              <div className="mb-6 inline-flex rounded-2xl bg-emerald-50 p-4 text-emerald-900">
-                <KeyRound size={28} />
-              </div>
-              <h2 className="text-2xl font-semibold">Acesse sua fazenda</h2>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                Use o código de uso único enviado pela TPEC-IA. Ele fica válido por 10 minutos.
+              <h2 className="text-2xl font-semibold">Acesse sua fazenda por link</h2>
+              <p className="my-5 text-sm leading-relaxed text-slate-600">
+                Peça seu link pessoal à TPEC-IA. Ele abre o aplicativo instalado ou o painel na web,
+                sem digitar código. Nas próximas visitas, basta abrir o painel neste dispositivo.
               </p>
-              <form
-                className="mt-7 space-y-5"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  void enter();
-                }}
+              <a
+                href={whatsapp}
+                className="inline-flex rounded-xl bg-emerald-900 px-5 py-4 font-semibold text-white"
               >
-                <label className="block text-sm font-semibold" htmlFor="farm-phone">
-                  Seu WhatsApp (com DDD)
-                </label>
-                <input
-                  id="farm-phone"
-                  type="tel"
-                  autoComplete="tel"
-                  required={!legacyCode}
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="(17) 99999-9999"
-                  className="w-full rounded-xl border p-4"
-                />
-                <label className="block text-sm font-semibold" htmlFor="farm-code">
-                  Código de acesso
-                </label>
-                <input
-                  id="farm-code"
-                  required
-                  value={code}
-                  onChange={(e) =>
-                    setCode(
-                      legacyCode ? e.target.value.toUpperCase() : e.target.value.replace(/\D/g, ""),
-                    )
-                  }
-                  maxLength={legacyCode ? 40 : 6}
-                  inputMode={legacyCode ? "text" : "numeric"}
-                  pattern={legacyCode ? undefined : "[0-9]{6}"}
-                  autoComplete="one-time-code"
-                  autoCapitalize="characters"
-                  spellCheck={false}
-                  placeholder={legacyCode ? "XXXX-XXXX-XXXX-XXXX" : "000000"}
-                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-4 font-mono text-lg tracking-wider outline-none focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/15"
-                />
-                <button
-                  disabled={busy || !code.trim()}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-900 px-5 py-4 font-semibold text-white hover:bg-emerald-800 disabled:opacity-50"
-                >
-                  {busy ? "Conferindo código…" : "Entrar no painel"}
-                  <ArrowRight size={18} />
-                </button>
-                <button
-                  type="button"
-                  className="text-sm underline"
-                  onClick={() => {
-                    setLegacyCode(!legacyCode);
-                    setCode("");
-                  }}
-                >
-                  {legacyCode ? "Usar código de 6 números" : "Recebi um código antigo com letras"}
-                </button>
-              </form>
-              <p className="mt-6 flex gap-2 border-t pt-5 text-xs leading-relaxed text-slate-500">
-                <ShieldCheck className="shrink-0" size={17} />O código dá acesso aos dados da
-                fazenda. Mantenha-o privado e saia do painel em dispositivos compartilhados.
+                Pedir link pelo WhatsApp
+              </a>
+              <p className="mt-6 border-t pt-5 text-xs text-slate-500">
+                Mantenha seu link pessoal privado. Em dispositivos compartilhados, use Sair ao
+                terminar.
               </p>
             </section>
           </div>
@@ -480,6 +443,9 @@ export function FarmPanel() {
                 )}
               </div>
             </div>
+            {view.role === "owner" && (
+              <FarmTeam key={view.propertyId} team={view.team} api={api} refresh={load} />
+            )}
             <nav
               aria-label="Áreas da fazenda"
               className="mb-6 hidden gap-1 overflow-x-auto rounded-2xl border border-slate-200 bg-white p-2 md:flex"
