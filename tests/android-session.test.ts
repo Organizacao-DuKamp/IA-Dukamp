@@ -27,7 +27,8 @@ test("a native disk acknowledgement finishes entry without exposing credentials 
   try {
     await persistAndroidSession();
     assert.equal(messages.length, 1);
-    assert.deepEqual(Object.keys(messages[0] as object).sort(), ["requestId", "type"]);
+    assert.deepEqual(Object.keys(messages[0] as object).sort(), ["loggedOut", "requestId", "type"]);
+    assert.equal((messages[0] as { loggedOut: boolean }).loggedOut, false);
     assert.equal((messages[0] as { type: string }).type, "persist_session");
     messages.length = 0;
     await persistAndroidSession(true);
@@ -35,6 +36,7 @@ test("a native disk acknowledgement finishes entry without exposing credentials 
       messages.map((message) => (message as { type: string }).type),
       ["disconnect", "persist_session"],
     );
+    assert.equal((messages[1] as { loggedOut: boolean }).loggedOut, true);
   } finally {
     if (previous) Object.defineProperty(globalThis, "window", previous);
     else Reflect.deleteProperty(globalThis, "window");

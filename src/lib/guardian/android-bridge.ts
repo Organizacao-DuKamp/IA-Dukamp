@@ -24,8 +24,8 @@ export function nativeAndroid() {
 }
 export function androidCommand(
   command:
-    | { type: "status" | "sync" | "disconnect" | "test" }
-    | { type: "persist_session"; requestId: string }
+    | { type: "status" | "sync" | "disconnect" | "test" | "forget_session" }
+    | { type: "persist_session"; requestId: string; loggedOut: boolean }
     | { type: "connect"; mode: "notification" | "alarm" }
     | {
         type: "permission";
