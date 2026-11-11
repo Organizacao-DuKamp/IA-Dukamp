@@ -375,7 +375,15 @@ test("panel HTTP sees WhatsApp lot edits and supports audited record corrections
     const updated = await (await get()).json();
     assert.equal(updated.book.ledger[0].amountCents, 55000);
     assert.equal(updated.book.ledger[0].revisions[0].before.amountCents, 50000);
-    assert.equal(JSON.stringify(updated).includes(phone), false);
+    // Only the owner's access-management list exposes confirmed team numbers.
+    const { team, ...publicFarm } = updated;
+    assert.equal(JSON.stringify(publicFarm).includes(phone), false);
+    assert.ok(
+      team.members.some(
+        (member: { phone: string; role: string }) =>
+          member.phone === phone && member.role === "owner",
+      ),
+    );
   } finally {
     await f.db.close();
   }
