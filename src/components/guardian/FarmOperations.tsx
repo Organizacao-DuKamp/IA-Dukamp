@@ -1,10 +1,20 @@
 import { useMemo } from "react";
 import { Beef, Sprout, HeartPulse } from "lucide-react";
 import { herdOverview } from "@/lib/guardian/paddock-board";
-import type { FarmBook } from "@/lib/guardian/schema";
+import type { FarmBook, GuardianAction } from "@/lib/guardian/schema";
 import { PaddockBoard } from "./PaddockBoard";
 
-export function FarmOperations({ book, compact = false }: { book: FarmBook; compact?: boolean }) {
+export function FarmOperations({
+  book,
+  compact = false,
+  busy,
+  onPropose,
+}: {
+  book: FarmBook;
+  compact?: boolean;
+  busy: boolean;
+  onPropose(action: GuardianAction): Promise<void>;
+}) {
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(
     new Date(),
   );
@@ -69,7 +79,7 @@ export function FarmOperations({ book, compact = false }: { book: FarmBook; comp
           </div>
         )}
       </div>
-      {!compact && <PaddockBoard book={book} date={today} />}
+      {!compact && <PaddockBoard book={book} date={today} busy={busy} onPropose={onPropose} />}
     </section>
   );
 }

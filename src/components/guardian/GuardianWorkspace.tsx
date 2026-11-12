@@ -237,7 +237,12 @@ export function GuardianWorkspace({
     <div className="space-y-5">
       {management}
       {(tab === "overview" || tab === "herd") && (
-        <FarmOperations book={book} compact={tab === "overview"} />
+        <FarmOperations
+          book={book}
+          compact={tab === "overview"}
+          busy={busy}
+          onPropose={onPropose}
+        />
       )}
       {tab === "overview" && (
         <>

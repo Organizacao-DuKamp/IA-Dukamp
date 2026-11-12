@@ -47,9 +47,11 @@ export function GuardianActionForm({
   onPropose,
   allowedKinds,
   initialKind,
+  initialValues,
   book,
 }: {
   initialKind?: FormKind;
+  initialValues?: Record<string, string>;
   allowedKinds?: string[];
   hasProperty: boolean;
   busy: boolean;
@@ -64,7 +66,7 @@ export function GuardianActionForm({
           : preferred;
       })(),
     ),
-    [values, setValues] = useState<Record<string, string>>({}),
+    [values, setValues] = useState<Record<string, string>>(initialValues ?? {}),
     [error, setError] = useState("");
   const field = (key: string, label: string, type = "text", required = true) => (
     <label className="block text-sm font-medium" key={key}>

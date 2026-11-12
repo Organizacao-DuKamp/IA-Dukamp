@@ -1,7 +1,8 @@
 import { memo, useMemo, useState } from "react";
 import { ArrowUpRight, Beef, ChevronDown, MapPin, Search, Sprout } from "lucide-react";
 import { paddockBoard, type PaddockView } from "@/lib/guardian/paddock-board";
-import type { FarmBook, GuardianAnimal } from "@/lib/guardian/schema";
+import type { FarmBook, GuardianAction, GuardianAnimal } from "@/lib/guardian/schema";
+import { GuardianActionForm } from "./GuardianActionForm";
 import { AnimalProfileDetails } from "./AnimalProfileDetails";
 import {
   Dialog,
@@ -52,12 +53,62 @@ function AnimalButtons({
     </>
   );
 }
-function LotCard({
+function DraftButtons({
+  count,
+  start,
   lot,
   onSelect,
 }: {
+  count: number;
+  start: number;
+  lot: string | null;
+  onSelect(slot: { number: number; lot: string | null }): void;
+}) {
+  const [limit, setLimit] = useState(20);
+  return (
+    <>
+      <p className="mt-3 text-xs text-slate-500">
+        {count} {count === 1 ? "bovino sem ficha" : "bovinos sem ficha"}.
+        São rascunhos da quantidade informada.
+      </p>
+      <ul className="farm-animal-list">
+        {Array.from({ length: Math.min(limit, count) }, (_, offset) => start + offset).map(
+          (number) => (
+            <li key={number}>
+              <button
+                type="button"
+                onClick={() => onSelect({ number, lot })}
+                aria-label={`Completar ficha provisória: Animal não identificado ${number}`}
+              >
+                <span className="farm-animal-avatar">
+                  <Beef size={18} aria-hidden="true" />
+                </span>
+                <span>
+                  <strong>{`Animal não identificado ${number}`}</strong>
+                  <small>Rascunho · completar ficha</small>
+                </span>
+                <ArrowUpRight size={17} className="text-slate-400" aria-hidden="true" />
+              </button>
+            </li>
+          ),
+        )}
+      </ul>
+      {limit < count && (
+        <button type="button" className="farm-text-button" onClick={() => setLimit((n) => n + 20)}>
+          Mostrar mais rascunhos ({limit} de {count})
+        </button>
+      )}
+    </>
+  );
+}
+function LotCard({
+  lot,
+  onSelect,
+  onDraft,
+}: {
   lot: PaddockView["lots"][number];
   onSelect(animal: GuardianAnimal): void;
+  onDraft(slot: { number: number; lot: string | null }): void;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -77,7 +128,9 @@ function LotCard({
                     ? row.registered
                       ? `${row.registered} com localização registrada · total a confirmar`
                       : "contagem não informada"
-                    : row.count.toLocaleString("pt-BR")}
+                    : row.species === "cattle" && lot.animals.length > row.count
+                      ? `${lot.animals.length} fichas identificadas · saldo calculado ${row.count} (conferir)`
+                      : row.count.toLocaleString("pt-BR")}
                 </small>
               ))
             ) : (
@@ -91,12 +144,21 @@ function LotCard({
         <div className="farm-lot-content">
           <p className="text-xs text-slate-500">
             {lot.animals.length}{" "}
-            {lot.animals.length === 1 ? "ficha identificada" : "fichas identificadas"}. As fichas
-            fazem parte da contagem e não são somadas novamente.
+            {lot.animals.length === 1 ? "ficha identificada" : "fichas identificadas"}.
           </p>
-          {lot.animals.length ? (
-            <AnimalButtons animals={lot.animals} onSelect={onSelect} />
-          ) : (
+          <p className="text-xs text-slate-500">
+            Fichas identificadas não alteram as contagens declaradas.
+          </p>
+          {lot.animals.length > 0 && <AnimalButtons animals={lot.animals} onSelect={onSelect} />}
+          {lot.unidentified > 0 && (
+            <DraftButtons
+              count={lot.unidentified}
+              start={lot.draftStart}
+              lot={lot.name}
+              onSelect={onDraft}
+            />
+          )}
+          {!lot.animals.length && !lot.unidentified && (
             <p className="py-4 text-sm text-slate-500">
               Ainda não há fichas individuais vinculadas a este lote.
             </p>
@@ -109,13 +171,18 @@ function LotCard({
 export const PaddockBoard = memo(function PaddockBoard({
   book,
   date,
+  busy,
+  onPropose,
 }: {
   book: FarmBook;
   date: string;
+  busy: boolean;
+  onPropose(action: GuardianAction): Promise<void>;
 }) {
   const paddocks = useMemo(() => paddockBoard(book, date), [book, date]);
   const [query, setQuery] = useState(""),
     [animalCode, setAnimalCode] = useState<string | null>(null),
+    [draft, setDraft] = useState<{ number: number; lot: string | null } | null>(null),
     [weights, setWeights] = useState(20);
   const animal = book.animals.find((a) => a.code === animalCode);
   const matches = useMemo(() => {
@@ -175,7 +242,9 @@ export const PaddockBoard = memo(function PaddockBoard({
                 </span>
               </div>
               {paddock.lots.length ? (
-                paddock.lots.map((lot) => <LotCard key={lot.key} lot={lot} onSelect={select} />)
+                paddock.lots.map((lot) => (
+                  <LotCard key={lot.key} lot={lot} onSelect={select} onDraft={setDraft} />
+                ))
               ) : (
                 <p className="p-4 text-sm text-slate-500">Nenhum lote vinculado a este piquete.</p>
               )}
@@ -229,6 +298,36 @@ export const PaddockBoard = memo(function PaddockBoard({
                 </button>
               )}
             </>
+          )}
+        </DialogContent>
+      </Dialog>
+      <Dialog open={draft !== null} onOpenChange={(open) => !open && setDraft(null)}>
+        <DialogContent className="max-h-[90dvh] max-w-3xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {draft ? `Animal não identificado ${draft.number}` : "Ficha provisória"}
+            </DialogTitle>
+            <DialogDescription>
+              Esta ficha provisória já está incluída na quantidade informada.
+              <span className="block">
+                Informe série/RGN ou brinco; o total do rebanho não será alterado.
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          {draft && (
+            <GuardianActionForm
+              key={`${draft.lot ?? "sem-lote"}:${draft.number}`}
+              hasProperty
+              initialKind="animal"
+              initialValues={draft.lot ? { lot: draft.lot } : {}}
+              allowedKinds={["animal"]}
+              book={book}
+              busy={busy}
+              onPropose={async (action) => {
+                await onPropose(action);
+                setDraft(null);
+              }}
+            />
           )}
         </DialogContent>
       </Dialog>

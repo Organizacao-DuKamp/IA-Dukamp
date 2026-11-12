@@ -26,11 +26,17 @@ export function paddockBoard(book: FarmBook, date: string) {
       name === null ? report.unassigned : report.locations.filter((row) => row.lot === name)
     ).filter((row) => row.count !== 0 || row.registered > 0);
     const codes = [...new Set(rows.flatMap((row) => row.codes))];
+    const animals = codes.flatMap((code) => (byCode.has(code) ? [byCode.get(code)!] : []));
+    const cattle = rows.find((row) => row.species === "cattle");
+    // The quantity belongs to the census/group; identified cards occupy slots
+    // in that quantity. Virtual drafts are never inserted into book.animals.
+    const expected = cattle ? Math.max(cattle.count ?? 0, cattle.registered) : 0;
     return {
       key: name === null ? "unassigned" : `lot:${name}`,
       name,
       rows,
-      animals: codes.flatMap((code) => (byCode.has(code) ? [byCode.get(code)!] : [])),
+      animals,
+      unidentified: Math.max(0, expected - animals.length),
     };
   };
   type Lot = ReturnType<typeof lot>;
@@ -53,7 +59,14 @@ export function paddockBoard(book: FarmBook, date: string) {
     a === null ? 1 : b === null ? -1 : a.localeCompare(b, "pt-BR", { numeric: true });
   return [...groups.values()]
     .sort((a, b) => compare(a.name, b.name))
-    .map((p) => ({ ...p, lots: p.lots.sort((a, b) => compare(a.name, b.name)) }));
+    .map((paddock) => ({
+      ...paddock,
+      lots: paddock.lots
+        .sort((a, b) => compare(a.name, b.name))
+        // Occupied slots come first. After identifying draft 1, the remaining
+        // anonymous bovine stays draft 2 instead of silently renaming to 1.
+        .map((entry) => ({ ...entry, draftStart: entry.animals.length + 1 })),
+    }));
 }
 export type PaddockView = ReturnType<typeof paddockBoard>[number];
 
