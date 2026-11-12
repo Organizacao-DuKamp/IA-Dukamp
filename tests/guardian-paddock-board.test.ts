@@ -77,6 +77,49 @@ test("unlinked lots and unidentified groups remain visible without invented padd
   assert.equal(unassigned.rows[0].count, null);
   assert.equal(unassigned.rows[0].registered, 8);
 });
+test("421 identified without lot override misleading zero display and two quantity-only cattle stay drafts", () => {
+  let book = act(emptyFarm("QA", "Tanabi", "SP"), [
+    { kind: "lot_update", lot: "6" },
+    { kind: "herd_count", count: 2, date },
+    { kind: "herd_count", count: 2, date, lot: "6" },
+  ]);
+  book.animals = Array.from({ length: 421 }, (_, i) => ({
+    code: `QA ${i + 1}`,
+    sex: "unknown" as const,
+    weights: [],
+    source,
+  }));
+  const before = JSON.stringify(book);
+  const board = paddockBoard(book, date);
+  const unassigned = board.find((p) => p.name === null)!.lots.find((l) => l.name === null)!;
+  const lot6 = board.find((p) => p.name === null)!.lots.find((l) => l.name === "6")!;
+  assert.equal(unassigned.rows[0].count, 0, "reported balance remains visible for reconciliation");
+  assert.equal(unassigned.animals.length, 421, "individual cards must remain visible");
+  assert.equal(unassigned.unidentified, 0, "individual cards must not turn into anonymous drafts");
+  assert.equal(lot6.rows[0].count, 2);
+  assert.equal(lot6.animals.length, 0);
+  assert.equal(lot6.unidentified, 2);
+  assert.equal(lot6.draftStart, 1);
+  assert.equal(JSON.stringify(book), before, "projection must not write fake animals or census");
+
+  // Identifying one anonymous slot adds an individual card, not a new stock event.
+  book = act(book, [{ kind: "animal", code: "QA 422", lot: "6", sex: "unknown" }]);
+  const refreshed = paddockBoard(book, date).find((p) => p.name === null)!;
+  const updated = refreshed.lots.find((l) => l.name === "6")!;
+  assert.equal(updated.animals.length, 1);
+  assert.equal(updated.unidentified, 1);
+  assert.equal(updated.rows[0].count, 2);
+  assert.equal(unassigned.animals.length, 421);
+});
+test("anonymous purchased groups produce draft slots without inventing cattle identities", () => {
+  const book = act(emptyFarm("QA", "Tanabi", "SP"), [
+    { kind: "herd_event", type: "purchase", count: 8, date, description: "Bovinos sem ID" },
+  ]);
+  const unassigned = paddockBoard(book, date)[0].lots[0];
+  assert.equal(unassigned.animals.length, 0);
+  assert.equal(unassigned.unidentified, 8);
+  assert.equal(book.animals.length, 0);
+});
 test("declared paddocks with no lots remain visible and ambiguous management links never select an arbitrary paddock", () => {
   const book = fixture();
   book.management = {
