@@ -1,3 +1,5 @@
+import { FarmPhoto } from "./FarmPhoto";
+import { swipePanelTab } from "@/lib/guardian/panel-navigation";
 import { FarmTeam } from "./FarmTeam";
 import { readAccessFragment, invitationWhatsApp } from "@/lib/guardian/access-link";
 import type { FarmTeam as Team } from "@/lib/guardian/access-links.server";
@@ -23,10 +25,9 @@ import {
   LogOut,
   RefreshCw,
   Menu,
-  X,
+  Users,
 } from "lucide-react";
 import { FarmMobileHome } from "@/components/guardian/FarmMobileHome";
-import { FarmStatusOverview } from "@/components/guardian/FarmStatusOverview";
 import {
   Dialog,
   DialogContent,
@@ -68,6 +69,8 @@ const tabs = [
   ["supplies", "Estoque e insumos"],
   ["events", "Avisos e histórico"],
   ["calculator", "Calculadoras"],
+  ["team", "Equipe e acessos"],
+  ["more", "Mais"],
 ] as const;
 type Tab = (typeof tabs)[number][0];
 const tabIcons = {
@@ -81,6 +84,8 @@ const tabIcons = {
   supplies: Package,
   events: Bell,
   calculator: Calculator,
+  team: Users,
+  more: Menu,
 };
 const whatsapp = "https://wa.me/5516992256069?text=" + encodeURIComponent("Gerar link do painel");
 export function FarmPanel() {
@@ -105,7 +110,7 @@ export function FarmPanel() {
   const generation = useRef(0),
     entering = useRef(false),
     inFlight = useRef(false),
-    moreDialog = useRef<HTMLDialogElement>(null);
+    gesture = useRef<{ x: number; y: number; at: number; id: number } | null>(null);
   const hasView = !!view,
     propertyId = view?.propertyId,
     propertyVersion = view?.version;
@@ -150,7 +155,7 @@ export function FarmPanel() {
       setProposal(null);
       setForm(false);
       setTab("overview");
-      moreDialog.current?.close();
+
       void operation
         .then((result) => {
           if (!current()) return;
@@ -237,7 +242,7 @@ export function FarmPanel() {
     setTab(next);
     setForm(false);
     setProposal(null);
-    moreDialog.current?.close();
+
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
   async function save() {
@@ -277,7 +282,7 @@ export function FarmPanel() {
       .then(() => {
         if (run !== generation.current) return;
         androidCommand({ type: "disconnect" });
-        moreDialog.current?.close();
+
         setView(null);
         setInvitation(null);
         setProposal(null);
@@ -326,8 +331,8 @@ export function FarmPanel() {
         }
       : proposal?.action;
   return (
-    <div className="farm-panel min-h-screen bg-[#f4f6f2] text-slate-900">
-      <header className="border-b border-emerald-950/10 bg-white">
+    <div className="farm-panel min-h-screen bg-white text-slate-900">
+      <header className={`farm-topbar ${view ? "farm-topbar-authenticated" : ""}`}>
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 md:px-5 md:py-5">
           <Link
             to={nativeApp ? "/painelfazenda" : "/"}
@@ -361,7 +366,7 @@ export function FarmPanel() {
           )}
         </div>
       </header>
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
+      <main className="farm-main mx-auto max-w-7xl px-5 py-6 sm:px-8 sm:py-8">
         {error && (
           <p
             role="alert"
@@ -461,11 +466,22 @@ export function FarmPanel() {
           </div>
         ) : (
           <>
-            <div className="mb-7 flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-widest text-emerald-800">
-                  Gestão da propriedade
-                </p>
+            <div className="farm-property-header mb-7 flex flex-wrap items-start justify-between gap-4">
+              <FarmPhoto
+                key={view.propertyId}
+                photo={view.book.photo}
+                busy={busy}
+                canEdit={["owner", "manager"].includes(view.role)}
+                onChange={(photo) =>
+                  setProposal({
+                    action: { kind: "property_update", photo },
+                    requestId: crypto.randomUUID(),
+                    version: view.version,
+                  })
+                }
+              />
+              <div className="min-w-0 flex-1">
+                <p className="farm-eyebrow text-xs font-medium">Gestão da propriedade</p>
                 <h1 className="mt-2 text-2xl font-semibold md:text-3xl">{view.name}</h1>
                 <p className="mt-2 text-sm text-slate-600">
                   {[view.book.city, view.book.uf].filter(Boolean).join(" / ") ||
@@ -481,7 +497,7 @@ export function FarmPanel() {
                   }
                 </p>
               </div>
-              <div className="flex w-full justify-end gap-2 md:w-auto">
+              <div className="farm-header-actions flex w-full gap-2 md:w-auto">
                 <button
                   disabled={busy}
                   onClick={() => {
@@ -492,7 +508,7 @@ export function FarmPanel() {
                 >
                   <RefreshCw size={16} /> Atualizar
                 </button>
-                {!["fuel", "supplies"].includes(tab) && (
+                {!["fuel", "supplies", "team", "more", "imports"].includes(tab) && (
                   <button
                     disabled={busy}
                     onClick={() => setForm((f) => !f)}
@@ -504,27 +520,26 @@ export function FarmPanel() {
                 )}
               </div>
             </div>
-            {view.role === "owner" && (
-              <FarmTeam key={view.propertyId} team={view.team} api={api} refresh={load} />
-            )}
             <nav
               aria-label="Áreas da fazenda"
-              className="mb-6 hidden gap-1 overflow-x-auto rounded-2xl border border-slate-200 bg-white p-2 md:flex"
+              className="farm-desktop-nav mb-6 hidden gap-1 overflow-x-auto border-b border-slate-100 bg-white md:flex"
             >
-              {tabs.map(([id, label]) => {
-                const Icon = tabIcons[id];
-                return (
-                  <button
-                    key={id}
-                    onClick={() => navigate(id)}
-                    aria-current={tab === id ? "page" : undefined}
-                    className={`inline-flex min-h-12 shrink-0 cursor-pointer items-center gap-2 rounded-xl border-2 px-3 py-2.5 text-sm font-semibold shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-200 motion-reduce:transform-none ${tab === id ? "border-emerald-900 bg-emerald-900 text-white" : "border-slate-200 bg-white text-slate-700 hover:border-emerald-600 hover:bg-emerald-50"}`}
-                  >
-                    <Icon size={17} aria-hidden="true" />
-                    {label}
-                  </button>
-                );
-              })}
+              {tabs
+                .filter(([id]) => id !== "more" && (id !== "team" || view.role === "owner"))
+                .map(([id, label]) => {
+                  const Icon = tabIcons[id];
+                  return (
+                    <button
+                      key={id}
+                      onClick={() => navigate(id)}
+                      aria-current={tab === id ? "page" : undefined}
+                      className={`inline-flex min-h-12 shrink-0 cursor-pointer items-center gap-2 rounded-xl border-2 px-3 py-2.5 text-sm font-semibold shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-200 motion-reduce:transform-none ${tab === id ? "border-emerald-900 bg-emerald-900 text-white" : "border-slate-200 bg-white text-slate-700 hover:border-emerald-600 hover:bg-emerald-50"}`}
+                    >
+                      <Icon size={17} aria-hidden="true" />
+                      {label}
+                    </button>
+                  );
+                })}
             </nav>
             {tab !== "overview" && (
               <div className="mb-4 flex items-center gap-3 md:hidden">
@@ -539,48 +554,100 @@ export function FarmPanel() {
                 <h2 className="text-xl font-semibold">{tabs.find(([id]) => id === tab)?.[1]}</h2>
               </div>
             )}
-            <div className="space-y-6">
-              {tab === "overview" && (
-                <div className="hidden md:block">
-                  <FarmStatusOverview book={view.book} busy={busy} navigate={navigate} />
-                </div>
-              )}
-              {tab === "overview" && (
-                <FarmMobileHome
-                  book={view.book}
-                  busy={busy}
-                  navigate={navigate}
-                  complete={(task) => {
-                    setProposal({
-                      action: { kind: "task_update", task, status: "done" },
-                      requestId: crypto.randomUUID(),
-                      version: view.version,
-                    });
-                    setError("");
-                    setNotice("");
-                  }}
-                />
-              )}
-              {tab === "tasks" && <AndroidReminders />}
-              <div className={tab === "overview" ? "hidden md:block" : undefined}>
-                {tab === "imports" ? (
-                  <AnimalImports farmName={view.name} onImported={() => {}} />
-                ) : (
-                  <GuardianWorkspace
-                    detail={{
-                      id: view.propertyId,
-                      version: view.version,
-                      book: view.book,
-                      events: view.events,
-                      audit: view.audit,
-                      members: [],
-                    }}
-                    tab={tab}
-                    canManageFuel={["owner", "manager"].includes(view.role)}
+            <div
+              className="farm-pages"
+              style={{ touchAction: "pan-y pinch-zoom" }}
+              onPointerDown={(event) => {
+                gesture.current = null;
+                if (event.button !== 0 || !event.isPrimary || form || proposal || busy) return;
+                const target = event.target as HTMLElement;
+                if (
+                  target.closest(
+                    "button,a,input,select,textarea,dialog,[role=dialog],summary,[data-no-swipe]",
+                  )
+                )
+                  return;
+                // Horizontal tables and carousels retain their own drag gestures.
+                let node: HTMLElement | null = target;
+                while (node && node !== event.currentTarget) {
+                  if (
+                    node.scrollWidth > node.clientWidth + 4 &&
+                    /auto|scroll/.test(getComputedStyle(node).overflowX)
+                  )
+                    return;
+                  node = node.parentElement;
+                }
+                gesture.current = {
+                  x: event.clientX,
+                  y: event.clientY,
+                  at: Date.now(),
+                  id: event.pointerId,
+                };
+                if (event.pointerType === "mouse")
+                  event.currentTarget.setPointerCapture(event.pointerId);
+              }}
+              onPointerCancel={() => {
+                gesture.current = null;
+              }}
+              onPointerUp={(event) => {
+                const start = gesture.current;
+                gesture.current = null;
+                if (!start || start.id !== event.pointerId) return;
+                const next = swipePanelTab(
+                  tab,
+                  event.clientX - start.x,
+                  event.clientY - start.y,
+                  Date.now() - start.at,
+                );
+                if (next) navigate(next);
+              }}
+            >
+              <div key={tab} className="farm-page space-y-6">
+                {tab === "team" && view.role === "owner" && (
+                  <FarmTeam key={view.propertyId} team={view.team} api={api} refresh={load} />
+                )}
+                {tab === "more" && (
+                  <section aria-label="Mais opções" className="farm-more-page">
+                    <h2 className="mb-4 text-xl font-semibold">Sua fazenda</h2>
+                    {tabs
+                      .filter(
+                        ([id]) =>
+                          !["overview", "herd", "tasks", "finance", "more"].includes(id) &&
+                          (id !== "team" || view.role === "owner"),
+                      )
+                      .map(([id, label]) => {
+                        const Icon = tabIcons[id];
+                        return (
+                          <button
+                            key={id}
+                            disabled={busy}
+                            onClick={() => navigate(id)}
+                            className="farm-more-row"
+                          >
+                            <Icon size={21} aria-hidden="true" />
+                            <span>{label}</span>
+                            <ArrowRight size={17} aria-hidden="true" />
+                          </button>
+                        );
+                      })}
+                    <button
+                      disabled={busy}
+                      onClick={() => exit()}
+                      className="farm-more-row text-rose-700"
+                    >
+                      <LogOut size={21} aria-hidden="true" />
+                      <span>Sair desta fazenda</span>
+                    </button>
+                  </section>
+                )}
+                {tab === "overview" && (
+                  <FarmMobileHome
+                    book={view.book}
                     busy={busy}
-                    onPropose={async (action) => {
+                    navigate={navigate}
+                    complete={(task) => {
                       setProposal({
-                        action,
+                        action: { kind: "task_update", task, status: "done" },
                         requestId: crypto.randomUUID(),
                         version: view.version,
                       });
@@ -589,10 +656,40 @@ export function FarmPanel() {
                     }}
                   />
                 )}
+                {tab === "tasks" && <AndroidReminders />}
+                <div>
+                  {tab === "overview" || tab === "more" || tab === "team" ? null : tab ===
+                    "imports" ? (
+                    <AnimalImports farmName={view.name} onImported={() => void load()} />
+                  ) : (
+                    <GuardianWorkspace
+                      detail={{
+                        id: view.propertyId,
+                        version: view.version,
+                        book: view.book,
+                        events: view.events,
+                        audit: view.audit,
+                        members: [],
+                      }}
+                      tab={tab}
+                      canManageFuel={["owner", "manager"].includes(view.role)}
+                      busy={busy}
+                      onPropose={async (action) => {
+                        setProposal({
+                          action,
+                          requestId: crypto.randomUUID(),
+                          version: view.version,
+                        });
+                        setError("");
+                        setNotice("");
+                      }}
+                    />
+                  )}
+                </div>
               </div>
             </div>
             <Dialog
-              open={form && !["fuel", "supplies"].includes(tab)}
+              open={form && !["fuel", "supplies", "team", "more", "imports"].includes(tab)}
               onOpenChange={(open) => {
                 if (!open && !busy) setForm(false);
               }}
@@ -700,51 +797,6 @@ export function FarmPanel() {
                 Sair de todos os meus acessos desta fazenda
               </button>
             </details>
-            <dialog
-              ref={moreDialog}
-              aria-labelledby="farm-more-title"
-              className="farm-more-dialog"
-              onClick={(event) => {
-                if (event.target === event.currentTarget) moreDialog.current?.close();
-              }}
-            >
-              <div className="mb-4 flex items-center justify-between">
-                <h2 id="farm-more-title" className="text-xl font-semibold">
-                  Sua fazenda
-                </h2>
-                <button
-                  onClick={() => moreDialog.current?.close()}
-                  aria-label="Fechar menu"
-                  className="flex h-11 w-11 items-center justify-center rounded-xl border"
-                >
-                  <X size={22} aria-hidden="true" />
-                </button>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                {tabs.map(([id, label]) => {
-                  const Icon = tabIcons[id];
-                  return (
-                    <button
-                      key={id}
-                      disabled={busy}
-                      onClick={() => navigate(id)}
-                      className={`flex items-center gap-3 rounded-xl border p-3 text-left text-sm font-medium ${tab === id ? "border-emerald-800 bg-emerald-50 text-emerald-950" : "border-slate-200"}`}
-                    >
-                      <Icon size={22} className="shrink-0" aria-hidden="true" />
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
-              <button
-                disabled={busy}
-                onClick={() => exit()}
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-3 text-rose-700"
-              >
-                <LogOut size={19} aria-hidden="true" />
-                Sair desta fazenda
-              </button>
-            </dialog>
             <nav
               aria-label="Navegação principal"
               className="farm-bottom-nav fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-emerald-950/10 bg-white shadow-[0_-4px_20px_rgba(0,0,0,0.04)] md:hidden"
@@ -761,9 +813,14 @@ export function FarmPanel() {
                 <button
                   key={id}
                   disabled={busy}
-                  aria-current={tab === id ? "page" : undefined}
-                  onClick={() => (id === "more" ? moreDialog.current?.showModal() : navigate(id))}
-                  className={`flex min-h-16 flex-col items-center justify-center gap-1 px-1 py-2 text-[11px] font-semibold ${tab === id ? "text-emerald-800" : "text-slate-500"}`}
+                  aria-current={
+                    tab === id ||
+                    (id === "more" && !["overview", "herd", "tasks", "finance"].includes(tab))
+                      ? "page"
+                      : undefined
+                  }
+                  onClick={() => navigate(id)}
+                  className={`flex min-h-16 flex-col items-center justify-center gap-1 px-1 py-2 text-[11px] font-semibold ${tab === id || (id === "more" && !["overview", "herd", "tasks", "finance"].includes(tab)) ? "text-emerald-800" : "text-slate-500"}`}
                 >
                   <Icon size={23} aria-hidden="true" />
                   <span>{label}</span>

@@ -1,6 +1,6 @@
 import { namedProperty } from "./property-scope.ts";
 import { guardianStore, type GuardianStore } from "./store.server.ts";
-import { isAnimalImportPdf } from "./import-extract.server.ts";
+import { isAnimalImportPdf, isAnimalImportSpreadsheet } from "./import-extract.server.ts";
 import {
   currentImport,
   authorizeImport,
@@ -93,8 +93,11 @@ const answer = (reply: string): WhatsAppChatResult => ({
   shouldSend: true,
   duplicate: false,
 });
-const quiet = (): WhatsAppChatResult => ({ shouldSend: false, duplicate: false });
-export async function handleAnimalImportInbound(
+const received = () =>
+  answer(
+    "Arquivo recebido para a importação de animais. Vou ler as páginas ou abas e preparar todos os animais encontrados para você conferir. Nenhum cadastro é confirmado antes da sua aprovação. Acompanhe também em Importação de animais no painel.",
+  );
+async function processAnimalImportInbound(
   input: WhatsAppChatInput,
   dependencies: ImportInboundDependencies = {},
 ): Promise<WhatsAppChatResult | null> {
@@ -111,6 +114,9 @@ export async function handleAnimalImportInbound(
   const intent =
     /(?:pega|extrai|transcrev).*(?:dados|lista).*(?:foto|imagem)/.test(t) ||
     animalImportIntent(text) ||
+    (!!input.media &&
+      /\b(?:cadastr\w*|registr\w*|import\w*|atualiz\w*)\b/.test(t) &&
+      /\b(?:animal|animais|bovinos?|bezerros?|matrizes|novilhas?|touros?|fichas?)\b/.test(t)) ||
     /\b(?:vou (?:te )?(?:mandar|enviar).*(?:fotos|imagens|pdf|lista|dados dos? (?:gados?|animais))|(?:esses|sao os) animais)\b/.test(
       t,
     );
@@ -145,6 +151,20 @@ export async function handleAnimalImportInbound(
   ) {
     const file = await fileContent();
     candidate = await (dependencies.classifyPdf ?? isAnimalImportPdf)(new Uint8Array(file.bytes));
+  }
+  if (
+    !candidate &&
+    input.media?.type === "document" &&
+    (/\.(?:xlsx?|csv|tsv)$/i.test(input.media.filename ?? "") ||
+      [
+        "application/vnd.ms-excel",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "text/csv",
+        "text/tab-separated-values",
+      ].includes(input.media.mimeType ?? ""))
+  ) {
+    const file = await fileContent();
+    candidate = await isAnimalImportSpreadsheet(new Uint8Array(file.bytes));
   }
   if (input.media && !candidate) return null;
   // A finished batch is immutable. Only a new upload/import request starts
@@ -189,7 +209,7 @@ export async function handleAnimalImportInbound(
           instruction: "",
           sentAt: input.sentAt,
         });
-        return quiet();
+        return received();
       }
       return answer(
         "A lista em preparação pertence a outra fazenda. Selecione aquela fazenda para retomar, sem misturar os dados.",
@@ -219,7 +239,7 @@ export async function handleAnimalImportInbound(
       instruction: intent ? text : "",
       sentAt: input.sentAt,
     });
-    return quiet();
+    return received();
   }
   if (!batch || batch.status === "completed" || batch.status === "cancelled") {
     if (!intent) return null;
@@ -382,4 +402,18 @@ export async function handleAnimalImportInbound(
         .join("\n") +
       "\nPode pedir a próxima página, filtrar, corrigir ou conferir a lista completa no painel antes de autorizar.",
   );
+}
+
+/** Import failures must always produce a useful response, never swallow an attachment. */
+export async function handleAnimalImportInbound(
+  input: WhatsAppChatInput,
+  dependencies: ImportInboundDependencies = {},
+): Promise<WhatsAppChatResult | null> {
+  try {
+    return await processAnimalImportInbound(input, dependencies);
+  } catch {
+    return answer(
+      "Não consegui concluir a preparação da importação agora. Nenhum novo cadastro está confirmado. Confira a lista em Importação de animais no painel e tente enviar novamente o PDF ou Excel; os registros já salvos são preservados.",
+    );
+  }
 }

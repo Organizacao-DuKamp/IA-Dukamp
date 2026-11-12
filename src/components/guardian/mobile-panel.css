@@ -40,3 +40,303 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 }
+
+/* A quiet, shared interface for browser and installed Android WebView. */
+.farm-topbar {
+  background: white;
+  border-bottom: 1px solid #f1f5f3;
+}
+.farm-topbar-authenticated {
+  background: #064e3b;
+  color: white;
+  border: 0;
+}
+.farm-topbar-authenticated small {
+  color: #d1fae5;
+}
+.farm-topbar-authenticated a > span:first-child {
+  border-radius: 50%;
+  background: #ffffff18;
+}
+.farm-topbar-authenticated button {
+  background: #ffffff15;
+  color: white;
+  border-color: #ffffff25;
+}
+.farm-property-header {
+  position: relative;
+  margin: -1.5rem -1.25rem 1.75rem;
+  padding: 1.25rem 1.25rem 1.75rem;
+  background: #064e3b;
+  color: white;
+  align-items: center;
+}
+.farm-property-header p {
+  color: #d1fae5;
+}
+.farm-property-header h1 {
+  margin-top: 0.25rem;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+}
+.farm-property-header .farm-eyebrow {
+  color: #a7f3d0;
+  font-size: 0.7rem;
+}
+.farm-header-actions button {
+  border: 0;
+  box-shadow: none;
+  border-radius: 2rem;
+  background: #ffffff18;
+  color: white;
+}
+.farm-header-actions button:last-child {
+  background: white;
+  color: #064e3b;
+}
+.farm-photo {
+  flex-shrink: 0;
+  text-align: center;
+}
+.farm-avatar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #ffffff18;
+  color: white;
+}
+.farm-avatar:disabled {
+  opacity: 1 !important;
+  cursor: default !important;
+}
+.farm-avatar img {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.farm-avatar-camera {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: white;
+  color: #064e3b;
+  border: 2px solid #064e3b;
+}
+.farm-pages {
+  min-height: 55dvh;
+}
+.farm-page {
+  animation: farm-enter 0.18s ease-out;
+}
+@keyframes farm-enter {
+  from {
+    opacity: 0.65;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.farm-desktop-nav button {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  transform: none;
+  font-weight: 500;
+  background: white;
+  color: #64748b;
+}
+.farm-desktop-nav button[aria-current] {
+  background: white;
+  color: #065f46;
+  border-bottom: 2px solid #065f46;
+}
+.farm-quick-actions {
+  display: flex;
+  gap: 1.25rem;
+  overflow-x: auto;
+  padding: 0.25rem 0 1rem;
+  scrollbar-width: thin;
+}
+.farm-quick-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 0 0 76px;
+  text-align: center;
+}
+.farm-quick-icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #f3f5f4;
+  color: #1f4538;
+}
+.farm-quick-action:hover .farm-quick-icon {
+  background: #d1fae5;
+}
+.farm-account-summary {
+  border-bottom: 1px solid #f1f5f3;
+}
+.farm-management-groups {
+  border-top: 1px solid #f1f5f3;
+}
+.farm-management-group {
+  border-bottom: 1px solid #f1f5f3;
+}
+.farm-management-group > summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 62px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  list-style: none;
+}
+.farm-management-group > summary::-webkit-details-marker {
+  display: none;
+}
+.farm-management-group[open] > summary svg {
+  transform: rotate(180deg);
+}
+.farm-management-list {
+  display: grid;
+  gap: 0;
+  padding-bottom: 0.5rem;
+}
+.farm-management-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 66px;
+  padding: 0.65rem 0;
+  text-align: left;
+}
+.farm-management-row + .farm-management-row {
+  border-top: 1px solid #f8faf9;
+}
+.farm-management-row > span:first-child {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #f3f5f4;
+  color: #16634d;
+}
+.farm-more-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  min-height: 66px;
+  text-align: left;
+  border-bottom: 1px solid #f1f5f3;
+  font-size: 0.9rem;
+}
+.farm-more-row span {
+  flex: 1;
+}
+.farm-panel section[aria-label="Funções da fazenda"] {
+  border: 0;
+  padding: 0;
+  box-shadow: none;
+}
+.farm-panel section[aria-label="Funções da fazenda"] > h2 {
+  font-size: 1rem;
+}
+.farm-bottom-nav {
+  box-shadow: none;
+}
+.farm-bottom-nav button[aria-current] {
+  color: #065f46;
+}
+.farm-bottom-nav button[aria-current] svg {
+  background: #e8f4ee;
+  border-radius: 1rem;
+  box-sizing: content-box;
+  padding: 4px 14px;
+  margin: -4px -14px;
+}
+@media (min-width: 640px) {
+  .farm-property-header {
+    margin-left: -2rem;
+    margin-right: -2rem;
+    margin-top: -2rem;
+    padding: 2rem;
+  }
+  .farm-quick-actions {
+    gap: 2rem;
+  }
+}
+@media (min-width: 768px) {
+  .farm-home {
+    max-width: 58rem;
+    margin: auto;
+  }
+  .farm-management-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 1.5rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .farm-page {
+    animation: none;
+  }
+}
+/* Keep the mobile layout viewport stable while horizontal shortcuts scroll. */
+.farm-panel {
+  width: 100%;
+  overflow-x: clip;
+}
+.farm-pages,
+.farm-page,
+.farm-home {
+  min-width: 0;
+}
+.farm-quick-actions {
+  max-width: 100%;
+}
+.farm-panel section[aria-label="Gestão do rebanho"] {
+  border: 0;
+  padding: 0;
+}
+.farm-herd-metrics {
+  border-bottom: 1px solid #f1f5f3;
+  padding-bottom: 1rem;
+}
+.farm-herd-metrics article {
+  padding: 0.75rem 0;
+  border: 0;
+  border-radius: 0;
+  background: white;
+}
+.farm-herd-metrics article > div > p {
+  font-size: 0.7rem;
+}
+.farm-herd-metrics .metric-icon {
+  display: none;
+}
+.farm-herd-metrics article > p {
+  font-size: 1.6rem;
+}
+.farm-herd-metrics article > p:last-child:not(:nth-child(2)) {
+  font-size: 0.65rem;
+}
+.farm-period-filter > div {
+  margin-top: 1rem;
+}
+.farm-quick-action {
+  position: relative;
+}

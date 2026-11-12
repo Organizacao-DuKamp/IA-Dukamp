@@ -1,3 +1,11 @@
+import { AnimalImports } from "./AnimalImports";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { AnimalPedigreeTree } from "./AnimalPedigreeTree";
 import { useEffect, useId, useRef, useState } from "react";
 import { Search, ExternalLink, Check, LoaderCircle } from "lucide-react";
@@ -6,6 +14,7 @@ import {
   animalFieldLabels,
   animalFieldValue,
   animalFormValues,
+  animalIdentity,
   sameAnimalRegistry,
   pedigreeLabel,
   type AnimalProfile,
@@ -34,6 +43,7 @@ export function AnimalProfileFields({
   const id = useId(),
     request = useRef<AbortController | null>(null),
     generation = useRef(0);
+  const [importing, setImporting] = useState(false);
   const [mode, setMode] = useState<"rgn" | "rgd">("rgn"),
     [loading, setLoading] = useState(false),
     [lookup, setLookup] = useState<RegistryLookup | null>(null),
@@ -108,7 +118,7 @@ export function AnimalProfileFields({
       {label}
       <input
         aria-label={label}
-        required={key === "code"}
+        required={false}
         type={type}
         value={values[key] ?? ""}
         onChange={(event) => change(key, event.target.value)}
@@ -199,42 +209,6 @@ export function AnimalProfileFields({
       if (expected === generation.current) setLoading(false);
     }
   }
-  async function importPdf(file: File) {
-    request.current?.abort();
-    const controller = new AbortController();
-    request.current = controller;
-    const expected = ++generation.current;
-    setError("");
-    setNotice("");
-    setLookup(null);
-    setReviewedTarget(null);
-    if (file.size > 5 * 1024 * 1024) {
-      setError("O PDF deve ter até 5 MB.");
-      return;
-    }
-    setLoading(true);
-    try {
-      const response = await fetch("/api/public/farm-panel/animal-registry", {
-        method: "POST",
-        credentials: "same-origin",
-        cache: "no-store",
-        headers: { ...headers(), "content-type": "application/pdf" },
-        body: file,
-        signal: controller.signal,
-      });
-      const data = await response.json();
-      if (!response.ok) throw Error(data.error ?? "Não foi possível importar o PDF.");
-      const profile = AnimalProfileSchema.partial().parse(data.profile);
-      if (controller.signal.aborted || expected !== generation.current) return;
-      setLookup({ ...data, profile });
-      setSelected(Object.keys(animalFormValues(profile)).filter((key) => !values[key]?.trim()));
-    } catch (error) {
-      if (!controller.signal.aborted && expected === generation.current)
-        setError((error as Error).message);
-    } finally {
-      if (expected === generation.current) setLoading(false);
-    }
-  }
   const matchingAnimals = lookup
     ? animals.filter(
         (animal) =>
@@ -285,8 +259,9 @@ export function AnimalProfileFields({
     );
     setLookup(null);
   }
+  const identity = animalIdentity(values);
   const existing = animals.find(
-    (animal) => animal.code.trim().toLowerCase() === values.code?.trim().toLowerCase(),
+    (animal) => animal.code.trim().toLowerCase() === identity?.toLowerCase(),
   );
   let pedigree: PedigreeNode[] = [];
   try {
@@ -372,25 +347,31 @@ export function AnimalProfileFields({
             Abrir consulta pública <ExternalLink size={15} aria-hidden="true" />
           </a>
         </div>
-        <label className="mt-4 block text-sm font-semibold text-emerald-950">
-          Importar ficha ABCZ
-          <input
-            type="file"
-            accept="application/pdf,.pdf"
-            disabled={disabled || loading}
-            aria-label="Importar ficha ABCZ"
-            className="mt-2 block w-full rounded-xl border bg-white p-3"
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              event.target.value = "";
-              if (file) void importPdf(file);
-            }}
-          />
-          <span className="mt-2 block text-xs font-normal">
-            PDF digital de nascimento, até 5 MB. A importação funciona sem a conexão oficial. Revise
-            antes de salvar; nenhum ancestral entra no rebanho.
-          </span>
-        </label>
+        <button
+          type="button"
+          disabled={disabled || loading}
+          onClick={() => setImporting(true)}
+          className="mt-4 rounded-xl border border-emerald-300 bg-white px-4 py-3 text-sm font-semibold text-emerald-950"
+        >
+          Importar animais de PDF ou Excel
+        </button>
+        <p className="mt-2 text-xs text-slate-600">
+          Certificados, relatórios e listas da ABCZ ou de terceiros. Um arquivo pode conter vários
+          animais.
+        </p>
+        <Dialog open={importing} onOpenChange={setImporting}>
+          <DialogContent className="max-h-[92dvh] w-[calc(100vw-1rem)] max-w-5xl overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Importar animais</DialogTitle>
+              <DialogDescription>
+                Envie os documentos, confira os animais encontrados e autorize o cadastro.
+              </DialogDescription>
+            </DialogHeader>
+            {importing && (
+              <AnimalImports farmName={book?.name ?? "Sua fazenda"} onImported={() => {}} />
+            )}
+          </DialogContent>
+        </Dialog>
         {available === false && (
           <p role="status" className="mt-3 rounded-xl bg-white p-3 text-sm text-amber-950">
             A consulta automática está aguardando a habilitação da ABCZ. O cadastro manual e as
@@ -523,7 +504,10 @@ export function AnimalProfileFields({
       <fieldset disabled={disabled} className="space-y-4">
         <legend className="mb-3 font-semibold">Identificação</legend>
         <div className="grid gap-4 sm:grid-cols-2">
-          {input("code", "Identificação do animal *", "text", "Código usado na fazenda")}
+          <p className="text-sm text-slate-500 sm:col-span-2">
+            A identificação é formada pela série + RGN. Para animais sem registro, informe o brinco.
+            Não é preciso repetir um código.
+          </p>
           {input("name", "Nome do animal")}
           {input("birthDate", "Data de nascimento", "date")}
           {input("earTag", "Brinco")}

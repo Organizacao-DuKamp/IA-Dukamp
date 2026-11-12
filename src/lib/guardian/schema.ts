@@ -1,3 +1,4 @@
+import { FarmPhotoSchema } from "./operations.ts";
 import { EmployeeSchema, EmployeeActionSchema } from "./employees.ts";
 import {
   ManagementActionSchemas,
@@ -284,6 +285,7 @@ export interface RecordRevision {
 }
 export interface FarmBook {
   schema: 1;
+  photo?: string | null;
   employees?: Array<import("zod").infer<typeof EmployeeSchema>>;
   name: string | null;
   city: string | null;
@@ -564,6 +566,7 @@ const RecordRevisionSchema = z
 export const FarmBookSchema = z
   .object({
     schema: z.literal(1),
+    photo: FarmPhotoSchema.nullable().optional(),
     employees: z.array(EmployeeSchema).max(1000).optional(),
     name: label.nullable(),
     city: label.nullable(),

@@ -8,8 +8,8 @@ android {
         applicationId = "br.com.tpecia.fazenda"
         minSdk = 26
         targetSdk = 36
-        versionCode = 5
-        versionName = "1.1.2"
+        versionCode = 6
+        versionName = "1.2.0"
         buildConfigField("String", "PANEL_ORIGIN", "\"https://www.tpecia.com.br\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

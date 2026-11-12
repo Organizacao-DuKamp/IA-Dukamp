@@ -3,6 +3,12 @@ import type { FarmBook, Provenance } from "./schema.ts";
 import { ledgerForTotals } from "./finance.ts";
 import { applyGroupedLotTransfer } from "./herd-locations.ts";
 
+// Small private thumbnail travels with the existing authorized farm book.
+// JPEG only: no SVG, remote URLs, scripts or new public storage surface.
+export const FarmPhotoSchema = z
+  .string()
+  .max(12000)
+  .regex(/^data:image\/jpeg;base64,\/9j\/[A-Za-z0-9+/]+={0,2}$/);
 const label = z.string().trim().min(1).max(160);
 const count = z.number().int().min(0).max(1e7);
 const day = z.iso.date();
@@ -155,6 +161,7 @@ export const OperationsActionSchemas = [
   z
     .object({
       kind: z.literal("property_update"),
+      photo: FarmPhotoSchema.nullable().optional(),
       name: label.optional(),
       aliases: z.array(label).max(20).optional(),
       responsibleName: label.optional(),
@@ -197,6 +204,7 @@ export function describeOperations(action: OperationsAction): string {
       return `Registrar consumo ${action.basis === "measured" ? "informado como medido" : "estimado"} de ${action.kg} kg de ${action.feed} em ${action.date}${lot(action.lot)}. Não é uma recomendação de alimentação.`;
     case "property_update": {
       const labels: Record<string, string> = {
+        photo: "Foto da fazenda",
         name: "Nome",
         city: "Município",
         uf: "UF",
@@ -215,7 +223,7 @@ export function describeOperations(action: OperationsAction): string {
           .filter(([key]) => key !== "kind")
           .map(
             ([key, value]) =>
-              `${labels[key]}: ${Array.isArray(value) ? value.join(", ") : key === "production" ? ({ beef: "Corte", milk: "Leite", mixed: "Misto" } as Record<string, string>)[String(value)] : value}`,
+              `${labels[key]}: ${key === "photo" ? (value ? "Atualizar foto" : "Remover foto") : Array.isArray(value) ? value.join(", ") : key === "production" ? ({ beef: "Corte", milk: "Leite", mixed: "Misto" } as Record<string, string>)[String(value)] : value}`,
           )
           .join("\n")
       );
@@ -497,7 +505,8 @@ export function applyOperations(
     return;
   }
   if (action.kind === "property_update") {
-    const { kind: _, name, city, uf, ...attributes } = action;
+    const { kind: _, name, city, uf, photo, ...attributes } = action;
+    if (photo !== undefined) book.photo = photo;
     if (name !== undefined) book.name = name;
     if (city !== undefined) book.city = city;
     if (uf !== undefined) book.uf = uf;

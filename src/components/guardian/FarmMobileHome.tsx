@@ -54,37 +54,56 @@ export function FarmMobileHome({
   const money = (cents: number) =>
     (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   return (
-    <div className="space-y-6 md:hidden">
-      <div className="grid grid-cols-2 gap-3">
+    <div className="farm-home space-y-7">
+      <div className="farm-account-summary grid grid-cols-2 gap-5">
         <button
           disabled={busy}
           onClick={() => navigate("herd")}
-          className="rounded-2xl border border-emerald-950/10 bg-white p-4 text-left"
+          className="bg-white py-4 text-left"
         >
           <Beef size={23} className="text-emerald-800" aria-hidden="true" />
           <span className="mt-3 block text-2xl font-semibold">
             {cattle === null ? "—" : cattle.toLocaleString("pt-BR")}
           </span>
-          <span className="mt-1 block text-sm text-slate-600">Bovinos calculados</span>
+          <span className="mt-1 block text-xs text-slate-500">Bovinos nos registros</span>
         </button>
         <button
           disabled={busy}
           onClick={() => navigate("finance")}
-          className="rounded-2xl border border-emerald-950/10 bg-white p-4 text-left"
+          className="bg-white py-4 text-left"
         >
           <Wallet size={23} className="text-sky-800" aria-hidden="true" />
           <span className="mt-3 block break-words text-xl font-semibold">
             {finances.count ? money(balance) : "Sem lançamentos"}
           </span>
-          <span className="mt-1 block text-sm text-slate-600">
-            Saldo dos lançamentos, não lucro líquido
-          </span>
+          <span className="mt-1 block text-sm text-slate-600">Saldo registrado no mês</span>
         </button>
       </div>
+      <section aria-labelledby="farm-mobile-areas">
+        <h2 id="farm-mobile-areas" className="mb-3 text-lg font-semibold">
+          O que você quer cuidar?
+        </h2>
+        <div className="farm-quick-actions">
+          {areas.map(([id, label, description, Icon, color]) => (
+            <button
+              key={id}
+              disabled={busy}
+              onClick={() => navigate(id)}
+              className="farm-quick-action"
+            >
+              <span className={`farm-quick-icon ${color}`}>
+                <Icon size={24} aria-hidden="true" />
+              </span>
+              <strong className="mt-3 text-xs font-medium">{label}</strong>
+              <span className="sr-only">{description}</span>
+            </button>
+          ))}
+        </div>
+      </section>
       {(cattle === null || finances.estimates > 0 || overdue.length > 0) && (
         <section
           aria-label="Informações que precisam de atenção"
-          className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950"
+          className="rounded-xl bg-slate-50 p-4 text-xs leading-relaxed text-slate-600"
         >
           <h2 className="font-semibold">Atenção aos registros</h2>
           <ul className="mt-2 list-disc space-y-1 pl-5">
@@ -105,7 +124,7 @@ export function FarmMobileHome({
       )}
       <section
         aria-labelledby="farm-next-tasks"
-        className="rounded-2xl border border-emerald-950/10 bg-white p-4"
+        className="border-t border-slate-100 bg-white py-6"
       >
         <div className="flex items-center justify-between gap-2">
           <h2 id="farm-next-tasks" className="text-lg font-semibold">
@@ -163,32 +182,6 @@ export function FarmMobileHome({
           Configurar notificações e alarmes
           <ChevronRight size={18} aria-hidden="true" />
         </button>
-      </section>
-      <section aria-labelledby="farm-mobile-areas">
-        <h2 id="farm-mobile-areas" className="mb-3 text-lg font-semibold">
-          O que você quer cuidar?
-        </h2>
-        <div className="grid grid-cols-2 gap-3">
-          {areas.map(([id, label, description, Icon, color]) => (
-            <button
-              key={id}
-              disabled={busy}
-              onClick={() => navigate(id)}
-              className="group relative flex cursor-pointer flex-col items-start rounded-2xl border-2 border-emerald-950/15 bg-white p-4 text-left shadow-sm transition hover:border-emerald-600 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-200 active:bg-emerald-50"
-            >
-              <span className={`rounded-xl p-3 ${color}`}>
-                <Icon size={24} aria-hidden="true" />
-              </span>
-              <ChevronRight
-                size={22}
-                aria-hidden="true"
-                className="absolute right-3 top-4 text-emerald-800"
-              />
-              <strong className="mt-3 text-base">{label}</strong>
-              <span className="mt-1 text-xs text-slate-500">{description}</span>
-            </button>
-          ))}
-        </div>
       </section>
     </div>
   );
