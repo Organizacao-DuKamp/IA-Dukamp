@@ -108,6 +108,7 @@ test("421 identified without lot override misleading zero display and two quanti
   const updated = refreshed.lots.find((l) => l.name === "6")!;
   assert.equal(updated.animals.length, 1);
   assert.equal(updated.unidentified, 1);
+  assert.equal(updated.draftStart, 2, "remaining anonymous animal retains number 2");
   assert.equal(updated.rows[0].count, 2);
   assert.equal(unassigned.animals.length, 421);
 });
