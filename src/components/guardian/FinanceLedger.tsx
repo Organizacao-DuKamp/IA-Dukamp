@@ -18,7 +18,8 @@ export function FinanceLedger({
   onPropose: (a: GuardianAction) => Promise<void>;
 }) {
   const [filter, setFilter] = useState("all"),
-    [search, setSearch] = useState("");
+    [search, setSearch] = useState(""),
+    [limit, setLimit] = useState(20);
   const totals = ledgerForTotals(ledger),
     income = totals.filter((e) => e.direction === "income").reduce((s, e) => s + e.amountCents, 0),
     expense = totals
@@ -61,7 +62,10 @@ export function FinanceLedger({
               <button
                 key={id}
                 aria-pressed={filter === id}
-                onClick={() => setFilter(id)}
+                onClick={() => {
+                  setFilter(id);
+                  setLimit(20);
+                }}
                 className={`rounded-lg px-3 py-2 text-sm font-medium ${filter === id ? "bg-white text-slate-900 shadow-sm" : "text-slate-600"}`}
               >
                 {label}
@@ -73,14 +77,17 @@ export function FinanceLedger({
             <input
               aria-label="Buscar lançamento"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setLimit(20);
+              }}
               placeholder="Buscar descrição ou lote"
               className="min-w-0 w-full bg-transparent text-sm outline-none"
             />
           </label>
         </div>
         <div className="divide-y divide-slate-100">
-          {rows.map((e) => {
+          {rows.slice(0, limit).map((e) => {
             const outgoing = e.direction === "expense",
               Icon = outgoing ? ArrowUpRight : ArrowDownLeft;
             return (
@@ -171,6 +178,15 @@ export function FinanceLedger({
               </article>
             );
           })}
+          {limit < rows.length && (
+            <button
+              type="button"
+              className="farm-text-button"
+              onClick={() => setLimit((n) => n + 20)}
+            >
+              Mostrar mais lançamentos ({limit} de {rows.length})
+            </button>
+          )}
           {!rows.length && (
             <p className="py-12 text-center text-sm text-slate-500">
               {ledger.length ? "Nenhum lançamento encontrado." : "Nenhuma movimentação registrada."}

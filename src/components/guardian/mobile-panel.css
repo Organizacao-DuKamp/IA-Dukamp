@@ -134,19 +134,6 @@
 .farm-pages {
   min-height: 55dvh;
 }
-.farm-page {
-  animation: farm-enter 0.18s ease-out;
-}
-@keyframes farm-enter {
-  from {
-    opacity: 0.65;
-    transform: translateX(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
 .farm-desktop-nav button {
   border: 0;
   border-radius: 0;
@@ -189,51 +176,6 @@
 }
 .farm-account-summary {
   border-bottom: 1px solid #f1f5f3;
-}
-.farm-management-groups {
-  border-top: 1px solid #f1f5f3;
-}
-.farm-management-group {
-  border-bottom: 1px solid #f1f5f3;
-}
-.farm-management-group > summary {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  min-height: 62px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 500;
-  list-style: none;
-}
-.farm-management-group > summary::-webkit-details-marker {
-  display: none;
-}
-.farm-management-group[open] > summary svg {
-  transform: rotate(180deg);
-}
-.farm-management-list {
-  display: grid;
-  gap: 0;
-  padding-bottom: 0.5rem;
-}
-.farm-management-row {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  min-height: 66px;
-  padding: 0.65rem 0;
-  text-align: left;
-}
-.farm-management-row + .farm-management-row {
-  border-top: 1px solid #f8faf9;
-}
-.farm-management-row > span:first-child {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: #f3f5f4;
-  color: #16634d;
 }
 .farm-more-row {
   display: flex;
@@ -339,4 +281,282 @@
 }
 .farm-quick-action {
   position: relative;
+}
+
+/* Only the small shortcut icons animate; the full page never moves or fades. */
+.farm-circle-shortcuts .farm-quick-action,
+.farm-home .farm-quick-action {
+  animation: farm-shortcut-in 220ms cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
+  flex-basis: 96px;
+}
+.farm-circle-shortcuts .farm-quick-action strong {
+  margin-top: 0.65rem;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  font-weight: 500;
+}
+.farm-circle-shortcuts .farm-quick-action small {
+  margin-top: 0.25rem;
+  color: #64748b;
+  font-size: 0.65rem;
+}
+.farm-quick-action:active .farm-quick-icon {
+  transform: scale(0.94);
+}
+.farm-quick-icon {
+  transition:
+    transform 100ms ease,
+    background 100ms ease;
+}
+.farm-circle-shortcuts {
+  gap: 1.5rem;
+}
+.farm-page[hidden] {
+  display: none !important;
+}
+@keyframes farm-shortcut-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.farm-herd-overview {
+  border: 1px solid #e8efec;
+  border-radius: 1.5rem;
+  padding: 1.25rem;
+}
+.farm-herd-stats {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr 1fr;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+.farm-herd-stat {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.farm-stat-icon {
+  display: grid;
+  place-items: center;
+  height: 38px;
+  width: 38px;
+  border-radius: 50%;
+  background: #edf5f0;
+  color: #065f46;
+  margin-bottom: 0.75rem;
+}
+.farm-stat-births .farm-stat-icon {
+  background: #eef8ed;
+  color: #3e7b30;
+}
+.farm-stat-deaths .farm-stat-icon {
+  background: #fff1f0;
+  color: #a34b46;
+}
+.farm-herd-stat p {
+  color: #475569;
+  font-size: 0.7rem;
+}
+.farm-herd-stat strong {
+  font-size: clamp(1.6rem, 5vw, 2.2rem);
+  letter-spacing: -0.05em;
+  margin: 0.35rem 0;
+}
+.farm-herd-stat small {
+  color: #64748b;
+  font-size: 0.65rem;
+  line-height: 1.4;
+}
+.farm-species-chips {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  border-top: 1px solid #f1f5f3;
+  margin-top: 1rem;
+  padding-top: 1rem;
+}
+.farm-species-chips span {
+  font-size: 0.75rem;
+  background: #f3f6f4;
+  padding: 0.5rem 0.75rem;
+  border-radius: 2rem;
+}
+.farm-paddock-board {
+  padding-top: 0.5rem;
+}
+.farm-board-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 1rem;
+  background: #edf5f0;
+  color: #065f46;
+}
+.farm-animal-search {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #f5f7f6;
+  border-radius: 1rem;
+  padding: 0.5rem 1rem;
+  margin: 1.25rem 0;
+  color: #64748b;
+}
+.farm-animal-search input {
+  width: 100%;
+  min-width: 0;
+  outline: 0;
+  border: 0;
+  background: transparent;
+  font-size: 0.875rem;
+  padding: 0.4rem 0;
+}
+.farm-paddock-grid {
+  display: grid;
+  gap: 1rem;
+}
+.farm-paddock {
+  border: 1px solid #dfebe3;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  align-self: start;
+}
+.farm-paddock-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem;
+  background: #edf5f0;
+  color: #174e3a;
+}
+.farm-paddock-heading h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+.farm-paddock-heading > span {
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+.farm-paddock-unassigned .farm-paddock-heading {
+  background: #f6f5f1;
+  color: #645a42;
+}
+.farm-lot-card + .farm-lot-card {
+  border-top: 1px solid #f1f5f3;
+}
+.farm-lot-card > summary {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  cursor: pointer;
+  list-style: none;
+}
+.farm-lot-card > summary::-webkit-details-marker {
+  display: none;
+}
+.farm-lot-mark {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #f3f6f4;
+  color: #42634f;
+}
+.farm-lot-card strong {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.farm-lot-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  margin-top: 0.3rem;
+  color: #64748b;
+}
+.farm-lot-counts small {
+  font-size: 0.7rem;
+}
+.farm-lot-card[open] .farm-expand-icon {
+  transform: rotate(180deg);
+}
+.farm-lot-content {
+  padding: 0 1rem 1rem;
+}
+.farm-animal-list {
+  margin-top: 0.75rem;
+}
+.farm-animal-list li + li {
+  border-top: 1px solid #f1f5f3;
+}
+.farm-animal-list button {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 64px;
+  text-align: left;
+  padding: 0.5rem 0;
+}
+.farm-animal-list button > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+.farm-animal-list strong {
+  display: block;
+  font-size: 0.875rem;
+}
+.farm-animal-list small {
+  display: block;
+  font-size: 0.7rem;
+  color: #64748b;
+  overflow-wrap: anywhere;
+}
+.farm-animal-avatar {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #f3f6f4;
+  color: #42634f;
+}
+.farm-text-button {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #065f46;
+  padding: 0.75rem 0;
+}
+.farm-board-empty {
+  border: 1px dashed #dce7df;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  color: #64748b;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+@media (min-width: 768px) {
+  .farm-paddock-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .farm-circle-shortcuts .farm-quick-action,
+  .farm-home .farm-quick-action {
+    animation: none;
+  }
+  .farm-quick-icon {
+    transition: none;
+  }
 }

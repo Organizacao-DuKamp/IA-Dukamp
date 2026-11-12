@@ -1,11 +1,11 @@
 import { FarmPhoto } from "./FarmPhoto";
-import { swipePanelTab } from "@/lib/guardian/panel-navigation";
+import { primaryPanelTabs, swipePanelTab } from "@/lib/guardian/panel-navigation";
 import { FarmTeam } from "./FarmTeam";
 import { readAccessFragment, invitationWhatsApp } from "@/lib/guardian/access-link";
 import type { FarmTeam as Team } from "@/lib/guardian/access-links.server";
 import { AnimalImports } from "@/components/guardian/AnimalImports";
 import { Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import {
   Upload,
   ArrowLeft,
@@ -99,6 +99,7 @@ export function FarmPanel() {
     [loading, setLoading] = useState(true),
     [busy, setBusy] = useState(false),
     [tab, setTab] = useState<Tab>("overview"),
+    [visitedTabs, setVisitedTabs] = useState<Tab[]>(["overview"]),
     [form, setForm] = useState(false),
     [proposal, setProposal] = useState<{
       action: GuardianAction;
@@ -111,6 +112,8 @@ export function FarmPanel() {
     entering = useRef(false),
     inFlight = useRef(false),
     gesture = useRef<{ x: number; y: number; at: number; id: number } | null>(null);
+  const swipeSurface = useRef<HTMLDivElement>(null);
+  const touchIntent = useRef<{ x: number; y: number; at: number; done: boolean } | null>(null);
   const hasView = !!view,
     propertyId = view?.propertyId,
     propertyVersion = view?.version;
@@ -119,7 +122,12 @@ export function FarmPanel() {
     const run = ++generation.current;
     try {
       const data = await api();
-      if (run === generation.current) setView(data);
+      if (run === generation.current)
+        setView((previous) =>
+          previous && previous.propertyId === data.propertyId && previous.version === data.version
+            ? { ...data, book: previous.book }
+            : data,
+        );
     } catch (e) {
       if (run === generation.current) {
         if (e instanceof Error && "status" in e && e.status === 401) {
@@ -155,6 +163,7 @@ export function FarmPanel() {
       setProposal(null);
       setForm(false);
       setTab("overview");
+      setVisitedTabs(["overview"]);
 
       void operation
         .then((result) => {
@@ -236,15 +245,98 @@ export function FarmPanel() {
     if (propertyId) androidCommand({ type: "sync" });
   }, [propertyId, propertyVersion]);
 
-  function navigate(next: Tab) {
-    if (inFlight.current) return;
-    if (proposal && !window.confirm("Descartar a alteração que ainda não foi salva?")) return;
-    setTab(next);
-    setForm(false);
-    setProposal(null);
+  const navigate = useCallback(
+    (next: Tab) => {
+      if (inFlight.current) return;
+      if (proposal && !window.confirm("Descartar a alteração que ainda não foi salva?")) return;
+      setTab(next);
+      setVisitedTabs((areas) => (areas.includes(next) ? areas : [...areas, next]));
+      setForm(false);
+      setProposal(null);
 
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
+      window.scrollTo({ top: 0, behavior: "instant" });
+    },
+    [proposal],
+  );
+  useEffect(() => {
+    const surface = swipeSurface.current;
+    if (!surface || !hasView || form || proposal || busy) {
+      touchIntent.current = null;
+      return;
+    }
+    const start = (event: TouchEvent) => {
+      touchIntent.current = null;
+      if (event.touches.length !== 1) return;
+      const target = event.target as HTMLElement;
+      if (
+        target.closest(
+          "button,a,input,select,textarea,dialog,[role=dialog],summary,[data-no-swipe]",
+        )
+      )
+        return;
+      let node: HTMLElement | null = target;
+      while (node && node !== surface) {
+        if (
+          node.scrollWidth > node.clientWidth + 4 &&
+          /auto|scroll/.test(getComputedStyle(node).overflowX)
+        )
+          return;
+        node = node.parentElement;
+      }
+      const point = event.touches[0];
+      touchIntent.current = { x: point.clientX, y: point.clientY, at: Date.now(), done: false };
+    };
+    const move = (event: TouchEvent) => {
+      const intent = touchIntent.current;
+      if (!intent || event.touches.length !== 1 || !event.cancelable) return;
+      if (intent.done) {
+        event.preventDefault();
+        return;
+      }
+      const dx = event.touches[0].clientX - intent.x,
+        dy = event.touches[0].clientY - intent.y;
+      if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) {
+        touchIntent.current = null;
+        return;
+      }
+      if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.6) event.preventDefault();
+      const next = swipePanelTab(tab, dx, dy, Date.now() - intent.at);
+      if (next) {
+        intent.done = true;
+        navigate(next);
+      }
+    };
+    const end = () => {
+      touchIntent.current = null;
+    };
+    // Cancel only committed horizontal page swipes. Native vertical scroll,
+    // pinch zoom and horizontal shortcut carousels keep their default gestures.
+    surface.addEventListener("touchstart", start, { passive: true });
+    surface.addEventListener("touchmove", move, { passive: false });
+    surface.addEventListener("touchend", end, { passive: true });
+    surface.addEventListener("touchcancel", end, { passive: true });
+    return () => {
+      surface.removeEventListener("touchstart", start);
+      surface.removeEventListener("touchmove", move);
+      surface.removeEventListener("touchend", end);
+      surface.removeEventListener("touchcancel", end);
+    };
+  }, [hasView, tab, navigate, form, proposal, busy]);
+  const propose = useCallback(
+    async (action: GuardianAction) => {
+      if (!propertyId || propertyVersion === undefined) return;
+      setProposal({ action, requestId: crypto.randomUUID(), version: propertyVersion });
+      setError("");
+      setNotice("");
+    },
+    [propertyId, propertyVersion],
+  );
+  const completeTask = useCallback(
+    (task: string) => {
+      void propose({ kind: "task_update", task, status: "done" });
+    },
+    [propose],
+  );
   async function save() {
     if (!proposal || inFlight.current) return;
     inFlight.current = true;
@@ -272,34 +364,38 @@ export function FarmPanel() {
       }
     }
   }
-  function exit(all = false) {
-    if (inFlight.current) return;
-    inFlight.current = true;
-    const run = ++generation.current;
-    accessOperation.current = null;
-    setBusy(true);
-    void api("DELETE", all ? { kind: "logout_all" } : undefined)
-      .then(() => {
-        if (run !== generation.current) return;
-        androidCommand({ type: "disconnect" });
+  const exit = useCallback(
+    (all = false) => {
+      if (inFlight.current) return;
+      inFlight.current = true;
+      const run = ++generation.current;
+      accessOperation.current = null;
+      setBusy(true);
+      void api("DELETE", all ? { kind: "logout_all" } : undefined)
+        .then(() => {
+          if (run !== generation.current) return;
+          androidCommand({ type: "disconnect" });
 
-        setView(null);
-        setInvitation(null);
-        setProposal(null);
-        setNotice("");
-        setError("");
-        setForm(false);
-        setTab("overview");
-      })
-      .catch((e) => {
-        if (run === generation.current) setError(e.message);
-      })
-      .finally(() => {
-        if (run !== generation.current) return;
-        inFlight.current = false;
-        setBusy(false);
-      });
-  }
+          setView(null);
+          setInvitation(null);
+          setProposal(null);
+          setNotice("");
+          setError("");
+          setForm(false);
+          setTab("overview");
+          setVisitedTabs(["overview"]);
+        })
+        .catch((e) => {
+          if (run === generation.current) setError(e.message);
+        })
+        .finally(() => {
+          if (run !== generation.current) return;
+          inFlight.current = false;
+          setBusy(false);
+        });
+    },
+    [api],
+  );
   const allowed =
     view && !["owner", "manager"].includes(view.role)
       ? ["record", "animal", "weighing", "task_create"]
@@ -556,10 +652,18 @@ export function FarmPanel() {
             )}
             <div
               className="farm-pages"
-              style={{ touchAction: "pan-y pinch-zoom" }}
+              ref={swipeSurface}
               onPointerDown={(event) => {
                 gesture.current = null;
-                if (event.button !== 0 || !event.isPrimary || form || proposal || busy) return;
+                if (
+                  event.pointerType === "touch" ||
+                  event.button !== 0 ||
+                  !event.isPrimary ||
+                  form ||
+                  proposal ||
+                  busy
+                )
+                  return;
                 const target = event.target as HTMLElement;
                 if (
                   target.closest(
@@ -586,6 +690,20 @@ export function FarmPanel() {
                 if (event.pointerType === "mouse")
                   event.currentTarget.setPointerCapture(event.pointerId);
               }}
+              onPointerMove={(event) => {
+                const start = gesture.current;
+                if (!start || start.id !== event.pointerId) return;
+                const next = swipePanelTab(
+                  tab,
+                  event.clientX - start.x,
+                  event.clientY - start.y,
+                  Date.now() - start.at,
+                );
+                if (next) {
+                  gesture.current = null;
+                  navigate(next);
+                }
+              }}
               onPointerCancel={() => {
                 gesture.current = null;
               }}
@@ -602,91 +720,30 @@ export function FarmPanel() {
                 if (next) navigate(next);
               }}
             >
-              <div key={tab} className="farm-page space-y-6">
-                {tab === "team" && view.role === "owner" && (
-                  <FarmTeam key={view.propertyId} team={view.team} api={api} refresh={load} />
-                )}
-                {tab === "more" && (
-                  <section aria-label="Mais opções" className="farm-more-page">
-                    <h2 className="mb-4 text-xl font-semibold">Sua fazenda</h2>
-                    {tabs
-                      .filter(
-                        ([id]) =>
-                          !["overview", "herd", "tasks", "finance", "more"].includes(id) &&
-                          (id !== "team" || view.role === "owner"),
-                      )
-                      .map(([id, label]) => {
-                        const Icon = tabIcons[id];
-                        return (
-                          <button
-                            key={id}
-                            disabled={busy}
-                            onClick={() => navigate(id)}
-                            className="farm-more-row"
-                          >
-                            <Icon size={21} aria-hidden="true" />
-                            <span>{label}</span>
-                            <ArrowRight size={17} aria-hidden="true" />
-                          </button>
-                        );
-                      })}
-                    <button
-                      disabled={busy}
-                      onClick={() => exit()}
-                      className="farm-more-row text-rose-700"
-                    >
-                      <LogOut size={21} aria-hidden="true" />
-                      <span>Sair desta fazenda</span>
-                    </button>
-                  </section>
-                )}
-                {tab === "overview" && (
-                  <FarmMobileHome
-                    book={view.book}
-                    busy={busy}
-                    navigate={navigate}
-                    complete={(task) => {
-                      setProposal({
-                        action: { kind: "task_update", task, status: "done" },
-                        requestId: crypto.randomUUID(),
-                        version: view.version,
-                      });
-                      setError("");
-                      setNotice("");
-                    }}
-                  />
-                )}
-                {tab === "tasks" && <AndroidReminders />}
-                <div>
-                  {tab === "overview" || tab === "more" || tab === "team" ? null : tab ===
-                    "imports" ? (
-                    <AnimalImports farmName={view.name} onImported={() => void load()} />
-                  ) : (
-                    <GuardianWorkspace
-                      detail={{
-                        id: view.propertyId,
-                        version: view.version,
-                        book: view.book,
-                        events: view.events,
-                        audit: view.audit,
-                        members: [],
-                      }}
-                      tab={tab}
-                      canManageFuel={["owner", "manager"].includes(view.role)}
+              {visitedTabs
+                .filter(
+                  (area) => primaryPanelTabs.some((primary) => primary === area) || area === tab,
+                )
+                .map((area) => (
+                  <div
+                    key={`${view.propertyId}:${view.role}:${area}`}
+                    hidden={area !== tab}
+                    className="farm-page space-y-6"
+                    data-farm-area={area}
+                  >
+                    <FarmAreaContent
+                      area={area}
+                      view={view}
                       busy={busy}
-                      onPropose={async (action) => {
-                        setProposal({
-                          action,
-                          requestId: crypto.randomUUID(),
-                          version: view.version,
-                        });
-                        setError("");
-                        setNotice("");
-                      }}
+                      onPropose={propose}
+                      completeTask={completeTask}
+                      navigate={navigate}
+                      load={load}
+                      api={api}
+                      exit={exit}
                     />
-                  )}
-                </div>
-              </div>
+                  </div>
+                ))}
             </div>
             <Dialog
               open={form && !["fuel", "supplies", "team", "more", "imports"].includes(tab)}
@@ -838,3 +895,87 @@ export function FarmPanel() {
     </div>
   );
 }
+
+// Visited primary areas retain their DOM and local state. Stable props let React
+// skip work when only visibility changes; private data is discarded on logout.
+const FarmAreaContent = memo(function FarmAreaContent({
+  area,
+  view,
+  busy,
+  onPropose,
+  completeTask,
+  navigate,
+  load,
+  api,
+  exit,
+}: {
+  area: Tab;
+  view: View;
+  busy: boolean;
+  onPropose(action: GuardianAction): Promise<void>;
+  completeTask(task: string): void;
+  navigate(tab: Tab): void;
+  load(): Promise<void>;
+  api: ReturnType<typeof createPanelClient>;
+  exit(all?: boolean): void;
+}) {
+  if (area === "overview")
+    return (
+      <FarmMobileHome book={view.book} busy={busy} navigate={navigate} complete={completeTask} />
+    );
+  if (area === "team")
+    return view.role === "owner" ? (
+      <FarmTeam key={view.propertyId} team={view.team} api={api} refresh={load} />
+    ) : null;
+  if (area === "more")
+    return (
+      <section aria-label="Mais opções" className="farm-more-page">
+        <h2 className="mb-4 text-xl font-semibold">Sua fazenda</h2>
+        {tabs
+          .filter(
+            ([id]) =>
+              !["overview", "herd", "tasks", "finance", "more"].includes(id) &&
+              (id !== "team" || view.role === "owner"),
+          )
+          .map(([id, label]) => {
+            const Icon = tabIcons[id];
+            return (
+              <button
+                key={id}
+                disabled={busy}
+                onClick={() => navigate(id)}
+                className="farm-more-row"
+              >
+                <Icon size={21} aria-hidden="true" />
+                <span>{label}</span>
+                <ArrowRight size={17} aria-hidden="true" />
+              </button>
+            );
+          })}
+        <button disabled={busy} onClick={() => exit()} className="farm-more-row text-rose-700">
+          <LogOut size={21} aria-hidden="true" />
+          <span>Sair desta fazenda</span>
+        </button>
+      </section>
+    );
+  if (area === "imports") return <AnimalImports farmName={view.name} onImported={load} />;
+  return (
+    <>
+      {area === "tasks" && <AndroidReminders />}
+      <GuardianWorkspace
+        detail={{
+          id: view.propertyId,
+          version: view.version,
+          book: view.book,
+          events: view.events,
+          audit: view.audit,
+          members: [],
+        }}
+        tab={area}
+        canManageFuel={["owner", "manager"].includes(view.role)}
+        busy={busy}
+        onPropose={onPropose}
+      />
+    </>
+  );
+});

@@ -95,7 +95,7 @@ const answer = (reply: string): WhatsAppChatResult => ({
 });
 const received = () =>
   answer(
-    "Arquivo recebido para a importação de animais. Vou ler as páginas ou abas e preparar todos os animais encontrados para você conferir. Nenhum cadastro é confirmado antes da sua aprovação. Acompanhe também em Importação de animais no painel.",
+    "Entendido! Já estou preparando os animais no painel. Pode aguardar — aviso quando terminar.",
   );
 async function processAnimalImportInbound(
   input: WhatsAppChatInput,

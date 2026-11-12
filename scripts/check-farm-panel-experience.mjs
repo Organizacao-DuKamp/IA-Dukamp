@@ -4,8 +4,9 @@ import { createServer } from "node:http";
 import { randomUUID, randomBytes } from "node:crypto";
 import { chromium } from "playwright";
 import { farmIntegration } from "../tests/helpers/farm-integration.ts";
-import { emptyFarm } from "../src/lib/guardian/schema.ts";
+import { emptyFarm, FarmBookSchema } from "../src/lib/guardian/schema.ts";
 import { handleFarmPanel, hashToken } from "../src/lib/guardian/panel.server.ts";
+import { prepareFarmBatch } from "../src/lib/guardian/execution.ts";
 import { PDFDocument } from "pdf-lib";
 
 const origin = process.env.FARM_PANEL_TEST_ORIGIN ?? "http://127.0.0.1:8080";
@@ -18,6 +19,39 @@ let browser,
   server;
 const errors = [];
 try {
+  const at = new Date().toISOString(),
+    day = at.slice(0, 10);
+  const source = { actor: phone, messageId: "fixture", at, confirmed: true };
+  const book = prepareFarmBatch({
+    book: emptyFarm("Fazenda Boa Vista", "Tanabi", "SP"),
+    actions: [
+      { kind: "lot_update", lot: "1", pasture: "Piquete Norte" },
+      { kind: "lot_update", lot: "2", pasture: "Piquete Sul" },
+      { kind: "herd_count", count: 2000, date: day },
+      { kind: "herd_count", count: 1000, date: day, lot: "1" },
+      { kind: "herd_count", count: 1000, date: day, lot: "2" },
+    ],
+    role: "owner",
+    propertyId: property,
+    source,
+    executedByMessageId: "fixture",
+  }).book;
+  book.animals = Array.from({ length: 1999 }, (_, i) => ({
+    code: `AN ${i + 1}`,
+    name: `Animal ${i + 1}`,
+    sex: "female",
+    breed: "Nelore",
+    lot: i % 2 ? "1" : "2",
+    source,
+    weights: Array.from({ length: 20 }, (_, n) => ({
+      date: `2026-10-${String(n + 1).padStart(2, "0")}`,
+      weightKg: 300 + n,
+      estimated: false,
+      corrections: [],
+      ...source,
+    })),
+  }));
+  FarmBookSchema.parse(book);
   await f.guardian.commit({
     phone,
     messageId: "seed-experience",
@@ -25,7 +59,7 @@ try {
     propertyId: property,
     propertyVersion: null,
     operation: "create",
-    book: emptyFarm("Fazenda Boa Vista", "Tanabi", "SP"),
+    book,
     pending: null,
     reply: "ok",
   });
@@ -105,14 +139,70 @@ try {
   );
   await page.screenshot({ path: "/workspace/work/farm-home-mobile.png", fullPage: true });
   const nav = page.getByRole("navigation", { name: "Navegação principal" });
+  const cdp = await context.newCDPSession(page);
+  const shortcutBox = await page.locator(".farm-home .farm-quick-actions").boundingBox();
+  const shortcutY = shortcutBox.y + 30;
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [{ x: 310, y: shortcutY }],
+  });
+  for (let i = 1; i <= 6; i++)
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: [{ x: 310 - i * 35, y: shortcutY }],
+    });
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await page.waitForFunction(
+    () => document.querySelector(".farm-home .farm-quick-actions").scrollLeft > 0,
+  );
+  assert.equal(await page.locator('[data-farm-area="overview"]').evaluate((e) => e.hidden), false);
+  // Vertical scrolling must never be converted into a page change.
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [{ x: 340, y: 720 }],
+  });
+  for (let i = 1; i <= 6; i++)
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: [{ x: 340, y: 720 - i * 35 }],
+    });
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await page.waitForFunction(() => scrollY > 0);
+  assert.equal(await page.locator('[data-farm-area="overview"]').evaluate((e) => e.hidden), false);
+
   await nav.getByRole("button", { name: "Rebanho", exact: true }).click();
   await page.getByRole("heading", { name: "Rebanho e lotes", exact: true }).waitFor();
   assert.equal(await page.getByRole("button", { name: /Medicações e vacinas/ }).isVisible(), false);
-  await page.getByText("Saúde do rebanho", { exact: true }).click();
+  await page.getByRole("button", { name: "Saúde do rebanho", exact: true }).click();
   await page.getByRole("button", { name: /Medicações e vacinas/ }).waitFor();
+  await page.keyboard.press("Escape");
+  await page.getByRole("dialog").waitFor({ state: "hidden" });
+  await page.getByRole("region", { name: "Piquetes e lotes da fazenda" }).waitFor();
+  for (const name of [
+    "Filtrar período e movimentos",
+    "Localização atual do rebanho",
+    "Rebanho por grupos",
+    "Histórico de movimentações",
+    "Lotes e pastagens",
+  ])
+    assert.equal(await page.getByText(name, { exact: true }).count(), 0);
+  await page.getByText("Lote 1", { exact: true }).click();
+  const lot = page.locator(".farm-lot-card[open]");
+  await lot
+    .getByRole("button", { name: /Abrir ficha de/ })
+    .first()
+    .waitFor();
+  assert.equal(await lot.getByRole("button", { name: /Abrir ficha de/ }).count(), 20);
+  assert.equal(await page.locator(".farm-lot-content .farm-animal-list").count(), 1);
+  await lot.getByRole("button", { name: "Abrir ficha de AN 2", exact: true }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("heading", { name: "AN 2 · Animal 2", exact: true })
+    .waitFor();
+  await page.keyboard.press("Escape");
+  await page.getByRole("dialog").waitFor({ state: "hidden" });
   await page.screenshot({ path: "/workspace/work/farm-herd-mobile.png", fullPage: true });
   // True touch events exercise touch-action and pointer cancellation in Chromium.
-  const cdp = await context.newCDPSession(page);
   const swipe = async (dx) => {
     await page.evaluate(() => scrollTo(0, 0));
     const box = await page.locator(".farm-pages").boundingBox();
@@ -128,6 +218,57 @@ try {
   };
   await swipe(-220);
   await page.getByRole("heading", { name: "Tarefas", exact: true }).waitFor({ timeout: 3000 });
+  const samples = [];
+  await page.locator('[data-farm-area="herd"]').evaluate((el) => {
+    el.dataset.retentionProbe = "preserved";
+  });
+  const cpuRate = Number(process.env.FARM_PANEL_CPU_RATE ?? 1);
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: cpuRate });
+  for (const [label, area] of [
+    ["Finanças", "finance"],
+    ["Rebanho", "herd"],
+    ["Tarefas", "tasks"],
+    ["Início", "overview"],
+    ["Rebanho", "herd"],
+  ]) {
+    const sample = await page.evaluate(
+      async ({ label, area }) => {
+        const button = [...document.querySelectorAll(".farm-bottom-nav button")].find(
+          (b) => b.textContent.trim() === label,
+        );
+        const started = performance.now();
+        button.click();
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        return {
+          area,
+          ms: performance.now() - started,
+          visible: !document.querySelector(`[data-farm-area="${area}"]`).hidden,
+        };
+      },
+      { label, area },
+    );
+    assert.ok(sample.visible);
+    assert.ok(sample.ms < 300, `navigation ${sample.area}: ${sample.ms}ms with ${cpuRate}x CPU`);
+    samples.push(sample);
+  }
+  assert.equal(
+    await page.locator('[data-farm-area="herd"]').getAttribute("data-retention-probe"),
+    "preserved",
+  );
+  assert.equal(await page.locator(".farm-lot-card[open]").count(), 1);
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 1 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await nav.getByRole("button", { name: "Tarefas", exact: true }).click();
+  await nav.getByRole("button", { name: "Rebanho", exact: true }).click();
+  assert.equal(
+    await page
+      .locator('[data-farm-area="herd"] .farm-quick-action')
+      .first()
+      .evaluate((e) => e.getAnimations().length),
+    0,
+  );
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  console.log(`Navigation timings (1999 animals, ${cpuRate}x CPU):`, JSON.stringify(samples));
   await nav.getByRole("button", { name: "Mais", exact: true }).click();
   await page.getByRole("button", { name: "Equipe e acessos", exact: true }).click();
   await page.getByRole("heading", { name: "Equipe e acessos", exact: true }).last().waitFor();
@@ -159,7 +300,7 @@ try {
   await page.getByRole("button", { name: "Revisar antes de salvar", exact: true }).click();
   await page.getByRole("button", { name: "Confirmar e salvar", exact: true }).click();
   await page.getByRole("dialog").waitFor({ state: "hidden" });
-  assert.equal((await f.guardian.load(phone)).active.book.animals[0].code, "QA 101");
+  assert.ok((await f.guardian.load(phone)).active.book.animals.some((a) => a.code === "QA 101"));
   await page.getByRole("button", { name: "Novo registro", exact: true }).click();
   await page.getByLabel("O que deseja fazer?").selectOption("animal");
   await page.getByRole("button", { name: "Importar animais de PDF ou Excel", exact: true }).click();
@@ -206,7 +347,7 @@ try {
     .then((v) => assert.equal(v, "page"));
   assert.deepEqual(errors, []);
   console.log(
-    "PASS: mobile touch navigation, desktop drag, grouped layout, separate team, photo persistence/reload, registration by series/RGN and multi-animal import UI.",
+    "PASS: fluid touch/mouse navigation, retained pages, animated circular categories, lazy paddock/lot/animal board, separate team, photo persistence, registration and import UI.",
   );
 } catch (error) {
   console.error("BROWSER ERRORS", errors);
