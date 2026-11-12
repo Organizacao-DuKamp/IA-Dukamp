@@ -68,8 +68,8 @@ function DraftButtons({
   return (
     <>
       <p className="mt-3 text-xs text-slate-500">
-        {count} {count === 1 ? "animal ainda sem ficha identificada" : "animais ainda sem fichas identificadas"}.
-        São rascunhos da quantidade informada, não novos animais na contagem.
+        {count} {count === 1 ? "bovino sem ficha" : "bovinos sem ficha"}.
+        São rascunhos da quantidade informada.
       </p>
       <ul className="farm-animal-list">
         {Array.from({ length: Math.min(limit, count) }, (_, offset) => start + offset).map(
@@ -145,7 +145,9 @@ function LotCard({
           <p className="text-xs text-slate-500">
             {lot.animals.length}{" "}
             {lot.animals.length === 1 ? "ficha identificada" : "fichas identificadas"}.
-            Fichas e contagens são registros distintos; não são somadas automaticamente.
+          </p>
+          <p className="text-xs text-slate-500">
+            Fichas identificadas não alteram as contagens declaradas.
           </p>
           {lot.animals.length > 0 && <AnimalButtons animals={lot.animals} onSelect={onSelect} />}
           {lot.unidentified > 0 && (
@@ -240,7 +242,9 @@ export const PaddockBoard = memo(function PaddockBoard({
                 </span>
               </div>
               {paddock.lots.length ? (
-                paddock.lots.map((lot) => <LotCard key={lot.key} lot={lot} onSelect={select} onDraft={setDraft} />)
+                paddock.lots.map((lot) => (
+                  <LotCard key={lot.key} lot={lot} onSelect={select} onDraft={setDraft} />
+                ))
               ) : (
                 <p className="p-4 text-sm text-slate-500">Nenhum lote vinculado a este piquete.</p>
               )}
@@ -304,8 +308,10 @@ export const PaddockBoard = memo(function PaddockBoard({
               {draft ? `Animal não identificado ${draft.number}` : "Ficha provisória"}
             </DialogTitle>
             <DialogDescription>
-              Este rascunho representa um bovino já informado. Use série/RGN ou brinco
-              para identificá-lo; a contagem do lote não será aumentada.
+              Esta ficha provisória já está incluída na quantidade informada.
+              <span className="block">
+                Informe série/RGN ou brinco; o total do rebanho não será alterado.
+              </span>
             </DialogDescription>
           </DialogHeader>
           {draft && (
