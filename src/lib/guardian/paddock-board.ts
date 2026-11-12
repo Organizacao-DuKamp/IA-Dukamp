@@ -57,18 +57,16 @@ export function paddockBoard(book: FarmBook, date: string) {
   if (unassigned.rows.length) group(null).lots.push(unassigned);
   const compare = (a: string | null, b: string | null) =>
     a === null ? 1 : b === null ? -1 : a.localeCompare(b, "pt-BR", { numeric: true });
-  const ordered = [...groups.values()]
+  return [...groups.values()]
     .sort((a, b) => compare(a.name, b.name))
-    .map((p) => ({ ...p, lots: p.lots.sort((a, b) => compare(a.name, b.name)) }));
-  let nextDraftNumber = 1;
-  return ordered.map((paddock) => ({
-    ...paddock,
-    lots: paddock.lots.map((entry) => {
-      const draftStart = nextDraftNumber;
-      nextDraftNumber += entry.unidentified;
-      return { ...entry, draftStart };
-    }),
-  }));
+    .map((paddock) => ({
+      ...paddock,
+      lots: paddock.lots
+        .sort((a, b) => compare(a.name, b.name))
+        // Occupied slots come first. After identifying draft 1, the remaining
+        // anonymous bovine stays draft 2 instead of silently renaming to 1.
+        .map((entry) => ({ ...entry, draftStart: entry.animals.length + 1 })),
+    }));
 }
 export type PaddockView = ReturnType<typeof paddockBoard>[number];
 
