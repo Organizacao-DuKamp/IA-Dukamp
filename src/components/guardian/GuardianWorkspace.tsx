@@ -1,5 +1,4 @@
 import { ManagementWorkspace } from "./ManagementWorkspace";
-import { AnimalProfileDetails } from "./AnimalProfileDetails";
 import { taskDisplayDueAt } from "@/lib/guardian/task-recurrence";
 import { SuppliesWorkspace } from "./SuppliesWorkspace";
 import { FuelWorkspace } from "./FuelWorkspace";
@@ -7,7 +6,7 @@ import { FinanceLedger } from "./FinanceLedger";
 import { PanelMetric } from "./PanelMetric";
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { FarmOperations } from "./FarmOperations";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ArrowDownToLine, Check, ClipboardList, TrendingUp, Users } from "lucide-react";
 import type { GuardianDetail, GuardianEventHistoryView } from "@/lib/guardian.functions";
 import type { GuardianAction } from "@/lib/guardian/schema";
@@ -179,8 +178,19 @@ export function GuardianWorkspace({
     [start, setStart] = useState(""),
     [end, setEnd] = useState(""),
     [lot, setLot] = useState("");
-  const tasks = book.tasks.map((t) => ({ ...t, dueAt: taskDisplayDueAt(t) }));
-  const ledgerTotals = ledgerForTotals(book.ledger);
+  const [taskLimit, setTaskLimit] = useState(20);
+  const tasks = useMemo(
+    () =>
+      book.tasks
+        .map((t) => ({ ...t, dueAt: taskDisplayDueAt(t) }))
+        .sort(
+          (a, b) =>
+            Number(b.status === "open") - Number(a.status === "open") ||
+            a.dueAt.localeCompare(b.dueAt),
+        ),
+    [book.tasks],
+  );
+  const ledgerTotals = useMemo(() => ledgerForTotals(book.ledger), [book.ledger]);
   const expense = ledgerTotals
       .filter((e) => e.direction === "expense")
       .reduce((s, e) => s + e.amountCents, 0),
@@ -389,7 +399,7 @@ export function GuardianWorkspace({
           <h2 className="text-lg font-semibold">Tarefas da propriedade</h2>
 
           <div className="mt-5 space-y-3">
-            {tasks.map((t) => (
+            {tasks.slice(0, taskLimit).map((t) => (
               <article key={t.id} className="rounded-xl border border-border p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
@@ -432,52 +442,14 @@ export function GuardianWorkspace({
               </article>
             ))}
             {!tasks.length && <Empty>Você ainda não cadastrou tarefas nesta fazenda.</Empty>}
-          </div>
-        </section>
-      )}
-      {tab === "herd" && (
-        <section className="rounded-2xl border border-border bg-card p-5">
-          <h2 className="text-lg font-semibold">Fichas dos animais</h2>
-
-          <div className="mt-5 space-y-3">
-            {book.animals.map((a) => (
-              <details key={a.code} className="rounded-xl border border-border p-4">
-                <summary className="cursor-pointer text-sm font-semibold">
-                  {a.code} ·{" "}
-                  {a.sex === "female" ? "Fêmea" : a.sex === "male" ? "Macho" : "Sexo pendente"}
-                  {a.breed ? ` · ${a.breed}` : ""}
-                  {a.lot ? ` · Lote ${a.lot}` : ""}
-                  {a.rgn && (
-                    <span className="ml-2 inline-flex rounded-full bg-sky-50 px-2 py-1 text-xs font-medium text-sky-800">
-                      RGN {a.rgn}
-                    </span>
-                  )}
-                </summary>
-                <p className="mt-3 text-xs text-muted-foreground">
-                  Nascimento: {a.birthDate ?? "não informado"} · Atualizado em {when(a.source.at)}
-                </p>
-                <AnimalProfileDetails animal={a} />
-                <div className="mt-3 space-y-2">
-                  {a.weights.map((w) => (
-                    <div key={w.date} className="rounded-lg bg-secondary/50 p-3 text-sm">
-                      {w.date.split("-").reverse().join("/")} · <strong>{w.weightKg} kg</strong>
-                      {w.estimated ? " (estimado)" : " (informado)"}
-                      {w.corrections.length > 0 && (
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          Correções:{" "}
-                          {w.corrections.map((c) => `${c.weightKg} kg em ${when(c.at)}`).join("; ")}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                  {!a.weights.length && (
-                    <p className="text-sm text-muted-foreground">Ainda sem pesagem.</p>
-                  )}
-                </div>
-              </details>
-            ))}
-            {!book.animals.length && (
-              <Empty>Cadastre o código dos animais para acompanhar pesagens individuais.</Empty>
+            {taskLimit < tasks.length && (
+              <button
+                type="button"
+                className="farm-text-button"
+                onClick={() => setTaskLimit((n) => n + 20)}
+              >
+                Mostrar mais tarefas ({taskLimit} de {tasks.length})
+              </button>
             )}
           </div>
         </section>

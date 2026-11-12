@@ -10,7 +10,7 @@ import {
   Wallet,
 } from "lucide-react";
 import type { FarmBook } from "@/lib/guardian/schema";
-import { farmIndicators } from "@/lib/guardian/operations";
+import { stockAt, emptyOperations } from "@/lib/guardian/operations";
 import { operationalMoney } from "@/lib/guardian/operational-intelligence";
 
 type Area = "herd" | "tasks" | "finance" | "fuel" | "supplies" | "records";
@@ -43,7 +43,7 @@ export function FarmMobileHome({
     new Date(),
   );
   const month = today.slice(0, 7);
-  const cattle = farmIndicators(book, month + "-01", today).stock.count;
+  const cattle = stockAt(book.operations ?? emptyOperations(), today).count;
   const finances = operationalMoney(book, month);
   const balance = finances.income - finances.expenses;
   const tasks = book.tasks
