@@ -413,6 +413,17 @@ export function semanticContext(
               ...active,
               book: {
                 ...book,
+                photo: undefined,
+                lastOperation: book.lastOperation
+                  ? {
+                      ...book.lastOperation,
+                      actions: book.lastOperation.actions.map((action) =>
+                        action.kind === "property_update"
+                          ? { ...action, photo: undefined }
+                          : action,
+                      ),
+                    }
+                  : undefined,
                 management: book.management
                   ? {
                       entries: [

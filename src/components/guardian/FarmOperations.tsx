@@ -72,14 +72,14 @@ export function FarmOperations({ book, compact = false }: { book: FarmBook; comp
             : `${start.split("-").reverse().join("/")} — ${end.split("-").reverse().join("/")}`}
         </span>
       </div>
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="farm-herd-metrics grid grid-cols-3 gap-3">
         <PanelMetric
           label={
             data.stocksBySpecies.some((s) => s.species !== "cattle")
               ? "Bovinos contabilizados"
               : "Rebanho calculado"
           }
-          value={data.stock.count ?? "Não informado"}
+          value={data.stock.count ?? "—"}
           icon={Beef}
           hint={data.stock.count === null ? "Contagem inicial pendente" : "cabeças"}
         />
@@ -162,49 +162,54 @@ export function FarmOperations({ book, compact = false }: { book: FarmBook; comp
         })()}
       {!compact && (
         <>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <label className="text-sm">
-              De
-              <input
-                type="date"
-                aria-label="Início do período"
-                value={start}
-                max={end}
-                onChange={(e) => {
-                  setStart(e.target.value);
-                  setPage(0);
-                }}
-                className="mt-1 block w-full rounded-xl border bg-background p-2.5"
-              />
-            </label>
-            <label className="text-sm">
-              Até
-              <input
-                type="date"
-                aria-label="Fim do período"
-                value={end}
-                min={start}
-                max={today}
-                onChange={(e) => {
-                  setEnd(e.target.value);
-                  setPage(0);
-                }}
-                className="mt-1 block w-full rounded-xl border bg-background p-2.5"
-              />
-            </label>
-            <label className="text-sm">
-              Buscar movimento ou lote
-              <input
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(0);
-                }}
-                placeholder="Ex.: nascimento, lote 2"
-                className="mt-1 block w-full rounded-xl border bg-background p-2.5"
-              />
-            </label>
-          </div>
+          <details className="farm-period-filter">
+            <summary className="cursor-pointer text-sm font-medium">
+              Filtrar período e movimentos
+            </summary>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <label className="text-sm">
+                De
+                <input
+                  type="date"
+                  aria-label="Início do período"
+                  value={start}
+                  max={end}
+                  onChange={(e) => {
+                    setStart(e.target.value);
+                    setPage(0);
+                  }}
+                  className="mt-1 block w-full rounded-xl border bg-background p-2.5"
+                />
+              </label>
+              <label className="text-sm">
+                Até
+                <input
+                  type="date"
+                  aria-label="Fim do período"
+                  value={end}
+                  min={start}
+                  max={today}
+                  onChange={(e) => {
+                    setEnd(e.target.value);
+                    setPage(0);
+                  }}
+                  className="mt-1 block w-full rounded-xl border bg-background p-2.5"
+                />
+              </label>
+              <label className="text-sm">
+                Buscar movimento ou lote
+                <input
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(0);
+                  }}
+                  placeholder="Ex.: nascimento, lote 2"
+                  className="mt-1 block w-full rounded-xl border bg-background p-2.5"
+                />
+              </label>
+            </div>
+          </details>
           {(data.consumption.measuredKg > 0 || data.consumption.estimatedKg > 0) && (
             <div className="rounded-xl border p-4 text-sm">
               <h3 className="font-semibold">Consumo de alimentos / suplementos no período</h3>

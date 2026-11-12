@@ -86,70 +86,103 @@ export function ManagementWorkspace({ book, area, busy, canEdit, onPropose }: Pr
                 ? "produtos e fórmulas"
                 : "rotina da fazenda"}
       </h2>
-      <p className="text-sm text-slate-600">
-        Toque em um cartão para abrir os registros e fazer alterações. Você também pode pedir à
-        TPEC-IA pelo WhatsApp.
-      </p>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {sections.map((s) => {
-          const active = selected === s;
-          const count = managementEntries(book, s).length;
-          const Icon = {
-            pasture: MapPin,
-            pasture_management: Sprout,
-            soil_analysis: FlaskConical,
-            health: Syringe,
-            exam: Stethoscope,
-            insemination: Heart,
-            pregnancy: Heart,
-            calving: Baby,
-            fecal: ClipboardCheck,
-            payable: Wallet,
-            receivable: Wallet,
-            product: Package,
-            storage: Warehouse,
-            formula: Wheat,
-            feeding: Wheat,
-            vehicle: Tractor,
-            maintenance: Wrench,
-            vehicle_cost: Receipt,
-            occurrence: AlertTriangle,
-            round: Footprints,
-          }[s];
-          return (
-            <button
-              key={s}
-              type="button"
-              disabled={busy}
-              aria-expanded={active}
-              aria-haspopup="dialog"
-              onClick={() => setSelected(active ? null : s)}
-              className={`group flex min-h-24 cursor-pointer items-center gap-3 rounded-2xl border-2 p-4 text-left shadow-sm transition duration-150 hover:-translate-y-0.5 hover:border-emerald-600 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-200 disabled:cursor-wait disabled:opacity-50 motion-reduce:transform-none ${active ? "border-emerald-700 bg-emerald-50 text-emerald-950" : "border-slate-200 bg-white text-slate-900 hover:bg-emerald-50/50"}`}
+      <div className="farm-management-groups">
+        {(area === "herd"
+          ? [
+              {
+                label: "Pastagens e estrutura",
+                sections: sections.filter((s) =>
+                  ["pasture", "pasture_management", "soil_analysis"].includes(s),
+                ),
+              },
+              {
+                label: "Saúde do rebanho",
+                sections: sections.filter((s) => ["health", "exam", "fecal"].includes(s)),
+              },
+              {
+                label: "Reprodução e nascimentos",
+                sections: sections.filter((s) =>
+                  ["insemination", "pregnancy", "calving"].includes(s),
+                ),
+              },
+            ]
+          : [{ label: "Registros e controles", sections }]
+        )
+          .filter((group) => group.sections.length)
+          .map((group) => (
+            <details
+              key={group.label}
+              className="farm-management-group"
+              open={area !== "herd" ? true : undefined}
             >
-              <span
-                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${active ? "bg-emerald-800 text-white" : "bg-emerald-100 text-emerald-800 group-hover:bg-emerald-200"}`}
-              >
-                <Icon size={23} aria-hidden="true" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <strong className="block text-sm leading-snug">
-                  {managementSections[s].label}
-                </strong>
-                <span className="mt-1 block text-xs text-slate-500">
-                  {count ? `${count} ${count === 1 ? "registro" : "registros"}` : "Nenhum registro"}
-                </span>
-              </span>
-              <span className="flex shrink-0 flex-col items-center gap-1 text-xs font-semibold text-emerald-800">
-                {active ? (
-                  <ChevronDown size={20} aria-hidden="true" />
-                ) : (
-                  <ChevronRight size={20} aria-hidden="true" />
-                )}
-                {active ? "Fechar" : "Abrir"}
-              </span>
-            </button>
-          );
-        })}
+              <summary>
+                <span>{group.label}</span>
+                <ChevronDown size={18} aria-hidden="true" />
+              </summary>
+              <div className="farm-management-list">
+                {group.sections.map((s) => {
+                  const active = selected === s;
+                  const count = managementEntries(book, s).length;
+                  const Icon = {
+                    pasture: MapPin,
+                    pasture_management: Sprout,
+                    soil_analysis: FlaskConical,
+                    health: Syringe,
+                    exam: Stethoscope,
+                    insemination: Heart,
+                    pregnancy: Heart,
+                    calving: Baby,
+                    fecal: ClipboardCheck,
+                    payable: Wallet,
+                    receivable: Wallet,
+                    product: Package,
+                    storage: Warehouse,
+                    formula: Wheat,
+                    feeding: Wheat,
+                    vehicle: Tractor,
+                    maintenance: Wrench,
+                    vehicle_cost: Receipt,
+                    occurrence: AlertTriangle,
+                    round: Footprints,
+                  }[s];
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      disabled={busy}
+                      aria-expanded={active}
+                      aria-haspopup="dialog"
+                      onClick={() => setSelected(active ? null : s)}
+                      className="farm-management-row"
+                    >
+                      <span
+                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${active ? "bg-emerald-800 text-white" : "bg-emerald-100 text-emerald-800 group-hover:bg-emerald-200"}`}
+                      >
+                        <Icon size={23} aria-hidden="true" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <strong className="block text-sm leading-snug">
+                          {managementSections[s].label}
+                        </strong>
+                        <span className="mt-1 block text-xs text-slate-500">
+                          {count
+                            ? `${count} ${count === 1 ? "registro" : "registros"}`
+                            : "Nenhum registro"}
+                        </span>
+                      </span>
+                      <span className="shrink-0 text-emerald-800">
+                        {active ? (
+                          <ChevronDown size={20} aria-hidden="true" />
+                        ) : (
+                          <ChevronRight size={20} aria-hidden="true" />
+                        )}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </details>
+          ))}
       </div>
       <Dialog open={selected !== null} onOpenChange={(open) => !open && setSelected(null)}>
         <DialogContent className="flex h-[min(92dvh,920px)] w-[calc(100vw-1rem)] max-w-5xl flex-col gap-0 overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-2xl sm:h-[min(88dvh,920px)]">

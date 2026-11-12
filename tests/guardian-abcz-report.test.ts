@@ -165,7 +165,8 @@ test("captionless generic filename is inspected and routed into one persistent i
   const bytes = await activeReportPdf([2]);
   const f = dependencies(bytes);
   const result = await handleAnimalImportInbound(message(), f.deps);
-  assert.deepEqual(result, { shouldSend: false, duplicate: false });
+  assert.equal(result?.shouldSend, true);
+  assert.match(result?.reply ?? "", /Arquivo recebido.*importação/);
   assert.equal(f.downloads(), 1);
   assert.equal(f.enqueued.length, 2); // preparation, then attachment; no animal commit.
   assert.equal(f.enqueued[1].propertyId, farmId);

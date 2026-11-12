@@ -35,6 +35,19 @@ class MainActivity : ComponentActivity() {
     private lateinit var offline: LinearLayout
     private val network = FarmApi.executor
     private val session by lazy { PanelSessionCookies(this) }
+    private var fileCallback: ValueCallback<Array<Uri>>? = null
+    private var fileSelectionPage: String? = null
+    private val chooseFiles = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        val callback = fileCallback
+        fileCallback = null
+        val samePage = ::web.isInitialized && inPanel() && web.url == fileSelectionPage
+        fileSelectionPage = null
+        // Only explicit document-provider grants are handed to the trusted panel.
+        // Never accept file:// or arbitrary remote URIs from a picker result.
+        val files = WebChromeClient.FileChooserParams.parseResult(result.resultCode, result.data)
+            ?.takeIf { files -> files.all { it.scheme == "content" } }
+        callback?.onReceiveValue(if (samePage && !files.isNullOrEmpty()) files else null)
+    }
     private var sessionReady = false
     private var launchTarget: String? = null
     private val notifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -69,7 +82,7 @@ class MainActivity : ComponentActivity() {
             addView(Button(this@MainActivity).apply { text = "Tentar novamente"; setOnClickListener { web.loadUrl(panelUrl) } })
         }
         root.addView(offline); web = WebView(this); root.addView(web, LinearLayout.LayoutParams(-1, 0, 1f)); setContentView(root)
-        with(web.settings) { javaScriptEnabled = true; domStorageEnabled = true; allowFileAccess = false; allowContentAccess = false
+        with(web.settings) { javaScriptEnabled = true; domStorageEnabled = true; allowFileAccess = false; allowContentAccess = true
             mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW; javaScriptCanOpenWindowsAutomatically = false; setSupportMultipleWindows(false); safeBrowsingEnabled = true }
         CookieManager.getInstance().setAcceptCookie(true); CookieManager.getInstance().setAcceptThirdPartyCookies(web, false)
         if (!WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
@@ -81,6 +94,24 @@ class MainActivity : ComponentActivity() {
             catch (_: Exception) { publish("Não foi possível realizar essa ação. Tente novamente.") }
         }
         web.webChromeClient = object : WebChromeClient() {
+            override fun onShowFileChooser(view: WebView, callback: ValueCallback<Array<Uri>>, params: WebChromeClient.FileChooserParams): Boolean {
+                fileCallback?.onReceiveValue(null)
+                fileCallback = null
+                if (!inPanel()) { callback.onReceiveValue(null); return true }
+                fileCallback = callback
+                fileSelectionPage = web.url
+                val types = PanelFiles.acceptTypes(params.acceptTypes.toList())
+                val picker = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    type = if (types.size == 1) types[0] else "*/*"
+                    putExtra(Intent.EXTRA_MIME_TYPES, types.toTypedArray())
+                    putExtra(Intent.EXTRA_ALLOW_MULTIPLE, params.mode == WebChromeClient.FileChooserParams.MODE_OPEN_MULTIPLE)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                try { chooseFiles.launch(picker) }
+                catch (_: Exception) { fileCallback = null; fileSelectionPage = null; callback.onReceiveValue(null); publish("Não foi possível abrir o seletor de arquivos.") }
+                return true
+            }
             override fun onProgressChanged(view: WebView, value: Int) { progress.progress = value; progress.visibility = if (value == 100) View.GONE else View.VISIBLE }
         }
         web.webViewClient = object : WebViewClient() {
@@ -277,5 +308,5 @@ class MainActivity : ComponentActivity() {
         super.onPause()
     }
     override fun onResume() { super.onResume(); if (::web.isInitialized) { ReminderEngine.reschedule(this); sync() } }
-    override fun onDestroy() { unregisterReceiver(changes); if (::web.isInitialized) web.destroy(); super.onDestroy() }
+    override fun onDestroy() { fileCallback?.onReceiveValue(null); fileCallback = null; unregisterReceiver(changes); if (::web.isInitialized) web.destroy(); super.onDestroy() }
 }

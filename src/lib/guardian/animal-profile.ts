@@ -165,6 +165,21 @@ const numberFields = new Set([
   "dailyIntakeKg",
   "carcassPercent",
 ]);
+/** Derive the internal key from an identity actually supplied by the producer.
+ * Existing local codes remain stable when editing a registered animal. */
+export function animalIdentity(profile: Partial<AnimalProfile>): string | undefined {
+  if (profile.code?.trim()) return profile.code.trim();
+  const rgn = profile.rgn?.trim().toUpperCase();
+  if (rgn && /^[A-Z]{1,6}[ .-]+\d+[A-Z]?$/.test(rgn)) return rgn.replace(/[ .-]+/, " ");
+  if (profile.registrySeries?.trim() && rgn)
+    return `${profile.registrySeries.trim().toUpperCase()} ${rgn}`;
+  return (
+    profile.registry?.trim() ||
+    profile.earTag?.trim() ||
+    profile.electronicTag?.trim() ||
+    profile.rgd?.trim()
+  );
+}
 export function animalActionFromForm(values: Record<string, string>) {
   const profile: Record<string, unknown> = {};
   for (const key of Object.keys(AnimalProfileShape)) {
@@ -176,6 +191,7 @@ export function animalActionFromForm(values: Record<string, string>) {
       profile[key] = Math.round(Number(value.replace(",", ".")) * 100);
     else profile[key] = value;
   }
+  profile.code = animalIdentity(profile as Partial<AnimalProfile>);
   // Editing a parent removes that imported branch rather than retaining stale ancestry.
   if (Array.isArray(profile.pedigree)) {
     const roots = profile.pedigree as PedigreeNode[];

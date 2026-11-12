@@ -129,8 +129,14 @@ export function AnimalImports({
   const upload = async (files: FileList | null) => {
     if (!files) return;
     setBusy(true);
+    setError("");
+    setNotice("");
     try {
       for (const file of Array.from(files)) {
+        if (file.size > 4 * 1024 * 1024)
+          throw Error(
+            `${file.name}: o limite é 4 MB por arquivo no painel. Pelo WhatsApp, envie até 25 MB.`,
+          );
         const form = new FormData();
         form.set("file", file);
         await call(endpoint, form);
@@ -171,7 +177,7 @@ export function AnimalImports({
               cadastro.
             </p>
           </div>
-          <button onClick={() => void refresh()} aria-label="Atualizar importação">
+          <button type="button" onClick={() => void refresh()} aria-label="Atualizar importação">
             <RefreshCw size={20} />
           </button>
         </div>
@@ -188,8 +194,9 @@ export function AnimalImports({
           />
         </label>
         <p className="mt-2 text-xs text-slate-500">
-          Até 4 MB por arquivo neste painel (25 MB pelo WhatsApp) e 100 páginas por PDF. Os lotes
-          iniciados no WhatsApp também aparecem aqui.
+          PDF da ABCZ ou de terceiros, Excel (.xlsx/.xls) e CSV, com um ou vários animais. Até 4 MB
+          por arquivo neste painel (25 MB pelo WhatsApp) e 100 páginas por PDF. Os lotes iniciados
+          no WhatsApp também aparecem aqui.
         </p>
       </div>
       {error && (
@@ -233,6 +240,7 @@ export function AnimalImports({
             </div>
             {view.files.some((f) => f.status === "error") && (
               <button
+                type="button"
                 disabled={busy}
                 onClick={() => void mutate("retry")}
                 className="mt-3 rounded-xl border p-3"
@@ -292,16 +300,25 @@ export function AnimalImports({
           </div>
           <div className="flex flex-wrap gap-2 print:hidden">
             <button
+              type="button"
               onClick={() => void download("csv")}
               className="flex items-center gap-1 rounded-xl border p-3"
             >
               <Download size={16} />
               CSV
             </button>
-            <button onClick={() => void download("xlsx")} className="rounded-xl border p-3">
+            <button
+              type="button"
+              onClick={() => void download("xlsx")}
+              className="rounded-xl border p-3"
+            >
               Excel
             </button>
-            <button onClick={() => void download("pdf")} className="rounded-xl border p-3">
+            <button
+              type="button"
+              onClick={() => void download("pdf")}
+              className="rounded-xl border p-3"
+            >
               PDF completo
             </button>
           </div>
@@ -354,6 +371,7 @@ export function AnimalImports({
                     <div className="mt-3 flex gap-2 print:hidden">
                       {["review", "error", "duplicate", "excluded"].includes(r.status) && (
                         <button
+                          type="button"
                           disabled={busy}
                           onClick={() => {
                             setEditing(structuredClone(r));
@@ -367,6 +385,7 @@ export function AnimalImports({
                       )}
                       {r.status === "review" && (
                         <button
+                          type="button"
                           disabled={busy}
                           onClick={() => void mutate("exclude", { id: r.id })}
                           className="rounded-lg border px-3 py-2 text-rose-700"
@@ -382,6 +401,7 @@ export function AnimalImports({
           </div>
           <div className="flex items-center justify-between print:hidden">
             <button
+              type="button"
               disabled={page <= 1}
               onClick={() => setPage(page - 1)}
               className="rounded-xl border p-3 disabled:opacity-40"
@@ -390,6 +410,7 @@ export function AnimalImports({
             </button>
             <span>Página {page}</span>
             <button
+              type="button"
               disabled={page * 25 >= view.total}
               onClick={() => setPage(page + 1)}
               className="rounded-xl border p-3 disabled:opacity-40"
@@ -400,6 +421,7 @@ export function AnimalImports({
           {view.batch.status === "review" && (
             <div className="flex flex-wrap gap-3 print:hidden">
               <button
+                type="button"
                 disabled={busy}
                 onClick={() => setConfirm(true)}
                 className="flex items-center gap-2 rounded-xl bg-emerald-900 p-4 font-semibold text-white"
@@ -410,6 +432,7 @@ export function AnimalImports({
                   : "Cadastrar todos os validados"}
               </button>
               <button
+                type="button"
                 disabled={busy}
                 onClick={() => void mutate("cancel")}
                 className="rounded-xl border p-3"
@@ -433,6 +456,7 @@ export function AnimalImports({
             </DialogDescription>
           </DialogHeader>
           <button
+            type="button"
             disabled={busy}
             className="rounded-xl bg-emerald-900 p-4 font-semibold text-white"
             onClick={() =>
@@ -561,6 +585,7 @@ export function AnimalImports({
                 </p>
               )}
               <button
+                type="button"
                 disabled={busy}
                 onClick={() =>
                   void mutate("edit", {
