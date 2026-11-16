@@ -51,7 +51,7 @@ export default defineConfig(({ command, mode }) => {
       ...(command === "build"
         ? [
             nitro({
-              preset: process.env.NITRO_PRESET || "netlify",
+              preset: process.env.NITRO_PRESET || "node_server",
               traceDeps: ["ffmpeg-static*"],
               traceOpts: { hooks: { tracedPackages: deduplicateFFmpegTrace } },
             }),

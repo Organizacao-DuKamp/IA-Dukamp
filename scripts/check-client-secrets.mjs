@@ -19,6 +19,7 @@ const forbidden = [
   "TPEC_FCM_CLIENT_EMAIL",
   "ABCZ_SOFTWARE_ID",
   "ABCZ_FARM_CREDENTIALS_JSON",
+  "TPEC_WORKER_TOKEN",
 ];
 const extensions = /\.(?:js|mjs|cjs|map|html)$/i;
 

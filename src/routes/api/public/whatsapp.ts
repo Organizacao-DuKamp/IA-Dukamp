@@ -3,6 +3,8 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { enforceDurableWhatsAppStateStore } from "@/lib/whatsapp/state-store-guard.server";
+import { selfHosted } from "@/lib/runtime/config.server";
+import { enqueueWhatsAppWebhook } from "@/lib/runtime/webhook.server";
 
 const MAX_BACKGROUND_WEBHOOK_BYTES = 240 * 1024;
 const BACKGROUND_FUNCTION_PATH = "/.netlify/functions/whatsapp-process-background";
@@ -95,6 +97,7 @@ async function enqueueBackground(request: Request): Promise<Response> {
 }
 
 async function handle(request: Request): Promise<Response> {
+  if (selfHosted() && request.method === "POST") return enqueueWhatsAppWebhook(request);
   // O GET de verificação da Meta é instantâneo e continua no handler normal.
   if (request.method === "GET" || !shouldUseWhatsAppBackground()) {
     return handleDirect(request);

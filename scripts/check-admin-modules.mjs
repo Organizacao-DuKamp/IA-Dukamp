@@ -5,7 +5,11 @@ import { pathToFileURL } from "node:url";
 // A successful bundle alone does not guarantee its route modules can load.
 // In particular, removed server-function builder APIs throw during import,
 // before authentication or any handler has a chance to run.
-const root = resolve(".netlify/functions-internal/server/_ssr");
+const root = resolve(
+  process.env.NITRO_PRESET === "netlify"
+    ? ".netlify/functions-internal/server/_ssr"
+    : ".output/server/_ssr",
+);
 const files = await readdir(root);
 const routes = [
   "admin.base-conhecimento",
