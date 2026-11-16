@@ -22,9 +22,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:
-      QA_BASE_URL: ${{ vars.TPEC_QA_BASE_URL || 'https://tpec-ia.netlify.app' }}
-      QA_CONCURRENCY: '3'
-      QA_TIMEOUT_MS: '90000'
+      QA_BASE_URL: ${{ vars.TPEC_QA_BASE_URL || 'https://www.tpecia.com.br' }}
+      QA_CONCURRENCY: "3"
+      QA_TIMEOUT_MS: "90000"
       QA_OUTPUT_DIR: qa-results
     steps:
       - uses: actions/checkout@v4

@@ -1,0 +1,29 @@
+name: Package self-hosted Linux release
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
+      VITE_SUPABASE_PROJECT_ID: ${{ vars.VITE_SUPABASE_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.22.1"
+          cache: npm
+      - run: npm ci --include=dev
+      - run: npm run build:node
+      - name: Package runtime without secrets
+        run: |
+          tar -czf tpecia-linux-x64-${{ github.sha }}.tar.gz .output package.json scripts/start.mjs scripts/worker.mjs scripts/check-config.mjs scripts/queue.mjs src/lib/runtime/config.server.ts src/lib/runtime/queue.server.ts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tpecia-linux-x64-${{ github.sha }}
+          path: tpecia-linux-x64-${{ github.sha }}.tar.gz
+          retention-days: 14

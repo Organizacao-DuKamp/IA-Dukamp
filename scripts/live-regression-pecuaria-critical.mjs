@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 
-const baseUrl = (process.env.QA_BASE_URL || "https://tpec-ia.netlify.app").replace(/\/$/, "");
+const baseUrl = (process.env.QA_BASE_URL || "https://www.tpecia.com.br").replace(/\/$/, "");
 const endpoint = `${baseUrl}/api/public/chat`;
 const outDir = process.env.QA_OUTPUT_DIR || "qa-regression-results";
 const timeoutMs = Number(process.env.QA_TIMEOUT_MS || 90_000);

@@ -1,0 +1,27 @@
+[Unit]
+Description=TPEC-IA persistent queue and minute schedules
+After=network-online.target tpecia-web.service
+Wants=network-online.target tpecia-web.service
+
+[Service]
+Type=simple
+User=tpecia
+Group=tpecia
+WorkingDirectory=/opt/tpecia/current
+ExecStart=/usr/local/bin/node --env-file=/etc/tpecia/tpecia.env scripts/worker.mjs
+Restart=on-failure
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=27min
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/tpecia
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=tpecia-worker
+
+[Install]
+WantedBy=multi-user.target

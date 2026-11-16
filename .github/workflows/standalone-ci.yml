@@ -1,4 +1,4 @@
-name: Standalone Netlify CI
+name: Self-hosted Node CI
 
 on:
   push:
@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+
+env:
+  VITE_SUPABASE_URL: https://fixture.supabase.co
+  VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_fixture
+  VITE_SUPABASE_PROJECT_ID: fixture
 
 permissions:
   contents: read
@@ -25,10 +30,13 @@ jobs:
         run: npm run audit:privileged
       - name: Test
         run: npm test
-      - name: Build Netlify preset
+      - name: Build Node preset
         env:
-          NITRO_PRESET: netlify
+          NITRO_PRESET: node_server
         run: npm run build
+      - name: Smoke test production Node server and durable jobs
+        if: runner.os == 'Linux'
+        run: npm run test:hosting
       - name: Lint
         if: always()
         run: npm run lint
@@ -45,9 +53,9 @@ jobs:
         run: npm ci --include=dev
       - name: Test FFmpeg packaging and WhatsApp media
         run: node --test --experimental-strip-types tests/ffmpeg-trace.test.ts tests/whatsapp-video.test.ts tests/whatsapp-media.test.ts
-      - name: Build Netlify preset and verify Windows executable
+      - name: Build Node preset and verify Windows executable
         env:
-          NITRO_PRESET: netlify
+          NITRO_PRESET: node_server
         run: npm run build
 
   panel-access:
