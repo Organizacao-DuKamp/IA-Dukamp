@@ -6,7 +6,9 @@ import { createRequire } from "node:module";
 import { basename, isAbsolute, relative, resolve } from "node:path";
 import { promisify } from "node:util";
 
-const root = resolve(".netlify/functions-internal/server");
+const root = resolve(
+  process.env.NITRO_PRESET === "netlify" ? ".netlify/functions-internal/server" : ".output/server",
+);
 const require = createRequire(resolve(root, "package.json"));
 const binary = require("ffmpeg-static");
 assert.ok(binary, "FFmpeg is unsupported on this platform");

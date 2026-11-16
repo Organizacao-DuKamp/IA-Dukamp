@@ -47,7 +47,10 @@ function handle(request: Request): Response {
     env[name] = process.env[name]?.trim() ? "configurada" : "ausente";
   }
 
-  return json({ backend_mode: "netlify-standalone", env });
+  return json({
+    backend_mode: process.env.TPEC_RUNTIME === "node" ? "node-server" : "netlify-standalone",
+    env,
+  });
 }
 
 export const Route = createFileRoute("/api/public/diag")({

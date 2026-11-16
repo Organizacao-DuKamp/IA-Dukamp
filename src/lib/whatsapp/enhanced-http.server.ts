@@ -28,6 +28,8 @@ const DELIVERY_CONFIRM_ATTEMPTS = 3;
 const DELIVERY_CONFIRM_RETRY_MS = 120;
 
 export interface EnhancedWhatsAppHttpDependencies {
+  /** Fail the durable envelope on transient claim failure; never acknowledge lost work. */
+  durableQueue?: boolean;
   env?: EnvLike;
   fetchImpl?: typeof fetch;
   dispatchChat?: (input: WhatsAppChatInput) => Promise<WhatsAppChatResult>;
@@ -514,9 +516,11 @@ export async function handleEnhancedWhatsAppWebhookRequest(
         action: "claim",
         phone: message.phone,
         messageId: message.messageId,
+        input: message,
       });
     } catch (error) {
       console.error(`[whatsapp] durable claim failed ${errorDetails(error)}`);
+      if (dependencies.durableQueue) return json({ error: "durable_claim_failed" }, 503);
       await trySendWhatsAppText(
         message.phone,
         friendlyWhatsAppError(error),

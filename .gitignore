@@ -23,6 +23,10 @@ dist-ssr
 .tanstack/**
 .nitro
 .netlify/
+data/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
 *.local
 
 # Wrangler / Cloudflare

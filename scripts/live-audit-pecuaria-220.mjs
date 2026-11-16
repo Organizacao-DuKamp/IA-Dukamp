@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-const baseUrl = (process.env.QA_BASE_URL || 'https://tpec-ia.netlify.app').replace(/\/$/, '');
+const baseUrl = (process.env.QA_BASE_URL || 'https://www.tpecia.com.br').replace(/\/$/, '');
 const endpoint = `${baseUrl}/api/public/chat`;
 const concurrency = Number(process.env.QA_CONCURRENCY || 3);
 const timeoutMs = Number(process.env.QA_TIMEOUT_MS || 90000);

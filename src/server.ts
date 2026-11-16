@@ -47,6 +47,31 @@ function isH3SwallowedErrorBody(body: string): boolean {
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      if (process.env.TPEC_RUNTIME === "node") {
+        const path = new URL(request.url).pathname;
+        if (path === "/healthz")
+          return Response.json({ status: "ok" }, { headers: { "cache-control": "no-store" } });
+        if (path === "/readyz") {
+          const { jobQueue } = await import("./lib/runtime/queue.server.ts");
+          const ready = jobQueue().stats().workerHealthy;
+          return Response.json(
+            { status: ready ? "ready" : "worker_unavailable" },
+            { status: ready ? 200 : 503, headers: { "cache-control": "no-store" } },
+          );
+        }
+        if (path === "/api/internal/jobs") {
+          return (await import("./lib/runtime/jobs.server.ts")).handleWorkerRequest(request);
+        }
+        // Fixed trusted external origin preserves HTTPS cookies and strict CSRF
+        // behind a TLS-terminating proxy, without trusting forwarded Host input.
+        if (process.env.PUBLIC_ORIGIN) {
+          const url = new URL(request.url);
+          const publicUrl = new URL(process.env.PUBLIC_ORIGIN);
+          url.protocol = publicUrl.protocol;
+          url.host = publicUrl.host;
+          request = new Request(url, request);
+        }
+      }
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);

@@ -95,6 +95,16 @@ export async function controlWhatsAppMessage(
   const conversation = await import("./conversation.server.ts");
   switch (request.action) {
     case "claim":
+      // Persist normalized input atomically with the Supabase claim. A crash
+      // between claim and dispatch must remain recoverable after restart.
+      if (
+        request.input &&
+        process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() &&
+        process.env.WHATSAPP_STATE_STORE !== "memory"
+      ) {
+        const { claimWhatsAppMessage } = await import("./store.server.ts");
+        return claimWhatsAppMessage(request.messageId, request.phone, request.input);
+      }
       return conversation.claimWhatsAppInboundMessage(request.messageId, request.phone);
     case "complete":
       await conversation.completeWhatsAppInboundMessage(request.messageId, request.reply);
