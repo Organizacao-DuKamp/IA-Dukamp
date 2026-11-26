@@ -1,6 +1,6 @@
 import { handleAccessInvite } from "./access-links.server.ts";
 import { handleEmployeeDialogue } from "./employee-dialogue.server.ts";
-import { handleFarmDialogue } from "./farm-dialogue.server.ts";
+import { handleFarmDialogue, handleRegistrationInbound } from "./farm-dialogue.server.ts";
 import { directFarmReport } from "./direct-report.ts";
 import { creatingFarm, naturalConfirmation } from "./farm-dialogue.ts";
 import type { GuardianTrace } from "./trace.ts";
@@ -130,6 +130,7 @@ export interface GuardianHandled {
   persisted?: boolean;
   conversational?: boolean;
   herdIdentificationQuestion?: string;
+  registration?: boolean;
 }
 export interface GuardianDependencies {
   store?: GuardianStore;
@@ -324,6 +325,8 @@ export async function handleGuardianMessage(
       if (imported?.reply) return { reply: imported.reply, activeProperty: true, persisted: true };
     }
     if (!deps.request) {
+      const registration = await handleRegistrationInbound(input, store, now, deps.makeId);
+      if (registration) return registration;
       const invitation = await handleAccessInvite(input, {
         load: store.load.bind(store),
         links: deps.accessLinks,
@@ -1789,6 +1792,16 @@ export async function handleGuardianMessage(
                 description: action.description.slice(0, 160),
                 ...(action.lot ? { lot: action.lot } : {}),
               });
+            if ((action as GuardianAction).kind === "property_create") {
+              if (action.kind !== "property_create") throw Error("guardian_registration_required");
+              const registration = await handleFarmDialogue(
+                { ...input, text: "cadastrar fazenda " + action.name + " em " + action.city + "/" + action.uf },
+                snapshot, store, now, deps.makeId,
+              );
+              if (registration === "conflict") continue;
+              if (registration) return registration;
+              throw Error("guardian_registration_required");
+            }
             if (action.kind !== "property_create" && !snapshot.active)
               return {
                 reply:
@@ -1914,11 +1927,13 @@ export async function handleGuardianMessage(
               ...(pending.revisedBy ? { revisedBy: pending.revisedBy } : {}),
             };
             if (a.kind === "property_create") {
-              base.operation = "create";
-              base.propertyId = (deps.makeId ?? randomUUID)();
-              base.propertyVersion = null;
-              base.book = emptyFarm(a.name, a.city, a.uf);
-              base.reply = `Fazenda ${a.name} criada e selecionada, em ${a.city}/${a.uf}. A Guardiã é gratuita. Os avisos ficam pausados até você dizer “ativar avisos da guardiã”.`;
+              const registration = await handleFarmDialogue(
+                { ...input, text: "cadastrar fazenda " + a.name + " em " + a.city + "/" + a.uf },
+                snapshot, store, now, deps.makeId,
+              );
+              if (registration === "conflict") continue;
+              if (registration) return registration;
+              throw Error("guardian_registration_required");
             } else if (a.kind === "property_transfer") {
               const transfers = deps.transferStore ?? farmTransferStore;
               if (deps.store && !deps.transferStore)

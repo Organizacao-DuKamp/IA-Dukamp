@@ -1,0 +1,12 @@
+# Cadastro rural obrigatório
+
+O produtor inicia pelo WhatsApp ao solicitar acesso ao painel ou cadastrar propriedade. O diálogo coleta nome do produtor, nome da propriedade, CPF/CNPJ, inscrição estadual, município, e-mail e faturamento estimado anual em reais. Respostas parciais são preservadas no rascunho; perguntas não repetem campos já preenchidos. A UF e o código do município são consultados no IBGE; somente homônimos exigem desambiguação, e falhas da consulta impedem concluir o cadastro. A revisão mascara documento e inscrição. A confirmação salva dados cadastrais e propriedade na mesma transação.
+
+Classificação interna: até R$ 500.000 pequeno; acima de R$ 500.000 até R$ 3.500.000 médio; acima disso grande. Valores em centavos, coluna gerada no PostgreSQL. A inscrição estadual é obrigatória (validação de formato, sem consulta à SEFAZ); CPF/CNPJ tem validação de dígitos, sem consulta cadastral externa. E-mail tem validação sintática, sem confirmação de titularidade.
+
+Propriedades pré-existentes não perdem o acesso. Novos cadernos espontâneos são provisórios e ficam sem emissão de acesso até o cadastro ser completado, preservando o rebanho e os demais registros. Os dados fiscais ficam em tabela RLS exclusiva do backend, separados do livro da fazenda. O rascunho permanece no estado privado da conta e dados de cadastro não são enviados intencionalmente ao histórico de chat/telemetria no novo fluxo; a mídia e infraestrutura Meta seguem suas retenções existentes. Não há envio de dados fiscais ao IBGE.
+
+## Homologação
+Aplicar a nova migração no ambiente de teste antes de publicar o código. Executar typecheck, lint, suíte existente e testes de cadastro; validar primeiro cadastro, reinício com rascunho parcial, CPF/CNPJ e IE inválidos, homônimos, falha do IBGE, confirmação, concorrência, propriedade provisória, usuário já cadastrado, convite e link legado. Homologar no WhatsApp antes de aplicar ao ambiente real. Revisar a política de privacidade e retenção de rascunhos e as permissões de administração.
+
+Não foi aplicada nenhuma migração ou alteração em produção nesta entrega.

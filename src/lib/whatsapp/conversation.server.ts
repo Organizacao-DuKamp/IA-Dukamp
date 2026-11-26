@@ -469,6 +469,16 @@ export async function processClaimedWhatsAppChat(
       userText = resolvedUserText.text;
       snapshot = previous;
       conversationId = previous?.conversationId ?? `wa:${input.phone}`;
+      // Registration is handled before automatic notes and general AI. Keep raw
+      // registration fields out of the general chat transcript and telemetry.
+      const registration = !dependencies.executeChat && !dependencies.processGuardian &&
+        process.env.TPEC_GUARDIAN_ENABLED?.trim() === "true"
+        ? await (await import("../guardian/farm-dialogue.server.ts")).handleRegistrationInbound({
+            phone: input.phone, messageId: input.messageId, text: userText,
+            mediaType: input.media?.type, history: previous?.history, sentAt: input.sentAt,
+          }, (await import("../guardian/store.server.ts")).guardianStore)
+        : null;
+      if (registration) userText = "[Dados do cadastro rural]";
       // Every inbound updates the service window and stop preference, including structured operations.
       try {
         await observeWhatsAppInboundForMemory(input, userText, previous?.history ?? [], sourceAt);
@@ -477,7 +487,7 @@ export async function processClaimedWhatsAppChat(
       }
       const observe =
         dependencies.observeMemory ?? (!dependencies.executeChat ? observeLearnedMemory : null);
-      if (observe) {
+      if (observe && !registration) {
         try {
           learnedMemory = await observe({
             phone: input.phone,
@@ -502,7 +512,7 @@ export async function processClaimedWhatsAppChat(
         (!dependencies.executeChat
           ? (await import("../guardian/handler.server.ts")).handleGuardianMessage
           : null);
-      const guardian = guardianHandler
+      const guardian = registration ?? (guardianHandler
         ? await guardianHandler({
             phone: input.phone,
             messageId: input.messageId,
@@ -513,7 +523,7 @@ export async function processClaimedWhatsAppChat(
             ...(input.sentAt ? { sentAt: input.sentAt } : {}),
             ...(input.replyToMessageId ? { replyToMessageId: input.replyToMessageId } : {}),
           })
-        : null;
+        : null);
       if (guardian?.reply) {
         herdReply = guardian.reply;
         await recordAIChatTurn({
