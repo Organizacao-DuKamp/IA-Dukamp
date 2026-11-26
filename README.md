@@ -10,7 +10,7 @@ dados, autenticação e reservas de negócio. Não há necessidade de Functions 
 
 Veja [migração e operação](docs/MIGRACAO-HOSPEDAGEM.md) e a
 [auditoria anterior às alterações](docs/AUDITORIA-HOSPEDAGEM.md).
-Docker/Compose, Caddy e serviços systemd estão na raiz e em `deploy/`.
+Caddy e serviços systemd estão em `deploy/`. A implantação usa Node.js diretamente no Linux, sem Docker.
 Use `npm run build:node`, `npm start` e, em outro processo, `npm run worker`.
 O build exige as três variáveis públicas `VITE_SUPABASE_*`; os processos exigem
 as variáveis privadas descritas em `.env.example`. Não copie secrets ao build.
@@ -22,7 +22,7 @@ para compatibilidade e rollback enquanto a migração não for homologada.
 
 - TanStack Start + React 19
 - Nitro para SSR/server handlers
-- Netlify como frontend e backend server-side
+- Node.js + systemd para frontend SSR, APIs e worker; Netlify somente para rollback
 - Supabase TPEC-IA para RAG e dados internos
 - Supabase secundário DuKamp para produtos e vendedores públicos
 - OpenAI para raciocínio, Web Search, resposta final e embeddings do RAG
@@ -34,9 +34,9 @@ npm install
 npm run dev
 ```
 
-Use `.env.example` como referência. O backend roda diretamente no runtime server-side da Netlify.
+Use `.env.example` como referência. O desenvolvimento local usa o runtime Vite; a produção própria usa Nitro no Node.js.
 
-## Arquitetura de deploy independente
+## Arquitetura legada (Netlify)
 
 ```text
 Navegador

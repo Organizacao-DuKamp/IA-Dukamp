@@ -4,6 +4,8 @@ Executado em 16/11/2026, Linux x64, Node.js 24.22.1, branch
 `migration/self-hosted-node`, base `13bc4c05b77f0706cae60088a62ea106c2589a1c`.
 Não foram usadas credenciais de produção e nenhuma configuração externa foi alterada.
 
+Os testes de Docker abaixo são registros históricos da implementação inicial; a entrega final usa Node.js direto e systemd, sem arquivos de Docker.
+
 ## Aprovados
 
 | Verificação executada                                              | Resultado                                                                                                                                                                                                         |

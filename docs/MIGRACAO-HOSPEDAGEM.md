@@ -60,7 +60,7 @@ avaliar limites de IA e ordenação de mensagens por produtor.
 Solicite ao administrador, antes de contratar:
 
 - Linux x86_64 ou ARM64 com **Node.js 24.22.1**, npm e execução persistente de
-  dois processos (web e worker), ou Docker Engine + Compose v2. Esta versão é
+  dois processos (web e worker), supervisionados pelo systemd. Esta versão é
   exigida por package.json e também fornece `node:sqlite`; testar o mesmo release.
 - Recomendação inicial **2 vCPU, 4 GB RAM**, 20 GB SSD livres, swap monitorada.
   Builds podem exigir mais RAM; medir carga real de vídeo/PDF/IA e ajustar.
@@ -68,13 +68,13 @@ Solicite ao administrador, antes de contratar:
 - Disco POSIX local persistente e gravável para a fila. **Não usar NFS, volume
   efêmero, pasta pública ou múltiplos servidores compartilhando SQLite**.
 - Portas públicas TCP 80/443 para Caddy/ACME e aplicação. Porta 3000 somente
-  loopback (Node direto) ou rede privada Docker; nunca abri-la na Internet.
+  loopback; nunca abri-la na Internet.
 - Saída HTTPS/DNS para Supabase (Auth/REST/Storage), OpenAI, Gemini, DeepSeek,
   Perplexity, graph.facebook.com e hosts de mídia Meta, oauth2.googleapis.com,
   fcm.googleapis.com, ABCZ, IBGE, INMET e Open-Meteo. Builds precisam npm/GitHub
   e download do binário ffmpeg-static. Proxy corporativo precisa CA confiável;
   nunca desativar validação TLS.
-- systemd (opção direta), Caddy 2.10.2, Git, curl, CA certificates e ferramentas
+- systemd, Caddy 2.10.2, Git, curl, CA certificates e ferramentas
   de backup/logs. FFmpeg vem de ffmpeg-static; não requer instalação global,
   mas exige execução do ELF e `/tmp` gravável. Reserve ao menos 512 MB temporários;
   mídia continua limitada pela aplicação a 25 MB e vídeo a 10 minutos.
@@ -95,10 +95,8 @@ existentes dependem da chave. Copie também flags e overrides de modelos/tarifas
 não ative nem desative funcionalidades para simplificar a mudança.
 
 Para Node direto, crie `/etc/tpecia/build.env` (somente público) e
-`/etc/tpecia/tpecia.env` (privado), ambos fora do checkout. Para Docker use um
-arquivo privado `.env` fora do controle de versão (ou `TPEC_ENV_FILE` apontando
-para ele); Compose usa `--env-file` também para interpolar argumentos públicos.
-Nunca passe chaves de IA/service role como ARG de Docker ou prefixo `VITE_`.
+`/etc/tpecia/tpecia.env` (privado), ambos fora do checkout.
+Nunca passe chaves de IA/service role ao build ou com prefixo `VITE_`.
 
 Build público obrigatório:
 
@@ -124,7 +122,7 @@ exige rebuild, pois entram no JavaScript. `SUPABASE_*` sem VITE são de runtime.
 | Android            | `TPEC_ANDROID_SHA256_CERT_FINGERPRINTS` do certificado ORIGINAL/Play Signing; não criar certificado novo                                                                                                                            |
 | ABCZ               | `ABCZ_SOFTWARE_ID`, `ABCZ_FARM_CREDENTIALS_JSON`, se a integração atual estiver habilitada                                                                                                                                          |
 | Admin opcional     | `QA_TEST_TOKEN`, `MARKET_INGEST_TOKEN`, limites `RATE_LIMIT_*`, demais overrides existentes                                                                                                                                         |
-| Docker/Caddy       | `ACME_EMAIL` de contato real, `TPEC_RELEASE` identificando imagem imutável; Compose define host interno `http://web:3000` e volume automaticamente                                                                                  |
+| Caddy | `ACME_EMAIL` de contato real, configurado no serviço Caddy. |
 
 Gere token dedicado: `openssl rand -hex 32`. Mesma configuração web/worker.
 Para PEM Firebase, use valor entre aspas com quebras `\n`; o adapter converte.
@@ -139,44 +137,11 @@ node --env-file=/etc/tpecia/tpecia.env scripts/check-config.mjs
 
 Os processos recusam início se faltam variáveis essenciais, se origem não é
 HTTPS, se fila não tem caminho absoluto, se token é curto, se FCM está parcial
-ou se modo memória foi configurado. Verifique no processo e no Compose os
-mesmos valores. `TPEC_WHATSAPP_BACKGROUND=false` não desativa fila no modo Node.
+ou se modo memória foi configurado. Verifique os mesmos valores nos processos web e worker. `TPEC_WHATSAPP_BACKGROUND=false` não desativa fila no modo Node.
 Para desenvolvimento com `npm run dev`, não use as variáveis de produção:
 deixe `TPEC_RUNTIME` ausente e use credenciais de integração isoladas.
 
-## 4. Opção A: Docker + Compose
-
-Instale Docker/Compose e configure firewall. Em um clone de release revisado:
-
-```bash
-git clone https://github.com/Organizacao-DuKamp/IA-Dukamp.git tpecia
-cd tpecia
-git checkout COMMIT_APROVADO
-# Criar arquivo privado /etc/tpecia/tpecia.env com as variáveis acima.
-# Incluir nele VITE_* públicas, ACME_EMAIL e TPEC_RELEASE único.
-docker compose --env-file /etc/tpecia/tpecia.env build
-docker compose --env-file /etc/tpecia/tpecia.env up -d
-# Não imprima `docker compose config` completo: contém segredos.
-docker compose --env-file /etc/tpecia/tpecia.env ps
-docker compose --env-file /etc/tpecia/tpecia.env logs --tail=100 web worker
-docker compose --env-file /etc/tpecia/tpecia.env exec web node scripts/queue.mjs
-```
-
-Se o arquivo não é `.env` do diretório, exporte
-`TPEC_ENV_FILE=/etc/tpecia/tpecia.env` **antes dos comandos**, para que `env_file`
-use esse arquivo também. `--env-file` sozinho só controla interpolação Compose.
-A imagem final executa como `node`, raiz somente leitura, `/tmp` em tmpfs e
-volume privado compartilhado `jobs` (web e worker precisam do mesmo volume).
-Node traz o runtime e FFmpeg é copiado do build. Não montar checkout completo
-sobre `/app`, pois esconderia o artefato. Não publicar a porta do Node.
-
-Antes do DNS, suba apenas `web worker` se não puder emitir certificado ainda;
-valide por SSH tunnel ou proxy de homologação com HTTPS e origem explícita.
-A emissão pública de certificados por Caddy exige DNS apontando para o servidor
-ou certificados pré-provisionados pelo administrador. Não peça certificado
-inválido nem desative Secure para contornar homologação.
-
-## 5. Opção B: Node direto + systemd
+## 4. Node direto + systemd
 
 Instale Node 24.22.1 (verifique `node --version`) e Caddy. Os exemplos de units
 assumem `/usr/local/bin/node`; adapte para o caminho real do administrador.
@@ -213,7 +178,7 @@ ou defina `ACME_EMAIL` no serviço Caddy. O upstream padrão é 127.0.0.1:3000.
 Valide com `caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile`,
 e recarregue o proxy. Só o proxy pode alcançar Node pela rede.
 
-## 6. HTTPS, proxy, cookies, CORS e refresh
+## 5. HTTPS, proxy, cookies, CORS e refresh
 
 Caddy emite/renova HTTPS para **os dois hosts**, aplica HSTS, redireciona apex
 com 308 e encaminha todas as rotas ao Nitro, inclusive assets, APIs e páginas
@@ -229,7 +194,7 @@ sem necessidade. Preserve a mesma origem e os valores de secrets para que as
 sessões do browser/WebView continuem válidas. Endpoints autenticados não devem
 ter cache no proxy; o service worker já não armazena dados da fazenda.
 
-## 7. Registro.br: plano de DNS (não executado)
+## 6. Registro.br: plano de DNS (não executado)
 
 Primeiro confirme onde o DNS é autoritativo (`NS`). Registro.br pode delegar
 para outro provedor; nesse caso, editar na zona autoritativa, sem trocar NS
@@ -254,7 +219,7 @@ Não alterar registros reais nesta entrega. Após autorização futura: confirma
 A/AAAA/CNAME de fora da rede, HTTPS nos dois hosts, renovação e ausência de
 tráfego enviado ao host antigo. Manter Netlify disponível para rollback DNS.
 
-## 8. Meta, Supabase, Firebase, Android e PWA
+## 7. Meta, Supabase, Firebase, Android e PWA
 
 **Meta:** a URL continua `https://www.tpecia.com.br/api/public/whatsapp`.
 Preserve verify token, app secret, token permanente e phone number ID. Se o
@@ -287,7 +252,7 @@ APK existente; testar fechar/reabrir e reinício do aparelho, alarmes e push.
 PWA deve abrir a mesma rota e manter service worker sem cache de dados privados.
 Nenhum rebuild/redistribuição de APK é exigido apenas pela mudança de host.
 
-## 9. Fila, falhas, idempotência e dados privados
+## 8. Fila, falhas, idempotência e dados privados
 
 SQLite usa WAL, synchronous FULL, transações e permissões 0700/0600; limite de
 webhook 240 KiB antes do commit. Confirmação HTTP 200 somente após persistência.
@@ -301,8 +266,7 @@ renovado a cada 30 s. O worker aguarda no máximo 25 min por HTTP. Após falha d
 transporte incerta não libera imediatamente: o servidor poderia estar enviando
 uma resposta. Uma tarefa órfã pode aguardar até 30 min; as reservas de negócio
 mantêm a recuperação de mensagens mais rápida quando aplicável. Não reduzir
-leases sem medir a duração real. Encerramento SIGTERM drena trabalho; systemd e
-Compose aguardam 27 min. Em falta de energia/KILL, a fila e o Supabase retomam.
+leases sem medir a duração real. Encerramento SIGTERM drena trabalho; systemd aguarda 27 min. Em falta de energia/KILL, a fila e o Supabase retomam.
 
 Falhas confirmadas têm backoff exponencial de 5 s até 5 min, com até 10 tentativas
 antes de `dead`. O scheduler não perde as tarefas de negócio persistidas no
@@ -326,14 +290,13 @@ node --env-file=/etc/tpecia/tpecia.env scripts/queue.mjs
 node --env-file=/etc/tpecia/tpecia.env scripts/queue.mjs replay ID_DA_TAREFA
 ```
 
-Não executar esse comando com root sobre volume Docker e mudar seu proprietário:
-use `docker compose ... exec web node scripts/queue.mjs`.
+Execute os comandos de fila como o usuário `tpecia` (por exemplo, com `sudo -u tpecia`), para preservar as permissões do banco local.
 
-## 10. Atualização, publicação e rollback
+## 9. Atualização, publicação e rollback
 
 Nunca alterar uma pasta de release em execução. Identificar cada release por SHA
 completo e manter versão anterior, seu artefato Linux e o arquivo de variáveis
-compatível. Não sobrescrever nem recriar o volume `jobs` em atualizações.
+compatível. Não sobrescrever nem recriar o diretório persistente da fila em atualizações.
 
 Node direto: `deploy/release.sh SHA_COMPLETO` é exemplo executado pelo
 administrador (não por este PR). Clona release revisado, instala dependências,
@@ -350,11 +313,7 @@ para consumir pendências. No rollback DNS, drenar primeiro tarefas locais já c
 worker Node e reativar schedulers antigos. Se o worker precisar continuar, desativar
 as manutenções na outra origem até a drenagem. Não manter dois schedulers ativos.
 
-Docker: buildar com `TPEC_RELEASE=SHA_NOVO` sem apagar imagem antiga; parar worker
-com drenagem, recriar web e worker com a imagem nova e verificar saúde. Para
-reverter, usar `TPEC_RELEASE=SHA_ANTERIOR` e `up -d --no-build web worker`.
-Manter os arquivos Compose/env daquela versão. **Não executar `down -v`**.
-O volume `jobs`, os volumes Caddy e o diretório de secrets são permanentes.
+O diretório `/var/lib/tpecia`, os dados de Caddy e o diretório de secrets são permanentes.
 
 CI valida build Node e smoke test sem Netlify. O workflow opcional
 `self-hosted-release.yml` gera artefato por GitHub Actions (workflow_dispatch),
@@ -362,7 +321,7 @@ sem publicar nem tocar servidor. O terceiro pode baixar artefato revisado para
 uma nova release. Para deploy automático futuro, usar ambiente GitHub protegido,
 chave SSH restrita e comando de release fixo; não guardar senha/root no workflow.
 
-## 11. Monitoramento e logs
+## 10. Monitoramento e logs
 
 - `/healthz`: liveness do processo web, não testa provedores/banco.
 - `/readyz`: 200 se worker autenticou e deu heartbeat há menos de 90 s, 503 se
@@ -374,12 +333,11 @@ chave SSH restrita e comando de release fixo; não guardar senha/root no workflo
   `job_done`, `job_failed`, `worker_dispatch_uncertain`, `maintenance_summary`.
   Resumos de manutenção só incluem contadores/booleanos. Logs dos módulos atuais
   continuam ativos. Não habilitar captura de corpos ou cabeçalhos Authorization.
-- Docker limita rotação a 5 arquivos de 10 MB por serviço. Para systemd, configurar
-  retenção do journald segundo a política do administrador. Caddy não grava URLs
+- Configurar retenção do journald segundo a política do administrador. Caddy não grava URLs
   de acesso para evitar links sensíveis em queries. Monitorar status sem gravar
   mensagens, cookies, telefone completo ou tokens.
 
-## 12. Testes e checklist de corte
+## 11. Testes e checklist de corte
 
 Executáveis locais sem serviços pagos:
 
