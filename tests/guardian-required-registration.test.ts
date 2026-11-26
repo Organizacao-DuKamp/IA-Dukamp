@@ -47,3 +47,37 @@ test("IBGE: município único e homônimos não escolhem arbitrariamente o estad
   assert.equal(municipalityMatches("Exemplo",rows,"MG")[0].uf,"MG");
   assert.equal(municipalityMatches("Inexistente",rows).length,0);
 });
+
+
+test("cadastro parcial persiste, não cria com confirmação prematura e cria uma vez ao concluir", async () => {
+  const { handleFarmDialogue } = await import("../src/lib/guardian/farm-dialogue.server.ts");
+  const { PreferencesSchema } = await import("../src/lib/guardian/schema.ts");
+  type Snapshot = import("../src/lib/guardian/schema.ts").GuardianSnapshot;
+  type Store = import("../src/lib/guardian/store.server.ts").GuardianStore;
+  type Commit = import("../src/lib/guardian/store.server.ts").GuardianCommit;
+  const snapshot: Snapshot = { accountVersion:0, preferences:PreferencesSchema.parse({}), pending:null, properties:[], active:null };
+  const turns: Commit[] = [];
+  const store: Store = {
+    load: async () => snapshot,
+    receipt: async (_phone, messageId) => turns.find(t => t.messageId === messageId)?.reply ?? null,
+    commit: async (t) => {
+      turns.push(t); snapshot.pending=t.pending; snapshot.accountVersion++;
+      return "committed";
+    },
+  };
+  const now = new Date("2026-11-26T12:00:00Z");
+  const lookup = async () => [{id:3531407,name:"Monte Aprazível",uf:"SP"}];
+  const send = (text:string, id:string) => handleFarmDialogue({phone:"5517999999999",messageId:id,text},snapshot,store,now,()=> "11111111-1111-4111-8111-111111111111",lookup);
+  await send("gerar link do painel","a");
+  assert.equal(turns.at(-1)?.operation,"pending");
+  await send("Maria da Silva","b");
+  await send("confirmar","c");
+  assert.equal(turns.at(-1)?.operation,"pending");
+  await send("Nome da propriedade: Boa Vista\nCPF/CNPJ: 529.982.247-25\nInscrição estadual: 123456789\nMunicípio: Monte Aprazível\nE-mail: exemplo@example.com\nFaturamento anual: 500 mil","d");
+  assert.equal(turns.at(-1)?.operation,"pending");
+  await send("confirmar","e");
+  assert.equal(turns.at(-1)?.operation,"create");
+  assert.equal(turns.at(-1)?.book?.uf,"SP");
+  assert.equal((turns.at(-1)?.details?.registration as {annualRevenueCents:number}).annualRevenueCents,50_000_000);
+  assert.equal(turns.filter(t=>t.operation==="create").length,1);
+});

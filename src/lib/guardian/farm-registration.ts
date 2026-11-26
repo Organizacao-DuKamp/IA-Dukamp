@@ -13,6 +13,7 @@ export interface RegistrationSlots {
   annualRevenueCents?: number;
   targetPropertyId?: string;
   distinct?: boolean;
+  askedField?: RegistrationField | "uf" | "retry";
 }
 export type RegistrationField = "producer" | "name" | "document" | "stateRegistration" | "city" | "email" | "annualRevenueCents";
 export const registrationFields: RegistrationField[] = [
@@ -109,7 +110,7 @@ export function nextField(s: RegistrationSlots): RegistrationField | undefined {
   return registrationFields.find(f => s[f] === undefined || s[f] === "");
 }
 export const fieldQuestion = (field: RegistrationField) => questions[field];
-const labelPattern = /\b(nome\s+(?:completo\s+)?(?:do\s+)?produtor|produtor|meu\s+nome|eu\s+me\s+chamo|nome\s+(?:da\s+)?(?:propriedade|fazenda)|(?:a\s+)?(?:minha\s+)?(?:fazenda|propriedade)\s+(?:se\s+chama|chama-se)|cpf\s*\/\s*cnpj|cpf|cnpj|inscri[cç][aã]o\s+estadual|i\.?e\.?|munic[ií]pio|cidade|(?:a\s+)?(?:fazenda\s+)?fica\s+em|estado|uf|e[\s-]?mail|faturamento(?:\s+estimado)?(?:\s+anual)?|faturamos|fatura)\s*(?::|=|\s+[ée]\s+|\s+de\s+|\s+)?/giu;
+const labelPattern = /\b(nome\s+(?:completo\s+)?(?:do\s+)?produtor|produtor|meu\s+nome|eu\s+me\s+chamo|nome\s+(?:da\s+)?(?:propriedade|fazenda)|(?:a\s+)?(?:minha\s+)?(?:fazenda|propriedade)\s+(?:se\s+chama|chama-se)|cpf\s*\/\s*cnpj|cpf|cnpj|inscri[cç][aã]o\s+estadual|i\.?e\.?|munic[ií]pio|cidade|(?:a\s+)?(?:fazenda\s+)?fica\s+em|estado|uf|e[\s-]?mail|faturamento(?:\s+(?:estimado|anual)){0,2}|faturamos|fatura)\b\s*(?::|=|\s+[ée]\s+|\s+de\s+|\s+)?/giu;
 function labelField(raw: string): RegistrationField | "uf" {
   const t = normalize(raw);
   if (/produtor|meu nome|me chamo/.test(t)) return "producer";
@@ -126,7 +127,7 @@ function clean(value: string) {
 }
 export function collectRegistration(text: string, prior: RegistrationSlots = {}, expected?: RegistrationField | "uf"): RegistrationSlots {
   const s = { ...prior };
-  const raw = text.replace(/\*/g, "").replace(/^\[?Áudio(?: do WhatsApp)?\]?\s*:?\s*/i, "").trim();
+  const raw = text.replace(/\*/g, "").trim();
   const set = (field: RegistrationField | "uf", value: string) => {
     const v = clean(value);
     if (!v || /^(?:nao sei|não sei|nao tenho|não tenho|depois|pular|sim|ok|confirmar|cancelar)$/i.test(v)) return;
@@ -147,7 +148,7 @@ export function collectRegistration(text: string, prior: RegistrationSlots = {},
       s.municipalityId = undefined;
       return;
     }
-    if (v.length >= 2 && v.length <= 160 && /\p{L}/u.test(v) && !/[\n?@]/.test(v)) s[field] = v;
+    if (v.length >= 2 && v.length <= 160 && /\p{L}/u.test(v) && !/[\n?@]/.test(v) && !/^(?:quero |preciso |como |qual |pode |posso |me ajuda|bom dia|boa tarde|boa noite|ol[aá]$)/i.test(v)) s[field] = v;
   };
   const matches = [...raw.matchAll(labelPattern)].filter(m => {
     // Do not interpret a field word embedded in an answer (e.g. Fazenda Produtor Rural).

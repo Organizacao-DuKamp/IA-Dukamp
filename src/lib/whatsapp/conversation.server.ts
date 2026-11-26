@@ -471,7 +471,7 @@ export async function processClaimedWhatsAppChat(
       conversationId = previous?.conversationId ?? `wa:${input.phone}`;
       // Registration is handled before automatic notes and general AI. Keep raw
       // registration fields out of the general chat transcript and telemetry.
-      const registration = !dependencies.executeChat && !dependencies.processGuardian &&
+      const registration: GuardianHandled | null = !dependencies.executeChat && !dependencies.processGuardian &&
         process.env.TPEC_GUARDIAN_ENABLED?.trim() === "true"
         ? await (await import("../guardian/farm-dialogue.server.ts")).handleRegistrationInbound({
             phone: input.phone, messageId: input.messageId, text: userText,
@@ -512,7 +512,7 @@ export async function processClaimedWhatsAppChat(
         (!dependencies.executeChat
           ? (await import("../guardian/handler.server.ts")).handleGuardianMessage
           : null);
-      const guardian = registration ?? (guardianHandler
+      const guardian: GuardianHandled | null = registration ?? (guardianHandler
         ? await guardianHandler({
             phone: input.phone,
             messageId: input.messageId,
@@ -525,6 +525,10 @@ export async function processClaimedWhatsAppChat(
           })
         : null);
       if (guardian?.reply) {
+        if (guardian.registration) userText = "[Dados do cadastro rural]";
+        const recordedReply = guardian.registration && guardian.reply.startsWith("Confira seu cadastro:")
+          ? "Confira seu cadastro. Confirme ou corrija o campo desejado."
+          : guardian.reply;
         herdReply = guardian.reply;
         await recordAIChatTurn({
           channel: "whatsapp",
@@ -532,7 +536,7 @@ export async function processClaimedWhatsAppChat(
           conversationId,
           clientMessageId: input.messageId,
           userText,
-          assistantText: guardian.reply,
+          assistantText: recordedReply,
           status: "completed",
           diagnostics: {
             retrieved_blocks: ["guardian:confirmed-operations"],
@@ -551,10 +555,10 @@ export async function processClaimedWhatsAppChat(
               previous?.state,
               conversationId,
               userText,
-              guardian.reply,
+              recordedReply,
               guardian.trace,
             ),
-            history: appendTurn(previous?.history ?? [], userText, guardian.reply.slice(0, 8000)),
+            history: appendTurn(previous?.history ?? [], userText, recordedReply.slice(0, 8000)),
           });
         } catch {
           /* Authoritative receipt is already persisted. */

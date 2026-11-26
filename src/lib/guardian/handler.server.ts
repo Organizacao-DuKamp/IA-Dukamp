@@ -556,6 +556,12 @@ export async function handleGuardianMessage(
           continue;
         }
         if (semantic && "panelRequest" in semantic) {
+          const registration = await handleFarmDialogue(
+            { ...input, text: "gerar link do painel para " + semantic.panelRequest },
+            snapshot, store, now, deps.makeId,
+          );
+          if (registration === "conflict") continue;
+          if (registration) return registration;
           const reply = await handlePanelLinkRequest(
             { ...input, text: `gerar link do painel para ${semantic.panelRequest}` },
             {

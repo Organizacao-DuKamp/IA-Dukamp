@@ -5,7 +5,7 @@ import { panelAccessRequest, panelFarmKey } from "./panel-access.ts";
 import { emptyFarm, type GuardianSnapshot, type SemanticDraft } from "./schema.ts";
 import type { GuardianCommit, GuardianStore } from "./store.server.ts";
 import type { GuardianInput } from "./handler.server.ts";
-import { collectRegistration, fieldQuestion, loadMunicipalities, municipalityMatches, nextField, privateRegistration, producerSize, registrationComplete, sizeLabel, stateCode, type RegistrationSlots } from "./farm-registration.ts";
+import { collectRegistration, fieldQuestion, loadMunicipalities, municipalityMatches, nextField, privateRegistration, producerSize, registrationComplete, sizeLabel, stateCode, type RegistrationSlots, type RegistrationField } from "./farm-registration.ts";
 
 export async function handleFarmDialogue(
   input: GuardianInput, snapshot: GuardianSnapshot, store: GuardianStore, now: Date,
@@ -38,10 +38,10 @@ export async function handleFarmDialogue(
       const book = target.id === snapshot.active?.id ? snapshot.active : await store.loadProperty?.(input.phone, target.id);
       prior = { targetPropertyId: target.id, name: book?.book.name ?? undefined, city: book?.book.city ?? undefined };
     }
-    const confirmation = naturalConfirmation(raw);
-    const expectingState = !!prior.city && !prior.municipalityId && !!pending && "question" in pending && pending.question.startsWith("Encontrei mais de um município");
-    const expected = pending ? expectingState ? "uf" : nextField(prior) : undefined;
-    let slots = confirmation || (access && !pending)
+    const confirmation = naturalConfirmation(raw) || /^(?:t[aá] tudo certo|est[aá] tudo certo|pode concluir|pode finalizar|isso a[ií]|pode prosseguir)[.! ]*$/i.test(raw.trim());
+    const expectingState = prior.askedField === "uf";
+    const expected = pending ? prior.askedField === "retry" ? undefined : prior.askedField ?? nextField(prior) : undefined;
+    const slots = confirmation || access
       ? { ...prior }
       : collectRegistration(raw, prior, expected);
     // A familiar initial request may include the farm name and municipality.
@@ -50,7 +50,7 @@ export async function handleFarmDialogue(
       if (m && !/[:;\n]/.test(m[1]) && !/^(?:por favor|pra mim|para mim)$/i.test(m[1])) {
         slots.name ??= cleanFarmName(m[1]);
         if (m[2] && !slots.city) {
-          slots = collectRegistration("Município: " + m[2], slots);
+          Object.assign(slots, collectRegistration("Município: " + m[2], slots));
         }
       }
       if (/\b(?:outra|nova)\s+(?:fazenda|propriedade)\b/i.test(raw)) slots.distinct = true;
@@ -60,6 +60,7 @@ export async function handleFarmDialogue(
       slots.municipalityId = undefined;
     }
     let municipalityQuestion: string | undefined;
+    let askedField: RegistrationField | "uf" | "retry" | undefined;
     if (slots.city && !slots.municipalityId) {
       try {
         const rows = await municipalities();
@@ -67,12 +68,15 @@ export async function handleFarmDialogue(
         if (matches.length === 1) {
           slots.city = matches[0].name; slots.uf = matches[0].uf; slots.municipalityId = matches[0].id;
         } else if (matches.length > 1) {
+          askedField = "uf";
           municipalityQuestion = "Encontrei mais de um município chamado " + slots.city + ": " + matches.map(m => m.uf).join(", ") + ". Qual deles? Informe apenas o estado para diferenciar.";
         } else {
           slots.city = undefined; slots.uf = undefined; slots.municipalityId = undefined;
+          askedField = "city";
           municipalityQuestion = "Não encontrei esse município na base do IBGE. Pode conferir o nome?";
         }
       } catch {
+        askedField = "retry";
         municipalityQuestion = "Não consegui consultar a base de municípios agora. Seus dados anteriores continuam no cadastro. Responda “confirmar” para tentar novamente.";
       }
     }
@@ -124,6 +128,7 @@ export async function handleFarmDialogue(
       } else if (!pending) {
         question = "Vamos cadastrar sua propriedade. Preciso do nome do produtor, nome da propriedade, CPF/CNPJ, inscrição estadual, município, e-mail e faturamento anual estimado. Você pode enviar tudo de uma vez ou responder aos poucos. " + question;
       }
+      slots.askedField = complete ? undefined : askedField ?? missing;
       base.pending = {
         kind: "semantic_draft", farmDraft: slots, propertyId: null, createdAt: now.toISOString(),
         expiresAt: new Date(now.getTime() + 24 * 60 * 60000).toISOString(),
@@ -142,6 +147,10 @@ export async function handleFarmDialogue(
 /** Run before general memory/AI; use the existing CAS and receipts. */
 export async function handleRegistrationInbound(input: GuardianInput, store: GuardianStore, now = new Date(), makeId?: () => string, municipalities = loadMunicipalities) {
   if (input.mediaType && input.mediaType !== "audio") return null;
+  if (input.mediaType === "audio") input = {
+    ...input,
+    text: input.text.replace(/^\[Mensagem recebida por áudio[^\]]*\]\s*Pedido do usuário:[\s\S]*?Transcrição do áudio:\s*/i, "").trim(),
+  };
   for (let attempt = 0; attempt < 4; attempt++) {
     const snapshot = await store.load(input.phone);
     const result = await handleFarmDialogue(input, snapshot, store, now, makeId, municipalities);
