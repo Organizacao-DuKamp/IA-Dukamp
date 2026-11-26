@@ -47,9 +47,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Build Netlify preset
+      - name: Build Node server
         env:
-          NITRO_PRESET: netlify
+          NITRO_PRESET: node_server
         run: npm run build
 
       - name: Commit refreshed snapshot

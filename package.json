@@ -15,7 +15,14 @@
     "audit:privileged": "node scripts/audit-privileged-imports.mjs",
     "format": "prettier --write .",
     "audit:privileged-imports": "node scripts/audit-privileged-imports.mjs",
-    "check:client-secrets": "node scripts/check-client-secrets.mjs"
+    "check:client-secrets": "node scripts/check-client-secrets.mjs",
+    "start": "node scripts/start.mjs",
+    "worker": "node scripts/worker.mjs",
+    "check:config": "node scripts/check-config.mjs",
+    "queue:status": "node scripts/queue.mjs",
+    "build:node": "node scripts/build-node.mjs",
+    "test:self-hosted": "node --test tests/self-hosted*.test.ts",
+    "test:hosting": "node scripts/check-self-hosted.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

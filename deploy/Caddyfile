@@ -1,0 +1,33 @@
+{
+    email {$ACME_EMAIL}
+}
+
+tpecia.com.br {
+    # The APK is verified against www; preserve method/path when canonicalizing.
+    redir https://www.tpecia.com.br{uri} 308
+}
+
+www.tpecia.com.br {
+    encode zstd gzip
+    # No access log: queries could contain private legacy links. Use app metrics.
+    header {
+        Strict-Transport-Security "max-age=31536000"
+        X-Content-Type-Options nosniff
+        Referrer-Policy no-referrer
+        -Server
+    }
+    @private path /api/internal/* /.netlify/*
+    respond @private 404
+    request_body {
+        max_size 32MB
+    }
+    # Forward every path to SSR, including direct page refreshes and assetlinks.
+    reverse_proxy {$TPEC_UPSTREAM:127.0.0.1:3000} {
+        header_up Host www.tpecia.com.br
+        header_up X-Forwarded-Proto https
+        transport http {
+            read_timeout 26m
+            write_timeout 26m
+        }
+    }
+}

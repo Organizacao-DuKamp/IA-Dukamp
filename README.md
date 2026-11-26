@@ -2,11 +2,27 @@
 
 Assistente de IA especialista em pecuária brasileira, com vitrine institucional em `/`, atendimento pelo WhatsApp, memória curta de conversa, base RAG, previsão meteorológica aprofundada por região e integração comercial somente leitura com o Supabase do site DuKamp.
 
+## Hospedagem independente
+
+A produção independente usa Nitro `node_server` (padrão), Node.js 24.22.1,
+worker supervisionado e fila SQLite persistente. O Supabase existente mantém
+dados, autenticação e reservas de negócio. Não há necessidade de Functions Netlify.
+
+Veja [migração e operação](docs/MIGRACAO-HOSPEDAGEM.md) e a
+[auditoria anterior às alterações](docs/AUDITORIA-HOSPEDAGEM.md).
+Caddy e serviços systemd estão em `deploy/`. A implantação usa Node.js diretamente no Linux, sem Docker.
+Use `npm run build:node`, `npm start` e, em outro processo, `npm run worker`.
+O build exige as três variáveis públicas `VITE_SUPABASE_*`; os processos exigem
+as variáveis privadas descritas em `.env.example`. Não copie secrets ao build.
+
+As seções Netlify abaixo documentam a implantação anterior, mantida somente
+para compatibilidade e rollback enquanto a migração não for homologada.
+
 ## Stack
 
 - TanStack Start + React 19
 - Nitro para SSR/server handlers
-- Netlify como frontend e backend server-side
+- Node.js + systemd para frontend SSR, APIs e worker; Netlify somente para rollback
 - Supabase TPEC-IA para RAG e dados internos
 - Supabase secundário DuKamp para produtos e vendedores públicos
 - OpenAI para raciocínio, Web Search, resposta final e embeddings do RAG
@@ -18,9 +34,9 @@ npm install
 npm run dev
 ```
 
-Use `.env.example` como referência. O backend roda diretamente no runtime server-side da Netlify.
+Use `.env.example` como referência. O desenvolvimento local usa o runtime Vite; a produção própria usa Nitro no Node.js.
 
-## Arquitetura de deploy independente
+## Arquitetura legada (Netlify)
 
 ```text
 Navegador
@@ -176,7 +192,7 @@ O `vite.config.ts` usa `src/server.ts` como entrada do TanStack Start. O `netlif
 
 ```toml
 NITRO_PRESET = "netlify"
-NODE_VERSION = "22"
+NODE_VERSION = "24.22.1"
 ```
 
 O diretório publicado continua sendo `dist`; o projeto não é convertido em deploy estático e continua gerando o handler server da Netlify.
