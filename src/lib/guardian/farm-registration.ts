@@ -243,7 +243,7 @@ export function collectRegistration(
       "",
     );
   const set = (field: RegistrationField | "uf", value: string) => {
-    const v = clean(value);
+    const v = clean(value).replace(/^[ée]\s+/i, "");
     if (
       !v ||
       /^(?:nao sei|não sei|nao tenho|não tenho|depois|pular|sim|ok|pode|isso mesmo|tudo certo|confirmar|cancelar)$/i.test(
