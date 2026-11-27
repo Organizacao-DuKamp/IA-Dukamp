@@ -297,8 +297,15 @@ test("integrated PostgreSQL: an existing explicitly registered owner farm is reu
   const f = await farmIntegration();
   try {
     await handleGuardianMessage(
-      { phone, messageId: "create", text: "cadastrar fazenda Boa Vista em Tanabi/SP" },
-      { store: f.guardian },
+      {
+        phone,
+        messageId: "create",
+        text: "cadastrar fazenda; Nome do produtor: Maria da Silva; Nome da propriedade: Boa Vista; CPF: 529.982.247-25; Inscrição estadual: 123456789; Município: Tanabi; E-mail: exemplo@example.com; Faturamento anual: 500 mil",
+      },
+      {
+        store: f.guardian,
+        municipalities: async () => [{ id: 3553401, name: "Tanabi", uf: "SP" }],
+      },
     );
     await handleGuardianMessage(
       { phone, messageId: "confirm", text: "confirmar" },
