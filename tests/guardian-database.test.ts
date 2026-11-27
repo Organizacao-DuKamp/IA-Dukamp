@@ -12,6 +12,9 @@ import {
 import { handleGuardianMessage } from "../src/lib/guardian/handler.server.ts";
 import { PreferencesSchema } from "../src/lib/guardian/schema.ts";
 
+const completeRegistration =
+  "cadastrar fazenda; Nome do produtor: Maria da Silva; Nome da propriedade: Boa Vista; CPF: 529.982.247-25; Inscrição estadual: 123456789; Município: Monte Aprazível; E-mail: exemplo@example.com; Faturamento anual: 500 mil";
+
 const phone = "5517999991111",
   other = "5517999992222";
 const admin = "00000000-0000-4000-8000-000000000001",
@@ -75,7 +78,11 @@ async function setup() {
   const send = (text: string, p = phone) =>
     handleGuardianMessage(
       { phone: p, messageId: `msg${++seq}`, text },
-      { store, now: new Date("2026-10-23T15:00:00Z") },
+      {
+        store,
+        now: new Date("2026-10-23T15:00:00Z"),
+        municipalities: async () => [{ id: 3531407, name: "Monte Aprazível", uf: "SP" }],
+      },
     );
   return { db, store, send };
 }
@@ -83,10 +90,10 @@ async function setup() {
 test("real SQL: farm draft, confirmation, durable receipt, ledger and structured herd", async () => {
   const { db, store, send } = await setup();
   try {
-    const draft = await send("cadastrar fazenda Boa Vista em Monte Aprazível/SP");
+    const draft = await send(completeRegistration);
     assert.match(draft!.reply!, /confirmar/);
     assert.equal((await store.load(phone)).active, null);
-    assert.match((await send("confirmar"))!.reply!, /criada e selecionada/);
+    assert.match((await send("confirmar"))!.reply!, /Cadastro de Boa Vista concluído/);
     await send("despesa R$ 150,50 com ração");
     await send("confirmar");
     const snapshot = await store.load(phone);
@@ -170,7 +177,7 @@ test("real SQL: knowledge replacement rolls back every chunk on failure and reje
 test("real SQL: one-time web pairing binds the verified sender and expires, with no client-writable membership", async () => {
   const { db, store, send } = await setup();
   try {
-    await send("cadastrar fazenda Boa Vista em Monte Aprazível/SP");
+    await send(completeRegistration);
     await send("confirmar");
     const token = "1234567890abcdef1234567890abcdef";
     await db.query(
@@ -229,7 +236,7 @@ test("real SQL: one-time web pairing binds the verified sender and expires, with
 test("real SQL: tenant isolation, anonymous denial, legacy phone-bound invite, revocation and web RLS", async () => {
   const { db, store, send } = await setup();
   try {
-    await send("cadastrar fazenda Boa Vista em Monte Aprazível/SP");
+    await send(completeRegistration);
     await send("confirmar");
     const prop = (await store.load(phone)).active!;
     assert.equal((await store.load(other)).properties.length, 0);
@@ -310,7 +317,7 @@ test("real SQL: tenant isolation, anonymous denial, legacy phone-bound invite, r
 test("real SQL: compare-and-swap prevents lost updates and task completion cancels queued evidence", async () => {
   const { db, store, send } = await setup();
   try {
-    await send("cadastrar fazenda Boa Vista em Monte Aprazível/SP");
+    await send(completeRegistration);
     await send("confirmar");
     await send("me lembra de pesar o lote 2 na sexta às 8h");
     await send("confirmar");
@@ -343,7 +350,7 @@ test("real SQL: compare-and-swap prevents lost updates and task completion cance
 test("real SQL: event history follows parent RLS and becomes unreadable immediately after revocation", async () => {
   const { db, store, send } = await setup();
   try {
-    await send("cadastrar fazenda Boa Vista em Monte Aprazível/SP");
+    await send(completeRegistration);
     await send("confirmar");
     await send("me lembra de pesar o lote 2 na sexta às 8h");
     await send("confirmar");
@@ -375,7 +382,7 @@ test("real SQL: event history follows parent RLS and becomes unreadable immediat
 test("real SQL: consent, quiet hours, claim fencing, accepted receipt and ambiguous crash recovery", async () => {
   const { db, store, send } = await setup();
   try {
-    await send("cadastrar fazenda Boa Vista em Monte Aprazível/SP");
+    await send(completeRegistration);
     await send("confirmar");
     const s = await store.load(phone),
       prop = s.active!.id;
