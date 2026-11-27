@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { readFile } from "node:fs/promises";
 import { naturalConfirmation, creatingFarm, farmSlots } from "../src/lib/guardian/farm-dialogue.ts";
 import { handleFarmDialogue } from "../src/lib/guardian/farm-dialogue.server.ts";
 import { handleEmployeeDialogue } from "../src/lib/guardian/employee-dialogue.server.ts";
@@ -71,37 +72,48 @@ test("natural creation intent stays separate from animal registration, selection
 test("farm registration persists missing slots with real SQL, saving once and preserving another farm", async () => {
   const f = await farmIntegration();
   try {
+    await f.db.exec(
+      await readFile(
+        new URL("../supabase/migrations/20261126130000_guardian_required_registration.sql", import.meta.url),
+        "utf8",
+      ),
+    );
+    const municipalities = async () => [{ id: 3531407, name: "Monte Aprazível", uf: "SP" }];
     let i = 0;
-    for (const text of [
-      "Quero cadastrar minha fazenda",
-      "Estância Tambory",
-      "É em Monte Aprazível, São Paulo",
-      "salvar",
-    ]) {
+    const send = async (text: string) => {
       const snapshot = await f.guardian.load(phone);
       const result = await handleFarmDialogue(
         { phone, messageId: "farm-natural-" + ++i, text },
         snapshot,
         f.guardian,
         now,
+        undefined,
+        municipalities,
       );
       assert.ok(result && result !== "conflict");
-    }
-    const s = await f.guardian.load(phone);
-    assert.equal(s.properties.length, 1);
-    assert.equal(s.active!.book.name, "Estância Tambory");
-    assert.equal(s.pending, null);
-    const replay = await handleFarmDialogue(
-      { phone, messageId: "farm-natural-4", text: "salvar" },
-      s,
-      f.guardian,
-      now,
+      return result;
+    };
+    await send("Quero cadastrar minha fazenda");
+    await send("O nome é Fazenda Oliveira, ele fica em Monte Aprazível");
+    await send("Não, é só Fazenda Oliveira");
+    await send("Pode");
+    assert.equal((await f.guardian.load(phone)).properties.length, 0);
+    await send("Meu nome é Maria da Silva");
+    await send("CPF: 529.982.247-25; Inscrição estadual: 123456789; E-mail: exemplo@example.com; Faturamento anual: 500 mil");
+    assert.equal((await f.guardian.load(phone)).properties.length, 0);
+    await send("Pode");
+    const snapshot = await f.guardian.load(phone);
+    assert.equal(snapshot.properties.length, 1);
+    assert.equal(snapshot.active!.book.name, "Fazenda Oliveira");
+    assert.equal(snapshot.active!.book.uf, "SP");
+    assert.equal(snapshot.pending, null);
+    const stored = await f.db.query<{ producer_size: string }>(
+      "select producer_size from guardian_farm_registrations where property_id=$1",
+      [snapshot.active!.id],
     );
-    assert.equal(replay, null);
-    for (const text of ["Criar fazenda Estância Tambory em Monte Aprazível/SP", "isso mesmo"]) {
-      const s = await f.guardian.load(phone);
-      await handleFarmDialogue({ phone, messageId: "same-" + i++, text }, s, f.guardian, now);
-    }
+    assert.equal(stored.rows[0]?.producer_size, "small");
+    await send("cadastrar fazenda; Nome do produtor: Maria da Silva; Nome da propriedade: Fazenda Oliveira; CPF: 529.982.247-25; Inscrição estadual: 123456789; Município: Monte Aprazível; E-mail: exemplo@example.com; Faturamento anual: 500 mil");
+    await send("isso mesmo");
     assert.equal((await f.guardian.load(phone)).properties.length, 1);
   } finally {
     await f.db.close();
