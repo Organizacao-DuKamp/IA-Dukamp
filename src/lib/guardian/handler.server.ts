@@ -324,6 +324,8 @@ export async function handleGuardianMessage(
       });
       if (imported?.reply) return { reply: imported.reply, activeProperty: true, persisted: true };
     }
+    const previous = await store.receipt(input.phone, input.messageId);
+    if (previous) return { reply: previous, activeProperty: false, persisted: true };
     if (!deps.request) {
       const registration = await handleRegistrationInbound(input, store, now, deps.makeId);
       if (registration) return registration;
@@ -340,8 +342,6 @@ export async function handleGuardianMessage(
       });
       if (portalReply) return { reply: portalReply, activeProperty: false };
     }
-    const previous = await store.receipt(input.phone, input.messageId);
-    if (previous) return { reply: previous, activeProperty: false, persisted: true };
     if (
       !deps.request &&
       !deps.interpret &&
@@ -1663,8 +1663,8 @@ export async function handleGuardianMessage(
               ? "Suas fazendas:\n" +
                 snapshot.properties
                   .map(
-                    (p) =>
-                      `${p.id} — ${p.name}${p.id === snapshot.active?.id ? " (selecionada)" : ""}`,
+                    (p, index) =>
+                      `${index + 1}. ${p.name}${p.id === snapshot.active?.id ? " (selecionada)" : ""}`,
                   )
                   .join("\n")
               : "Você ainda não tem fazendas vinculadas. Diga “cadastrar fazenda Boa Vista em Monte Aprazível/SP”.";
