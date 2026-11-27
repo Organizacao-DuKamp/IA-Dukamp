@@ -558,7 +558,10 @@ export async function handleGuardianMessage(
         if (semantic && "panelRequest" in semantic) {
           const registration = await handleFarmDialogue(
             { ...input, text: "gerar link do painel para " + semantic.panelRequest },
-            snapshot, store, now, deps.makeId,
+            snapshot,
+            store,
+            now,
+            deps.makeId,
           );
           if (registration === "conflict") continue;
           if (registration) return registration;
@@ -1801,8 +1804,14 @@ export async function handleGuardianMessage(
             if ((action as GuardianAction).kind === "property_create") {
               if (action.kind !== "property_create") throw Error("guardian_registration_required");
               const registration = await handleFarmDialogue(
-                { ...input, text: "cadastrar fazenda " + action.name + " em " + action.city + "/" + action.uf },
-                snapshot, store, now, deps.makeId,
+                {
+                  ...input,
+                  text: "cadastrar fazenda " + action.name + " em " + action.city + "/" + action.uf,
+                },
+                snapshot,
+                store,
+                now,
+                deps.makeId,
               );
               if (registration === "conflict") continue;
               if (registration) return registration;
@@ -1935,7 +1944,10 @@ export async function handleGuardianMessage(
             if (a.kind === "property_create") {
               const registration = await handleFarmDialogue(
                 { ...input, text: "cadastrar fazenda " + a.name + " em " + a.city + "/" + a.uf },
-                snapshot, store, now, deps.makeId,
+                snapshot,
+                store,
+                now,
+                deps.makeId,
               );
               if (registration === "conflict") continue;
               if (registration) return registration;
