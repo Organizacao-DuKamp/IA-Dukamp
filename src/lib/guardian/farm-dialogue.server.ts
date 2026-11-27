@@ -307,6 +307,7 @@ export async function handleRegistrationInbound(
   now = new Date(),
   makeId?: () => string,
   municipalities = loadMunicipalities,
+  initialSnapshot?: GuardianSnapshot,
 ) {
   if (input.mediaType && input.mediaType !== "audio") return null;
   if (input.mediaType === "audio")
@@ -320,7 +321,7 @@ export async function handleRegistrationInbound(
         .trim(),
     };
   for (let attempt = 0; attempt < 4; attempt++) {
-    const snapshot = await store.load(input.phone);
+    const snapshot = attempt === 0 && initialSnapshot ? initialSnapshot : await store.load(input.phone);
     const result = await handleFarmDialogue(input, snapshot, store, now, makeId, municipalities);
     if (result !== "conflict") return result;
   }
