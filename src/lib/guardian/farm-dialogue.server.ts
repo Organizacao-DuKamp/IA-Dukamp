@@ -321,7 +321,8 @@ export async function handleRegistrationInbound(
         .trim(),
     };
   for (let attempt = 0; attempt < 4; attempt++) {
-    const snapshot = attempt === 0 && initialSnapshot ? initialSnapshot : await store.load(input.phone);
+    const snapshot =
+      attempt === 0 && initialSnapshot ? initialSnapshot : await store.load(input.phone);
     const result = await handleFarmDialogue(input, snapshot, store, now, makeId, municipalities);
     if (result !== "conflict") return result;
   }

@@ -330,7 +330,12 @@ export async function handleGuardianMessage(
     if (!deps.request) {
       initialSnapshot = await store.load(input.phone);
       const registration = await handleRegistrationInbound(
-        input, store, now, deps.makeId, deps.municipalities, initialSnapshot,
+        input,
+        store,
+        now,
+        deps.makeId,
+        deps.municipalities,
+        initialSnapshot,
       );
       if (registration) return registration;
       const invitation = await handleAccessInvite(input, {
@@ -450,7 +455,14 @@ export async function handleGuardianMessage(
         }
       }
       if (!deps.request && (!input.mediaType || input.mediaType === "audio")) {
-        const farm = await handleFarmDialogue(input, snapshot, store, now, deps.makeId, deps.municipalities);
+        const farm = await handleFarmDialogue(
+          input,
+          snapshot,
+          store,
+          now,
+          deps.makeId,
+          deps.municipalities,
+        );
         if (farm === "conflict") continue;
         if (farm) return farm;
         const employee = await handleEmployeeDialogue(input, snapshot, store, now);

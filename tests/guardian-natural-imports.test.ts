@@ -74,7 +74,10 @@ test("farm registration persists missing slots with real SQL, saving once and pr
   try {
     await f.db.exec(
       await readFile(
-        new URL("../supabase/migrations/20261126130000_guardian_required_registration.sql", import.meta.url),
+        new URL(
+          "../supabase/migrations/20261127141526_guardian_required_registration.sql",
+          import.meta.url,
+        ),
         "utf8",
       ),
     );
@@ -99,7 +102,9 @@ test("farm registration persists missing slots with real SQL, saving once and pr
     await send("Pode");
     assert.equal((await f.guardian.load(phone)).properties.length, 0);
     await send("Meu nome é Maria da Silva");
-    await send("CPF: 529.982.247-25; Inscrição estadual: 123456789; E-mail: exemplo@example.com; Faturamento anual: 500 mil");
+    await send(
+      "CPF: 529.982.247-25; Inscrição estadual: 123456789; E-mail: exemplo@example.com; Faturamento anual: 500 mil",
+    );
     assert.equal((await f.guardian.load(phone)).properties.length, 0);
     await send("Pode");
     const snapshot = await f.guardian.load(phone);
@@ -112,7 +117,9 @@ test("farm registration persists missing slots with real SQL, saving once and pr
       [snapshot.active!.id],
     );
     assert.equal(stored.rows[0]?.producer_size, "small");
-    await send("cadastrar fazenda; Nome do produtor: Maria da Silva; Nome da propriedade: Fazenda Oliveira; CPF: 529.982.247-25; Inscrição estadual: 123456789; Município: Monte Aprazível; E-mail: exemplo@example.com; Faturamento anual: 500 mil");
+    await send(
+      "cadastrar fazenda; Nome do produtor: Maria da Silva; Nome da propriedade: Fazenda Oliveira; CPF: 529.982.247-25; Inscrição estadual: 123456789; Município: Monte Aprazível; E-mail: exemplo@example.com; Faturamento anual: 500 mil",
+    );
     await send("isso mesmo");
     assert.equal((await f.guardian.load(phone)).properties.length, 1);
   } finally {
