@@ -138,6 +138,7 @@ export interface GuardianDependencies {
   now?: Date;
   extract?: (text: string, now: Date) => Promise<unknown>;
   makeId?: () => string;
+  municipalities?: typeof import("./farm-registration.ts").loadMunicipalities;
   token?: () => string;
   request?: GuardianRequest;
   transferStore?: FarmTransferStore;
@@ -327,7 +328,10 @@ export async function handleGuardianMessage(
     const previous = await store.receipt(input.phone, input.messageId);
     if (previous) return { reply: previous, activeProperty: false, persisted: true };
     if (!deps.request) {
-      const registration = await handleRegistrationInbound(input, store, now, deps.makeId);
+      initialSnapshot = await store.load(input.phone);
+      const registration = await handleRegistrationInbound(
+        input, store, now, deps.makeId, deps.municipalities, initialSnapshot,
+      );
       if (registration) return registration;
       const invitation = await handleAccessInvite(input, {
         load: store.load.bind(store),
@@ -348,7 +352,7 @@ export async function handleGuardianMessage(
       deps.store &&
       (!input.mediaType || input.mediaType === "audio")
     ) {
-      const selection = await store.load(input.phone);
+      const selection = initialSnapshot ?? (await store.load(input.phone));
       initialSnapshot = selection;
       const named = creatingFarm(input.text) ? null : namedProperty(input.text, selection);
       const completionFarmChoice =
@@ -446,7 +450,7 @@ export async function handleGuardianMessage(
         }
       }
       if (!deps.request && (!input.mediaType || input.mediaType === "audio")) {
-        const farm = await handleFarmDialogue(input, snapshot, store, now, deps.makeId);
+        const farm = await handleFarmDialogue(input, snapshot, store, now, deps.makeId, deps.municipalities);
         if (farm === "conflict") continue;
         if (farm) return farm;
         const employee = await handleEmployeeDialogue(input, snapshot, store, now);
