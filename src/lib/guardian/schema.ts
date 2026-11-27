@@ -469,7 +469,12 @@ export interface GuardianSnapshot {
   accountVersion: number;
   preferences: GuardianPreferences;
   pending: GuardianPending | null;
-  properties: Array<{ id: string; name: string; role: GuardianRole; registrationRequired?: boolean }>;
+  properties: Array<{
+    id: string;
+    name: string;
+    role: GuardianRole;
+    registrationRequired?: boolean;
+  }>;
   active: {
     id: string;
     version: number;
