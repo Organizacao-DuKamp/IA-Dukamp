@@ -38,7 +38,7 @@ export async function handleFarmDialogue(
       const book = target.id === snapshot.active?.id ? snapshot.active : await store.loadProperty?.(input.phone, target.id);
       prior = { targetPropertyId: target.id, name: book?.book.name ?? undefined, city: book?.book.city ?? undefined };
     }
-    const confirmation = naturalConfirmation(raw) || /^(?:t[aá] tudo certo|est[aá] tudo certo|pode concluir|pode finalizar|isso a[ií]|pode prosseguir)[.! ]*$/i.test(raw.trim());
+    const confirmation = naturalConfirmation(raw) || /^(?:pode|tudo certo|t[aá] tudo certo|est[aá] tudo certo|pode concluir|pode finalizar|isso a[ií]|pode prosseguir)[.! ]*$/i.test(raw.trim());
     const expectingState = prior.askedField === "uf";
     const expected = pending ? prior.askedField === "retry" ? undefined : prior.askedField ?? nextField(prior) : undefined;
     const slots = confirmation || access
