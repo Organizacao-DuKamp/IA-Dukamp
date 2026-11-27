@@ -71,13 +71,32 @@ test("cadastro parcial persiste, não cria com confirmação prematura e cria um
   await send("gerar link do painel","a");
   assert.equal(turns.at(-1)?.operation,"pending");
   await send("Maria da Silva","b");
-  await send("confirmar","c");
+  await send("Pode","c");
   assert.equal(turns.at(-1)?.operation,"pending");
   await send("Nome da propriedade: Boa Vista\nCPF/CNPJ: 529.982.247-25\nInscrição estadual: 123456789\nMunicípio: Monte Aprazível\nE-mail: exemplo@example.com\nFaturamento anual: 500 mil","d");
   assert.equal(turns.at(-1)?.operation,"pending");
-  await send("confirmar","e");
+  await send("Pode","e");
   assert.equal(turns.at(-1)?.operation,"create");
   assert.equal(turns.at(-1)?.book?.uf,"SP");
   assert.equal((turns.at(-1)?.details?.registration as {annualRevenueCents:number}).annualRevenueCents,50_000_000);
   assert.equal(turns.filter(t=>t.operation==="create").length,1);
+});
+
+
+test("natural farm name and municipality from WhatsApp are independent of the requested field", () => {
+  let s = collectRegistration(
+    "O nome é Fazenda Oliveira, ele fica em mirassol",
+    {},
+    "producer",
+  );
+  assert.equal(s.name, "Fazenda Oliveira");
+  assert.equal(s.city, "mirassol");
+  assert.equal(s.producer, undefined);
+  s = collectRegistration("Não, é só Fazenda Oliveira", s, "producer");
+  assert.equal(s.name, "Fazenda Oliveira");
+  assert.equal(s.city, "mirassol");
+  assert.equal(s.producer, undefined);
+  s = collectRegistration("Meu nome é Maria da Silva", s, "producer");
+  assert.equal(s.producer, "Maria da Silva");
+  assert.equal(nextField(s), "document");
 });
