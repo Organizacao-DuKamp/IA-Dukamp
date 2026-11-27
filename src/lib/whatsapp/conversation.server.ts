@@ -469,6 +469,27 @@ export async function processClaimedWhatsAppChat(
       userText = resolvedUserText.text;
       snapshot = previous;
       conversationId = previous?.conversationId ?? `wa:${input.phone}`;
+      // Registration is handled before automatic notes and general AI. Keep raw
+      // registration fields out of the general chat transcript and telemetry.
+      const registration: GuardianHandled | null =
+        !dependencies.executeChat &&
+        !dependencies.processGuardian &&
+        process.env.TPEC_GUARDIAN_ENABLED?.trim() === "true"
+          ? await (
+              await import("../guardian/farm-dialogue.server.ts")
+            ).handleRegistrationInbound(
+              {
+                phone: input.phone,
+                messageId: input.messageId,
+                text: userText,
+                mediaType: input.media?.type,
+                history: previous?.history,
+                sentAt: input.sentAt,
+              },
+              (await import("../guardian/store.server.ts")).guardianStore,
+            )
+          : null;
+      if (registration) userText = "[Dados do cadastro rural]";
       // Every inbound updates the service window and stop preference, including structured operations.
       try {
         await observeWhatsAppInboundForMemory(input, userText, previous?.history ?? [], sourceAt);
@@ -477,7 +498,7 @@ export async function processClaimedWhatsAppChat(
       }
       const observe =
         dependencies.observeMemory ?? (!dependencies.executeChat ? observeLearnedMemory : null);
-      if (observe) {
+      if (observe && !registration) {
         try {
           learnedMemory = await observe({
             phone: input.phone,
@@ -502,19 +523,26 @@ export async function processClaimedWhatsAppChat(
         (!dependencies.executeChat
           ? (await import("../guardian/handler.server.ts")).handleGuardianMessage
           : null);
-      const guardian = guardianHandler
-        ? await guardianHandler({
-            phone: input.phone,
-            messageId: input.messageId,
-            text: userText,
-            mediaType: input.media?.type,
-            animalDocument: resolvedUserText.animalDocument,
-            history: previous?.history,
-            ...(input.sentAt ? { sentAt: input.sentAt } : {}),
-            ...(input.replyToMessageId ? { replyToMessageId: input.replyToMessageId } : {}),
-          })
-        : null;
+      const guardian: GuardianHandled | null =
+        registration ??
+        (guardianHandler
+          ? await guardianHandler({
+              phone: input.phone,
+              messageId: input.messageId,
+              text: userText,
+              mediaType: input.media?.type,
+              animalDocument: resolvedUserText.animalDocument,
+              history: previous?.history,
+              ...(input.sentAt ? { sentAt: input.sentAt } : {}),
+              ...(input.replyToMessageId ? { replyToMessageId: input.replyToMessageId } : {}),
+            })
+          : null);
       if (guardian?.reply) {
+        if (guardian.registration) userText = "[Dados do cadastro rural]";
+        const recordedReply =
+          guardian.registration && guardian.reply.startsWith("Confira seu cadastro:")
+            ? "Confira seu cadastro. Confirme ou corrija o campo desejado."
+            : guardian.reply;
         herdReply = guardian.reply;
         await recordAIChatTurn({
           channel: "whatsapp",
@@ -522,7 +550,7 @@ export async function processClaimedWhatsAppChat(
           conversationId,
           clientMessageId: input.messageId,
           userText,
-          assistantText: guardian.reply,
+          assistantText: recordedReply,
           status: "completed",
           diagnostics: {
             retrieved_blocks: ["guardian:confirmed-operations"],
@@ -541,10 +569,10 @@ export async function processClaimedWhatsAppChat(
               previous?.state,
               conversationId,
               userText,
-              guardian.reply,
+              recordedReply,
               guardian.trace,
             ),
-            history: appendTurn(previous?.history ?? [], userText, guardian.reply.slice(0, 8000)),
+            history: appendTurn(previous?.history ?? [], userText, recordedReply.slice(0, 8000)),
           });
         } catch {
           /* Authoritative receipt is already persisted. */

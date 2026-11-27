@@ -217,6 +217,8 @@ export async function handlePanelLinkRequest(
         "\nQual delas? Pode responder com o nome da fazenda ou o número."
       );
     const property = candidates[0];
+    if (property.registrationRequired)
+      return "O cadastro dessa propriedade ainda está incompleto. Diga “gerar link do painel” para completar os dados antes de receber o acesso.";
     if (access.expectedName && panelFarmKey(property.name) !== panelFarmKey(access.expectedName))
       return "O número e o nome não correspondem à mesma fazenda. Escolha novamente pelo nome completo; nenhum link foi emitido.";
     const token = deps.token ? deps.token() : accessToken(input.phone, input.messageId, "login");

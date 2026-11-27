@@ -1,4 +1,5 @@
 import { fold } from "./book.ts";
+import type { RegistrationSlots } from "./farm-registration.ts";
 export const naturalConfirmation = (text: string) =>
   /^(?:sim|isso(?: mesmo)?|certo|ok|salvar|salva|confirmar|confirmo|confirma(?: ai)?|pode (?:salvar|criar|cadastrar|confirmar)|pode sim|ta certo)[.!\s]*$/.test(
     fold(text),
@@ -15,7 +16,7 @@ export const cleanFarmName = (s: string) =>
     .trim()
     .replace(/[.!]+$/, "");
 const key = (s: string) => fold(cleanFarmName(s)).replace(/^(?:fazenda|estancia|sitio)\s+/, "");
-export interface FarmSlots {
+export interface FarmSlots extends RegistrationSlots {
   name?: string;
   city?: string;
   uf?: string;
