@@ -127,10 +127,24 @@ function clean(value: string) {
 }
 export function collectRegistration(text: string, prior: RegistrationSlots = {}, expected?: RegistrationField | "uf"): RegistrationSlots {
   const s = { ...prior };
-  const raw = text.replace(/\*/g, "").trim();
+  let raw = text.replace(/\*/g, "").trim();
+  // Explicit corrections and natural farm-name/location clauses are independent
+  // of the field currently being requested.
+  const correction = raw.match(
+    /^(?:n[aã]o[,! ]+)?(?:[ée] (?:s[oó]|apenas) )?((?:fazenda|s[ií]tio|est[aâ]ncia|ch[aá]cara)\s+[^,;\n.!?]+)[.! ]*$/iu,
+  );
+  if (correction && (prior.name || expected === "name")) {
+    s.name = clean(correction[1]);
+    return s;
+  }
+  raw = raw
+    .replace(/\b(?:o\s+)?nome(?:\s+(?:correto|certo))?\s+[ée]\s+(?=(?:fazenda|s[ií]tio|est[aâ]ncia|ch[aá]cara)\b)/giu, "Nome da propriedade: ")
+    .replace(/\b(?:a\s+)?(?:minha\s+)?(?:fazenda|propriedade)\s+(?:chama|se chama|chama-se|[ée])\s+/giu, "Nome da propriedade: ")
+    .replace(/[,;]?\s+(?:(?:e\s+)?(?:ele|ela|a propriedade|a fazenda)\s+|e\s+)?fica\s+em\s+/giu, "; Município: ")
+    .replace(/^(?:n[aã]o[,! ]+)(?=(?:nome|munic[ií]pio|cidade|cpf|cnpj|inscri[cç][aã]o|e-mail|faturamento)\b)/iu, "");
   const set = (field: RegistrationField | "uf", value: string) => {
     const v = clean(value);
-    if (!v || /^(?:nao sei|não sei|nao tenho|não tenho|depois|pular|sim|ok|confirmar|cancelar)$/i.test(v)) return;
+    if (!v || /^(?:nao sei|não sei|nao tenho|não tenho|depois|pular|sim|ok|pode|isso mesmo|tudo certo|confirmar|cancelar)$/i.test(v)) return;
     if (field === "document") { s.document = taxDocument(v); return; }
     if (field === "email") { s.email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) && v.length <= 254 ? v.toLowerCase() : undefined; return; }
     if (field === "stateRegistration") {
